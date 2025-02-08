@@ -1817,7 +1817,7 @@ def main():
             lambda_units = 'mu'
 
         if event == 'About SPAN':
-            sg.popup ('SPAN is a Python 3.X 1D spectra analysis tool. It can modify the spectra and perform measurements, using both built-in and external (e.g. ppxf) algorithms')
+            sg.popup ('SPAN is a Python 3.X 1D spectra analysis tool. It can modify the spectra and perform measurements, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         if event == 'Version':
             sg.popup ('This is version 6.3 with improved and semplified layout')
 
