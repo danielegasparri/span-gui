@@ -1,4 +1,4 @@
-# SPAN: Spectral Analysis Software (Version 6.3.0)
+# SPAN: Spectral Analysis Software
 📖 **Author:** Daniele Gasparri  
 📅 **Release Date:** February 2025  
 
