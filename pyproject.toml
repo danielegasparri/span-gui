@@ -74,8 +74,5 @@ include = ["span*"]
 span-gui = "span.span:main"
 
 [project.urls]
-"Homepage" = "https://github.com/tuonome/span-gui"
-"Issue Tracker" = "https://github.com/tuonome/span-gui/issues"
-"Documentation" = "https://tuo-sito/docs"
-
-
+"Homepage" = "https://github.com/danielegasparri/span-gui"
+"Issue Tracker" = "https://github.com/danielegasparri/span-gui/issues"
