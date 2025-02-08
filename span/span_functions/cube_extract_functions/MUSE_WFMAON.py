@@ -1,7 +1,6 @@
 from astropy.io import fits
 import numpy as np
 import os
-import logging
 import sys
 
 # Append parent directory to system path for importing modules
@@ -11,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from span_functions import der_snr as der_snr
 
 # ======================================
-# Routine to load MUSE cubes
+# Routine to load MUSE cubes. Inspired by the GIST pipeline of Bittner et. al 2019
 # ======================================
 def read_cube(config):
     """
@@ -24,11 +23,9 @@ def read_cube(config):
     dict: Dictionary containing extracted cube data, including spatial coordinates,
           wavelengths, spectra, errors, and SNR.
     """
-    loggingBlanks = (len(os.path.splitext(os.path.basename(__file__))[0]) + 33) * " "
 
     # Log and print the start of the cube reading process
-    print("Reading the MUSE-WFM cube")
-    logging.info("Reading the MUSE-WFM cube: " + config['GENERAL']['INPUT'])
+    print(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
 
     # Open the FITS file and extract data and header
     hdu = fits.open(config['GENERAL']['INPUT'])
@@ -39,11 +36,11 @@ def read_cube(config):
 
     # Read error spectra if available, otherwise estimate using DER_SNR
     if len(hdu) == 3:
-        logging.info("Reading the error spectra from the cube")
+        print("Reading the error spectra from the cube")
         stat = hdu[2].data
         espec = np.reshape(stat, [s[0], s[1] * s[2]])
     elif len(hdu) == 2:
-        logging.info("No error extension found. Estimating the error spectra with the DER_SNR algorithm")
+        print("No error extension found. Estimating the error spectra with the DER_SNR algorithm")
         espec = np.zeros(spec.shape)
         for i in range(spec.shape[1]):
             espec[:, i] = der_snr.der_snr(spec[:, i])
@@ -63,15 +60,11 @@ def read_cube(config):
     y = np.reshape(y, [s[1] * s[2]])
     pixelsize = hdr['CD2_2'] * 3600.0
 
-    logging.info(
-        "Extracting spatial information:\n"
-        + loggingBlanks + "* Spatial coordinates are centred to " + str(origin) + "\n"
-        + loggingBlanks + "* Spatial pixel size is " + str(pixelsize)
-    )
 
-    # Adjust wavelengths to the rest-frame
-    wave = wave / (1 + config['GENERAL']['REDSHIFT'])
-    logging.info("Shifting spectra to rest-frame, assuming a redshift of " + str(config['GENERAL']['REDSHIFT']))
+    # De-redshift the spectra
+    redshift = config['GENERAL']['REDSHIFT']
+    wave /= (1 + redshift)
+    print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Shorten spectra to the required wavelength range
     lmin = config['READ_DATA']['LMIN_TOT']
@@ -80,9 +73,7 @@ def read_cube(config):
     spec = spec[idx, :]
     espec = espec[idx, :]
     wave = wave[idx]
-    logging.info(
-        "Shortening spectra to the wavelength range from " + str(lmin) + "A to " + str(lmax) + "A."
-    )
+    print(f"Shortened spectra to the range {lmin}Å - {lmax}Å.")
 
     # Compute the SNR per spaxel, ignoring laser guide star (LGS) region
     idx_snr = np.where(
@@ -101,11 +92,7 @@ def read_cube(config):
         if len(hdu) == 3 else espec[0, :]
     )
     snr = signal / noise
-    logging.info(
-        "Computing the signal-to-noise ratio in the wavelength range from "
-        + str(config['READ_DATA']['LMIN_SNR']) + "A to " + str(config['READ_DATA']['LMAX_SNR']) + "A, "
-        + "while ignoring the wavelength range affected by the LGS."
-    )
+    print(f"Computed SNR in the range {lmin_snr}Å - {lmax_snr}Å, excluding LGS-affected regions.")
 
     # Replace NaNs in the LGS region with the median signal and noise
     idx_laser = np.where(
@@ -116,9 +103,7 @@ def read_cube(config):
     )[0]
     spec[idx_laser, :] = signal
     espec[idx_laser, :] = noise
-    logging.info(
-        "Replacing the spectral region affected by the LGS (5820A - 5970A) with the median signal of the spectra."
-    )
+    print("Replaced LGS-affected regions (5760Å-6010Å) with median signal.")
 
     # Store extracted data into a dictionary
     cube = {
@@ -127,8 +112,6 @@ def read_cube(config):
     }
 
     # Log and print the completion of the cube reading process
-    print("Reading the MUSE-WFM cube")
-    print(f"             Read {len(cube['x'])} spectra!")
-    logging.info(f"Finished reading the MUSE cube! Read a total of {len(cube['x'])} spectra!")
+    print(f"Finished reading the MUSE cube! Total spectra: {len(cube['x'])}.")
 
     return cube

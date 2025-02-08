@@ -1,7 +1,6 @@
 from astropy.io import fits
 import numpy as np
 import os
-import logging
 import sys
 
 # Add the parent directory to the Python path
@@ -9,10 +8,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from span_functions import der_snr as der_snr
 
-
-
 # ======================================
-# Function to load MUSE cubes
+# Function to load MUSE cubes. Inspired by the GIST pipeline of Bittner et. al 2019
 # ======================================
 def read_cube(config):
     """
@@ -24,10 +21,9 @@ def read_cube(config):
     Returns:
         dict: Processed data cube containing spectra, errors, SNR, spatial coordinates, and metadata.
     """
-    logging_blanks = (len(os.path.splitext(os.path.basename(__file__))[0]) + 33) * " "
 
     # Read the MUSE cube
-    logging.info(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
+    print(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
     hdu = fits.open(config['GENERAL']['INPUT'])
     hdr = hdu[1].header
     data = hdu[1].data
@@ -36,11 +32,11 @@ def read_cube(config):
 
     # Handle error spectra or estimate them using DER_SNR
     if len(hdu) == 3:
-        logging.info("Reading error spectra from the cube.")
+        print("Reading error spectra from the cube.")
         stat = hdu[2].data
         espec = stat.reshape(shape[0], -1)
     else:
-        logging.info("No error extension found. Estimating error spectra with DER_SNR.")
+        print("No error extension found. Estimating error spectra with DER_SNR.")
         espec = np.array([der_snr.der_snr(spec[:, i]) for i in range(spec.shape[1])]).T
 
     # Extract wavelength information
@@ -54,25 +50,25 @@ def read_cube(config):
     x, y = x.ravel(), y.ravel()
     pixelsize = hdr['CD2_2'] * 3600.0
 
-    logging.info(f"Spatial coordinates centered at {origin}, pixel size: {pixelsize:.3f}")
+    print(f"Spatial coordinates centered at {origin}, pixel size: {pixelsize:.3f}")
 
     # De-redshift the spectra
     redshift = config['GENERAL']['REDSHIFT']
     wave /= (1 + redshift)
-    logging.info(f"Shifting spectra to rest-frame (redshift: {redshift}).")
+    print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Limit spectra to the specified wavelength range
     lmin, lmax = config['READ_DATA']['LMIN_TOT'], config['READ_DATA']['LMAX_TOT']
     idx = (wave >= lmin) & (wave <= lmax)
     spec, espec, wave = spec[idx, :], espec[idx, :], wave[idx]
-    logging.info(f"Wavelength range limited to {lmin}-{lmax} \u00c5.")
+    print(f"Wavelength range limited to {lmin}-{lmax} \u00c5.")
 
     # Compute SNR per spaxel
     idx_snr = (wave >= config['READ_DATA']['LMIN_SNR']) & (wave <= config['READ_DATA']['LMAX_SNR'])
     signal = np.nanmedian(spec[idx_snr, :], axis=0)
     noise = np.abs(np.nanmedian(np.sqrt(espec[idx_snr, :]), axis=0)) if len(hdu) == 3 else espec[0, :]
     snr = signal / noise
-    logging.info(f"Computed SNR in wavelength range {config['READ_DATA']['LMIN_SNR']}-{config['READ_DATA']['LMAX_SNR']} \u00c5.")
+    print(f"Computed SNR in wavelength range {config['READ_DATA']['LMIN_SNR']}-{config['READ_DATA']['LMAX_SNR']} \u00c5.")
 
     # Store data in a structured dictionary
     cube = {
@@ -80,7 +76,6 @@ def read_cube(config):
         'snr': snr, 'signal': signal, 'noise': noise, 'pixelsize': pixelsize
     }
 
-    logging.info(f"Finished reading the MUSE cube. Total spectra: {len(cube['x'])}.")
-    print(f"Read {len(cube['x'])} spectra from the MUSE-WFM cube.")
+    print(f"Finished reading the MUSE cube. Total spectra: {len(cube['x'])}.")
 
     return cube

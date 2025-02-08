@@ -1,45 +1,52 @@
 from astropy.io import fits
 import numpy as np
 import os
-import logging
 import sys
 
 # Aggiunge il percorso per importare moduli da directory superiori
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-
+# ======================================
+# Routine to load CALIFA cubes. Inspired by the GIST pipeline of Bittner et. al 2019
+# ======================================
 def read_cube(config):
     """
-    Legge un datacube CALIFA V500, estrae le informazioni necessarie e calcola i rapporti segnale-rumore (SNR).
+    Reads a CALIFA V500 data cube and processes its spectral and spatial information.
 
-    Args:
-        config (dict): Configurazione contenente percorsi dei file e parametri per la lettura del datacube.
+    Parameters:
+        config (dict): Configuration dictionary containing the following keys:
+            - GENERAL['INPUT']: Path to the FITS file.
+            - GENERAL['REDSHIFT']: Redshift to correct the spectra.
+            - READ_DATA['ORIGIN']: Origin for spatial coordinates.
+            - READ_DATA['LMIN_TOT']: Minimum wavelength for spectra.
+            - READ_DATA['LMAX_TOT']: Maximum wavelength for spectra.
+            - READ_DATA['LMIN_SNR']: Minimum wavelength for SNR calculation.
+            - READ_DATA['LMAX_SNR']: Maximum wavelength for SNR calculation.
 
     Returns:
-        dict: Dizionario contenente coordinate spaziali, spettro, errore, SNR e altre informazioni.
+        dict: A dictionary containing processed cube data including spatial coordinates,
+              wavelengths, spectra, errors, SNR, signal, noise, and pixel size.
     """
-    logging_blanks = (len(os.path.splitext(os.path.basename(__file__))[0]) + 33) * " "
 
-    # Legge il datacube CALIFA
-    print("Reading the CALIFA V500 cube")
-    logging.info("Reading the CALIFA V500 cube: " + config['GENERAL']['INPUT'])
+    # Reading CALIFA datacubes
+    print(f"Reading the CALIFA V500 cube: {config['GENERAL']['INPUT']}")
 
-    # Apertura del file FITS
+    # Opening the fits
     hdu = fits.open(config['GENERAL']['INPUT'])
     hdr = hdu[0].header
     data = hdu[0].data
     s = np.shape(data)
     spec = np.reshape(data, [s[0], s[1] * s[2]])
 
-    # Lettura degli spettri di errore
-    logging.info("Reading the error spectra from the cube")
+    # Reading error info
+    print("Reading the error spectra from the cube")
     stat = hdu[1].data
     espec = np.reshape(stat, [s[0], s[1] * s[2]])
 
-    # Calcolo della lunghezza d'onda
+    # Wavelength
     wave = hdr['CRVAL3'] + (np.arange(s[0])) * hdr['CDELT3']
 
-    # Calcolo delle coordinate spaziali
+    # Spatial coordinates
     origin = [
         float(config['READ_DATA']['ORIGIN'].split(',')[0].strip()),
         float(config['READ_DATA']['ORIGIN'].split(',')[1].strip())
@@ -51,31 +58,25 @@ def read_cube(config):
     y = np.reshape(y, [s[1] * s[2]])
     pixelsize = hdr['CD2_2'] * 3600.0
 
-    logging.info(
-        "Extracting spatial information:\n"
-        + logging_blanks + f"* Spatial coordinates are centred to {origin}\n"
-        + logging_blanks + f"* Spatial pixelsize is {pixelsize}"
-    )
 
-    # Shift degli spettri al rest-frame
-    wave = wave / (1 + config['GENERAL']['REDSHIFT'])
-    logging.info(f"Shifting spectra to rest-frame, assuming a redshift of {config['GENERAL']['REDSHIFT']}")
+    # De-redshift the spectra
+    redshift = config['GENERAL']['REDSHIFT']
+    wave /= (1 + redshift)
+    print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
-    # Riduzione degli spettri al range di lunghezze d'onda richiesto
+    # Cropping
     lmin = config['READ_DATA']['LMIN_TOT']
     lmax = config['READ_DATA']['LMAX_TOT']
     idx = np.where(np.logical_and(wave >= lmin, wave <= lmax))[0]
     spec = spec[idx, :]
     espec = espec[idx, :]
     wave = wave[idx]
-    logging.info(
-        f"Shortening spectra to the wavelength range from {lmin}A to {lmax}A."
-    )
+    print(f"Shortening spectra to the wavelength range from {lmin}A to {lmax}A.")
 
-    # Conversione degli errori in varianze
+    # Calculating the variance
     espec = espec ** 2
 
-    # Calcolo del rapporto segnale-rumore (SNR) per spaxel
+    # S/N
     idx_snr = np.where(
         np.logical_and(
             wave >= config['READ_DATA']['LMIN_SNR'], wave <= config['READ_DATA']['LMAX_SNR']
@@ -84,11 +85,9 @@ def read_cube(config):
     signal = np.nanmedian(spec[idx_snr, :], axis=0)
     noise = np.abs(np.nanmedian(np.sqrt(espec[idx_snr, :]), axis=0))
     snr = signal / noise
-    logging.info(
-        f"Computing the signal-to-noise ratio in the wavelength range from {config['READ_DATA']['LMIN_SNR']}A to {config['READ_DATA']['LMAX_SNR']}A."
-    )
+    print(f"Computing the signal-to-noise ratio in the wavelength range from {config['READ_DATA']['LMIN_SNR']}A to {config['READ_DATA']['LMAX_SNR']}A.")
 
-    # Creazione del dizionario con i dati del datacube
+    # DIctionary with datacube info
     cube = {
         'x': x,
         'y': y,
@@ -102,6 +101,5 @@ def read_cube(config):
     }
 
     print(f"Finished reading the CALIFA V500 cube: Read {len(cube['x'])} spectra!")
-    logging.info(f"Finished reading the CALIFA V500 cube: Read {len(cube['x'])} spectra!")
 
     return cube

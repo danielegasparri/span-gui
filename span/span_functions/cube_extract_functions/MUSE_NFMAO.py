@@ -1,29 +1,20 @@
-from   astropy.io          import fits
-import numpy               as np
-
+from astropy.io import fits
+import numpy as np
 import os
-import logging
-
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-# from functions import printStatus
-
 from span_functions import der_snr as der_snr
 
-
-
 # ======================================
-# Routine to load MUSE-cubes
+# Routine to load MUSE-cubes. Inspired by the GIST pipeline of Bittner et. al 2019
 # ======================================
 def read_cube(config):
 
-    loggingBlanks = (len( os.path.splitext(os.path.basename(__file__))[0] ) + 33) * " "
 
     # Read MUSE-cube
-    print("Reading the MUSE-NFM cube")
-    logging.info("Reading the MUSE-NFM cube: "+config['GENERAL']['INPUT'])
+    print(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
 
     # Reading the cube
     hdu   = fits.open(config['GENERAL']['INPUT'])
@@ -34,11 +25,11 @@ def read_cube(config):
 
     # Read the error spectra if available. Otherwise estimate the errors with the der_snr algorithm
     if len(hdu) == 3:
-        logging.info("Reading the error spectra from the cube")
+        print("Reading the error spectra from the cube")
         stat  = hdu[2].data
         espec = np.reshape(stat,[s[0],s[1]*s[2]])
     elif len(hdu) == 2:
-        logging.info("No error extension found. Estimating the error spectra with the der_snr algorithm")
+        print("No error extension found. Estimating the error spectra with the der_snr algorithm")
         espec = np.zeros( spec.shape )
         for i in range( 0, spec.shape[1] ):
             espec[:,i] = der_snr.der_snr( spec[:,i] )
@@ -55,13 +46,10 @@ def read_cube(config):
     y     = np.reshape(y,[s[1]*s[2]])
     pixelsize = hdr['CD2_2']*3600.0
 
-    logging.info("Extracting spatial information:\n"\
-            +loggingBlanks+"* Spatial coordinates are centred to "+str(origin)+"\n"\
-            +loggingBlanks+"* Spatial pixelsize is "+str(pixelsize))
-  
-    # De-redshift spectra
-    wave = wave / (1+config['GENERAL']['REDSHIFT'])
-    logging.info("Shifting spectra to rest-frame, assuming a redshift of "+str(config['GENERAL']['REDSHIFT']))
+    # De-redshift the spectra
+    redshift = config['GENERAL']['REDSHIFT']
+    wave /= (1 + redshift)
+    print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Shorten spectra to required wavelength range
     lmin  = config['READ_DATA']['LMIN_TOT']
@@ -70,7 +58,7 @@ def read_cube(config):
     spec  = spec[idx,:]
     espec = espec[idx,:]
     wave  = wave[idx]
-    logging.info("Shortening spectra to the wavelength range from "+str(config['READ_DATA']['LMIN_TOT'])+"A to "+str(config['READ_DATA']['LMAX_TOT'])+"A.")
+    print(f"Shortening spectra to wavelength range: {lmin} - {lmax} Å.")
 
     # Computing the SNR per spaxel
     idx_snr   = np.where( np.logical_and.reduce([ \
@@ -83,19 +71,17 @@ def read_cube(config):
     elif len(hdu) == 2:
         noise = espec[0,:]    # DER_SNR returns constant error spectra
     snr    = signal / noise
-    logging.info("Computing the signal-to-noise ratio in the wavelength range from "+str(config['READ_DATA']['LMIN_SNR'])+"A to "+str(config['READ_DATA']['LMAX_SNR'])+"A, while ignoring the wavelength range affected by the LGS.")
+    print(f"Computed SNR in wavelength range: {config['READ_DATA']['LMIN_SNR']} - {config['READ_DATA']['LMAX_SNR']} Å.")
 
     # Replacing the np.nan in the laser region by the median of the spectrum
     idx_laser          = np.where( np.logical_and( wave > 5780 / (1+config['GENERAL']['REDSHIFT']), wave < 6050 / (1+config['GENERAL']['REDSHIFT'])) )[0]
     spec[idx_laser,:]  = signal
     espec[idx_laser,:] = noise
-    logging.info("Replacing the spectral region affected by the LGS (5780A-6050A) with the median signal of the spectra.")
+    print("Replacing the spectral region affected by the LGS (5780A-6050A) with the median signal of the spectra.")
 
     # Storing everything into a structure
     cube = {'x':x, 'y':y, 'wave':wave, 'spec':spec, 'error':espec, 'snr':snr, 'signal':signal, 'noise':noise, 'pixelsize':pixelsize}
 
-    print("Reading the MUSE-NFM cube")
-    print("             Read "+str(len(cube['x']))+" spectra!")
-    logging.info("Finished reading the MUSE cube! Read a total of "+str(len(cube['x']))+" spectra!")
+    print(f"Finished reading MUSE cube: {len(cube['x'])} spectra loaded.")
 
     return(cube)
