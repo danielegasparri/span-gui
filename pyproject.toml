@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "span-gui"
+version = "6.3.1"
+description = "GUI program for the manipulation and analysis of astronomical spectra in the optical and NIR wavelength ranges."
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = """
+SPAN License
+
+1. This software is licensed **for non-commercial use only**.
+2. The source code may be **freely redistributed**, but this license notice must always be included.
+3. Any user who redistributes or uses this software **must properly attribute the original author**.
+4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
+5. **Commercial use is strictly prohibited** without prior written permission from the author.
+
+DISCLAIMER:
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+© Daniele Gasparri - 2025
+"""}
+authors = [
+  { name = "Daniele Gasparri", email = "daniele.gasparri@gmail.com" }
+]
+keywords = [
+  "spectral analysis",
+  "galaxies",
+  "spectral manipulation",
+  "linestrength analysis",
+  "astronomy",
+  "spectral fitting",
+  "spectroscopy",
+  "data analysis",
+  "kinematics",
+  "stellar populations"
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: Free for non-commercial use",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Scientific/Engineering :: Astrophysics",
+  "Intended Audience :: Science/Research"
+]
+
+dependencies = [
+  "numpy>=1.21.6,<1.28.0",
+  "astropy>=6.0.0,<=6.1.7",
+  "pandas>=2.0.0,<=2.2.3",
+  "matplotlib>=3.5.3,<=3.10.0",
+  "scipy>=1.11.2,<1.12.0",
+  "scikit-image>=0.23.1",
+  "PyWavelets>=1.6.0,<=1.8.0",
+  "joblib>=1.3.3,<=1.4.2",
+  "scikit-learn>=1.3.0,<=1.6.1",
+  "ppxf>=9.4.1",
+  "vorbin>=3.1.3"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["span*"]
+
+[tool.setuptools.package-data]
+"span" = ["**/*"]
+
+[project.scripts]
+span-gui = "span.span:main"
+
+[project.urls]
+"Homepage" = "https://github.com/tuonome/span-gui"
+"Issue Tracker" = "https://github.com/tuonome/span-gui/issues"
+"Documentation" = "https://tuo-sito/docs"
+
+
