@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "span-gui"
-version = "6.3.1"
+version = "6.4.0"
 description = "GUI program for the manipulation and analysis of astronomical spectra in the optical and NIR wavelength ranges."
 requires-python = ">=3.7"
 readme = "README.md"
@@ -22,6 +22,7 @@ THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPL
 
 © Daniele Gasparri - 2025
 """}
+
 authors = [
   { name = "Daniele Gasparri", email = "daniele.gasparri@gmail.com" }
 ]
@@ -42,7 +43,6 @@ classifiers = [
   "License :: Free for non-commercial use",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering :: Astronomy",
-  "Topic :: Scientific/Engineering :: Astrophysics",
   "Intended Audience :: Science/Research"
 ]
 
@@ -71,7 +71,7 @@ include = ["span*"]
 "span" = ["**/*"]
 
 [project.scripts]
-span-gui = "span.span:main"
+span-gui = "span:main"
 
 [project.urls]
 "Homepage" = "https://github.com/danielegasparri/span-gui"

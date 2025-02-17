@@ -6,9 +6,6 @@
 ![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
 
-![Screenshot 2025-02-05 201233](https://github.com/user-attachments/assets/5a58bded-259e-4d0d-b79b-f1b8b712a919)
-
-
 
 
 ## 🔹 Overview
@@ -17,7 +14,7 @@
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
 The goal of SPAN is to make spectral manipulation and analysis faster, simpler and fun in one GUI program, fully cross-platform and user friendly.  
 
-**You don't need to write code or insert strange command line parameters anymore to analyze your science spectra. Now, you can do it directly with SPAN and few muose clicks!**
+**You don't need to write code or insert weird command line parameters anymore to analyze your science spectra. Now, you can do it directly with SPAN and few muose clicks!**
 
 
 ## 🔹 Features
