@@ -70,58 +70,6 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
-# Blackbody parameters window
-# def blackbody_parameters(wave1_bb, wave2_bb, t_guess):
-#
-#     sg.theme('LightBlue1')
-#     bb_layout = [
-#     [sg.Text('Wave interval (nm):'), sg.InputText(wave1_bb, size = (6,1), key = 'left_wave_bb'), sg.Text('-'), sg.InputText(wave2_bb, size = (6,1), key = 'right_wave_bb'), sg.Text('Initial Temperature guess'), sg.InputText(t_guess, size = (8,1), key = 't_guess_bb')],
-#     [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
-#     ]
-#
-#     print ('*** Blackbody fitting parameters window open. The main panel will be inactive until you close the window ***')
-#     bb_window = sg.Window('Blackbody fitting parameters', bb_layout)
-#
-#     while True:
-#         bb_event, bb_values = bb_window.read()
-#
-#         if bb_event == sg.WIN_CLOSED:
-#             break
-#
-#         try:
-#             wave1_bb = float(bb_values['left_wave_bb'])
-#             wave2_bb = float(bb_values['right_wave_bb'])
-#             t_guess = float(bb_values['t_guess_bb'])
-#
-#         except Exception:
-#             sg.popup ('Invalid input parameters!')
-#             continue
-#         if t_guess <=0:
-#             sg.Popup ('No blackbody has a negative temperature!')
-#             t_guess = 4000.
-#             continue
-#         if t_guess > 1e7:
-#             sg.Popup ('No stellar blackbody has a temperature greater than 10 million degrees!')
-#             t_guess = 4000.
-#             continue
-#
-#         if wave1_bb >= wave2_bb:
-#             sg.popup ('The first wavelength cannot be greater than the second!')
-#             continue
-#
-#         epsilon_wave_check = 5.
-#         if wave2_bb - wave1_bb <= epsilon_wave_check:
-#             sg.popup ('The wavelength interval is too small to perform a good fit. Enlarge it!')
-#             continue
-#
-#         if bb_event == 'Confirm':
-#             print ('Blackbody parameters confirmed. This main panel is now active again')
-#             print ('')
-#             break
-#
-#     bb_window.close()
-#
-#     return wave1_bb, wave2_bb, t_guess
 
 def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     """Handles blackbody fitting parameter input via GUI."""
@@ -185,164 +133,6 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     return replace(params, wave1_bb=new_wave1_bb, wave2_bb=new_wave2_bb, t_guess=new_t_guess)
 
 
-
-# Cross-correlation parameters window
-# def crosscorr_parameters(
-#         template_crosscorr, lambda_units_template_crosscorr_nm, lambda_units_template_crosscorr_a,
-#         lambda_units_template_crosscorr_mu, smooth_template_crosscorr, smooth_value_crosscorr,
-#         low_wave_corr, high_wave_corr, is_vel_xcorr, low_vel_corr, high_vel_corr,
-#         is_z_xcorr, low_z_corr, high_z_corr, wave_interval_corr, vel_interval_corr, z_interval_corr):
-#
-#     layout, scale_win, fontsize, default_size = misc.get_layout()
-#
-#     sg.theme('LightBlue1')
-#     xcorr_layout = [
-#     [sg.Text('Select a template:', font = ('', default_size, 'bold')), sg.InputText(template_crosscorr, size = (32,1), key = 'xcorr_template'), sg.FileBrowse(tooltip='Load a template')], [sg.Text('Template wavelegth is in:'),sg.Radio ('nm', "RADIOCORR", default = lambda_units_template_crosscorr_nm, key = 'xcorr_template_wave_nm'), sg.Radio('a', "RADIOCORR", default = lambda_units_template_crosscorr_a, key = 'xcorr_template_wave_a'), sg.Radio('mu', "RADIOCORR", key = 'xcorr_template_wave_mu', default = lambda_units_template_crosscorr_mu)],
-#     [sg.Checkbox('Add broadening to template (km/s):', key = 'xcorr_smooth_template',tooltip='Add a sigma broadeing to the template (km/s)', default = smooth_template_crosscorr), sg.InputText(smooth_value_crosscorr, size = (6,1), key = 'xcorr_smooth_template_value'), sg.Text(' '), sg.Button('View template',button_color=('black','light blue'))],
-#     [sg.HorizontalSeparator()],
-#     [sg.Text('Wavelength interval to cross-correlate (nm):',tooltip='Wavelength range of the spectrum to consider for cross-correlation, in nm', font = ('', default_size, 'bold')), sg.InputText(low_wave_corr, size = (6,1), key = 'xcorr_left_lambda'), sg.Text('-'), sg.InputText(high_wave_corr, size = (6,1), key = 'xcorr_right_lambda')],
-#     [sg.Radio('Considering the velocirty range (km/s):', "RADIOONLY2", default = is_vel_xcorr, key = 'is_vel_xcorr',tooltip='Use for peculiar Doppler motion or low (<0.01) redshift galaxies', font = ('', default_size, 'bold')), sg.InputText(low_vel_corr, size = (7,1), key = 'xcorr_low_vel'), sg.Text('-'), sg.InputText(high_vel_corr, size = (7,1), key = 'xcorr_high_vel')], [sg.Radio('Considering the redshift range (z):', "RADIOONLY2", default = is_z_xcorr, key = 'is_z_xcorr',tooltip='Use for cosmological redshift estimation, where the velocity has no physical meaning', font = ('', default_size, 'bold')), sg.InputText(low_z_corr, size = (7,1), key = 'low_z_corr'), sg.Text('-'), sg.InputText(high_z_corr, size = (7,1), key = 'high_z_corr')],
-#     [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
-#     ]
-#
-#     print ('*** Cross-corr parameters window open. The main panel will be inactive until you close the window ***')
-#     xcorr_window = sg.Window('Cross-correlation parameters', xcorr_layout)
-#
-#     while True:
-#         xcorr_event, xcorr_values = xcorr_window.read()
-#
-#         if xcorr_event == sg.WIN_CLOSED:
-#             break
-#
-#         is_vel_xcorr = xcorr_values['is_vel_xcorr']
-#         is_z_xcorr = xcorr_values['is_z_xcorr']
-#         lambda_units_template_crosscorr_nm = xcorr_values['xcorr_template_wave_nm']
-#         lambda_units_template_crosscorr_a = xcorr_values['xcorr_template_wave_a']
-#         lambda_units_template_crosscorr_mu = xcorr_values['xcorr_template_wave_mu']
-#         template_crosscorr = xcorr_values['xcorr_template']
-#         if (lambda_units_template_crosscorr_nm):
-#             lambda_units_template_crosscorr = 'nm'
-#         if (lambda_units_template_crosscorr_a):
-#             lambda_units_template_crosscorr = 'a'
-#         if (lambda_units_template_crosscorr_mu):
-#             lambda_units_template_crosscorr = 'mu'
-#         smooth_template_crosscorr = xcorr_values['xcorr_smooth_template']
-#         if smooth_template_crosscorr:
-#             try:
-#                 smooth_value_crosscorr = float(xcorr_values['xcorr_smooth_template_value'])
-#                 if smooth_value_crosscorr <0:
-#                     sg.popup('Invalid smooth value for template. Must be >= 0!')
-#                     continue
-#             except ValueError:
-#                 sg.popup('Smooth template value not valid!')
-#                 continue
-#         else:
-#             smooth_value_crosscorr = 0
-#
-#         #cheching the input wavelength range
-#         try:
-#             low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
-#             high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
-#             wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
-#         except Exception:
-#             sg.popup('Limit wave values not valid!')
-#             continue
-#
-#         real_low_wave_corr = np.min(wave_interval_corr)
-#         real_high_wave_corr = np.max(wave_interval_corr)
-#
-#
-#         #existence of correct values of velocity range
-#         if is_vel_xcorr:
-#             try:
-#                 low_vel_corr = float(xcorr_values['xcorr_low_vel'])
-#                 high_vel_corr = float(xcorr_values['xcorr_high_vel'])
-#                 vel_interval_corr = np.array([low_vel_corr,high_vel_corr])
-#                 low_vel_corr = np.min(vel_interval_corr)
-#                 high_vel_corr = np.max(vel_interval_corr)
-#             except Exception:
-#                 sg.popup('Limit velocity values not valid!')
-#                 low_vel_corr = -1000
-#                 high_vel_corr = 1000
-#                 vel_interval_corr = np.array([low_vel_corr,high_vel_corr])
-#                 continue
-#             epsilon_vel = 4
-#             if abs(low_vel_corr - high_vel_corr)<epsilon_vel:
-#                 sg.Popup('Velocity interval too small')
-#                 low_vel_corr = -1000
-#                 high_vel_corr = 1000
-#                 vel_interval_corr = np.array([low_vel_corr,high_vel_corr])
-#                 continue
-#
-#         if is_z_xcorr:
-#             try:
-#                 low_z_corr = float(xcorr_values['low_z_corr'])
-#                 high_z_corr = float(xcorr_values['high_z_corr'])
-#                 #in case I invert the values
-#                 z_interval_corr = np.array([low_z_corr,high_z_corr])
-#                 low_z_corr = np.min(z_interval_corr)
-#                 high_z_corr = np.max(z_interval_corr)
-#                 if z_interval_corr[0] < 0 or z_interval_corr[1] < 0:
-#                     sg.popup('Redshift values must be greater than zero!')
-#                     z_interval_corr = np.array([0, 0.1])
-#                     low_z_corr = 0
-#                     high_z_corr = 0.1
-#                     continue
-#                 if np.max(z_interval_corr) > 10:
-#                     sg.Popup('Sorry, the maximum z available (and meaningful) is 10')
-#                     z_interval_corr = np.array([0, 0.1])
-#                     low_z_corr = 0
-#                     high_z_corr = 0.1
-#                     continue
-#
-#             except Exception:
-#                 sg.popup('Redshift values not valid!')
-#                 low_z_corr = 0
-#                 high_z_corr = 0.1
-#                 z_interval_corr = np.array([low_z_corr,high_z_corr])
-#                 continue
-#
-#             epsilon_z = 0.001
-#             if abs(low_z_corr - high_z_corr)<epsilon_z:
-#                 sg.Popup('Redshift interval too small')
-#                 low_z_corr = 0
-#                 high_z_corr = 0.1
-#                 z_interval_corr = np.array([low_z_corr,high_z_corr])
-#                 continue
-#
-#
-#
-#         if xcorr_event == 'View template':
-#             cond01 = (os.path.isfile(template_crosscorr))
-#             if not cond01:
-#                 sg.popup('The template does not exist. I have nothing to show!')
-#                 continue
-#
-#             wave_template1, flux_template1, step_temp1, name_temp1 = stm.read_spec(template_crosscorr, lambda_units_template_crosscorr)
-#
-#             #doing the broadening, if selected
-#             if smooth_value_crosscorr > 0:
-#                 flux_template1 = spman.sigma_broad(wave_template1, flux_template1, smooth_value_crosscorr)
-#             plt.title(template_crosscorr)
-#             plt.plot(wave_template1, flux_template1)
-#             plt.xlim(real_low_wave_corr,wave_interval_corr[len(wave_interval_corr)-1])
-#             plt.xlabel('Wavelength (nm)')
-#             plt.ylabel('Norm flux')
-#             plt.show()
-#             plt.close()
-#
-#         #CLOSING THE WINDOW ONCE I CLICK "CONFIRM"
-#         if xcorr_event == 'Confirm':
-#             print ('Cross-corr parameters confirmed. This main panel is now active again')
-#             print ('')
-#             break
-#
-#     xcorr_window.close()
-#
-#     return (template_crosscorr, lambda_units_template_crosscorr_nm, lambda_units_template_crosscorr_a,
-#         lambda_units_template_crosscorr_mu, smooth_template_crosscorr, smooth_value_crosscorr,
-#         low_wave_corr, high_wave_corr, is_vel_xcorr, low_vel_corr, high_vel_corr,
-#         is_z_xcorr, low_z_corr, high_z_corr, wave_interval_corr, vel_interval_corr, z_interval_corr)
 
 def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
     """Handles cross-correlation parameter input via GUI."""
@@ -429,8 +219,6 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
         except ValueError:
             sg.popup('Limit wave values not valid!')
             continue
-        # real_low_wave_corr = np.min(wave_interval_corr)
-#         real_high_wave_corr = np.max(wave_interval_corr)
 
         if is_vel_xcorr:
             try:
@@ -492,7 +280,6 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
                    lambda_units_template_crosscorr = lambda_units_template_crosscorr,
                    smooth_template_crosscorr=smooth_template_crosscorr,
                    smooth_value_crosscorr=smooth_value_crosscorr,
-                   # wave_interval_corr = wave_interval_corr,
                    low_wave_corr=low_wave_corr,
                    high_wave_corr=high_wave_corr,
                    is_vel_xcorr=is_vel_xcorr,
@@ -503,135 +290,6 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
                    high_z_corr=high_z_corr)
 
 
-
-
-# # Cross-correlation parameters
-# def sigma_parameters(
-#         template_sigma, lambda_units_template_sigma_nm, lambda_units_template_sigma_a,
-#         lambda_units_template_sigma_mu, resolution_template, resolution_spec,
-#         band_cat, band_halpha, band_nad, band_h, band_k, band_custom,
-#         low_wave_sigma, high_wave_sigma, low_wave_cont, high_wave_cont, sigma_measurement, band_sigma, cont_sigma, lambda_units_template_sigma):
-#
-#     layout, scale_win, fontsize, default_size = misc.get_layout()
-#     sg.theme('LightBlue1')
-#     sigma_layout = [
-#         [sg.Text('Select a template:', font = ('', default_size, 'bold')), sg.InputText(template_sigma, size = (55,1), key = 'sigma_template'), sg.FileBrowse(tooltip='Load a template')],
-#         [sg.Text('Template wavelength is in:'), sg.Radio ('nm', "RADIOSIGMA", default = lambda_units_template_sigma_nm, key = 'sigma_template_wave_nm'), sg.Radio('a', "RADIOSIGMA", default = lambda_units_template_sigma_a, key = 'sigma_template_wave_a'), sg.Radio('mu', "RADIOSIGMA", default = lambda_units_template_sigma_mu, key = 'sigma_template_wave_mu')],
-#         [sg.Text('Resolution (R) of the template (0 if (E)MILES)', tooltip='Set the resolving power (R) of the template in the selected wavelength band'), sg.InputText(resolution_template, size = (5,1), key = 'sigma_res_template'), sg.Push(), sg.Button('View template',button_color=('black','light blue'))],
-#         [sg.HorizontalSeparator()],
-#         [sg.Text('Pre-loaded bands to fit for sigma:', font = ('', default_size, 'bold'), tooltip='You can try some common wavelength bands for sigma measurements. I assume that the spectrum has been de-redshifted!'), sg.Radio('CaT', "RADIOBAND", default = band_cat, key = 'sigma_band_cat'), sg.Radio('Ha', "RADIOBAND", default = band_halpha, key = 'sigma_band_ha'), sg.Radio('Nad', "RADIOBAND", default = band_nad, key = 'sigma_band_nad'), sg.Radio('H band', "RADIOBAND", default = band_h, key = 'sigma_band_h'), sg.Radio('K band', "RADIOBAND", default = band_k, key = 'sigma_band_k')],
-#         [sg.Radio('Fitting a custom band', "RADIOBAND", default = band_custom, key = 'sigma_custom_band', tooltip='Set a wavelength band containing strong absorption features, usually 50-100 nm wide', font = ('', default_size, 'bold')), sg.Text('Wave interval (nm)'), sg.InputText(low_wave_sigma, size = (5,1), key = 'sigma_left_lambda'), sg.Text('-'), sg.InputText(high_wave_sigma, size = (5,1), key = 'sigma_right_lambda'), sg.Text('Cont. interval'), sg.InputText(low_wave_cont, size = (5,1), key = 'sigma_cont_left_lambda'), sg.Text('-'), sg.InputText(high_wave_cont, size = (5,1), key = 'sigma_cont_right_lambda')],
-#         [sg.HorizontalSeparator()],
-#         [sg.Text('Resolution of the spectrum (R)', tooltip='If your spectrum has a variable R, try to estimate a mean value at the center of the considered wavelength band'), sg.InputText(resolution_spec, size=(5,1), key = 'sigma_spec_res')],
-#         [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
-#         ]
-#
-#     print ('*** Sigma parameters window open. The main panel will be inactive until you close the window ***')
-#     sigma_window = sg.Window('Sigma parameters', sigma_layout)
-#
-#     while True:
-#         sigma_event, sigma_values = sigma_window.read()
-#
-#         if sigma_event == sg.WIN_CLOSED:
-#             break
-#
-#         lambda_units_template_sigma_nm = sigma_values['sigma_template_wave_nm']
-#         lambda_units_template_sigma_a = sigma_values['sigma_template_wave_a']
-#         lambda_units_template_sigma_mu = sigma_values['sigma_template_wave_mu']
-#
-#         template_sigma = sigma_values['sigma_template']
-#
-#         #assigning lambda units of the template spectra
-#         if (lambda_units_template_sigma_nm):
-#             lambda_units_template_sigma = 'nm'
-#         if (lambda_units_template_sigma_a):
-#             lambda_units_template_sigma = 'a'
-#         if (lambda_units_template_sigma_mu):
-#             lambda_units_template_sigma = 'mu'
-#
-#         #preloaded bands
-#         band_cat = sigma_values['sigma_band_cat']
-#         band_halpha = sigma_values['sigma_band_ha']
-#         band_nad = sigma_values['sigma_band_nad']
-#         band_h = sigma_values['sigma_band_h']
-#         band_k = sigma_values['sigma_band_k']
-#
-# #************* Define the preloaded bands for the velocity dispersion measurement ********
-#
-#         if band_cat:
-#             band_sigma = np.array([844., 872.])
-#             cont_sigma = np.array([856.,864.])
-#
-#         if band_halpha:
-#             band_sigma = np.array([642.,661])
-#             cont_sigma = np.array([651., 654.])
-#
-#         if band_nad:
-#             band_sigma = np.array([560., 615.])
-#             cont_sigma = np.array([591., 597.])
-#
-#         if band_h:
-#             band_sigma = np.array([1660., 1720.])
-#             cont_sigma = np.array([1693., 1704.])
-#
-#         if band_k:
-#             band_sigma = np.array([2270., 2370.])
-#             cont_sigma = np.array([2270., 2280.])
-#
-#
-#         if sigma_measurement:
-#             try:
-#                 resolution_spec = float(sigma_values['sigma_spec_res'])
-#                 resolution_template = float(sigma_values['sigma_res_template'])
-#                 if resolution_spec <=0 or resolution_template < 0:
-#                     sg.popup('Invalid resolution values for the spectrum or the template')
-#                     continue
-#             except ValueError:
-#                 sg.popup('Resolution values for sigma not valid!')
-#                 continue
-#
-#         band_custom = sigma_values['sigma_custom_band']
-#         if sigma_measurement and band_custom:
-#             try:
-#                 low_wave_sigma = float(sigma_values['sigma_left_lambda'])
-#                 high_wave_sigma = float(sigma_values['sigma_right_lambda'])
-#                 low_wave_cont = float(sigma_values['sigma_cont_left_lambda'])
-#                 high_wave_cont = float(sigma_values['sigma_cont_right_lambda'])
-#
-#                 if band_custom:
-#                     band_sigma = np.array([low_wave_sigma, high_wave_sigma])
-#                     cont_sigma = np.array([low_wave_cont, high_wave_cont])
-#             except ValueError:
-#                 sg.popup('Band values for sigma not valid!')
-#                 continue
-#
-#         if sigma_event == 'View template':
-#
-#             #test if file file exist
-#             cond02 = (os.path.isfile(template_sigma))
-#             if not cond02:
-#                 sg.popup('The template does not exist. I have nothing to show!')
-#                 continue
-#
-#             wave_template2, flux_template2, step_temp2, name_temp2 = stm.read_spec(template_sigma, lambda_units_template_sigma)
-#             plt.title(template_sigma)
-#             plt.plot(wave_template2, flux_template2)
-#             plt.xlim(band_sigma[0],band_sigma[1])
-#             plt.xlabel('Wavelength (nm)')
-#             plt.ylabel('Norm flux')
-#             plt.show()
-#             plt.close()
-#
-#         #CLOSING THE WINDOW ONCE I CLICK "CONFIRM"
-#         if sigma_event == 'Confirm':
-#             print ('Sigma parameters confirmed. This main panel is now active again')
-#             print ('')
-#             break
-#
-#     sigma_window.close()
-#     return (template_sigma, lambda_units_template_sigma_nm, lambda_units_template_sigma_a, lambda_units_template_sigma_mu,
-#                 resolution_template, resolution_spec, band_cat, band_halpha, band_nad, band_h, band_k,
-#                 band_custom, low_wave_sigma, high_wave_sigma, low_wave_cont, high_wave_cont, band_sigma, cont_sigma, lambda_units_template_sigma)
 
 def sigma_parameters(params: SpectraParams) -> SpectraParams:
     """Handles sigma measurement parameter input via GUI."""
@@ -655,7 +313,7 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
     high_wave_cont = params.high_wave_cont
     band_sigma = params.band_sigma
     cont_sigma = params.cont_sigma
-    # sigma_measurement = params.sigma_measurement
+
 
     sg.theme('LightBlue1')
 
@@ -739,7 +397,6 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
                 sg.popup('Band values for sigma not valid!')
                 continue
 
-        # else:
         try:
             resolution_spec = float(sigma_values['sigma_spec_res'])
             resolution_template = float(sigma_values['sigma_res_template'])
@@ -749,8 +406,6 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
         except ValueError:
             sg.popup('Resolution values for sigma not valid!')
             continue
-
-
 
         if sigma_event == 'View template':
             if not os.path.isfile(template_sigma):
@@ -791,33 +446,15 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
                    high_wave_sigma=high_wave_sigma,
                    low_wave_cont=low_wave_cont,
                    high_wave_cont=high_wave_cont)
-                   # band_sigma=band_sigma,
-                   # cont_sigma=cont_sigma)
 
-
-
-
-
-
-
-
-# Line-strength parameters window
-# def line_strength_parameters(
-#     index_file, have_index_file, single_index, idx_left_blue, idx_right_blue,
-#     idx_left_red, idx_right_red, idx_left_line, idx_right_line, index_usr, lick_ew,
-#     lick_constant_fwhm, lick_constant_r, spec_lick_res_fwhm, spec_lick_res_r,
-#     lick_correct_emission, z_guess_lick_emission, correct_ew_sigma,
-#     radio_lick_sigma_auto, radio_lick_sigma_single, sigma_single_lick,
-#     radio_lick_sigma_list, sigma_lick_file, stellar_parameters_lick,
-#     dop_correction_lick, lick_ssp_models, ssp_model, interp_modes, interp_model, sigma_coeff, sigma_corr, stellar_spectra_coeff_file, lambda_units_coeff_nm, lambda_units_coeff_a, lambda_units_coeff_mu, lambda_units_coeff, smooth_stellar_sample, smooth_value_sample, same_idx_ew_task, have_index_file_corr, index_file_corr, single_index_corr, idx_left_blue_sigma, idx_right_blue_sigma, idx_left_red_sigma, idx_right_red_sigma, idx_left_line_sigma, idx_right_line_sigma, sigma_vel_file, ew_list_file, sigma_coeff_file, result_sigma_coeff_dir, spectra_list_name, result_plot_dir, result_ew_data_dir):
 
 
 def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
-
     """
     Opens the line strength measurement parameters GUI and updates the values in params.
     """
+
     # Extract parameters from params
     index_file = params.index_file
     have_index_file = params.have_index_file
@@ -873,7 +510,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
 
 
-
     layout, scale_win, fontsize, default_size = misc.get_layout()
     timestamp = time.strftime("%Y%m%d_%H%M%S")
 
@@ -909,15 +545,13 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         if ew_event == sg.WIN_CLOSED:
             break
 
+        # Retrieving the parameters of the GUI
         index_file = ew_values['idx_file']
-
         have_index_file = ew_values['ew_idx_file']
         single_index = ew_values['ew_single_idx']
-
         lick_ew = ew_values['ew_lick']
         lick_constant_fwhm = ew_values['lick_constant_fwhm']
         lick_constant_r = ew_values['lick_constant_r']
-
         lick_correct_emission = ew_values['lick_correct_emission']
         radio_lick_sigma_single = ew_values['radio_lick_sigma_single']
         radio_lick_sigma_list = ew_values['radio_lick_sigma_list']
@@ -928,10 +562,8 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         dop_correction_lick = ew_values['dop_correction_lick']
         ssp_model = ew_values['ssp_model']
         interp_model = ew_values['interp_model']
-
         sigma_coeff = ew_values['sigma_coeff']
         sigma_corr = ew_values['sigma_corr']
-
 
         try:
             idx_left_blue = float(ew_values['left_wave_blue_cont'])
@@ -979,8 +611,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
             break
 
 
-
-
     #A) SIGMA COEFF DETERMINATION
         if ew_event == 'Sigma coeff parameters':
             sg.theme('LightBlue1')
@@ -993,7 +623,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
             sigmacorr_window = sg.Window('Sigma coeff parameters', sigmacorr_layout)
 
-
             print (single_index_corr)
             while True:
 
@@ -1002,6 +631,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 if sigmacorr_event == sg.WIN_CLOSED:
                     break
 
+                # Retrieving the parameters of the GUI
                 index_file_corr = sigmacorr_values['idx_corr_file']
                 have_index_file_corr = sigmacorr_values['ew_corr_idx_file']
                 single_index_corr = sigmacorr_values['ew_corr_single_idx']
@@ -1014,7 +644,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                     idx_left_line_sigma = float(sigmacorr_values['left_line'])
                     idx_right_line_sigma = float(sigmacorr_values['right_line'])
                     #building the index
-                    index_usr_corr = np.array([idx_left_blue_sigma, idx_right_blue_sigma, idx_left_red_sigma, idx_right_red_sigma, idx_left_line_sigma, idx_right_line_sigma]).T
+                    index_usr_corr = np.array([idx_left_blue_sigma, idx_right_blue_sigma, idx_left_red_sigma, idx_right_red_sigma, idx_left_line_sigma, idx_right_line_sigma]).T #not useful anymore since I have the dataclass now
                 except ValueError:
                     sg.popup('Index values not valid!')
                     continue
@@ -1063,6 +693,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 if correw_event == sg.WIN_CLOSED:
                     break
 
+                # Retrieving the parameters of the GUI
                 sigma_vel_file = correw_values['sigma_file']
                 ew_list_file = correw_values['ew_file_to_correct']
                 sigma_coeff_file = correw_values['coeff_sigma_file']
@@ -1092,6 +723,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                     sg.popup('It seems we have a problem. Did you invert the wavelengths of the indices?')
                     continue
 
+                # Retrieving the parameters of the GUI
                 coeff_file = result_sigma_coeff_dir+'/'+spectra_list_name+'_sigma_coeff_' +timestamp + '.dat'
                 coeff_id = ['sigma_spline', 'err_spline']
                 coeff_number = 4
@@ -1218,7 +850,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                     sg.popup('Stellar spectra file does not exist. Skipping...')
                     continue
 
-
                 #check to add the absolute path in case the spectra list is given in relative path
                 with open(stellar_spectra_coeff_file, 'r') as f:
                     spec_names_sample = []
@@ -1260,7 +891,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                     df_coeff[coeff_id[k]]= ew_coeff_array_new
                     df_coeff[coeff_id[k+num_indices]] = err_coeff_array_new
                     df_coeff.to_csv(coeff_file, index= False, sep=' ')
-
 
                 print ('Indices')
                 print (idx_array)
@@ -1313,7 +943,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
     ew_window.close()
 
-
+    # updating the params in the dataclass
     params = replace(params,
         index_file=index_file,
         have_index_file=have_index_file,
@@ -1324,7 +954,6 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         idx_right_red=idx_right_red,
         idx_left_line=idx_left_line,
         idx_right_line=idx_right_line,
-        # index_usr=index_usr,
         lick_ew=lick_ew,
         lick_constant_fwhm=lick_constant_fwhm,
         lick_constant_r=lick_constant_r,
@@ -1370,71 +999,14 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
     return params
 
-    # return (
-    #         index_file, have_index_file, single_index, idx_left_blue, idx_right_blue,
-    #         idx_left_red, idx_right_red, idx_left_line, idx_right_line, index_usr, lick_ew,
-    #         lick_constant_fwhm, lick_constant_r, spec_lick_res_fwhm, spec_lick_res_r,
-    #         lick_correct_emission, z_guess_lick_emission, correct_ew_sigma,
-    #         radio_lick_sigma_auto, radio_lick_sigma_single, sigma_single_lick,
-    #         radio_lick_sigma_list, sigma_lick_file, stellar_parameters_lick,
-    #         dop_correction_lick, lick_ssp_models, ssp_model, interp_modes, interp_model, sigma_coeff, sigma_corr, stellar_spectra_coeff_file, lambda_units_coeff_nm, lambda_units_coeff_a, lambda_units_coeff_mu, lambda_units_coeff, smooth_stellar_sample, smooth_value_sample, same_idx_ew_task, have_index_file_corr, index_file_corr, single_index_corr, idx_left_blue_sigma, idx_right_blue_sigma, idx_left_red_sigma, idx_right_red_sigma, idx_left_line_sigma, idx_right_line_sigma, sigma_vel_file, ew_list_file, sigma_coeff_file)
-
-
-
-# Line(s) fitting parameters window
-# def line_fitting_parameters(cat_band_fit, usr_fit_line, emission_line,
-#                             low_wave_fit, high_wave_fit, y0, x0, a, sigma, m, c):
-#
-#     sg.theme('LightBlue1')
-#     linefit_layout = [
-#         [sg.Radio('Automatic fit of the CaT lines', "RADIOFILEFIT", key = 'cat_fit', default = cat_band_fit,tooltip='Automatic CaT band fitting with three gaussian functions and a line')],
-#         [sg.Radio('Manual fit of the following line:', "RADIOFILEFIT", default = usr_fit_line, key = 'line_fit_single',tooltip='Fitting of user defined line with the parameters on the right'),sg.Checkbox('Emission', default = emission_line, key = 'emission_line'), sg.Text('Wave:'), sg.InputText(low_wave_fit, size = (4,1), key = 'left_wave_fitting'), sg.Text('-'), sg.InputText(high_wave_fit, size = (4,1), key = 'right_wave_fitting'), sg.Text('Guess:',tooltip='Initial guess only for usr line, fitted with a gaussian and a line'), sg.Text('Y-off'), sg.InputText (y0, key = 'y0', size = (3,1)), sg.Text('Line'), sg.InputText(x0, key = 'x0', size = (4,1)), sg.Text('Height'), sg.InputText(a, key = 'a', size = (3,1)), sg.Text('Sigma'), sg.InputText(sigma, key = 'sigma', size = (3,1)), sg.Text('Slope'), sg.InputText(m, key = 'm', size = (2,1)), sg.Text('Intercept'), sg.InputText(c, key = 'c', size = (2,1))],
-#         [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
-#         ]
-#
-#     print ('*** Line fitting parameters window open. The main panel will be inactive until you close the window ***')
-#     linefit_window = sg.Window('Line(s) fitting parameters', linefit_layout)
-#
-#     while True:
-#         linefit_event, linefit_values = linefit_window.read()
-#
-#         if linefit_event == sg.WIN_CLOSED:
-#             break
-#
-#         cat_band_fit = linefit_values['cat_fit']
-#         usr_fit_line = linefit_values['line_fit_single']
-#         emission_line = linefit_values['emission_line']
-#
-#         try:
-#             low_wave_fit = float(linefit_values['left_wave_fitting'])
-#             high_wave_fit = float(linefit_values['right_wave_fitting'])
-#             y0 = float(linefit_values['y0'])
-#             x0 = float(linefit_values['x0'])
-#             a = float(linefit_values['a'])
-#             sigma = float(linefit_values['sigma'])
-#             m = float(linefit_values['m'])
-#             c = float(linefit_values['c'])
-#             wave_interval_fit = np.array([low_wave_fit,high_wave_fit])
-#             guess_param = [y0,x0,a,sigma,m,c]
-#         except ValueError:
-#             sg.popup ('At least one of the parameters of the Line(s) fitting task is not valid!')
-#             continue
-#
-#         if linefit_event == 'Confirm':
-#             print ('Line fitting parameters confirmed. This main panel is now active again')
-#             print ('')
-#             break
-#
-#     linefit_window.close()
-#
-#     return cat_band_fit, usr_fit_line, emission_line, low_wave_fit, high_wave_fit, y0, x0, a, sigma, m, c
-
 
 
 def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
+
     """
     Opens the line fitting parameters GUI and updates the values in params.
     """
+
     # Extract parameters from params
     cat_band_fit = params.cat_band_fit
     usr_fit_line = params.usr_fit_line
@@ -1526,8 +1098,8 @@ def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
 
 
 
-# Kinematics parameters window
 def kinematics_parameters(params: SpectraParams) -> SpectraParams:
+
     """
     Opens a GUI window to set kinematic fitting parameters
     and updates the params object with the selected values.
@@ -1728,19 +1300,8 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
 
 
 
-# Population parameters window
-# def population_parameters(
-#     wave1_pop, wave2_pop, res_pop, sigma_guess_pop, z_pop,
-#     pop_with_gas, pop_without_gas, fit_components, ppxf_pop_dust_stars, ppxf_pop_dust_gas,
-#     ppxf_pop_tie_balmer, ppxf_pop_noise, regul_err, additive_degree, multiplicative_degree,
-#     ppxf_best_noise_estimate, ppxf_best_param, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_mask,
-#     ppxf_pop_want_to_mask, ppxf_pop_mask_ranges_str, ppxf_pop_lg_age, with_errors,
-#     ppxf_min_age, ppxf_max_age, ppxf_min_met, ppxf_max_met, ppxf_pop_error_nsim,
-#     ppxf_pop_preloaded_lib, markers_ppxf, stellar_library, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_custom_temp_suffix,
-#     ppxf_pop_custom_npz, ppxf_pop_npz_file, stellar_parameters_lick_ppxf, ssp_model_ppxf, interp_model_ppxf, lick_ssp_models_ppxf, interp_modes_ppxf):
-
-
 def population_parameters(params: SpectraParams) -> SpectraParams:
+
     """
     Opens a GUI window to set stellar population fitting parameters
     and updates the params object with the selected values.
@@ -1987,15 +1548,3 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 )
 
     return params
-    # return (wave1_pop, wave2_pop, res_pop, sigma_guess_pop, z_pop, pop_with_gas, pop_without_gas, fit_components, ppxf_pop_dust_stars, ppxf_pop_dust_gas, ppxf_pop_tie_balmer, ppxf_pop_noise, regul_err, additive_degree, multiplicative_degree, ppxf_best_noise_estimate, ppxf_best_param, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_mask, ppxf_pop_want_to_mask, ppxf_pop_mask_ranges_str, ppxf_pop_lg_age, with_errors, ppxf_min_age, ppxf_max_age, ppxf_min_met, ppxf_max_met, age_range_array, met_range_array, ppxf_pop_error_nsim, ppxf_pop_preloaded_lib, stellar_library, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_custom_temp_suffix,
-    # ppxf_pop_custom_npz, ppxf_pop_npz_file, stellar_parameters_lick_ppxf, ssp_model_ppxf, interp_model_ppxf)
-
-
-#     wave1_pop, wave2_pop, res_pop, sigma_guess_pop, z_pop,
-#     pop_with_gas, pop_without_gas, fit_components, ppxf_pop_dust_stars, ppxf_pop_dust_gas,
-#     ppxf_pop_tie_balmer, ppxf_pop_noise, regul_err, additive_degree, multiplicative_degree,
-#     ppxf_best_noise_estimate, ppxf_best_param, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_mask,
-#     ppxf_pop_want_to_mask, ppxf_pop_mask_ranges_str, ppxf_pop_lg_age, with_errors,
-#     ppxf_min_age, ppxf_max_age, ppxf_min_met, ppxf_max_met, ppxf_pop_error_nsim,
-#     ppxf_pop_preloaded_lib, markers_ppxf, stellar_library, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_custom_temp_suffix,
-#     ppxf_pop_custom_npz, ppxf_pop_npz_file, stellar_parameters_lick_ppxf, ssp_model_ppxf, interp_model_ppxf, lick_ssp_models_ppxf, interp_modes_ppxf):

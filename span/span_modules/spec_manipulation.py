@@ -50,18 +50,9 @@ BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
 
-
-
-
-
-
-
-
-
-
 def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
-
+    # assigning all the params to local variables and work with them.
     current_order = params.current_order
     reorder_op = params.reorder_op
     reordered_operations = params.reordered_operations
@@ -821,7 +812,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     #closing the window
     spec_window.close()
 
-    #updating the parameters
+    #updating the parameters with the values of the local variables.
     params = replace(params,
         # Spectra pre-processing
         cropping_spectrum=cropping_spectrum,
@@ -928,9 +919,5 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
         reordered_operations=reordered_operations,
         active_operations=active_operations
     )
-
-
-    # return (cropping_spectrum, cropping_low_wave, cropping_high_wave, sigma_clipping, clip_factor, sigma_clip_resolution, sigma_clip_single_vel, sigma_clip_single_value, sigma_clip_have_file, sigma_clip_sigma_file, wavelet_cleaning, sigma_wavelets, wavelets_layers, filter_denoise, moving_average, box_moving_avg, box_moving_avg_size, gauss_moving_avg, gauss_moving_avg_kernel, low_pass_filter, lowpass_cut_off, lowpass_order, bandpass_filter, bandpass_lower_cut_off, bandpass_upper_cut_off, bandpass_order, dop_cor, dop_cor_single_shot_vel, dop_cor_have_file, dop_cor_file, dop_cor_single_shot, dop_cor_have_vel, dop_cor_have_z, helio_corr, helio_have_file, helio_file, helio_single_shot, helio_single_shot_location, helio_single_shot_date, ra_obj, dec_obj, is_initial_res_r, initial_res_r, res_degrade_to_r, final_res_r, res_degrade_to_fwhm, final_res_r_to_fwhm, is_initial_res_fwhm, initial_res_fwhm, final_res_fwhm, markers_cont_operations, cont_math_operation, cont_model_filtering, cont_model_poly, cont_want_to_mask, cont_mask_ranges_str, cont_mask_ranges, cont_poly_degree, rebinning, rebinning_linear, rebin_step_pix, rebinning_log, rebin_step_sigma, degrade, normalize_wave, norm_wave, sigma_broad, sigma_to_add, add_noise, noise_to_add, continuum_sub, subtract_normalized_avg, subtract_normalized_spec, spectra_to_subtract, add_pedestal, pedestal_to_add, multiply, multiply_factor, derivatives, average_all, norm_and_average, do_nothing, sum_all, normalize_and_sum_all, use_for_spec_an, reorder_op, current_order, reordered_operations, active_operations)
-
 
     return params

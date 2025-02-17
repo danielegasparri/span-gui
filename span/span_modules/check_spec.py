@@ -181,8 +181,12 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
 
 
 
-
 def validate_and_load_spectrum(params, window):
+
+    """
+    Loads and validates the single spectrum, ensuring it exists and is readable
+
+    """
 
     # Check if the file exists
     cond00 = os.path.isfile(params.spectra_list)
@@ -226,44 +230,3 @@ def validate_and_load_spectrum(params, window):
         print("Please, reload a valid spectrum or a list.")
 
     return params  # Return updated params
-
-#     cond00 = (os.path.isfile(params.spectra_list))
-#     params = replace(params, spectra_number = 1)
-#
-#         #test if file file exist
-#     print ('Guessing the type of the spectrum. It is correct?')
-#     if not cond00:
-#         sg.popup('We don''t start well: the spectrum does not exist. Try again...')
-#         # continue
-#     # assigning a value for the selected spectrum
-#     params = replace(params, prev_spec= params.spectra_list)
-#     params = replace(params, prev_spec_nopath = os.path.splitext(os.path.basename(params.prev_spec))[0])
-#
-# #control whether the spectrum is really a spectrum or something else, maybe a list
-#     try:
-#         #Checnking the fits spectra, if they are valid or not
-#         if params.prev_spec.lower().endswith('.fits'):
-#             # Just for fits files
-#             valid, message = stm.is_valid_spectrum(params.prev_spec)
-#             print(f"{params.prev_spec}: {message}")  # Log for debugging
-#             if not valid:
-#                 params = replace(params, spec_not_valid = params.prev_spec)
-#                 sg.popup('Your FITS file does not seem a spectrum. Please, load a valid spectrum')
-#                 params = replace(params, prev_spec= '')
-#                 # continue
-#
-#         #reading the spectrum and showing in the listbox withouth the path
-#         params = replace(params, **dict(zip(
-#         ["wavelength", "flux"],
-#         stm.read_spec(params.prev_spec, params.lambda_units)[:2])))
-#
-#         params = replace(params, prev_spec_nopath = os.path.splitext(os.path.basename(params.prev_spec))[0])
-#         spec_name = [params.prev_spec_nopath, ' ' ] #storing the spec in a temp variable just to looks better in the listbox
-#         listbox2 = spec_name
-#         window['-LIST-'].Update(listbox2) #update the listbox
-#     except Exception:
-#         sg.popup('Ops! Cannot read the spectrum. You sure is a spectrum?')
-#         print ('Please, reload a valid spectrum or a list')
-#         # continue
-#     print ('*** Please, check the correct spectrum wavelength range with plot button before doing anything ***')
-#

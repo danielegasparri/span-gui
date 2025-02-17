@@ -153,8 +153,6 @@ def plot_data_window(BASE_DIR, layout):
             if plot_event == 'Plot!':
                 stm.plot_data(file_path, x_column, y_columns, x_label, y_label, marker_color, marker_size, plot_size, x_label_size, y_label_size, x_tick_size, y_tick_size, legend, add_error_bars_x, add_error_bars_y, x_err, y_err, False, enable_linear_fit, x_log_scale, y_log_scale, x_range_min, x_range_max, y_range_min, y_range_max)
 
-
-
             if plot_event == 'Save img':
                 stm.plot_data(file_path, x_column, y_columns, x_label, y_label, marker_color, marker_size, plot_size, x_label_size, y_label_size, x_tick_size, y_tick_size, legend, add_error_bars_x, add_error_bars_y, x_err, y_err, True, enable_linear_fit, x_log_scale, y_log_scale, x_range_min, x_range_max, y_range_min, y_range_max)
 

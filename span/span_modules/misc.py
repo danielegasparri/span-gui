@@ -236,8 +236,7 @@ def check_and_download_spectral_templates():
             sg.popup(
                 "Without the required files, SPAN functionalities are limited, but you can still perform some tasks.",
                 title="SPAN Warning",
-                keep_on_top=True
-            )
+                keep_on_top=True)
 
 
 # saving the spaxels for the Cube extract panel and manual bin info in a txt file and store in the array.

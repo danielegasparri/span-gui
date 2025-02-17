@@ -102,7 +102,7 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
                 print("Something went wrong, cannot complete the task.")
                 return params
 
-        # # Save plot if required
+        # # Save plot if required # PLOTS  FOR SPECTRAL MANIPULATION PANEL ARE DEACTIVATED BY DEFAULT, BUT IF YOU NEED THEM, JUST UNCOMMENT THESE LINES FOR ALL THE TASKS
         # if event == 'Process all' and save_plot:
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Cropped')
@@ -1214,7 +1214,6 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             plt.legend(fontsize=10)
             plt.show()
             plt.close()
-
 
         # Return updated parameters
         return replace(params, proc_wavelength=proc_wavelength, proc_flux=proc_flux, task_done=task_done, task_spec=task_spec)
