@@ -1,0 +1,585 @@
+SIMPLE  =                    T / Fits standard                                  BITPIX  =                  -32 / Bits per pixel                                 NAXIS   =                    1 / Number of axes                                 NAXIS1  =                24318 / Axis length                                    EXTEND  =                    T / File may contain extensions                    ORIGIN  = 'NOAO-IRAF FITS Image Kernel July 2003' / FITS file originator        IRAF-TLM= '2020-03-01T18:28:24' / Time of last modification                     COMMENT   FITS (Flexible Image Transport System) format is defined in 'AstronomyCOMMENT   and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H DATE    = '2020-03-01T18:28:24' / file creation date (YYYY-MM-DDThh:mm:ss UT)   LAMNLIN =                 3610 / No. of lines used in wavelength solution       LAMRMS  =   0.0024688071691873 / RMS of wavelength solution [CUNIT1]            CRDER1  = 4.10897566230766E-05 / Wavelength uncertainty [CUNIT1]                CSYER1  =                 0.02 / Typical systematic wavelength error [CUNIT1]   CUNIT1  = 'nm      '                                                            CRPIX1  =                   1.                                                  CRVAL1  =     525.426290724257                                                  CDELT1  =   0.0196914249043878                                                  CTYPE1  = 'LINEAR  '                                                            TELESCOP= 'ESO-VLT-U2'         / ESO Telescope Name                             INSTRUME= 'XSHOOTER'           / Instrument used.                               OBJECT  = 'NGC0897 '           / Original target.                               RA      =             35.27619 / 02:21:06.2 RA (J2000) pointing (deg)           DEC     =            -33.72052 / -33:43:13.8 DEC (J2000) pointing (deg)         EQUINOX =                2000. / Standard FK5 (years)                           RADECSYS= 'FK5     '           / Coordinate reference frame                     EXPTIME =                 438. / Total integration time                         MJD-OBS =       55471.14470723 / MJD start (2010-10-02T03:28:22.704)            DATE-OBS= '2010-10-02T03:28:22.704' / Date of observation                       UTC     =               12500. / 03:28:20.000 UTC at start (sec)                LST     =            84583.219 / 23:29:43.219 LST at start (sec)                PI-COI  = 'UNKNOWN '           / PI-COI name.                                   OBSERVER= 'UNKNOWN '           / Name of observer.                              BUNIT   = 'erg/s/cm2/Angstrom'                                                  CD1_1   =   0.0196914249043878                                                  HDUCLASS= 'ESO     '           / hdu classification                             HDUDOC  = 'DICD    '           / hdu reference document                         HDUVERS = 'DICD V6.0'          / hdu reference document version                 HDUCLAS1= 'IMAGE   '           / hdu format classification                      HDUCLAS2= 'DATA    '           / hdu type classification                        ERRDATA = 'ORD16_ERRS'         / name of errs extension                         QUALDATA= 'ORD16_QUAL'         / name of qual extension                         ARCFILE = 'XSHOO.2010-10-02T03:28:22.705.fits' / Archive File Name              DATAMD5 = 'dc728a4b09b9025bf0b8a086e45beb9b' / MD5 checksum                     PIPEFILE= 'SCI_SLIT_FLUX_MERGE1D_VIS.fits' / Filename of data product           HIERARCH ESO OBS DID = 'ESO-VLT-DIC.OBS-1.11' / OBS Dictionary                  HIERARCH ESO OBS EXECTIME = 3037 / Expected execution time                      HIERARCH ESO OBS GRP = '0       ' / linked blocks                               HIERARCH ESO OBS ID =   492825 / Observation block ID                           HIERARCH ESO OBS NAME = 'Cesetti_NGC0897' / OB name                             HIERARCH ESO OBS OBSERVER = 'UNKNOWN ' / Observer Name                          HIERARCH ESO OBS PI-COI ID = 17101 / ESO internal PI-COI ID                     HIERARCH ESO OBS PI-COI NAME = 'UNKNOWN ' / PI-COI name                         HIERARCH ESO OBS PROG ID = '086.B-0900(A)' / ESO program identification         HIERARCH ESO OBS START = '2010-10-02T03:22:46' / OB start time                  HIERARCH ESO OBS TARG NAME = 'NGC0897 ' / OB target name                        HIERARCH ESO OBS TPLNO =     2 / Template number within OB                      HIERARCH ESO TPL DID = 'ESO-VLT-DIC.TPL-1.9' / Data dictionary for TPL          HIERARCH ESO TPL EXPNO =     3 / Exposure number within template                HIERARCH ESO TPL ID = 'XSHOOTER_slt_obs_GenericOffset' / Template signa         HIERARCH ESO TPL NAME = 'XSHOOTER observations with generic offsets' / Te       HIERARCH ESO TPL NEXP =     13 / Number of exposures within templat             HIERARCH ESO TPL PRESEQ = 'XSHOOTER_obs_GenericOffset.seq' / Sequencer scri     HIERARCH ESO TPL START = '2010-10-02T03:27:37' / TPL start time                 HIERARCH ESO TPL VERSION = '$Revision: 1.72 $' / Version of the template        HIERARCH ESO TEL AIRM END = 1.154 / Airmass at end                              HIERARCH ESO TEL AIRM START = 1.274 / Airmass at start                          HIERARCH ESO TEL ALT =  51.692 / Alt angle at start (deg)                       HIERARCH ESO TEL AMBI FWHM END = 2.58 / Observatory Seeing queried from AS      HIERARCH ESO TEL AMBI FWHM START = 1.74 / Observatory Seeing queried from AS    HIERARCH ESO TEL AMBI PRES END = 741.72 / Observatory ambient air pressure q    HIERARCH ESO TEL AMBI PRES START = 742.1 / Observatory ambient air pressure q   HIERARCH ESO TEL AMBI RHUM = 12. / Observatory ambient relative humi            HIERARCH ESO TEL AMBI TAU0 = 0.00064 / Average coherence time                   HIERARCH ESO TEL AMBI TEMP = 6.1 / Observatory ambient temperature qu           HIERARCH ESO TEL AMBI WINDDIR = 21. / Observatory ambient wind directio         HIERARCH ESO TEL AMBI WINDSP = 15.8 / Observatory ambient wind speed que        HIERARCH ESO TEL AZ =    293.8 / Az angle at start (deg) S=0,W=90               HIERARCH ESO TEL CHOP ST =   F / True when chopping is active                   HIERARCH ESO TEL DATE = '2000-01-01T00:00:00' / TCS installation date           HIERARCH ESO TEL DID = 'ESO-VLT-DIC.TCS' / Data dictionary for TEL              HIERARCH ESO TEL DOME STATUS = 'FULLY-OPEN' / Dome status                       HIERARCH ESO TEL FOCU ID = 'CA      ' / Telescope focus station ID              HIERARCH ESO TEL FOCU LEN = 108.557 / Focal length (m)                          HIERARCH ESO TEL FOCU SCALE = 1.894 / Focal scale (arcsec/mm)                   HIERARCH ESO TEL FOCU VALUE = 1.748 / M2 setting (mm)                           HIERARCH ESO TEL GEOELEV = 2648. / Elevation above sea level (m)                HIERARCH ESO TEL GEOLAT = -24.6272 / Tel geo latitute (+=North) (deg)           HIERARCH ESO TEL GEOLON = -70.4048 / Tel geo longitude (+=East) (deg)           HIERARCH ESO TEL IA FWHM = 1.04 / Delivered seeing corrected by airm            HIERARCH ESO TEL ID = 'v 3.41  ' / TCS version number                           HIERARCH ESO TEL MOON DEC = 20.75478 / 20:45:17.2 DEC (J2000) (deg)             HIERARCH ESO TEL MOON RA = 113.645509 / 07:34:34.9 RA (J2000) (deg)             HIERARCH ESO TEL OPER = 'I, Condor' / Telescope Operator                        HIERARCH ESO TEL PARANG END = -81.224 / Parallactic angle at end (deg)          HIERARCH ESO TEL PARANG START = -87.967 / Parallactic angle at start (deg)      HIERARCH ESO TEL TARG ALPHA = 22106.37 / Alpha coordinate for the target        HIERARCH ESO TEL TARG COORDTYPE = 'M       ' / Coordinate type (M=mean A=apparenHIERARCH ESO TEL TARG DELTA = -334314.5 / Delta coordinate for the target       HIERARCH ESO TEL TARG EPOCH = 2000. / Epoch                                     HIERARCH ESO TEL TARG EPOCHSYSTEM = 'J       ' / Epoch system (default J=Julian)HIERARCH ESO TEL TARG EQUINOX = 2000. / Equinox                                 HIERARCH ESO TEL TARG PARALLAX = 0. / Parallax                                  HIERARCH ESO TEL TARG PMA = 0. / Proper Motion Alpha                            HIERARCH ESO TEL TARG PMD = 0. / Proper motion Delta                            HIERARCH ESO TEL TARG RADVEL = 0. / Radial velocity                             HIERARCH ESO TEL TH M1 TEMP = 6.31 / M1 superficial temperature                 HIERARCH ESO TEL TRAK STATUS = 'NORMAL  ' / Tracking status                     HIERARCH ESO INS ADC1 DEC = -334000.66096 / Telescope desclination [deg].       HIERARCH ESO INS ADC1 END = 266.802 / Position angle at end [deg].              HIERARCH ESO INS ADC1 MODE = 'AUTO    ' / ADC mode.                             HIERARCH ESO INS ADC1 RA = 22136.059752 / Telescope right ascension [deg].      HIERARCH ESO INS ADC2 DEC = -334000.66096 / Telescope desclination [deg].       HIERARCH ESO INS ADC2 END = 308.925 / Position angle at end [deg].              HIERARCH ESO INS ADC2 MODE = 'AUTO    ' / ADC mode.                             HIERARCH ESO INS ADC2 RA = 22136.059752 / Telescope right ascension [deg].      HIERARCH ESO INS ADC3 DEC = -334000.66096 / Telescope desclination [deg].       HIERARCH ESO INS ADC3 ENCSTART = 53032 / ADC encoder value at exposure star     HIERARCH ESO INS ADC3 END = 265.366 / Position angle at end [deg].              HIERARCH ESO INS ADC3 MODE = 'AUTO    ' / ADC mode.                             HIERARCH ESO INS ADC3 RA = 22136.059752 / Telescope right ascension [deg].      HIERARCH ESO INS ADC4 DEC = -334000.66096 / Telescope desclination [deg].       HIERARCH ESO INS ADC4 ENCSTART = 62731 / ADC encoder value at exposure star     HIERARCH ESO INS ADC4 END = 298.963 / Position angle at end [deg].              HIERARCH ESO INS ADC4 MODE = 'AUTO    ' / ADC mode.                             HIERARCH ESO INS ADC4 RA = 22136.059752 / Telescope right ascension [deg].      HIERARCH ESO INS DATE = '2005-04-01' / Instrument release date (yyyy-mm-d       HIERARCH ESO INS DID = 'ESO-VLT-DIC.XSHOOTER_ICS-0.78' / Data dictionary        HIERARCH ESO INS FILT1 ID = 'PS8     ' / Filter unique id.                      HIERARCH ESO INS FILT1 NAME = 'B       ' / Filter name.                         HIERARCH ESO INS FILT1 NO =  8 / Filter wheel position index.                   HIERARCH ESO INS FOCU1 ENC = 26310 / Absolute position [Enc].                   HIERARCH ESO INS FOCU1 POS = 8.2 / Position [C].                                HIERARCH ESO INS FOCU2 ENC = 11750 / Absolute position [Enc].                   HIERARCH ESO INS FOCU2 POS = 0. / Position [C].                                 HIERARCH ESO INS ID = 'XSHOOTER/1.57' / Instrument ID.                          HIERARCH ESO INS MIRR1 ID = 'Tel     ' / Mirror unique ID.                      HIERARCH ESO INS MIRR1 NAME = 'Tel     ' / Mirror name.                         HIERARCH ESO INS MIRR1 NO =  1 / Mirror slide position.                         HIERARCH ESO INS MODE = 'SLITSPEC' / Instrument mode used.                      HIERARCH ESO INS OPTI2 ID = 'SLOT    ' / OPTIi unique ID.                       HIERARCH ESO INS OPTI2 NAME = 'SLOT    ' / OPTIi name.                          HIERARCH ESO INS OPTI2 NO =  3 / OPTIi slot number.                             HIERARCH ESO INS OPTI2 TYPE = 'MIRROR  ' / OPTIi element.                       HIERARCH ESO INS OPTI3 ID = 'PS2     ' / OPTIi unique ID.                       HIERARCH ESO INS OPTI3 NAME = '1.3x11  ' / OPTIi name.                          HIERARCH ESO INS OPTI3 NO =  2 / OPTIi slot number.                             HIERARCH ESO INS OPTI3 TYPE = 'SLIT    ' / OPTIi element.                       HIERARCH ESO INS OPTI4 ID = 'PS8     ' / OPTIi unique ID.                       HIERARCH ESO INS OPTI4 NAME = '1.5x11  ' / OPTIi name.                          HIERARCH ESO INS OPTI4 NO =  8 / OPTIi slot number.                             HIERARCH ESO INS OPTI4 TYPE = 'SLIT    ' / OPTIi element.                       HIERARCH ESO INS OPTI5 ID = 'PS5     ' / OPTIi unique ID.                       HIERARCH ESO INS OPTI5 NAME = '1.2x11  ' / OPTIi name.                          HIERARCH ESO INS OPTI5 NO =  5 / OPTIi slot number.                             HIERARCH ESO INS OPTI5 TYPE = 'SLIT    ' / OPTIi element.                       HIERARCH ESO INS PATH = 'SLITSPEC' / Optical path used.                         HIERARCH ESO INS SENS21 ID = 'CA1F1   ' / sensor ID.                            HIERARCH ESO INS SENS21 NAME = 'Cab.1 Flow rate' / sensor common name.          HIERARCH ESO INS SENS21 VAL = 38. / Cab. 1 Flow rate [l/h]                      HIERARCH ESO INS SENS60 ID = 'NPM     ' / sensor ID.                            HIERARCH ESO INS SENS60 NAME = 'NIR cryo. P' / sensor common name.              HIERARCH ESO INS SENS60 VAL = 3.96E-06 / NIR Pressure [mbar]                    HIERARCH ESO INS SENS81 ID = 'RANGE   ' / sensor ID.                            HIERARCH ESO INS SENS81 NAME = 'Heater Range' / sensor common name.             HIERARCH ESO INS SENS81 VAL = 4. / Lake 340 Heater Range                        HIERARCH ESO INS SENS82 ID = 'HEATR   ' / sensor ID.                            HIERARCH ESO INS SENS82 NAME = 'Heater output' / sensor common name.            HIERARCH ESO INS SENS82 VAL = 53.4 / Lake 340 Heater output                     HIERARCH ESO INS SHUT1 ID = 'INSH    ' / Shutter ID.                            HIERARCH ESO INS SHUT1 NAME = 'Instrument shutter' / Shutter name.              HIERARCH ESO INS SHUT1 ST =  T / Shutter open.                                  HIERARCH ESO INS SWSIM = 'NORMAL  ' / Software simulation.                      HIERARCH ESO INS TEMP1 ID = 'TMUC    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP1 NAME = 'UVB Camera temp.' / Temperature sensor name.     HIERARCH ESO INS TEMP1 VAL = 7.71 / UVB Camera temp. [C]                        HIERARCH ESO INS TEMP10 ID = 'TMA     ' / Temperature sensor ID.                HIERARCH ESO INS TEMP10 NAME = 'Ambient temp.' / Temperature sensor name.       HIERARCH ESO INS TEMP10 VAL = 7.63 / Ambient temp. [C]                          HIERARCH ESO INS TEMP11 ID = 'TMADC   ' / Temperature sensor ID.                HIERARCH ESO INS TEMP11 NAME = 'BB UVB ADC temp.' / Temperature sensor name.    HIERARCH ESO INS TEMP11 VAL = 10.49 / BB UVB ADC temp. [C]                      HIERARCH ESO INS TEMP2 ID = 'TMUP    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP2 NAME = 'UVB Prism temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP2 VAL = 7.63 / UVB Prism temp. [C]                         HIERARCH ESO INS TEMP21 ID = 'CA1OT   ' / Temperature sensor ID.                HIERARCH ESO INS TEMP21 NAME = 'Cab.1 outlet temp.' / Temperature sensor name.  HIERARCH ESO INS TEMP21 VAL = 9.47 / Cab. 1 outlet temp. [C]                    HIERARCH ESO INS TEMP22 ID = 'CA1IT   ' / Temperature sensor ID.                HIERARCH ESO INS TEMP22 NAME = 'Cab.1 inlet temp.' / Temperature sensor name.   HIERARCH ESO INS TEMP22 VAL = 5.66 / Cab. 1 inlet temp. [C]                     HIERARCH ESO INS TEMP23 ID = 'CA1CT   ' / Temperature sensor ID.                HIERARCH ESO INS TEMP23 NAME = 'Cab.1 temp.' / Temperature sensor name.         HIERARCH ESO INS TEMP23 VAL = 12.46 / Cab. 1 temp. [C]                          HIERARCH ESO INS TEMP24 ID = 'CA1AT   ' / Temperature sensor ID.                HIERARCH ESO INS TEMP24 NAME = 'Cab.1 Amb. temp.' / Temperature sensor name.    HIERARCH ESO INS TEMP24 VAL = 7.92 / Cab. 1 Amb. temp.  [C]                     HIERARCH ESO INS TEMP3 ID = 'TMUB    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP3 NAME = 'UVB bench temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP3 VAL = 7.88 / UVB bench temp. [C]                         HIERARCH ESO INS TEMP4 ID = 'TMVC    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP4 NAME = 'VIS Camera temp.' / Temperature sensor name.     HIERARCH ESO INS TEMP4 VAL = 6.64 / VIS Camera temp. [C]                        HIERARCH ESO INS TEMP5 ID = 'TMVP    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP5 NAME = 'VIS Prism temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP5 VAL = 7.33 / VIS Prism temp. [C]                         HIERARCH ESO INS TEMP6 ID = 'TMVB    ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP6 NAME = 'VIS bench temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP6 VAL = 7.28 / VIS bench temp. [C]                         HIERARCH ESO INS TEMP7 ID = 'TMUCR   ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP7 NAME = 'UVB cryo. temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP7 VAL = 4.07 / UVB cryo. temp. [C]                         HIERARCH ESO INS TEMP8 ID = 'TMVCR   ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP8 NAME = 'VIS cryo. temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP8 VAL = 5.36 / VIS cryo. temp. [C]                         HIERARCH ESO INS TEMP80 ID = 'OBCT    ' / Temperature sensor ID.                HIERARCH ESO INS TEMP80 NAME = 'OB Cover Tel.' / Temperature sensor name.       HIERARCH ESO INS TEMP80 VAL = 104.15 / OB Cover Telescope [K]                   HIERARCH ESO INS TEMP81 ID = 'OBCB    ' / Temperature sensor ID.                HIERARCH ESO INS TEMP81 NAME = 'OB Cover Tank' / Temperature sensor name.       HIERARCH ESO INS TEMP81 VAL = 104.33 / OB Cover Tank [K]                        HIERARCH ESO INS TEMP82 ID = 'OBPR    ' / Temperature sensor ID.                HIERARCH ESO INS TEMP82 NAME = 'OB Prism1' / Temperature sensor name.           HIERARCH ESO INS TEMP82 VAL = 103.41 / OB Prism1 [K]                            HIERARCH ESO INS TEMP83 ID = 'OBCL    ' / Temperature sensor ID.                HIERARCH ESO INS TEMP83 NAME = 'OB Corrector Lens' / Temperature sensor name.   HIERARCH ESO INS TEMP83 VAL = 104.37 / OB Corrector Lens [K]                    HIERARCH ESO INS TEMP84 ID = 'CP      ' / Temperature sensor ID.                HIERARCH ESO INS TEMP84 NAME = 'Cryo. Cold Plate' / Temperature sensor name.    HIERARCH ESO INS TEMP84 VAL = 83.213 / Cryostat Cold Plate [K]                  HIERARCH ESO INS TEMP85 ID = 'RS      ' / Temperature sensor ID.                HIERARCH ESO INS TEMP85 NAME = 'Cryo. rad. shield' / Temperature sensor name.   HIERARCH ESO INS TEMP85 VAL = 94.841 / Cryostat rad. shield [K]                 HIERARCH ESO INS TEMP86 ID = 'DCB     ' / Temperature sensor ID.                HIERARCH ESO INS TEMP86 NAME = 'CCD Copper bar' / Temperature sensor name.      HIERARCH ESO INS TEMP86 VAL = 76.636 / CCD Copper bar [K]                       HIERARCH ESO INS TEMP9 ID = 'TMNCR   ' / Temperature sensor ID.                 HIERARCH ESO INS TEMP9 NAME = 'NIR cryo. temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP9 VAL = 7.75 / NIR cryo. temp. [C]                         HIERARCH ESO INS TEMP90 ID = 'NHT     ' / Temperature sensor ID.                HIERARCH ESO INS TEMP90 NAME = 'NIR Head temp.' / Temperature sensor name.      HIERARCH ESO INS TEMP90 VAL = 78.999 / NIR Head temp. [K]                       HIERARCH ESO INS TILT1 AFCX = 0.885 / Flexure corr. in X [volt].                HIERARCH ESO INS TILT1 AFCY = -0.681 / Flexure corr. in Y [volt].               HIERARCH ESO INS TILT1 CONVX = 0.208 / VoltToMarcsec conversion in X.           HIERARCH ESO INS TILT1 CONVY = 0.269 / VoltToMarcsec conversion in Y.           HIERARCH ESO INS TILT1 ENGX = 4.506 / Piezo voltage at end in X [volt].         HIERARCH ESO INS TILT1 ENGY = 4.716 / Piezo voltage at end in Y [volt].         HIERARCH ESO INS TILT1 ID = 'afcs1   ' / AFCS ID.                               HIERARCH ESO INS TILT1 MODE = 'AUTO    ' / AFCS mode.                           HIERARCH ESO INS TILT1 NAME = 'Flexure comp. UVB' / AFCS description.           HIERARCH ESO INS TILT1 OFFSETX = 5. / Offset voltage in X [volt].               HIERARCH ESO INS TILT1 OFFSETY = 5. / Offset voltage in Y [volt].               HIERARCH ESO INS TILT1 POSXEND = -0.233 / Piezo position at end [volt].         HIERARCH ESO INS TILT1 POSXSTART = -0.588 / Piezo position at start in X [volt  HIERARCH ESO INS TILT1 POSYEND = -0.46 / Piezo position at end [volt].          HIERARCH ESO INS TILT1 POSYSTART = -0.243 / Piezo position at start in Y [volt  HIERARCH ESO INS TILT1 REFRACXEND = -1.607 / Atm. refr. corr. end in X [volt].  HIERARCH ESO INS TILT1 REFRACXST = -1.653 / Atm. refr. corr. start in X [volt]  HIERARCH ESO INS TILT1 REFRACYEND = 1.363 / Atm. refr. corr. end in Y [volt].   HIERARCH ESO INS TILT1 REFRACYST = 1.486 / Atm. refr. corr. start in Y [volt]   HIERARCH ESO INS TILT2 AFCX = -0.28 / Flexure corr. in X [volt].                HIERARCH ESO INS TILT2 AFCY = 0.293 / Flexure corr. in Y [volt].                HIERARCH ESO INS TILT2 CONVX = 0.291 / VoltToMarcsec conversion in X.           HIERARCH ESO INS TILT2 CONVY = 0.384 / VoltToMarcsec conversion in Y.           HIERARCH ESO INS TILT2 ENGX = 5.868 / Piezo voltage at end in X [volt].         HIERARCH ESO INS TILT2 ENGY = 4.965 / Piezo voltage at end in Y [volt].         HIERARCH ESO INS TILT2 ID = 'afcs2   ' / AFCS ID.                               HIERARCH ESO INS TILT2 MODE = 'AUTO    ' / AFCS mode.                           HIERARCH ESO INS TILT2 NAME = 'Flexure comp. VIS' / AFCS description.           HIERARCH ESO INS TILT2 OFFSETX = 5. / Offset voltage in X [volt].               HIERARCH ESO INS TILT2 OFFSETY = 5. / Offset voltage in Y [volt].               HIERARCH ESO INS TILT2 POSXEND = 0.633 / Piezo position at end [volt].          HIERARCH ESO INS TILT2 POSXSTART = 0.922 / Piezo position at start in X [volt   HIERARCH ESO INS TILT2 POSYEND = 0.099 / Piezo position at end [volt].          HIERARCH ESO INS TILT2 POSYSTART = -0.091 / Piezo position at start in Y [volt  HIERARCH ESO INS TILT2 REFRACXEND = 1.645 / Atm. refr. corr. end in X [volt].   HIERARCH ESO INS TILT2 REFRACXST = 1.692 / Atm. refr. corr. start in X [volt]   HIERARCH ESO INS TILT2 REFRACYEND = -1.399 / Atm. refr. corr. end in Y [volt].  HIERARCH ESO INS TILT2 REFRACYST = -1.522 / Atm. refr. corr. start in Y [volt]  HIERARCH ESO INS TILT3 AFCX = -0.023 / Flexure corr. in X [volt].               HIERARCH ESO INS TILT3 AFCY = 0.091 / Flexure corr. in Y [volt].                HIERARCH ESO INS TILT3 CONVX = 0.58 / VoltToMarcsec conversion in X.            HIERARCH ESO INS TILT3 CONVY = 0.56 / VoltToMarcsec conversion in Y.            HIERARCH ESO INS TILT3 ENGX = 4.564 / Piezo voltage at end in X [volt].         HIERARCH ESO INS TILT3 ENGY = 3.881 / Piezo voltage at end in Y [volt].         HIERARCH ESO INS TILT3 ID = 'afcs3   ' / AFCS ID.                               HIERARCH ESO INS TILT3 MODE = 'AUTO    ' / AFCS mode.                           HIERARCH ESO INS TILT3 NAME = 'Flexure comp. NIR' / AFCS description.           HIERARCH ESO INS TILT3 OFFSETX = 5. / Offset voltage in X [volt].               HIERARCH ESO INS TILT3 OFFSETY = 5. / Offset voltage in Y [volt].               HIERARCH ESO INS TILT3 POSXEND = -0.266 / Piezo position at end [volt].         HIERARCH ESO INS TILT3 POSXSTART = -0.504 / Piezo position at start in X [volt  HIERARCH ESO INS TILT3 POSYEND = -0.897 / Piezo position at end [volt].         HIERARCH ESO INS TILT3 POSYSTART = -1.211 / Piezo position at start in Y [volt  HIERARCH ESO INS TILT3 REFRACXEND = 1.764 / Atm. refr. corr. end in X [volt].   HIERARCH ESO INS TILT3 REFRACXST = 1.808 / Atm. refr. corr. start in X [volt]   HIERARCH ESO INS TILT3 REFRACYEND = -1.517 / Atm. refr. corr. end in Y [volt].  HIERARCH ESO INS TILT3 REFRACYST = -1.641 / Atm. refr. corr. start in Y [volt]  HIERARCH ESO DET BITS =     16 / Bits per pixel readout                         HIERARCH ESO DET CHIP1 DATE = '2005-04-22' / Date of installation [YYYY-MM-DD]  HIERARCH ESO DET CHIP1 ID = 'Catherine' / Detector chip identification          HIERARCH ESO DET CHIP1 INDEX = 1 / Chip index                                   HIERARCH ESO DET CHIP1 NAME = 'MIT/LL CCID-20' / Detector chip name             HIERARCH ESO DET CHIP1 NX = 2048 / # of pixels along X                          HIERARCH ESO DET CHIP1 NY = 4102 / # of pixels along Y                          HIERARCH ESO DET CHIP1 PSZX = 15. / Size of pixel in X                          HIERARCH ESO DET CHIP1 PSZY = 15. / Size of pixel in Y                          HIERARCH ESO DET CHIP1 X =   1 / X location in array                            HIERARCH ESO DET CHIP1 XGAP = 0. / Gap between chips along x                    HIERARCH ESO DET CHIP1 Y =   1 / Y location in array                            HIERARCH ESO DET CHIP1 YGAP = 0. / Gap between chips along y                    HIERARCH ESO DET CHIPS =     1 / # of chips in detector array                   HIERARCH ESO DET DATE = '2005-22-04' / Installation date                        HIERARCH ESO DET DEC =      0. / Apparent 00:00:00.0 DEC at start               HIERARCH ESO DET DID = 'ESO-VLT-DIC.CCDDCS,ESO-VLT-DIC.FCDDCS' / Diction        HIERARCH ESO DET EXP NO = 9261 / Unique exposure ID number                      HIERARCH ESO DET EXP RDTTIME = 89.062 / image readout time                      HIERARCH ESO DET EXP TYPE = 'Normal  ' / Exposure type                          HIERARCH ESO DET EXP XFERTIM = 89.165 / image transfer time                     HIERARCH ESO DET FRAM ID =   1 / Image sequencial number                        HIERARCH ESO DET FRAM TYPE = 'Normal  ' / Type of frame                         HIERARCH ESO DET ID = 'CCD FIERA - Rev: 3.96' / Detector system Id              HIERARCH ESO DET NAME = 'shdetv - shdetv' / Name of detector system             HIERARCH ESO DET OUT1 CHIP = 1 / Chip to which the output belongs               HIERARCH ESO DET OUT1 CONAD = 0.6 / Conversion from ADUs to electrons           HIERARCH ESO DET OUT1 GAIN = 1.67 / Conversion from electrons to ADU            HIERARCH ESO DET OUT1 ID = 'A       ' / Output ID as from manufacturer          HIERARCH ESO DET OUT1 INDEX = 1 / Output index                                  HIERARCH ESO DET OUT1 NAME = 'A       ' / Description of output                 HIERARCH ESO DET OUT1 NX = 2048 / valid pixels along X                          HIERARCH ESO DET OUT1 NY = 4000 / valid pixels along Y                          HIERARCH ESO DET OUT1 OVSCX = 48 / Overscan region in X                         HIERARCH ESO DET OUT1 OVSCY = 0 / Overscan region in Y                          HIERARCH ESO DET OUT1 PRSCX = 10 / Prescan region in X                          HIERARCH ESO DET OUT1 PRSCY = 0 / Prescan region in Y                           HIERARCH ESO DET OUT1 RON = 3.2 / Readout noise per output (e-)                 HIERARCH ESO DET OUT1 X =    1 / X location of output                           HIERARCH ESO DET OUT1 Y =    1 / Y location of output                           HIERARCH ESO DET OUTPUTS =   1 / # of outputs                                   HIERARCH ESO DET OUTREF =    0 / reference output                               HIERARCH ESO DET RA =       0. / Apparent 00:00:00.0 RA at start                HIERARCH ESO DET READ CLOCK = '100k/1pt/hg' / Readout clock pattern used        HIERARCH ESO DET READ MODE = 'normal  ' / Readout method                        HIERARCH ESO DET READ NFRAM = 1 / Number of readouts buffered in sin            HIERARCH ESO DET READ SPEED = '1pt/100k/hg' / Readout speed                     HIERARCH ESO DET SHUT ID = 'VA 25mm BistableCCD Sensor1' / Shutter unique id    HIERARCH ESO DET SHUT TMCLOS = 0. / Time taken to close shutter                 HIERARCH ESO DET SHUT TMOPEN = 0. / Time taken to open shutter                  HIERARCH ESO DET SHUT TYPE = 'Iris on Slit' / type of shutter                   HIERARCH ESO DET SOFW MODE = 'Normal  ' / CCD sw operational mode               HIERARCH ESO DET TELE INT = 600. / Interval between two successive te           HIERARCH ESO DET TELE NO =   4 / # of sources active                            HIERARCH ESO DET TLM1 END = 135. / Telemetry value at read completion           HIERARCH ESO DET TLM1 ID = 'CCD Sensor1' / ID of telemetry sensor               HIERARCH ESO DET TLM1 NAME = 'CCD T1  ' / Description of telemetry param.       HIERARCH ESO DET TLM1 START = 135. / Telemetry value at read start              HIERARCH ESO DET TLM2 END = 142.7 / Telemetry value at read completion          HIERARCH ESO DET TLM2 ID = 'CCD Sensor2' / ID of telemetry sensor               HIERARCH ESO DET TLM2 NAME = 'CCD T2  ' / Description of telemetry param.       HIERARCH ESO DET TLM2 START = 142.7 / Telemetry value at read start             HIERARCH ESO DET TLM3 END = 0. / Telemetry value at read completion             HIERARCH ESO DET TLM3 ID = 'Box Temp' / ID of telemetry sensor                  HIERARCH ESO DET TLM3 NAME = 'EBOX T  ' / Description of telemetry param.       HIERARCH ESO DET TLM3 START = 0. / Telemetry value at read start                HIERARCH ESO DET TLM4 END = 0. / Telemetry value at read completion             HIERARCH ESO DET TLM4 ID = 'Vacuum  ' / ID of telemetry sensor                  HIERARCH ESO DET TLM4 NAME = 'Vacuum  ' / Description of telemetry param.       HIERARCH ESO DET TLM4 START = 0. / Telemetry value at read start                HIERARCH ESO DET WIN1 BINX = 1 / Binning factor along X                         HIERARCH ESO DET WIN1 BINY = 1 / Binning factor along Y                         HIERARCH ESO DET WIN1 DIT1 = 438. / actual subintegration time                  HIERARCH ESO DET WIN1 DKTM = 438.364 / Dark current time                        HIERARCH ESO DET WIN1 NDIT = 1 / # of subintegrations                           HIERARCH ESO DET WIN1 NX = 2106 / # of pixels along X                           HIERARCH ESO DET WIN1 NY = 4000 / # of pixels along Y                           HIERARCH ESO DET WIN1 ST =   T / If T, window enabled                           HIERARCH ESO DET WIN1 STRX = 1 / Lower left pixel in X                          HIERARCH ESO DET WIN1 STRY = 1 / Lower left pixel in Y                          HIERARCH ESO DET WIN1 UIT1 = 438. / user defined subintegration time            HIERARCH ESO DET WINDOWS =   1 / # of windows readout                           HIERARCH ESO PRO CATG = 'SCI_SLIT_FLUX_MERGE1D_VIS' / Category of pipeline produHIERARCH ESO PRO RECT BIN LAMBDA = 0.02                                         HIERARCH ESO PRO RECT BIN SPACE = 0.16                                          HIERARCH ESO PRO RECT LAMBDA MIN = 533.66                                       HIERARCH ESO PRO RECT LAMBDA MAX = 1020.                                        HIERARCH ESO PRO RECT SPACE MIN = -5.30000019073486                             HIERARCH ESO PRO RECT SPACE MAX = 5.41999959945679                              HIERARCH ESO PRO EXTRACT SLIT MIN = 0.                                          HIERARCH ESO PRO EXTRACT SLIT MAX = 0.                                          HIERARCH ESO PRO ANCESTOR = 'XSHOO.2010-10-02T03:28:22.705.fits'                HIERARCH ESO PRO DID = 'PRO-1.15' / Data dictionary for PRO                     HIERARCH ESO PRO TYPE = 'REDUCED ' / Product type                               HIERARCH ESO PRO TECH = 'ECHELLE,SLIT,OFFSET' / Observation technique           HIERARCH ESO PRO SCIENCE =   T / Scientific product if T                        HIERARCH ESO PRO REC1 ID = 'xsh_scired_slit_offset' / Pipeline recipe (unique) iHIERARCH ESO PRO REC1 DRS ID = 'cpl-6.6 ' / Data Reduction System identifier    HIERARCH ESO PRO REC1 PIPE ID = 'xshoo/2.6.8' / Pipeline (unique) identifier    HIERARCH ESO PRO REC1 RAW1 NAME = 'XSHOOTER_SLT_OBJ_VIS_275_0010.fits' / File naHIERARCH ESO PRO REC1 RAW1 CATG = 'OBJECT_SLIT_OFFSET_VIS' / Category of raw fraHIERARCH ESO PRO REC1 RAW2 NAME = 'XSHOOTER_SLT_OBJ_VIS_275_0013.fits' / File naHIERARCH ESO PRO REC1 RAW2 CATG = 'OBJECT_SLIT_OFFSET_VIS' / Category of raw fraHIERARCH ESO PRO REC1 RAW3 NAME = 'XSHOOTER_SLT_OBJ_VIS_275_0011.fits' / File naHIERARCH ESO PRO REC1 RAW3 CATG = 'SKY_SLIT_VIS' / Category of raw frame        HIERARCH ESO PRO REC1 RAW4 NAME = 'XSHOOTER_SLT_OBJ_VIS_275_0012.fits' / File naHIERARCH ESO PRO REC1 RAW4 CATG = 'SKY_SLIT_VIS' / Category of raw frame        HIERARCH ESO PRO DATANCOM =  4 / Number of combined frames                      HIERARCH ESO PRO REC1 CAL1 NAME = 'xsh_paranal_extinct_model_vis.fits' / File naHIERARCH ESO PRO REC1 CAL1 CATG = 'ATMOS_EXT_VIS' / Category of calibration framHIERARCH ESO PRO REC1 CAL1 DATAMD5 = '127f77fd815204958285517e8b21a214' / MD5 siHIERARCH ESO PRO REC1 CAL2 NAME = 'BP_MAP_RP_VIS_1x1.fits' / File name of calibrHIERARCH ESO PRO REC1 CAL2 CATG = 'BP_MAP_RP_VIS' / Category of calibration framHIERARCH ESO PRO REC1 CAL2 DATAMD5 = '45b68d9dd3bfb2211887f5112de96d92' / MD5 siHIERARCH ESO PRO REC1 CAL3 NAME = 'DISP_TAB_AFC_VIS.fits' / File name of calibraHIERARCH ESO PRO REC1 CAL3 CATG = 'DISP_TAB_AFC_VIS' / Category of calibration fHIERARCH ESO PRO REC1 CAL3 DATAMD5 = 'bb9cef19bb6f02d69b05dc244fac1b65' / MD5 siHIERARCH ESO PRO REC1 CAL4 NAME = 'MASTER_FLAT_SLIT_VIS.fits' / File name of calHIERARCH ESO PRO REC1 CAL4 CATG = 'MASTER_FLAT_SLIT_VIS' / Category of calibratiHIERARCH ESO PRO REC1 CAL4 DATAMD5 = '8f1dd1546f47bb009140ea7899746292' / MD5 siHIERARCH ESO PRO REC1 CAL5 NAME = 'M.SHOOT.2014-04-09T14_35_31.872.fits' / File HIERARCH ESO PRO REC1 CAL5 CATG = 'MRESPONSE_MERGE1D_SLIT_VIS' / Category of calHIERARCH ESO PRO REC1 CAL6 NAME = 'ORDER_TAB_AFC_SLIT_VIS.fits' / File name of cHIERARCH ESO PRO REC1 CAL6 CATG = 'ORDER_TAB_AFC_SLIT_VIS' / Category of calibraHIERARCH ESO PRO REC1 CAL6 DATAMD5 = '6ec89b749ad92d87e3b08027c3a172ab' / MD5 siHIERARCH ESO PRO REC1 CAL7 NAME = 'ORDER_TAB_EDGES_SLIT_VIS.fits' / File name ofHIERARCH ESO PRO REC1 CAL7 CATG = 'ORDER_TAB_EDGES_SLIT_VIS' / Category of calibHIERARCH ESO PRO REC1 CAL7 DATAMD5 = '05c5cb60bf1e2894fa495b31eb5b1f2f' / MD5 siHIERARCH ESO PRO REC1 CAL8 NAME = 'XS_GSFT_100331A_VIS.fits' / File name of caliHIERARCH ESO PRO REC1 CAL8 CATG = 'SPECTRAL_FORMAT_TAB_VIS' / Category of calibrHIERARCH ESO PRO REC1 CAL9 NAME = 'XSH_MOD_CFG_OPT_2D_VIS.fits' / File name of cHIERARCH ESO PRO REC1 CAL9 CATG = 'XSH_MOD_CFG_OPT_2D_VIS' / Category of calibraHIERARCH ESO PRO REC1 CAL9 DATAMD5 = 'b30854d34cd8c503cf58d48f9c9facff' / MD5 siHIERARCH ESO PRO REC1 CAL10 NAME = 'XSH_MOD_CFG_OPT_AFC_VIS.fits' / File name ofHIERARCH ESO PRO REC1 CAL10 CATG = 'XSH_MOD_CFG_OPT_AFC_VIS' / Category of calibHIERARCH ESO PRO REC1 CAL10 DATAMD5 = '0bc7e5d890ba9d5c7ddf7ef4c1dfcc9e' / MD5 sHIERARCH ESO PRO REC1 PARAM1 NAME = 'keep-temp' / If 'no', temporary files are dHIERARCH ESO PRO REC1 PARAM1 VALUE = 'no      ' / Default: 'no'                 HIERARCH ESO PRO REC1 PARAM2 NAME = 'debug-level' / Additional xshooter debug leHIERARCH ESO PRO REC1 PARAM2 VALUE = 'none    ' / Default: 'none'               HIERARCH ESO PRO REC1 PARAM3 NAME = 'time-stamp' / Add timestamp to product fileHIERARCH ESO PRO REC1 PARAM3 VALUE = 'false   ' / Default: false                HIERARCH ESO PRO REC1 PARAM4 NAME = 'decode-bp' / Integer representation of the HIERARCH ESO PRO REC1 PARAM4 VALUE = '2144337919' / Default: 2144337919         HIERARCH ESO PRO REC1 PARAM5 NAME = 'pre-overscan-corr' / pre-overscan correctioHIERARCH ESO PRO REC1 PARAM5 VALUE = '1       ' / Default: 1                    HIERARCH ESO PRO REC1 PARAM6 NAME = 'removecrhsingle-sigmalim' / Poisson fluctuaHIERARCH ESO PRO REC1 PARAM6 VALUE = '20      ' / Default: 20                   HIERARCH ESO PRO REC1 PARAM7 NAME = 'removecrhsingle-flim' / Minimum contrast beHIERARCH ESO PRO REC1 PARAM7 VALUE = '2       ' / Default: 2                    HIERARCH ESO PRO REC1 PARAM8 NAME = 'removecrhsingle-niter' / Max number of iterHIERARCH ESO PRO REC1 PARAM8 VALUE = '4       ' / Default: 4                    HIERARCH ESO PRO REC1 PARAM9 NAME = 'rectify-kernel' / Name of the InterpolationHIERARCH ESO PRO REC1 PARAM9 VALUE = 'tanh    ' / Default: 'tanh'               HIERARCH ESO PRO REC1 PARAM10 NAME = 'rectify-radius' / Rectify Interpolation raHIERARCH ESO PRO REC1 PARAM10 VALUE = '2       ' / Default: 2                   HIERARCH ESO PRO REC1 PARAM11 NAME = 'rectify-bin-lambda' / Wavelength step in tHIERARCH ESO PRO REC1 PARAM11 VALUE = '0.02    ' / Default: -1                  HIERARCH ESO PRO REC1 PARAM12 NAME = 'rectify-bin-slit' / Spatial step along theHIERARCH ESO PRO REC1 PARAM12 VALUE = '0.16    ' / Default: -1                  HIERARCH ESO PRO REC1 PARAM13 NAME = 'localize-method' / Localization method (MAHIERARCH ESO PRO REC1 PARAM13 VALUE = 'MANUAL  ' / Default: 'MANUAL'            HIERARCH ESO PRO REC1 PARAM14 NAME = 'localize-chunk-nb' / Number of chunks in tHIERARCH ESO PRO REC1 PARAM14 VALUE = '10      ' / Default: 10                  HIERARCH ESO PRO REC1 PARAM15 NAME = 'localize-thresh' / Threshold relative to tHIERARCH ESO PRO REC1 PARAM15 VALUE = '0.1     ' / Default: 0.1                 HIERARCH ESO PRO REC1 PARAM16 NAME = 'localize-deg-lambda' / Degree in lambda inHIERARCH ESO PRO REC1 PARAM16 VALUE = '0       ' / Default: 0                   HIERARCH ESO PRO REC1 PARAM17 NAME = 'localize-slit-position' / Object position HIERARCH ESO PRO REC1 PARAM17 VALUE = '0       ' / Default: 0                   HIERARCH ESO PRO REC1 PARAM18 NAME = 'localize-slit-hheight' / Object half heighHIERARCH ESO PRO REC1 PARAM18 VALUE = '2       ' / Default: 2                   HIERARCH ESO PRO REC1 PARAM19 NAME = 'localize-kappa' / Kappa value for sigma clHIERARCH ESO PRO REC1 PARAM19 VALUE = '3       ' / Default: 3                   HIERARCH ESO PRO REC1 PARAM20 NAME = 'localize-niter' / Number of iterations forHIERARCH ESO PRO REC1 PARAM20 VALUE = '3       ' / Default: 3                   HIERARCH ESO PRO REC1 PARAM21 NAME = 'localize-use-skymask' / TRUE if we want toHIERARCH ESO PRO REC1 PARAM21 VALUE = 'false   ' / Default: false               HIERARCH ESO PRO REC1 PARAM22 NAME = 'stdextract-interp-hsize' / Half size of maHIERARCH ESO PRO REC1 PARAM22 VALUE = '30      ' / Default: 30                  HIERARCH ESO PRO REC1 PARAM23 NAME = 'combinenod-method' / Combination method foHIERARCH ESO PRO REC1 PARAM23 VALUE = 'MEAN    ' / Default: 'MEAN'              HIERARCH ESO PRO REC1 PARAM24 NAME = 'gen-sky ' / if TRUE a 2D sky frame, a 2D rHIERARCH ESO PRO REC1 PARAM24 VALUE = 'true    ' / Default: true                HIERARCH ESO PRO REC1 PARAM25 NAME = 'cut-uvb-spectrum' / TRUE if recipe cuts thHIERARCH ESO PRO REC1 PARAM25 VALUE = 'true    ' / Default: true                HIERARCH ESO PRO REC1 PARAM26 NAME = 'generate-SDP-format' / TRUE if additional HIERARCH ESO PRO REC1 PARAM26 VALUE = 'true    ' / Default: false               HIERARCH ESO PRO REC1 PARAM27 NAME = 'dummy-association-keys' / Sets the number HIERARCH ESO PRO REC1 PARAM27 VALUE = '0       ' / Default: 0                   HIERARCH ESO ADA ABSROT END = 63.09889 / Abs rot angle at exp end (deg)         HIERARCH ESO ADA ABSROT PPOS = 'POS     ' / sign of probe position              HIERARCH ESO ADA ABSROT START = 56.36591 / Abs rot angle at exp start (deg)     HIERARCH ESO ADA GUID DEC = -33.82363 / -33:49:25.0 Guide star DEC J2000        HIERARCH ESO ADA GUID RA = 35.26697 / 02:21:04.0 Guide star RA J2000            HIERARCH ESO ADA GUID STATUS = 'ON      ' / Status of autoguider                HIERARCH ESO ADA POSANG = -23. / Position angle at start                        HIERARCH ESO OCS DET2 IMGNAME = 'XSHOOTER_SLT_OBJ_VIS_' / Data File Name.       HIERARCH ESO SEQ ARM = 'VIS     ' / Instrument Arm                              HIERARCH ESO SEQ CUMOFF DEC = 0. / Cumulative DEC offset                        HIERARCH ESO SEQ CUMOFF RA = 0. / Cumulative RA offset                          HIERARCH ESO SEQ OBS TYPE = 'OBJECT  ' / List of observation types (Object,     HIERARCH ESO SEQ RELOFF DEC = 0. / List of DEC offsets                          HIERARCH ESO SEQ RELOFF RA = 0. / List of RA offsets                            HIERARCH ESO QC NPIXSAT =   2. / Number of saturated pixels                     HIERARCH ESO QC FPIXSAT = 2.44140625E-07 / Fraction of saturated pixels         HIERARCH ESO QC NPIXRANG = 44. / Number of pixels in range 4800-5200 ADU        HIERARCH ESO QC FPIXRANG = 5.37109375E-06 / Frac of pix in range 4800-5200 ADU  HIERARCH ESO QC CRRATE = 0.1222561 / Number of detected CRH per cm2 and s       HIERARCH ESO QC NCRH =     987 / Number of detected cosmic ray hits             HIERARCH ESO QC NCRH AVG = 951. / Average number of cosmic ray hits per frame   HIERARCH ESO QC VRAD BARYCOR = 3.25538244438941 / Barycentric radial velocity coHIERARCH ESO QC VRAD HELICOR = 3.25801601057324 / Heliocentric radial velocity cHIERARCH ESO QC NCRH TOT = 1902 / Total number of cosmic ray hits on frames     CHECKSUM= 'Z54Ca54CU54CZ54C'   / HDU checksum updated 2016-10-31T14:01:39       DATASUM = '1701950336'         / data unit checksum updated 2016-10-31T14:01:39 APNUM1  = '1 1     '                                                            DC-FLAG =                    0                                                  WCSDIM  =                    1                                                  LTM1_1  =                   1.                                                  WAT0_001= 'system=equispec'                                                     WAT1_001= 'wtype=linear label=Wavelength units=angstroms'                       DOPCOR01= '0.015671 all'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        END                                                                                 ªi*TÉ*YÑ*ô)£)â‡O)èÌŽ©f{\©P]*×©S‚©ÎŒ†©qSB©çaV(ö£¨@Í–(µ?5©«;*ßÒ)àA”(¾Y7©8…©Ñ±ª û‹(»sÜ*>…m)¥Ié¥•Éa)¶°)Äž¦gJf)û$Õ©„e…)éÇp)—‡a*U'ÕZû©b )ÕZ]*gpè(úxß)uß])ùYf©’Áo©W’¨*„C;*.s©°¢1©‡ã¨®²ˆ(«Ö)K¦è*"˜ (‹z)´`´©÷Y)ÏZÞ)¢Í¤©ƒ¯%(3)}”ƒ§•È/)B»ß)yá)ÃC(4Aš(å,ª¦)·M*q³E)ÎÃ©†~ˆ*[óß)ÑïW)Áy	*oÒ)V¦F)~ 	*~»R§3W«(Œ‰Ð(ƒ:*!Û)o„*ã^¨oŠw)ëh¨¼IÈ*?£H§gKŠ)ªï)BQÑ)ŠL†)ãÙî*A*A)ŸÐ¨F	v)³Fð)¡e)w å©©ÀÎ*
+ú)šeÉ©'2*[÷*	Î,¨¼E©å“À*¥©Ö	*Ô;)}b))O¨08"ª>Ô©½º¨_z÷)œhQ)~m‡©€ÞÖ)Ø•s)Õ4“©e/›(*¢æ(c¥®'‡7M(+FO)
+ÚA*ª¨(â¯ø)õQj*lY)I—Ù)‘ï¥)²ËÂ©+ò)í'Î}å)]–™)z`\*h) t`¨…ôÉ)þÿL*wu¨‡%	¨ýE)Ýn2()_ßÀ)†[f)Ñµ¨O¹@(ÏpI)ZQî(Ôí)".©6ºs¨_Z’)‚sÂ)6e)e¿)ƒF%)™š)ø’)%<œ)!	…)~/m©‚	*•ƒ(ö±)\	3§€X@)Þ"Ê)FL)’œë)¤Í>)ß
+l¨%}ù)­=^)Àî#(Œ
+¨¼ÑD)³Ç`©©-š)O®)[Ä¨)Hm2)Ld)’Ø&
+™È)~–
+)’Ì¤)ód¨BG))¾™/)lè4*R,Ä*`¡*.Ðì(A œ'"F(7)"i#)rÜ”) LÀ§£Ù:*\™)œôµ(èéæ¨¶Š)@o(³t<)‰µÈ)uFh)43Ó(²D(œ¥$)œ~õ)ƒ°r)™5(Þ\(§ª\¨ÎŒR)aMe)B¨(®½B)4\(ÆÚC¥Ò*Þ)ŒÎ(Š|‰(ªØ)L0(>:º&:ô(zT`¥Œ) À¿)Â¥)§Þ1(ú*Ý(œÍ}¨!)yak¨'}(ægé(¤Ts&„_¨v©Å);±Ž)4%D©žÿ(Û¸,)u‚æ¨am6&Þü¼)‘ã(g§°‘+)îh( ü(ç%(¶­(ÞiË)¨…);<Ã(ˆ=À((	Ê)F”z)+el)rÜ(ýqq)`_À)
+ög(×*ú'ƒâé(2K§“²ú)/-(ëõú(xÐÐ(?«})s¯Ú(ÃX)>ñ(ß…(è)#m)2ÈŠ(æÇ¬(…‹)) [¦ñ§)CÜ7(Öã¿',@¯)TFë)“É(¿–(e`Y(Ãûœ)¥ú)'©(¹ÂM)0ì)<(vK9(7Œ’(Ö(Õoí(Ü\3(Ù+)=\O(ÐO(¿øò(Â~@(°ý(ñ‹ÿ&Å-R(²(N¨)ÐÈ)<PM¨9f(ÃL)(ùŸV(¼ó6'ñ(L2<(¦"þ(Ší/)	6)$²U(Áˆ(E[Û(+ªÒ(²L2§•ÿ)Š¼'¨I(*(÷¢õ§’$(ÚÙ (±…À(642)ž«)dÝ¨rÜ(ß>(š9ú(Ï±·£ÌÙ(±n@(œ Q(Ô‡¸)(5[r(ih(Ú¥¨Y(„ï(a)KúŠ([(î%±Zm'0Ô¦¢¸Q( –'¬#¸(»î×'Ü\£(EÈ(v;±(n)1L(±(rO(ã+3)ZR(‹wr'‚ð(,s(iÊ(m¦.(Ãã…(8-Ò'1Žƒ(Æ2(°ûè(<U(Ò¢t(½W(|?'“7E(AÀ&
+¥ã(®K(ü(F(Ý1(¬Ö({•(wÿŽ(Ù(HbW(Müª(¥¸í(Qâ(~T(2öƒ(¡÷ß(A°¼(„Ò£(Šà(3bD(Xñ(©w(5…Þ($‘=(ªI'œáÌ(·ÝÇ(¤I(H’ì(ù(èÞb'Ü‚X(°áJ(a?Ú'ñÛ(sÉð(„¿(¼ð@'¯Æf(™Án(‡éÂ(í2(Ÿíq(¶–C(qÐª(+¿(Ô¨s(“Ve'úœ(]«(@–(‚„(+Ý(S^=(Žø¹(œ\(pl˜(6_ô(–~D(nÉJ'×üü(±»é('¸(Ž%+(Q×](gH'qêt)Bv(R/ã(ˆá(¤÷'á(ñ(1qŠ'ø²w(‘±ž(|0I'@I(…ty'Åð'Ñ-¶(+"ˆ(?w|(9òô(‰gO(Rì(cÄ´(Cnœ(G²f()¦( ^(1ów(†\S( Î(•úE( ›E($Yx(_8Ã(ˆð(K­(Ö(«	å(Wïä([Î(â¹(=Ë(ZœD(zÎ(H€(sÁ(c	`'çò(e‚^(Zµ'Ç€3(:–Â(K@b(F–q(Bà(ZÛ½(Z± (ƒaÐ(Ol(†ïD(/¤5(M±º(;š\(M,•(j›å(Pî5(08(ô»(5á(`½^(Mð6(?¤ñ(:.T(GK(NÀ¸(ƒ(BüÃ(9ú
+(NÖ(^‘¹(7ÎH(<ýZ(i7Å(<M(#%ù(Ru(L®ë()¶Ò(QQ(Aç($z(_< (DÏ¢(í•(Û(NÂ(kya(eÄÆ(6]Š($w($p»(=aò(-ïÜ(Dq—(IpÑ(º–(9á«(á(öD(?›(KÓú(UŽ¨(4+($C((ü‘("f(NŒ(D¼ï(D%(2Ö(;N(Wˆ(7}(3¹Ò(5•¤(3?(DY($‰(·o(C¾L(7d(,f('t‚(>ª€(©ß(;é(W3»(ï(?~Þ(!àN(8d9(/T(+­!(.çð(!£(H»(@¹S(ØŸ(>#Ñ(FÛÔ()Ò=(@²í("‚!(­G(;-(%˜‘(7*‘( %P(9W­(A!(; T(9óÔ(Wè¸(Dæ•(*Ñ›(/A-(>bÁ(3¨(Ô2((eÑ(&C!(3û:(Ig($ÛN("i_(>('ˆ÷(+êw(6'(5Š·(2EI(>f((>š¼(.ï<('+‚(?	V(%¤À(:™<(:\©(/Èß()ø(Âz(B œ(5ü,(6ýÅ()e(/ð¡(J{·(3–(=Ä†(.¸(%¥²(-²(&0(#ÙK(>©Ä(1 C(Kð()•(]J(T(%Í(4È(#Ãn(+ñ¼(:ÏC('<ù(@œÖ(/€%(=ï¢(fê(Iëo(#wy()–v( (5ð$( ÷(>nô(4ò(®H(2|ñ(( ¦(î"('á](ó(<4ã(1w×(ÃE( ’Ÿ(%n(„(&$}(&s1(V ()WN(.þ(—ò(“˜(!ªê(ÎL(®(Ùg(
+të(ï²'ó‹(ò(,(÷'($4(!s2(¬(ÖX(c^(…Õ(Ñ(µŒ(" %( gÜ(ž³($¦ï(Cc('(,G?(š·()}(-¼((
+„(¹( 
+(¢Ã(va( œ#(åh(
+Ì(%'O(5Œ((»5(W(&ö(q(‘'ù(Gß(Ï(
+ì(*ðÚ(£(kô(Õu(ët(¬(Õr(*8(&(¦4([ß(ˆ(<ä(‘Ï(Vº(i#(²œ(Ôó(f(Ì.(WC(Ø¿(y(YZ('œõ(Há([0(û('™·(‘X(«(!¿!(@.(§( \(KYô(â(w,(2r((8s(_¹()à9(¤d(—9($u¡(ƒþ(f(È°(0¦ô(•õ(+Üû(&,g(Ê­(!°6(+;n('Ìæ(ª(/#(!ô(.ì¹(ƒ‚(IÀ(%©?(%r—(3®(&($½h(Õ#(&IU(.DÒ(Ôç(Ã8()ß·(,/_(&4o(4N(€(+0#(•m(;Fn($H5(ô($!£(df(_‚(4Mz( f((ïí(-ê(5–(+ü…(':z(#Ì‰(•<(#Þ0(2±6((µÿ(6Ð8(%(-«(%–¨(/%_(')‰(6°M()ÖŠ(&f‚()ë(SÓ(#‘(,‰(-“(7Z( ø((°ù(0¼´(9(½(õG§ŽA'§þ	(£a(-T&('÷¥((7»( z€(·¨(M(¡©(6R(FF(—|((Ø('òÿ(fÿ(Þ(2¾(,áq((Ï"(j($ŽË(!øW(Ö(%ä(¢#(/ŠÁ(ä?(&íà( Ió(!Ü‚((ÑE(á((î((ð˜(
+¸0("ö<((®ƒ(3·(¼(%ðä(‘ó(Ä
+(-rZ(@û(îJ("	Q((Tú((Å(.ÕV(X»(V@((¯(&¯)((H (-JX(¥ ('+~(3|-(-¸ž(ºÉ((ÍI(!n((Ü6(+&¯(%ˆÑ()ý0(‘"( •ð(µ¡()¸(*óÃ(%Ë†(!hŸ'êhî§Ó4´'ßß˜'x8(Gmê(SQn(+ï((
+ä(!"*(,™(%@(6ª( ¹}(rÕ(#ìm(0<ˆ("ˆ3(|a(cš(hØ($ÿ()4('	(d(É((,©1()zø((B ( –—(#èo((1‹(Z¥'ÛmÊ(v=(­( ž(,Ûf(*•d(+(×Ï(*@ó(ä×(x’(2Ãü(NÔ(ôP(ß4(/(û(r(;¿()ìU( 9(2Í(Þo(,;¥("	W(ì@(- t(uÌ( ¨("(€($"é($R(
+&(Åy(¢t(Œ>($“(!sU(—o( E((Ð(42("‘p($­(dú(+¨(ÇØ(Íù(Ë(ì("v(¾(.IØ($fï( -Ï(h('ì(&fS(2d(;aD(Â(dü(›„(AŠ€(Ôí(ã.(Ï¨($¿ú(#åù(8°w(µ(7ký( F()(%Ôx(/ò(@ûY(!¬(Ûù(5‰ä(7U[(/C`(¬Ò(!áw(«ƒ(.ë^(äµ($›(d¼(&;Ó(7"&(8Þ("éÎ(Zö(%ö3('‡Ã(-Š"()Í<(€^(!¡(¶(0ûR((š(#2((1(×¨(žÑ(,2(%("5Ÿ(2Àú(=ï(ýï(Ú8(?(&Êé(DÊ(+('£(&}Ï(ñH(&˜\(¤ï(“
+(c•(ß ()m-((€-($`V(^("„»(×d(‚×( /×(%°$('Ã(õv(
+Ž(¿á(ò( ñ(6P( Šš(¸Ô(sn(+€À(lÞ(!§™(-Ž¼(¡(%%(#Ë(Z("'(sa(NE(#ªÝ(2Œ(Á(|Ä(,(ÝH((®(¶½(!¾ð(<6(qš(†”((é(¤(Õ‘(!3($=((=æ((x(ºÜ(”*(/ð(\+('>o("Èr(,\»()}Ú(ñó(!»u()NI("C(žG(!²(Ní(!O(W (#]ª(èc(&{(!÷ñ(÷À(¬(¥(Ú(&‡Ù(%V(†3(Øž(®(%ã‚(#í(æ("xÌ(ÛÊ($§z(lÛ(i(—^(k´(
+˜(´ê(ÙG(¯#(Ëº(ˆ=(+«(%’™(&2(,¾‘("– (ÙE(þr(':h($•Š(ñ(("¥(#æ1(1t(	q(Ö£(-½(«·(u(¿+('²V($&("3U("œ¨(Î¡("\ü(N(kª(&Œ(!—e(‹’(¨ (%‚Q("â6(#K`(ô( |a(!ÔN(šì(#6=(ÿ¥(…q(»](#Ð$(êò(%¬#(_(œ§(™(²S(—ê(Æ	(~™(a(#E¶(»e(w(Ú`(xÍ(!»'¬VR(+­j(hÇ("ç¤(ïÊ(Jð($ád(É(jœ(L(%¡/(6kr(–”L(#wî(#®®(±«(~‘( ;(bÂ(6(}N(”'(RK(@Ø(V\(|ˆ(Æg(ñE(D…(Iü(o$(Ã…( p(š(õ(÷N(„(xÛ({à(É( (›(Dè(ÐŽ(Øy(UÚ(óæ(Ò—(!.Ð(î{(ñ(\Ž(2/(HW({µ(åg(E¬(nj(Y(Ž(ÿä(O(„g(®(Ì¼(Ân(!øò( ¤É(ª (ù}('(¨õ('ä("äð(ò.(ë“(û(Û ($7{(%á<($#=( ÔÓ(#`ï( F(Ã°( ~“(%î(_(r¿(%JÇ(´-( !š('34(!”ù(àe(¥(">m(!(î(#‘­("Nþ(Å¤( àî(ë=("y(*a( St(J¾(·é(â(/Ë(êh(K(!÷( ¸!((é×(êø(^¾(èU(bó(4("(á(í(Z¸(“&(=«(N2˜(PíŽ(EbU(O[ý(CoÕ(AÀ( <(%Za(N(Jž(çg((ß(¾S(…ä(—(3*(_(ìu(Ó9(@(å_(vç($hÜ(›~(}[(ÏÁ(å4( ×Ò(ò‘(F¹(>6("á*(;–(¿£(",é([›(! S(j("¿ú(ªÝ(!Æp(%³ç(’”(‘â("¬¦(ñ\(!@Q(#Nî(ç(!ÝÛ(7´(Ê(3[(ñ—( (((!Žú(#O/(?(ÖÃ( Á(!Ä¬( 0>( ¦( MÒ(&§(!Hý(&ˆ(#/ú( Gï(#Ÿ¹("pl(#ªš(#—("z("?ì(!bT($l8(!Ü(&A‰("
+&(!êñ(ÊÝ("ûÔ("e( AT(!Þ](þ(!Ô(#A(!~k((3( ¬•($ù?(#Çp(¶ô('1ê(º('`(#;³($Ý](%	º(#è(#ÓX("éœ(#l(( r°( õ(!"é(&,½(¡g($^X( ¾£(Û÷("ªH($¢M("jÙ(!tÑ(!l‚(&!(kÿ(M( %z(ÁÑ( ïÏ(­©($4("õ1(!ïî(Ì©(#bþ(²N(;$(!sá(#œ(#)U(Â/(0×(Hz(×M(*(Çþ(Ž(#ÁH(¿K(!¬(-°('ä(!9¾(‡–(J†(µs(E(vÕ(ð((äF(eƒ(´E(Ë(IÜ(Õ³( ªž(d("S( ž(Ø“(—N(™å(µ|(Øl(Úv(‰(ëÙ(Þ›({Ñ(-b(((`F(Œu(ÔÚ(«v(»Œ(Ÿ!("¢(·(®À(é&(¿(›Þ(B_()(0.(
+c((â©(NL(-¯(ªª((Ú(0(¾Ž(‰Ù(ð(‹Ì(Œ(ºó(®(±Ø(Ç(‘(w(Õ\(ã^(°(C(#m(eµ(ÝZ(ÜÁ(~(5ó(¹ù(Ò(57(ö`(÷(`(Gl(¡§(]æ(/.(Þ(ú°(š(„(ÀC(S‰((3(<(‰S(¤é( “³(¤b(GÝ(ùñ(ó}(ßc(ªÑ(.U(¶ø(:Ý(ÅA(W7(‘…(”m(”(°ª(Y‘(Cù(-(“G(ƒÃ(úF(`(¡(%Õ(æ(ñ(ªG(VÇ(Ž/(¾(dt(Ú](ý’(›Á(„(Ô(æ(Üm(Ò«(êÒ(Q{(	(u’(f–(.³(Z(,¡(ì¯(=F(Ñ©(ðŒ(?	(
+-(ÅW(g[(Ï(5(ŒÀ(ey(üd(èp(](æ(@´(!*(gk(*µ(°Ô(_F(>¥($æ(U-(_( ¸(èb(;§(½¿(X(9¢(ž(Í(¬(ëõ(]¹(Ø(º°((iˆ(¦|(!(Ý(M“(R6(›®(EY(˜`((±û(‰(0]([¢(m(™&(ê(ãn(y€(Å(H`(LG(Ð_(“p(Žé(~K(¸­(¿ (&¬(«~(ÿã(¥Þ(Æ#(Ö¢(âÛ((ÿ(s2(#.(±M(›d(®¯(ý¯(ª(%®(¦(ÈÛ(ª`(à,(`J(s(V(•](òh(ÒD(Õ(ðZ(i( Î·(wà( {h(—("À5(!^™(ã¹(f(—Ú(Y (¸1(QI( Tq(ñM(#>€(­Ž(#Ï±(„( Mò("<A($—F(Ä(q±(M-("”(!’(“($cÃ('2¹(Á( à(!î((Ê(!‡(!¨=(´V("yü(ór(;(¹å(GÇ(! õ( ª¶(Tô(Ñ„(kg(…ú( Ÿ(hw(û(Ž4((‹¨(Rš(†—($( .¥(÷ß( WÝ( (((¹P(»(h8(«Á(É(@Ô(Ý'(ä#(_E(ÌŒ(¯(¾ (“r(X§(ûô(g;(ð4(ì(q~(L÷(o´(@:(š,((i(1—(q)(`¬(É¬(ç{(ô­(Ï£(®(	|(3•(H!(mY(§y(1|(…(ìU(qª(–(Ø¸(¯(!u(Žê(é°($ô§(µÜ(\’(üŠ( (V(Å
+(Wu(>ï(~»(aÎ(Œn(ò(Ýz(#H(×.(YG(U(¯(‰x( Ñ(Ù£(Ž£(†ñ(#¯($ú(
+( 2(Å6( jQ(-°(w|(æ¬(xL(s”(Äú(÷—(ë(å¿(º\(!å	(Äs("mÏ(kŽ(X(Ê~(x(]Ð(yï(£ï(·(%C(øy(†U(S(¬X( mÌ(I](Ù6(=(fÙ( (‹r( ÿr(vû(c(¡(>)(-…(²þ(ÅV( l(!í(*˜( ª©(‹G(">((W'(;(û—(Ú
+($íÔ(=( '(!è[(7ò( S(!CÙ($„,(ª(!RÌ(%Ò#(h8( Z«(!ª=($d‹(õ!(#)¼(ÑÏ(#|2(#ºQ(Á¨(%çf(,¾›(#>(ú©()c,( )(&Â0(…(!¹±(&®g( a‘(X(SK()ˆ—(ï(´¹([ò( ²(m(#¬å((.($6(î(ä:(!Ô`(%ñÄ(# (jÎ("“[(Ô(•E(&
+(%-á(=¡( >¦(!(&Í(#'(iž( (ºõ(+‰("¯j((ß($Ï7(=(ÇZ(ãó( Ãß(Z(š3(É8(Ç(‡Ô(®}($Ï(wš(%Â(áK(—(j(k“(îj(!ÜÙ(N (gT(¹Æ(Oí(Ös(!u(e‚(d%(¯ý(£(y÷($Z(÷Ã(#'7(ð(#."(1(Ù(Vè(Ý(Xg(¸H(YŽ(ÐË(!Ý(!m(æ€(W7(E](Fî(éM(($O(²{(#à(;(Òò(ÞŸ("Dz(%:Ú(9ò(!LO(<H(!&6(÷â(!uR(“(!ÓŒ()áF(Ä‚(%ðP(#‚«("( ëW('óv(R7($ÑA( ¬™(%ºæ(Ò—('¹:(v¾("Y(!Ü("µØ()YÒ($B(!tï(  ô(!t´(-¡.(&‘	(º$(% j(#Èä($a\(!()3ò(&î;($#à($¥«("ª('+Q("øF($£õ()É(%SÕ(#®¨(Ý(#.(!h("à³(!¹î( æ(%%l(#J–(#Dk(*§/("rf((´'(4·('¶R(%Gã($#“(#D'("†(§( ìµ("ðE("b[("¬ö(†(&†Ù(m†( ¤ƒ("3ú("¤½(Ÿü( 8(#aú(!(‹p( èu(Åö(!šh(Ü`(b(•c(ˆÇ(†ï(d`('H(!.»("¬y( îþ(#qß(#Åk(4("G(¨("év(#Og(![(!Q(£("é("f (#…( Cz("qa(ÄU(XU(&>( à(Õ!(„(!Äé(!:ˆ( qÙ('°À(#$V()(!½´(®—(&Tr(!¿(&û„(&t(%Å(#h(&RŠ(!êe($©(!)ï((tW(#Þ˜(é(&[G($ÀK( R§($ã('M(!å(!s((Kå(ü("z($	ê(!À…("!’($&ó(#,A(/Q( Â±( À‰($Ð(‹(!2(~O( ‹
+(ô³(X»( Yû(
+~(%	\(D( H`( ’œ(‹(&4;(!P(##›(ÔÅ(á(#Çx(Û(_Å(QÌ(üÿ(3("@©(4=(+£(yÿ(Ç(Ì(ªC(ï(òƒ(©(’œ(!˜((…è(LW(!ì(4r(PC(‘Z(f˜(ž(2+(ÿ(h2(7c(÷Ç(`Í(’(°J(ã1(¾0(œ…(  (fm(„Û(ñ2(…( U°(Ò$(k¤(u(4Ð(@y(ô(½ú( ×-((~( ûº(Ø(EW(|)("Éã('Rù([t( ¾è($Àg(‘('Å¤(ƒ­(,¿(#Õ()
+(%½(%f§(!	õ(%Ñ(!y(&¹F(*Û(#0Š(%qm(+5(*Vè($Dž('¾`()•(*JÙ(%à…(%Ó£(*2(('9Ì((×e(+`(,(*×<()®˜('»((Œ(+ÂE(/Ú(-ƒµ(,ib(+â(*ü(/Ðg(,‘s(,áø((Ÿ¾(+q)(,gv(&EØ((FÔ((æå(*Ãt(-(+îb()äC(*!ò((¬(/+('`_(,êJ(*vÐ(/V„()˜”(*1=(,¬(1.()Að(*c·(*•Ú(.×9(,2v(-"P($RŸ(-~%(0žÖ('¿ƒ('Ø (.Ž(*ü-(-<è(*Ô(+()™(-üý(&K(–N(,ñ6(($Ü(,Î(*í()ñ(,’à()^I('à(&‡((+›ƒ()‚0(,,û(+Ïƒ(-”b(%y(+B ()íh(,"ñ(+‹Ú()$Ñ((ò=(*u\($ö()oø(*'x(,¿§(%b]((ñ\(,»	(-?³(.r§((Sv((—(,+(+÷X((‹Ï(+k(0‡F((úH(/„Î(,AÙ()i.(,Q{(-¦(*†H(,œ(+£Ô(&¦0(-˜(,&(+œi(-z(*Ó½(+¥™(%Vü(0T((‹()?((hÁ()¨#(,}f(0Ê('Ú‘()Ž(+I(-xj(,"ç(-C.((Àí(+Ÿ(,H=()-?(,‘(-ÄÆ()>”(+Yd(1lw(.—³((àÛ((º÷(0¢ƒ(.F«(&)((.¾ð(1@i(+ÊO('()Žê((B’(+ä˜(+J(1S(*Gc((è„()óˆ()•(.’((.[¾(#XP($é´(*<š(*ÖÎ(&â('Oï(%z('êe((Šœ(+c(+3L(*?í()'9('¹(,—((]°(+³(&j(,È($¢/()(-d‘(#B9())((s€($ÑÃ(+: ('Â®((F%('\Ç()#8(+ý('Ï;(&+¾(*Ž(%@I(,9Þ()((î®('÷(,é»('µŽ(&[Ã('®()d¿("+Â('´(.	=(%¶n(*Íj((µ2()9…($3(+¨l(&ó(&,(-@s($Wh($îF((Em(.•(,	&('ïk(+‰w(&×ý(%JÅ(&á('”Ó() T()Åù((õJ(,†Ÿ(*b”()›((ÏÐ(*Å¿(+²V(,,](()²(,˜4(*[()ª(,('~<(&í_('Z`(*™(*@¯(*p|(,²%(,
+Ÿ(-~!().£(17:('ªÂ(*ÎB(*‚É()(p(.%ý(,&ß(+'©(,l½(-F'(+Ö;(.()—“()ý!(+Xc(+Þ(*ð('Ý(*~’('o\(+ª›(-¡.(+AÃ('v(&
+Ñ(,–(*éw((†4(,¨'((aÂ(%OÖ(+<()M(+‘Ë()±g((`('×Š($.B("c7((ÕÍ(+g’($¶2() Ã(&;}($ä#(%—,('‰Y($\ž(&ýú(%²("@c(%°($Q/(!ã($¦($Iº( Z( ÍÇ($( ¦8(!
+(õ¬(!={("æ‹(%d®(Çk( Ýú(!Ùµ( Àú(‘+((c(‡(F¬(Xè(!2±(¼®(¾a(RÍ(â( &0(Ê€(Ã—(ûF(“í(!÷×(Ãh(³(É¹(Ÿ( % ("0þ(@j(Þv(%ãu(nó(%m®(#ÿ™(–v("û("CZ(#Ï÷(!êU(ª("•[(ža("{§(&üG( ã…(#ìc(%!($('½ù(F’($ G(&ss((ö(!Ûˆ('[u(%j('q{(!â¿(&e("Å;((­Š("‹&(%(%Æe()ñz()Ñ‚(%qœ((ÿ((O4(%0ä(&h()I@()èˆ('”î()íó(#ã½(%Ý(/ýå(+•z(%Á(,Ýi('ëò()ã('¸Í()›´(%:Å((-(!š®(!¹a(mÑ(*('÷®(%‡‰(%Ì(&PÈ(+tÔ(*ò(.à(%ßË(,Ží(%² ()jM(+å()¡¤()²Ù(+Oí((P]((Èé((ó™(*³¶(!ûÑ(%°()œ(+Ër()E§(%>S('I‰($s(#±Ï(%BK(!†v(+#:('´É($…‰((…ô(&È(+ÀŠ(-Ê#(+–()5ž(%ÜW(*J;(,>ª(+Ú()¿`(,x'(,8Õ(%¤)(,fK(%¤(*ü;((.(*#()|()çâ()('øÆ(%ÿd()£('ð_(,ÉÒ(&*þ(*Ã@(+5('ÃC('#£((²(%ÜÐ((ÏË(*Yú(*OB((™5(!-Š((Pæ(*L$((Ú(&¯(%ßÓ()41(& ()!õ(#ÎY('µ($$F()!z('«(.üj()Ng()•((×ô((ã±()‰()òÓ()£U($åÔ((¶š(*É(%3 (,Áó($Å{(&xÀ(,x˜()
+©(&j˜(&~H(*€å()2‡(,h[()nÏ(+É8(+bo((ä-(.”()µ›('®È()oÞ(+ât(*á•(&(-¿×(,ç(+Õ©((/(-’©((T}(*Ç7()NØ(+Fâ(*}‰(+ÄÛ(* 3((ì(.#(+z((j•(,Çï('~S(%¿(*~J(-!(+€(*…@(+Ú¿(&9‡(-“u((V
+('vˆ(+<(,¿Ç(.?d()Ü£(+­ø(-ï²(,å?(*ŠQ(+ /(,‡¶(-œ&(.w2(%Á8(.Øð(,Ô(&ò±(3GH(+RÏ(.k()Ìq(+•((ä¡(/`1(+C(+(/=(*%(-p¯(1v(*ëG((ˆŸ(/(ð(2‰ò(-~Ò()þ[(,ë5()ÊÌ(-1®(-¼(+‚(-yá(,'u(+sF(+°T(,^A(,/•(/kz(,·v(+ò(0Sõ(*p().•(+ßÎ(.¦œ(+•(+ƒ#(.¦((:_(2,(-]ò(+»8(-¥—()‘((Kw('<(0>Ì(-Ñ()y(*0‡(-À’(-_`()Ñ('É(-¨W(.&~('°(/Š%(/¾ä(+W((*(1ð(/€Î(**(-°
+(1‡z(.^Û(*p(/ªþ()¹ (-Ð`(+]((ý(,úõ(*Ð¼(-ª(+«(*ê‡(+ËÜ('!6()#Y()CL(*ø†(*êL(+ôw((çÈ('ác()õ ()i,(%c’(%Ýë(+aX(&ƒ5()äT(&©q(*Æ£("«·(#Èæ((ß(&±~(+Ý#('ŸN((p—($å((î­(+šo($þ(%3('ÅÔ(&²()nñ("Ä($›â()V((˜o(#„( =8((²Y(3ö(*ÉV(*å»(Ü(('`©(#Æ±(!^(‹-(#ÇF("ÍY(#b»($¥`("¦ž(#ðP(%Óp(%§J()7a()"P(!Úm(&ÖÓ(&òó(&É(U¼(#¬…( Ød(,QÆ(sŠ(”() ê(%ø('#®(+ï( R('K™($ê(!Öa($¢6(*.(+,•(%Yb(!ð(Yq(,Ö(#ìn(%ºé((}(&ø,($®('ZZ()¯C(%ëj(%Ý@(&ƒ¿(#A(%°®((û™(&‹ (&ôª($Tô(+¨(/)(%ª('ÙÓ(%ú(&Á('€('hu('d($_¢('ùˆ(+`S(,(¾()”·((×M()ùÝ(&ï˜(&Œ*(˜1Å(vÁ($¼_(+S(%Ï
+((Ü(*áß(*”	(+KR()±('›š(++5(*òÓ(/a±(*†(*’ù('÷°('›}(,o(!ÔÐ('4(,tª()Ì>('À'(&‚q(-Ï(%À()û($('²ñ(&šk(+Ùð((iÁ('y($>À(%('ýÇ(*v}((ih(!ÔÒ()2'(,Y(%^(#ûá(#d†((Þ-($G(".Î('7Û((B(&z($aà(&O0(%ÜÁ($¿G((­(!ÉY(¾(!Ôf($Nœ(#Åc({/(P("p-(íê($x(£a($(ï&(îÝ('‡(Ñ(¡;(Õ(H(ž(–(_S(‰{(ðä(ÈV(vm(™k(×Ï(
+8(çô(<ã(	ºÕ(ˆ:(	Á3(¢¯(dŠ(4Ø(v'þš:(É^'õyé(žp'üSö'ý(\'ùßâ(  'õ|ˆ'øi'óíM'ò#~'ñ_V'ò¥'ösd'èáÙ'ëøˆ'ïÈø'îÑL'ñƒ¨'ï{Q'ò\ß'í÷©'ób 'í=t'ô'Ø'ïª('ëíe'ô'ðÌ‘'ê'ûPw'ý,Á'ô2'ñ¡>'÷¿­'ý7ò'ùjí'ôñÑ'ó¨x'ñg¶( “'÷f'ùã½'ö (Y#'û—®(+(U(¿°()a(Ë­(ª(:Û(†y(Xb(»‘(
+‡°(¾m(”H(¦¾(Ü…(Ó#([@(È3(ç(NÔ(ë,(ßt(rÆ( !(ûá(Üj(uï(˜z(&á(kæ(r1(sE(ÞÂ(@®(CÂ(sÈ(ŸŸ(­v(í(~ª(" Ý(‘(ðà(¤`(›C(£*(t("¼("HK(#3('&k(!m†(I(!ûC( ¯(!®(#ËS("Ei(%x(!=V("êÌ(nR(%`(!¼¾(Ï("8¹(!Õ("Â(  +($x("p/(ÿg( m©("5( î;(Ú("9A(BP(!y‚( U@("&d(!à(Åâ(RV("êh(Z(#qè(}6($q("
+-(&]9(Ð+(!%¡("DI(!‘("]ë(!ÑÏ("j'(!öÜ( ‚ý(•$(Ìr(#ù("è•(Èp("@b(!0(éJ("˜(!\À(#T(!S(%4((!zÑ(›("Øó(!ÃÇ('\_(#(#E(#
+·($éÇ("&($(#•†('Õ(%Ñ(åø(&*ú(!(!…b($0’(!‰I($?(!;%(!°(&¡5($ME(#Í(#“‰(!·Š(%„I($7=(!Â(ÐN($ùz("Çh("èg(6†(%z}(#(”((ŠÔ("($ž((!»Z("ßÕ(]`(%T”(!kX(!ñ3($ïú(!Š%("¿(#É(&Â=(%Ñ(&'(#2-(%T( ÆÏ("ÆP(#h{(!Wb(#n{(!’é("B(#E ( Dó(#2´(%G…(!Ú˜(%(ð(ü»(#ƒ‘(%Ï("´~(!ü(!Ç|("íf(!5Ž(&fœ(#»("Ãö(#ã¡(#G(!m()¦(!0(#/D(#Ej($õê(%W¬(%Ñ($n°('î”(#Ñ2(%•+(%lT( }(%õƒ("ŸC('*(#
+Ø(&Ò¨(({Ð( 8/($Š(#˜Ù(%‚Â($uÚ(&”("a1(((($P·(#ó«($H~(#†¦(#b;(&&2(!TJ($[w(%=±(!î5(%Ð¨(%ˆa(+%m($šœ($>j(š—('g©(#È($U("‰Ž(%¢(%Úô($‡6()ö-("Qz('(S(#¹S(#z("wi(&;D(&je($<(#¹Ü($’®(%¼&(&µô(&Ó($øy(!þ’(%"($uŽ("‹P((_G(#—('ïÆ("Ù](!6¡($f("+©( <(';(!ÓŸ(!C2( jä(!ó¯(">ü($¼(#g(#<´($®A("6=(%‚×(äì("»C(!Éœ($¦ƒ( ‚¨($ÒÂ($Ä($ò(%Sh("íU( ˜D(EJ($6Æ($ø(#¸€($L($J²(%(#€Â('_?(!æ(!9¥($]À()t±("9í($ª,($L(&5($!Š($3](%3o('P·($öØ((vç(%>Ã(&‹Ÿ(*ù("E>(&ã”((EÆ(&é`($56($³<()h("‘á(%ÝP((ê(%?¨(%àí($ö3()ú(*[e(&yã($À¼(&ÀE('¢(*ø('3Ó(-8/(%V((×„("d((™:('cB((5(*;Ž(& #((‹(&³()y?((·(&((J(+öX($)()¬($‡ê(*GN(*g©(*()më(%ùm(&þ´()7'((OS()å¾()Â˜(#°{(,:Â(,b(&,(&Õþ(%“‹($RF((Ô±(*db((&¿(&L¢((h($U|(&Wh('A('Îë()?i('vÓ(&Èp()+q(,b(&Ò¹($R($«­()ó(%Dx(%í ()TC(%bM((«('ËŸ('’('„é((@“('²('ôé(#ø(&/á('ñ$(#I>(&95(%c
+("äÌ(&¢ä();((!,(' 5(%©5('vN(&³(%®5(' @(!µ(&«c('	1("¥²(&½((Hå("‡ð($­(#äÛ()´<(%Ç¹(&&¬(#[V($I!(&z("£¢(%¦((1î('.«(%Ø¥(%ïÈ('G($8ò(%Û($çÿ($·õ(#hÃ(&7.($bÕ( ù(!¢('©U('õ6(%lÛ()ðÃ(&#
+($µs($íÊ(&cA(&áo((‡(%e×(%¡°(&ö((­('ˆ‡(%((žâ((Å((%9(#çà()©d('rè()FÀ(+e)((Üi()îâ(&ë(-#()ËÁ()óØ(&€O()­»('œ((Ù£(&¿˜('ãú(( æ(*–]('Ö(-Ê((ûÆ() ´(* s(*8|(%öù((0((üÆ(,—4(% Û()Ó((S&((vü((Ïb(' ½((°ê(#¾‚('H()	((¶ ('ø3(,Aá('Q´("³((Ç€((éP()ù8(($#(&Ð‚(%ôÈ(&q‚(&B("®x(&CÓ(&v(!W((B#(óG(#ë7(*£Î(&)g(#ÌW('=()ÜÒ('"Ò("Øf("bö(%A[('®ñ(&2(#ø(' ($y(&&F(#ÌË(&Z('xb($ÌE(%Gy((,û(&R($F($qÏ(&*‰($G(%¡Ã($+_(#žñ()†8('©($Ò('OY($Å²($Â$()oä(%t´("í9(%ïY("<!("bü('.($øá(#é[('Ý¨(&xk(%¾(#–y(&ÊÊ((#L("Ý¾(#Q	(#ï`(%Y(%Ê?(%Ù„(#Ç/('e”(%«(%uý(&ÿ("£3((¢£(#§î($ü¨(#c^("®¿(&Ø`(&!¯(&ûu(˜9("Wo(#°‡(&IÅ(&Ž(%ÿt(!R]($&('{‰($pã(%²(%Ïš( |R(#U¾(%S¥(&fó(%=(%Ø„(%B­(&Å$(&ë‡(#$i(&%½(#ß`(%´õ($N)(&½Ï('œ-(&AS('Ÿ(&õ˜(#Z(#Œ=('œÍ(&óv($L>($9Ê(*kÝ(&àP('(#ù(%Ó~():(#p(&¹(+,‰((ôO(&Ó(+}(+®%(%U3()Îš((‡†(%³)((9£((ç()…Ò('ÊL(&Ço(*Ñ(&×(,tÀ(,Åª((3Õ(,Ck()Ùy()½ì('ä(+p3(/Y”((@…(/ëý(*›º(*Õ(,Iß(*“©(,Õu(+
+s(*À(*ka(+cj(/üB(+jÞ(-!º(-0>(+úB((F©(7Àx(9'(*&Ù(,½Ú('p(,ˆ2(,Ëá(,ÐØ(1áû(-Ž(,UB(+œè()¨('Å®(+«(.ëƒ()…4(*m(,±()-O()4ª()W±(-0“(.iõ(-‘/((…(*±¤(-`¸(+W (/>&(0‰)(+€m((ºŽ(&Z()¶ï(+¸–( (/fü(-Å“(+Ú](,jê(+Æ(2R((mý(+½Ô(+“Ž(-¡î(.((+þR(-ïë()ÊÄ(0ä§(/GA(1ÿ¦(+ö(.¹þ(.¯p(*^‘(-¨Ç(-q(-3S(,)þ(/J²(.ÎV(-«(-¸(/Nè(.²9(.Ä(,Ý5(*òÈ(,¨(.P(+‘¡(.ü;(,áv(-9N(.tü(0 Ù(/¸(+%*(,4(0Ó?(*„(-¬}()§4(/(/ª(.”Ð(.ûÖ(,–û(.w	(,™(&ža(+Á((-™0()i3(-‡(&ù(&ó%(-às()Âl(+z‚(-ƒ (-öó(*œé()i(,Ö)(-?
+()ç›(+Êm()_«(,„È(*¨¸(+Ÿº(&üU()U((Ó:((Êq((å(* Â(+‹º(,0Æ(*() ('þ()ãú((8‰('Úg('†ÿ(&˜()K(,g(,€Ž('Zÿ()ú(*©()ú(&Û()öù((q}(, å(-4('Ür(*;)(++((Z ((Àú('Öô(+AÞ(,>ê((çÅ()Hx(%h|(*¤\(*´.(%ò!(+ª2(+Wb(,Ø('^¤((±l(+•Ó(,Ç‡(*± (*¼;(* Õ(*° ()ëï('×P(*é†(,¥Ù(,tm(',r(*h¥(+áo(*ÏA(-&g(.	É(, ã(*°(+¿’(/ƒÜ(+í(,UF(*úð(,Òî(,€J(/üü(/wØ(0”(,³ú()ÊÍ(/O-(-ú­(-Öl(.Á(/$(*·(.©Ì(//­(0¨L(0(,*O(:5[(,L!(*¼(+R€(2õ^(/Ój(,’(!µþ(.®ì(&É<(.Ãk(,\É(,¦(+•y(++1(-©¯(-pm(-Ê—(,•(/¤O(&¹()‰±()#›(-ŠŠ(,Ï((È(*Š3()Ã(-øÁ((A(&R›(-{‰($ú()yù(+ˆ'(+/Ø()ú°()®((Lh(*€('l•(%Ìð((å(%Y-(&Ý((#Ãn('Ã.("Ý1('¼Î(%¢()úp('8‡(#4Š(&ø(,éÜ(%‚(%‘b()E
+(%¹û(,ƒ('ýµ(%ä($kS(&®('4(*rœ()(¡(/N7()t–()­›('Q9('‹‹(% (&€(&+('ÿå((Îw((#(*b2((²¤()¼‡(+žg('¾()'Æ(,.¹(#VN(*~ä(*ðä(&¸!(&]]((âl()\L('5ë(,”_('÷…(&‘(&òº(+3(&>¯((Ñ(&ûŽ((=’((ÕD(&.((¼b(/§e()M¿((§E()$ú(,/r(&•U(*A(*Ô)(+Q˜('Q¤()4°('Ù±(+¾(+=Ä(+¿ê()¨?(%8[('­£(+ß ("Ú('d(&ú(&®‡((¢((à('ô«((~o()B(*:ˆ($ƒï(%ÜÍ('âE(*–W((ˆ(-IA(#%€(%o ('¤ç(-ç($Ù(*ïò(*ïÅ(*‰O(+à3(&ò()€9(#Û-(+
+((,((vÉ()Ø[('z(%8A('Pù()jŒ('Ãý('JÙ('}Ã('K¾((Ë×(,½(,Åá(2‘ß(*¦I(*f™('XN(*æ€(.Â(&—â('’‡()ìž()—c((×ï(' ‰((’p(*¤Ñ((t((ìn((^Û()ÃÁ(%r(*wi((yø(+ž(*O2(*.€((Ä§(+%((:«('ëB()‹ù(+Ýü(.?i(-9í(+¯Ç(+(/z—(,tß(/ï§()§Ü()Ž»(.r`(*ú()lÏ()¦ý(-w(+((-LÑ(+;V('lã()á®(,2((¹w((6Ú()A	(*š}(%0('Ê($Ô(*ß™((;j(%O(&#ê('|('ªP()j%(%±±()8(%Ë('Ö((˜¬($*¹('ú/()yÓ(#£I('($ÐU((¡d()áQ(%Õ	()±Ç('I(&±2(%Åi(#Q(&Â((9 (#à‰((g™('(+3h(%v(']t(&>»("›]((²·(+H (&f((^å()Ý(&®(&Eˆ('Z?(*î@((¬,((('Úë('Úô()`(*§­('ÇM()öÛ(&æ¶(*Íý((Ü{('ª±((	t()Gø()’((S(&põ(+´;(+øù(**á(#‘()~:($Hÿ(,Œ('ûÒ(-'()Œ^(*4(*¬q('F<()û($(*‹$(&Œ((yM((óö()¨µ()º()y('"M(#ŽÝ(&-L(&kÄ('¡(%0—("j³(&{+(&ã()ôC(%ƒR($LI(&ë¢($@*('gß(%ú>(*“x($./(*ù²('·¢(%­4(%§ó('²(%­(*3¡((<(%ãá(#~ç(%ƒ('Cß(&ù(&öo(' ˜(%R((/H(-X|((((ó¯((b×('ÿš(*{µ('=C()dï('Ñœ()\Ê((à(+:Z(-^–()¦ ()çð((¸()=X(,ï(,x^((R+(,[5(* ‚()n6(*¸¨(&©ˆ(*3*(*<ô(,oc(+3ê(-O¿(*Ù(+E((^Ã(+âƒ(*/Ž(*–b(+9;(*ß+(*y7( ç›(*'a()ØÄ('-¨()®('	x(*(à(+ÓU('ñ{(+®é((;²((b((±(&Ñ(&ºh()~\(*R('¸/(+Y0(+
+`((h('í(*JK(&Á‘(%ŠG(%Ž('ÐÊ(&Ë¿("*û("DÜ('!($9„(#¼z("|î('z(!rJ(&0ž(") (&Q¥( ($L•(œ’(òl(îE(»¶(ÌÄ(¿8(&	(L(ì(3{(0·(‹(›æ(<ô(ù.(#Ã(--(‘º(ú4(Ð(æ¬(P(¬*(%”(j´(gÎ(ð…(3~(â‡(o¤(`¬(Æ(ÅÅ(+(C"('b(õ(Ö–(eÝ(n#(àt(;ý(Œ(SÊ(„¥(Ì_(šð(¬$(>‰(y(Ðâ(Í(6(ÿË(±À(?(Né( ~ù(Jç(ù$(g?(ÐÃ(·×(‚(1’(ñº(²e(¬#(Ÿ1(áÇ(ÅD(ˆv((á(€;(³(‡(³›(|`(",(Pœ(!l3(·!(yh(!øG(1Ê( Î(¬é("#ö(ÚJ("vk(Û(#]©("7a( rº( *e($Òà($\ë($’o("øì(#§¹(#w¥("£|(!˜(#ÉX(&ù[($ô(!¦Ó(&6(("Ó|("2S( D(!Ý(Å*(T…(7((Z0(-Â(¶ð(Á˜(ûy(mw(Ÿš(ó(—ƒ(Õb( ÿ(fo( Ó(KY(•â(>©(î(ÕB(£ (1¬(¡%( à((„](§ð(©)((_(®(Zñ(»î(8”(‰ô( 1ñ(<(›w(a÷(aÇ(	5(c/("µ(!4w(!Ñ0(Õ(% (j(¤(MÄ(!¢}(dp(! Ž(Ø“(M°(Q(}‰(‘e(±('N(±b(ý`(®(å°(bD(s}(l^(òC(V(¦—(Q£(*/(yº(£(åg(&ˆ(]B(±+(²(Oy(bÕ(¾™(ÍÎ(.ú(¨Ã(;§(+ù(¶(ùX(LÌ(±(!t‘(MÞ(_í(PŽ(žƒ(GÌ(k (mØ( ™(p(÷4(–â( ŠÙ("Úþ($»(r( hÀ(!U( ëe("ÛW(¼(â|(„(Íý(ƒ(O=(xZ(Ù^(À#(ã8(
+¦ñ(ö"(#óŽ( \( >(5|(!'J(€Ý( XF(©¤(Ì1(" â(ê¿(›Õ("àX(6(üê(!ã»("®("„v(#G‚(!ú´(!Áf(Hä(#(3¡(Ü(ò‹(òU(å½(g(Å.(º(¿c(ƒÓ(9(é³(ž¡(\Ä(¥¡(!“(ð¯(!€(?C(Ú(ÕŒ(j9(Ü(dÎ(oK(’–(¨(¡(°Ë(±G(s˜(_(¼B(ø(t°('(¢;( â(Ù…(4\(ž­(^
+(Ú·(>¹(þò(uu(~P(·y(u(yã(>Ô(%Ã(‹“()Ò(m*(
+)(R©(nÞ(lú(æ‡(H(Jˆ(ÊÒ([ ((V(qK(4’(Zk(–<(wî(Ï(ê((½(/o(Çì(üh(“{(‰Ÿ(q(>£(k·(Ñ3(Œ(	ª({X( Ì(t…(,õ(b((™(wš(¨.(Ì–(Yü(Tè(–ý(£(KM( ü(.Í(Ÿ4(Ÿ”(x(cª(¾<(÷Ñ(O(yG(0(c(Öä(Qê(;(YJ(D^(ÁÐ(ˆf(p(+ê(×
+("•(j(3Õ(G<(X(U‘(Ú_(Å{(M(áª(®o(?((ˆ¥(¿ò(‡©(ýP(—(JC(iÄ(Ç(A<(J¢(þ|(Kµ(](©Ì(Þv(3·('”(Í×(Ç(bk(»(hè(ù”(,q(ìŽ({½(%Å(Rƒ(Sµ(%K(Ë³(³(­(ÐÙ(yÍ(üÛ(·î(kH(ç*(Ïf(V–(Š(Ú(›Û(ñÐ(Ðû(wÄ(àâ(³¼(Ò§(Ê·( G(’¾((™(©}(l
+(«£(á(?.(¢¾(•(}(6(*:(d(q/(•Ñ(R?(·¸(ÊÎ(*‚(‡b(5ë(†×(~(ö(íý(‘è(A…(‚d(ÏÎ(Tv(‚(¡ê(@Ÿ(Ì(‘(Ê(^D(Pî(r<(m(?(ð³(™±(Æ²($}(‘á(o(­(p§(±î(Í¢(7Ã(ù‚(Ã9(÷(­™(¸(v(Ï(IX(ô(Õ´((«Ã(Öº(ƒK(1‰(f(9‚(pæ(\(š6(#%((=(Èê(H(†š(¸²(è¥(íÝ((]Q(©‰(žÅ(dm(y¢(ƒÿ(Al                                                                                                                                                                                                                                                                                                ( k(Ž(  ¢(ö%( ²~()?©(&XÙ("](%¯ ("µ´( ? (&0(!FÊ(ÝÊ(%°h("-]( ÉI('ï¢(Ÿ…(N'(";å(=É(!‚ø( pp(6¼(%jõ($µf(!sp(Fs(!x,($8( ‘“(!Â?($'("ßÅ(#l¨(!u®(&HÐ(](!~ú(r¹()rä(±(#¿±($Âí('ù(#ð­($Ú("C(&s5(%¢+(%H¸(µÔ('z()Ýo( ’6(%Ñi( w@(.)Ñ(*Œ@(sL($¶®((ñ}("HÒ("–Ž((U1('Rý($¤œ()IÅ(VÌ((À%($Ñž(&âC(&¨((&à(&rn(*—š('¯ý(—À( œy($ãÄ(%°(!³*($ãã("Ê($Ùž(#=Ø(%Œ(%ô(%÷E(%6È(%?‰(#Ô´("py(!Q,('u4(ôæ(e¡($´a(©|(#ßo("Õ`(&#'(ùÔ('þ(u„('(!0P( ¸L($`þ(ÊÍ(#ÁÉ(!Ïä(%)’()Væ(!&ç($„¦(&Í®(#{@(!¦¿(µ_("œz(ÉÉ(Ìé(!…(!(: (&'	(#q("¢Ý(ø(  &("6R($AŽ(%Í×( ¹( B›($»,(/(!E0(%Þz(w¨('J‚(%ˆr('G(%le("Û~(!º4(#eà("~&(#+(#ˆÁ($;
+( *(#f(%ä
+($Þ3(!ÄÏ(!xr(¸($HZ(!¦S(%nw("Ën($Y	(#ô~(%­(!5a(#°(%-ª(!çþ(!¢q(#•7("q('=B( ¯1(%?N(#ób( 5F( 4Ü(ç^("sü(#>¯(Óâ( þÈ(#õV(('ž“(v-(!å(!¶Ý(!!+("cÙ(;(!Òÿ(!j("	( ƒ(õL((>( ¹ú(!Åç( ¬;(2K(#(=(þ±(">¢(%»Í( @Ã(ºj(%Q¬(!OY(´D(!&8( K(#fW("`>(!ÊQ(«( Ô(!y( x‘(!ô×( ³( Ë¡(!³5("(ö(!¢·('õ (!˜("gd(%Ë,(~ž(%ÁÊ(!'´("Ç("k[($Vð("t+($ša("K(&Ù‚(%*Ž(#þœ(#ÅV(!óë($îÅ(#9	('{—(#Å%(%¬ä(%–ê('o(%¹Q(%ä¹("ø•(&P›(&#($ýÈ('¥Ø((ÓP('Ú()0k(%ìe('+o(%ø5($öT(+÷((žx('Ëq(%ï(%v[(*î(&Ñ('Åë(&ñâ(&-Ä('ì( :;(%;ô(%B(( i(%LÑ('°r(#D–(#÷ð('DÂ(%º("‰÷($å(%u¦(*0‘($Ã(&E(%¸¤(&=Ü(&Ù($jo(#Hñ(.ðj("D/((,('Y( Ài( ™(%b‡("˜G(#d’("û(0E(ÖŒ('Ö<(&ÞN(#ƒi('«K("ø¦("üÖ( Œ§(!~"($— (!
+('Hõ(#X@(!„+($(&u(&8P(#t($/W(&Ä©($œ£(#í`(#Ö5(%ê¢( M¯(&Ù<(#ú:(&JT(+#½( ¡!(%‚(!©_($>.(&´ÿ()2õ(%ŠË(%¿( ‹ó(&Òç(&Í(%^Ç(%T(%Ë4(#£°(!Í–(Ïd(?ŽÍ( Uô('‹‹(%© (#óG(%ý)((B*(!J(#m@($e¢(!ÿc(#ù±('Yý(#ó(&òK(#Wå(#"â($÷($öj(%ªl($ýÖ('?](#ñŸ(%–°("Ö±(&›¸("…~('‡("È3(#ÿÃ(#Ìê("T²("ðj(#‘("Û(%.(#™©($\Ü(#à(#ó¸(%å(#××( Çx("a("®ì('¹Ê(&`>( ±
+(#f("U(!1(„(2(€( ß( ~_(¾5(»Ü(œ(JY(-‹( oj(Š(Ÿj( UÏ(­Ì(á
+(›9(!5™(¸ˆ(  €(o2( ()Š(Ø\(è($B(¢(õ¼(¢(Ýž( _Z( cŠ(!°'( ×ž(ñú(xk(¡O(Ûš(8("µÀ(áû(!«(!R+(!´þ(%1Y(ï0($v(#¸( %5(!÷(# f( ˆ($k°(#)8(%Q(&À(#}ƒ(%Gù(#j#(%SÐ(%ud(%°þ($6ß(%(%w`("Dh(&‚(%vÛ(&™¸(&ƒÊ('Fè('h’(&¤±(&Ö,(%ïw()‰:('ÔÍ(#Ãa('fi('·Í()±Z(&ŒÄ((w((÷¬()$()¹e(*ù('4x('ãÿ('p›(*-(*…(#·¡()vó((o¨(*¶¸($#j((üg(*†[(&©Ï()Á—()i('‘‹()`(('Q¯('Ø›()h((n:(,	()°é('™^(+ÞÜ()=W(&H}(&Ý(*;0('Ï¶(*W((J(*í»('ƒ™()-2(%´Õ()2Ž(%ôg(,Ó((®…()ëv(&‚(&Á&()l('Š[(%Æ('—((/(']c((ñˆ((ÃŸ('¿(*?L(*ð+(,6i(*É()™¡(%­(,Q('æv((t‹()ó7()¹](*=•($ñ`((y_('áÁ(&ˆ.(&JÎ((Üý(, P(%Þ (%Â…(&¨n()~„(*¬W('>()`()Ö¯()4¾(%A('£(%[u((½i(%ãL('(+ƒ(%R	(&/(*±i(&
+('„Ñ($¼Ï(&é:((!C(#¢('[¨('ky(%ª(&((ÝÚ(#™Ä((1:('Î^(&w7(&dŠ(&Ý(%ãX($Ü­(&Yq(#Ëê(&B(%ª¬(!´ ($‘((7((¶¤($Ÿ (&ó(%x”($¸‚(&5­(&´
+(*>æ(%¾('-´()ëF(%Ä((lù('·j((Z*(%ù(&>§(%qï('áð('ìŽ(#¥s(&Ô($8(&º (+Õà(((&Ë³(%9ð(%íZ($µ@(+nP(*²Æ((w•((¹(#ÓZ(&úÛ(%~Ã($„()m('f((»($«”((ó('IA('aÜ(&´>()ëy()xñ(*ó();¯()áÍ()G£()Üõ(%Çå(&	ã('â	(&Ò‘(+(*Jc((()!Ý(&ÛÆ((»(%Õ…(*íx((ª4('(˜((¼µ(+È¹(%t('»¥((ZR()D(%iè((ŒŸ(%—(*¦(($()-è(%gŠ()Bx((`°(&r®('{1()Q£((Þ…(&qµ(&7ã(&Èv()=Î(&Xo((c-(&gE($…(%Ÿ('`!((.((«(&|('Žž(' ò($C¹(&ìû()p(&Ó("»ß((ób((C¸(&«(%¤C('N™((¥(%6s(&ÿ©(&¹ñ((ò}('F('³M(%>Ä((Oµ((Ý?(%(*õ?((Ôn(((%ÓÌ(*ô((ÿŒ()×j(*å9(&€±()þ(+E=(' Š('ù¤((„((´ø(*Ä“(,U(*2y()ÿ((£('Ï„(/	()È3(%¸()þ()³d()w~('Ç*((×“((uã(-0`(&Åã(+((¾(*z(' L(-‹è(+ÀÍ(*&Á(-Ï(+~(+F(*(*Ž¢((¯Ê((`ú(+É(+.ú(+ä(*	()ƒÆ()1Ý(,Y()I¦(+Ån((ƒJ(.é<(*ðî(*AÀ('è›(((()¤•((°¬()P(,˜\(,.Ç(*'ª((°(*?¡(+åõ('˜H(,r‰()$É(+>g()b(+Æ (&iŽ((æÒ(*-(+Om(*m(,m(+:¢()³(+6Ø(+r((*áË((Ìf(*Q(+i()z(,üì(+y"(*™À()úD(,V(.Ý(.r°(*o(.‘)(*Ð—()VÄ(,Á(/½(/ø(.l(.³í(-‡Ú(*Õé('€w()ƒ±(+a‰(-H(*àÕ()`Ÿ(,<!(-Ü—(-]~(-0æ(-$ä(,ìy(':S(,XÀ()âû(+0Þ()Ã`(-Z(-W·()—p(,Žm(+
+t(,„()t#((fZ(*Ó(+Œ(*¤((3È((Y@((³(&°(*›@("(‚(,ƒï(*]Æ(*Á<('Mx((ÚÌ(*<Ç((Þ(+Ÿ·(*fB(&q8(. Ê()—‚((J('T(*Jý('xŒ((·X((¯j(+%±()ie('rd()¸*((ïµ(%ãŽ((]^('«é(+dT(*Þ(*%ƒ(,#.((«1(,!(*@(/´()œ((aç()Î('86()‰í(*žK(*2y()ND(*dL(*ûÄ(,»(*š¼(* p(*i$(*ºí()ÿÇ(-²¸()„(,éù(,¿³(.wŽ(-Q(*rf(*n ()¾Û(+Ÿ((ô§(/Û(-Óø()³(0†®((Á¸(-PÔ(*ø(-NØ(-.(+¹(+Ì/(/ÙÝ()C¸(-«Í(-©œ(,‡p('²Ý(+9c(-—$(-JÂ(*bÀ(+*ô(,o(,²ƒ(*†Ò(,_ö(-g¹((±[('ª(+‚„(,C(,@(-Œ¢(.Ö(+*(+N{(.þH(+ð9(.ªÛ(*0(,3(,O(*ùV(/Œ(-'(,³(,éµ(/(Ð(.(,µç(,q(/;Æ(.0¾(0L](+(…(/]ˆ(/ÁX(,ÚR(,4(.è (+ïç(/•ª(-[(0,(0/Q(.is(.–(-¥(.ªÑ(,Tü(/úñ(,Â‰(-¹¾(-yÌ(-×‰(-¿.(,h}(.ü*()®(0(+¦(0]É(*_Ç(-H'(,j‚(0šñ(+ÈU(*éî(,gÝ(.ï(*ƒ](+Úâ(/Ú(,Íò(*RL()´ê(,Ý"((Z(,•(,qk()êG(*:()Ãƒ()Íz()Rè(-’()à (,ZÎ()ß±(*èÆ(*bÀ(*Œ6((–•(+§º()*>()'c(*Û-(,J½(,ìn('‚(+YÜ(+Iª((³((@(+4†(*Ù('‰((Ë\(*Ý
+('ìÎ(+$i('«-('ñÃ(*2y((4D(&IV(*Îö((\B((ô('VÕ((gž(&Ö“(%ªE($ØÓ('ü7(&M–(%Œø("ZW(&#((*ö(#q(#•($Â("Âî(#5(#Ñø( Ãè(†£(#<( O( Ü›( mõ(£e( ´Á(iã( Z¦(!Ë>(!“(ÑÏ(!tÖ(ë/(FÆ(íœ(#Ñ(µ—(Œ4(Ð0(_¬(:()P( ¡(õŸ(šÂ(Í:( G(ã­(œ‡( ˜¸(Ïñ(€ƒ(ÚB( ÒÒ(f”(!&`(!¡(Â( «÷( « (y„("àÓ($­©(Œ¶(#Eˆ(  (!R (!	Ð( ½­(#GÇ(%Û¯($ñ($êz(&få($Š‹(!Ý¨('Fú(%ïd(&E( 7(&ú±('ÍC($k()„õ($nð(&O((æ(%I©(,9(''('¬ð(%zA(%ø”(),â(((øÈ(!*('fã(&ÀÆ()ø(&[ü(,"ž(*€û((¶(*yè()ÑÚ('öÐ('€(((I}((t~(+%7() T(*((ùU((æ(,v()Š¯((„('³((à¤('›V()°»()N„((·›(,wË('Ïò()¿()$þ(+ÇF(&«ú(*<â('êÕ()PL(*UÐ((#è(&wt((F³(-cº((×()Œ(+Æ(*œ(,k(-³(.¹(*›¨(+c(*ü(*êß(-„(*«Œ(&þC(*Â¿(*M½((L(*î$(,È(+5Q(%‘((£(+Ç%(*AN()§Ä()'ñ(*Á~()³æ((oS(+>f(-~÷(&A (+@}()Y‹(-X‘()qº(*O_(,î ()¢k(("I(*¾&(+]((+ì»(*À°('^l(,¿´(*¸Ã(*sG(.b(-q
+(,Ý³('îš()­Ì(*\†(*Ø.(,fí(+Ñé(+$ ()ø@()ÒŠ((Î=(*Z+()ïÍ(+ù/(,O(-Ïƒ(/Fƒ(*žÄ()2Ù(*÷ª(,!~(,B¢(,š(-RR(+ _(*Â(,¤((Ù0(-’(+À(*g()\Ê():n(,©#(+ì(,YÒ(+î’(+É´(,&(.,l(+*J(+Xà(.×(-è (+[¶('q(,•©(+2Ô(,(+NÑ(/Ñ	(-uá(-:†(+è›(,\¸(+¿}(,nb(*ª(.EŽ(/W()¯¨(.y()f¹(2G(-^Å(.8Ç(-¦V(.»(/À(,+Š(-+æ(/ñ(-V(+–5(/ $(+=—(0B_(/~Ú(0­é(-Ç(+”(.™G(.ùÄ(+Ò
+(1mµ(/ (.’‰(.÷(2h–(-°y(/X(,Ôú(3OÅ(2¹¥(/ý(-qe(2M(0ñð(.Ðv(0s
+(/e(/„â(1³`(-ð(0î©(1¦j(1ó(3sÙ(0FK(3"º(2Á(2Ç[(3t6(4ôO(/-?(.Ÿ½(/í²(1&(0(-AË(/ÛØ(-bú(,›p(.<Œ(+¾€(+Ž¹(-¾™(-¼v(+t()¶$()µ±(,P(-A('Ë((Ô}(+Ó(( ÿ()sã(-Ýô(0½(*„(&¨å(+Q('¥C(&¯('ÉÎ(&ÁÂ()¡,((ûá((Ž£(&83((I›(%Tr((ë6(*¾a()Wì((ú(&Œ($88((ú('^à(&ÔÀ(!Ï~("°ù(%4×($•å(%½
+(&{ ('šý($²˜(#Ðò(#5Ó($wf(&—g(!,«(%Á¥(#Ðç(&“¸($Å=(/($Å.(!þ¼(%6K((°Ì($ªÕ()k(+('íó(,Jø('ˆï()Q()¯(%óã(%y@('Õ®()—d(&˜($HŒ('3(&ºè("à	(&I("¦¬("¦µ(&‹„("1d(!®"("Ê(#5ï($É=("Îá(#å("Gk(# w(%\ô(%Åq("	W(#š­(#½,(&¸($ñî(!2¬( ƒ(!3(4i(%A(!L!(#9E($qœ(F©(!!(#Ý‡(%ŽA(#2Õ(Æ($s—(${
+($ç7(#UD(!(!)ô(!÷%("ÞË(#ô—(&k("ªT('ª(#(("`Å('ô(&4½(*é€(*Â()Ïš(,|£(.†<(-”(+À((I(0ø1(/UË(.ƒ­(0t}(+‘Q(4û¡(.l”(/²(.N(3!¾(2ýF(5/$(4
+À(2¬Ö(5Œ(4O(7Iž(7¶Ð(7LR(8F(85‹(8¤E(5DÝ(7‰–(5wo(=è(<òï(7¡(?ïú(?L(=G$(@ß(DÈi(=VÒ(;°Ð(AË¸(@‡(>Ú?(=¹J(=&(:›((<»[(=…¹(= Ú(<Ïj(9%0(:D'(7Þ*(:<ƒ(;¬}(6¥B(7Ô_(2br(5…¥(7é(5à‘(6Û™(6ëW(5l–(8®-(2rí(2ï´(6Çá(36Ë(6ç[(4SÚ(-H‚(0­(.ë(1ÎÃ(,\Õ(/$Ï(+8(,ŒË(/Äó(,1()zˆ((’Æ(,Ow(-O(*ï¸((S()°Ë((QI(*s('4‚()(('‡¶(%9(&§s(%Â(&aß('Šþ(%öu(&($l(&î?((¾ (%7M(%Ha(!Ÿü(%‡((}(&Yî('0n()*V(%¸—(%%v(*,(&l (&¿À($•(%m„(&ò()ë´(%¥(&³å($C('&Ê()³(&’(%KÖ(%_å(&f7('
+("äÀ(%m(*‡¯("¾¥((§(#½(#ÄÝ('2ï()™à("GZ(#U€($~(%Õ„(%ûA((­W()#>(%÷à($™_(&ç($g¿('Æ¼(%<j(%&X($¢](%U('«(%Õ(%Nù(&K$(&‹á(%'©(%—5(%óÄ(#‰(''h('°(&<Â('q,(%d('½Ì((§¬()‰(*B("ÎÖ('f((Ã(%%Â($ç](%”·(#ôŠ((ðK($((& ”(%ð_('ž(%€g(&U¶(%ÏÐ((XŸ((•U(%AS((ãê('Qê((zÌ(%À()„(&£($º¡()()£³(';ï(&œÎ((7q(&g¯('šé('ÝZ(-#/((Xy('¢(&Ý('mþ()¶¼(&Q(((+#Ú((ÊF(+]Œ((ñà()[y()¬x($~ø("Q (%S/(.Î/(ó»(4V(%(&%M((+É((Äá((ý(&«‹(&x($þ¨('|œ(&7€(%ß¸('ÈÏ(#·À(%Uÿ()rb('e(%!((X1(&´?(%Ô($ª(%©Ù($((ßË(%;Å(& P(&DÚ("ùÍ(&ÔÝ(#¾6("„(&¤m($ª(%™|(%¯€($;ð('ÑÏ( £¾(!…g(%¯Ù(%j²(#úì($)U(#ÛN(%t£($çÄ(" ±(#ã%("…Ò(";L($j"(#Œ(&¬(!,Ã(#H(q†($Ÿ("—/($â,("X(%˜6($ÃF(#±("]½("JÖ(!»Ê( 2Ç("%¶(#?(!sž("6("”[($îÏ(#äØ(#5("CX($W¬( ê…(#dì(×Â(#2Ë( ¥v($jP( Î(!íÑ(#¹å($H|( B("ª¯(#,\("/ø(!ö3($“¼(#e ("¯›(#i(#[}(#©g("A±(#(!Î	( d¨($¹.($Õ("?(#h¤(‡d((•¹(!F7(#›ó("¯I(#ý(# ($L…(!›($9ç("Û("R($æÆ(#êê(!2($»ì(}ó(& î(!ð[($H(#00(&Ÿ%($˜Ô($-Š( #(#LG(#hü($L("«¦('š8(&Û?(&ž(#Dæ($­Š("Ð($ƒ(#HÑ($$§(#Z^( ©×(!ÓÓ(#µ'("­6("GL("h$("+(#½C("("åÇ(#Ü($8j(%=("±Ú(%©(!Å#(#Gd($W(#¸(#Z&(#ùê(#+Ò(#Ëˆ(%XÃ($í("‚‡($C2( ‰ƒ("ìð( äU(!e(!(!Î¸(#Ý^(#§‡("Ö[( ÎÁ(#Ÿ±("‚w(#T'(!Ÿ[(Ç( çí(  (!µÌ("YG(!o}( ½"(Îz( sY(!aI( ¤ (#¸º( D(Üq( Ën(Z("zÇ(!*y(¿u("e°(†¼( ‚( z( +A(Àf(þV( =X( 3(³…(?( ò¡(6(r(!·µ(X( ·U( _Î(€(¯p( n(!¢0(L³("ˆ(iÿ(Äø(rÊ( b(R(!(YÕ("º(!h(Ï5(#Œ(ú\(†¨( Â(Ý³(ân("†û(=Þ( ‰G(!kD(º¿( ®é(!II(!MÈ(*o(áQ(!¦’( °( ·™( ^œ("9Œ(à(!,E("ž„( MÀ(!#û(Î†(!°( :a( !‚( Ø(!hc( ãú("æz("k$((!Ýš("kU( 'l(!H'(!œ( PP( ®(#)º("e(!G}(‹ô(W÷(!íÓ(µœ(!¼Á( ›i("gi(!W?(!Z´(Ê²(!±5(8(“¤( ü ( SÁ(!ù("î×( ª(!Åú("Vû(sß( Ñµ( Û#( 3¬(7([S( ¿¯("fƒ(Š#( æH(Nm(!š(!Ä( "û( KŒ( m¹( ÍÅ(T( Ù)((\(½B(ÜQ(!¿ì(æ(‚f(#G( •‡(!v(Ó(¾«(!wÔ(®$("Ž(k(!8( `(™{(äé("("@<(!Ö(!ù²("î*( wî("j9(Ý{(!~/(!ˆ5( ¬_(Â(!\(ú‹(‰(¶Y( Üu(!!(³(Pû( k0(Ãà(!(W
+(åù(/î(‹õ(¾(Lw(Æ±( R( m0(!~ë(ÃÊ(¹(¸V(4("iþ(BÒ(?ú( G9(þi(ÎK(!ƒÛ( Íò(]0(üK(§(î5(™
+(T (é.(y_(fæ(yÅ(n-( Ð­(!Ñò(#(¥( ”±(iŽ(ª*(  N(Â(!*>(ü((‡(B
+( Ô( ½p( p(…u(dj(ÓÁ(uŸ(X¢(#2Ï(–„( i’("e¼()( ý( LÅ(!ã;(!rŠ(!/â(!ž~( /É(”£( Kz(ñ&(W("zØ(ôD(á(!°(!×Õ(ÚÞ( æ(!•¡(!É¾(#hÉ("ëo("EW( ‰‘( ¬Ú(Ìw(#cH("bŠ("!4("n4($“(!}š(#Ÿ(! À(#Í
+("+Q(Â¡(#\ˆ($iŽ(#O(%ð'(ú.(%Rû("½( $(#ƒÙ($~ô("˜("šÅ('“Ã(:,( âÔ(!™ë("ó7(÷b(#Mº(%K÷("Õú(#¸(!¸c(%2š(#¡2(%b(#à§(%˜w($^("õç(!ÐÐ( ( î(%)( ü²(#T("C( ß0("ä»(!K­(ð˜("—o( _Ï(!C¸(d$(!(l( Z(m‘(#Òˆ( »|(V³(Nñ(Ë¾("!·( ™ß(#–(#ÞÓ(!þÅ("c("Oû( „¦("ß€("
+¤(!ñ((#(#@“($®1(!éà(#c¤(©©(!‡\("?ý(!š\("Ý›(!Â("º}(#7³(#“(!Ù(#•©( ¿t(!‰è(&T(!ªë(#E($tá($gª($5(!Ñ(#àP($ß$(#Å1('»(%¦D(&Á|(%W($Ä¢(!a¾(&eó(%Ù€(&>„($Â0('¶­(%›('HX("°&($!L($.ï(%Þ;(!¼K(%ÿ(&RG(!š(Þ3(%aŒ("m("¥"(#("%i("m(#ë(!ÑE(%(",Ð( ©<($Ô(!Î(",!( Q¾( Zß(!õS(	( û`( .("8ø(¾A( ñ(Å( )ž(¬>(ýþ(ò(K&('¸( k“(ªR(®œ( 4Ø(}¯(\¨(lc(‹(ý;( þ(.-(C(×©((@g(Ö+(›(Y(¨](ê(Ìs(b(e‚(3Ö(AÅ((ôÃ(v7(áõ(µ(Á(Û+(Òß( í(g2(!M(ÊÈ(˜õ(“M(ÿé(©
+(8E(ì÷(H(*(ž(ªï(Ù(((š (M‚(Ø(P<(È1(-Í(ûM(ÿw(ý7(fË(}„(qŽ(i(9*(ì'(½Ï(å°(Dî(ª@(Q¢(í(sS(u(Aþ(i0(S'(w(Éˆ(‚Ø(Uw(Pì(	;(¶¡(¤÷(·(“G(v( …?(A"(Y‚(^(˜(KQ( ºÈ((Ý( Ä (¦s(!ÛS(ÇÏ(om(Žƒ(ÄÈ(†(V‘'þp'ûC´'æ›'Ðë¼'¼Ö'Ã Y'¼±Ÿ'«„Ž'²)/'Â1'Ðtÿ'Ñ¹Ý'ÌÈ~'×.G'ê.9'ò«¹'æ€.'Ø7}'ÛJ@'å†'ä´'âê<'ÜhÊ'ß¤P'ê¼'ò€f'ëóO'è™,'å>r'êX'í¨'èy×'ì9a(84( _'ñR'çÇ'ðn–'þöÁ'øñ™'í¤'õ‡2( a(óM(tS'ôÚ'û¦(Hj(Ûá(×u'ø…Q'ø8Ñ( ß(
+ÞÍ(
+Ï(`t(:(§(œ¦(§
+(øþ(ð…(I(QÔ(Ý®(¦ü(Çs(×(Ÿ~(ä­(L¯(¾4(í(©#(!µ
+(!u(!!("Íê(‘û(œi(¯_( @(N\(Š™(Ÿ(ˆ(iN(Ó()Ê(»À(áÕ(T¦(Ã(^£(|Ê(†b'ü¸Õ( è(s¾(]”(D(
+ôÈ(Éí(ðW(·(Ø¡(‡+(
+é¥(A(	„º(Hê'ù}]'í°•'ú°,( àÜ(Ô ((š(ê(Ôb(ûG(D”(K¿(²{(N!(}Y(‰-(5'ð«†'ì6'ò¥X( ¨(í (~ù(~((Œ½(å(~{(~õ(†(ãu(£1(†z(
+n(Ý(—ƒ'úQ'ï¢'ìù 'ü#:(Ã(½B(š'(2¾(­(Q(Øï(ä(7²(](íè((	ø>(ž.(ùþ('ù7h'ïaÚ'ük‘(q¬(çD(	ÊÚ(	?À(Ìµ(ûþ(’ò(Ñˆ(}å(«²(à^(Úm(­	(P(ê?(‹7(
+sE(ÏÀ( -Ø'óÀ¥(´¿(þÌ(	i‰(j»(3ß(Àj(eJ(Zâ(ìÈ(­~(ag('‚(M( Gï(‚(}4(Âw(O0(·(0ï(B(ªg(Ê(Ó¹(		b(l¦(©¸(;(3(@(£
+(JA(¿‹(îÌ(;)(n(`Û("II(®/(mo(þ‹(o(V…(²9(`é(	‹Š(µw(-¢(#Ž(.7(Ay(Š€(‡W(qï(>(ìû(&(2´(.( ¿·(V+(ˆ¶(½(¶(<ñ(â
+(~Å(«s(¦ö(±(á((n](;Ä(ÆÑ(ÿ€(‘v(ì{(ÌÅ(Œ(’ø(Ó¿(z(M)(m{(Ô(¦ä(ô%(6(\(Îú(^š(Xf(õ(Ãu(™p(Ùk(š~(˜ (Ã(nM(W(Œ(5³(¿(ë/(ý (XÄ(Ÿâ(W<(S(À](Ø(:(!(—¾((è(ëÿ(@´(=ü(Qê(J3(à˜(B¡(§(Ju(æì(ð(¼>(nô(Ñ(x«(w`( vý(æ(6i(F(ó‹(( \(d@(Uœ(®j(Ë(Ñ¢(Â(ñ³( 2(œ#(Wp(‘°(ï(Õd(~‰(Ù‹(¶ä(ñ½(n/(5í(!Ë÷(}(¿u(æÇ(DJ(FG( ÀŒ(òì(¡È(ñü(°b(l( +ä(,â(«à(*:(õ(bj($Q(î(üñ(Ž(CÊ(*(¹©(ü)(°»(§6(6(U((hd(Â‚(¬Ê(mÂ(60(A[(ö0(~!(^h({ñ(¼Ý(‰g(“(ùU(ã®(‰Ç(æn(Ûu(H’(*¿(Žp(d(q(ô(š®(2(óÎ(ö˜(ˆ*(HB(é7(JD( ~(œý(ï{(*­(ÀÜ(ú7(¥!(~·(9I(%Þ(¿¥(ª½(s(I()Ý(«(3ø( 
+ø(Ï?(qÊ(à±(­°(”µ(\(¯((1°(hp(éø(÷ž(O(q¡(ž¼(SM(}l(á?(0·(ØI(V
+(Þ”(þ³(¡õ(Kî(	1(Á(}Ú(™Ê(ÃÂ( (6(©À(4–(†m(cJ(Ù(¬({(ët(ãý(m5(u¤(üþ(ü…(Öo(ÜÙ(7M("ž(L”(	/(ïä( '(¬„(:C(Ú(¤6(=`(Ö<(Ô(¾T(Ð›(Õ>(Àƒ(4ð(©½(”{(L(Å(¤((’Ó(ù°(#:=(íw(^ƒ((åW(‰™([ú("m‰(yŒ(ˆù(+§(ÿ¾(?§(×{(Vi(z¥(\±(C(î©(Õ’(!(¦(ño(rš(4ã(a^(Ò(Òa(èa(ƒ¹(TF(u¶(ƒp(—Ã(Š›(û	(!=(ü(G	(Þº(Z‹(Ø¢(!Á>(b(Ôv(ò( “^(.š(iL(aE(³Þ(ò(®®( Û(Ô÷(Gi(ÜE(UÈ(ô‡( v¾( °4(!(Är(~ù(!Ö( $X(?%( ®](#ã2(d(Óû(d( ½¡(þ_(n¡(£ª( 2Â(Ï7(O¦(†µ(  (DV(`p(°(€ì(G(Žç(ïà(­(>%(‹s(Ã(¶(„\(*Þ(ý	(vÿ(ò.(²_({H(ò(f(ñU(H(x`( \+(ö•(ŠG(×b( (=_(Áš(|(~z(~,(²(
+O(±n(Œí(Ýç( {™(«	(Ž‡(Of(I( ZX(÷š(^º('n( ‚w(¾á(pç(­¡( 6Ý(%(Š(ã(1™(Å1( MG( ^!(SÖ("( Å1(5…( ó("Ž(cÍ(>=(!Ž´( €(!¤?(¬¿( ït(!º(!Î6( vé(!!²("Æ(!|(kÓ(!&ç(!Á-( P1(y](Ôx(Î{(!îˆ(#D[(!v?( “ ($¨Š("‰B("=\(=((>-( ˆµ(F%(úÖ(#k¯(!É($/õ($²à(#-V("7ñ( Ì¿(ÖÜ($p£(!e÷( q3( Tˆ(Ù¶(’­(#Y0( Œ¢(t(#7("¾³("nM(!±(!L("¹Ò(!€(!ì(Òg( ªŒ(!“4(s/( >J(#úµ(#’l(!!Ç(#Fâ(ñf(Î}(!,Ö(Ôà(#²¿( oâ( ]6( µ¡(!$B( 4 (!T("ì($("gU("ˆ®("}p($’¨(!"+(t–("MR(#B´(#Á¬(é¶('z(!X(ž‚(!oN( Ž×(!(#AÇ(!5(õ( gà(#?‘(®‘( ì$(b-( ¦G( UŸ(jë(!]ô(ŒÂ(!	(#'( ‰("Á$(Šß("&(!&˜(C(T|(¨(–(!	€(8(!f,(•>(~(å{( dA(!éŠ(ÖÀ(ˆ("c•(ž#( ÉF(!H±(!Š°(¿ó(ª( ô;(¥T(^†(Ï(ÛØ(£(Ûõ( Ø("º½(ï@(PE(ÚB( ,ñ(Äš(€p(#s(( µ]( i( ß(Š¡( T(¹(_·(ç5(ý€(ò(‰÷(Ðv(!)(ì(Kª(­7(®(æ÷(Ø.(lp(µ5(%…(ÒÐ(;í(Ï´( q…(ó¢(Ù(!2Õ(Úµ(u8(!ÑZ(Ÿ½(…I( bT(!â( ©(CÙ( –("X(¬ä(”(]Å(ªn(|E(¦Û(Oo(!˜(Èè(ïõ( )µ($É(M(™G(­m(ë¿(€(((²š(·Ñ(?´(†º( Z(À·(†(¦(Þ}(É¥(¶ð((Q¿(49(æÑ(Ö~(„%(&l(¥(Å–(!‚!( 2
+(öÏ(¼ï(.x( (¬Ö(LY(õ( ˜Þ(íÅ( '5( {(w¡( S¾(Ýß(w( F:(¡( Cl(!§ß(¹W(k(¸[( :¡(ö( îa(p(Ý5(ÐS(À( ~A(Gc(z( 5z( ‡Ï( *S('p(û¤(yð( M¯(ÊG(eO(¸q(ì{( åä(Á¿(@)(‹Ä(É(>|( [(Ê((¿)(õc(·¿(¼u(ð(È(î´(!ÇO((ž\(^7(Öê((î‡(ßM(“((Ï–(­	(Šã(IÛ($j(61(C(6h(§Ð(s(!V(¿ç(<ú(xˆ(ÄC( VA(Ÿÿ( r™(ú(|‹([ð(T”(ñÃ(àó(éÖ(_â(þ/(§ (. (0©(.¾(ÑE(3Å(¬(Öî(Š(¾_(_(§*("d(ÿ(Ÿ
+(rs(­Ò(¯(³‹(@ð(À`(MZ(ßJ(%(\É(G(Æi(E(þå( +ž(Á(Â( Ü (³(ÁN( D¶(îÔ(O(‡e(”§(4H(F0(ý;(@§( ªÈ(§ü(Ä¡("*(só(a(D( à( z(ä”(¿X(+À(j([ô(ì‚( ƒ>(!Ž(!š¾(Òý( 7	( ( Cu(!r(W("G( ‰u( +¼(ˆè(!(Ø(@	(øn(ð(Íx( v(FÆ( (Ê(ÄÝ( Œ1(ªu(§Â(ïƒ(!,(¬ˆ(½( )(TŒ(š›( ZŒ( gš(ì(…N(!Ð(*w(!$+(Ym(˜a(!§(Mþ(Oç(ýÑ(",Õ(R›(z(‚("îï(Ê(n#(=É(óD(„(m(eÕ(×¥(!}(Yý(‡H(fq(Zz(øè(ù>(ÑŽ(uO(dÍ(>(Íî((<(Êu(”W(ó•(ôà(R((cè(óÓ(à8(£È(vì(Ìv(å¸(–(úÑ(r*(¤|(tÀ(((â¾(;Š( dµ( N{(|(…(Ñ	(õ( ¯`(ï(ý((«m(![_(Ós(WE( Æ( ¤²(û§(×>(Ùe(\ã(ÊÕ([(5€(²Ø(õá( ®Ù(£(!Òw( ¾`(!–>("ä«( Â( &y("ã(#€(F%( eG(¹Á( øK( î]( C(!<y(Ï3(õÍ(B(!Üb( "Ù("ã«( op( 1Ô(ûˆ( i(ßA( ü™("^(\„(!tÿ(7”(!ŒÜ(!ÈÅ( Ù( |(³î(!øÅ(ˆ­(!F&(žõ(ßµ( îl(W]( lø(Á¤(!X( ×(Àp(!|-(!ù§(bï(oð(“‚(xJ(ç((Z“'øp¤( Zü(t5(÷™(œ.()R( q’(y
+( ’Ž(ã(„–(,D(Ž»("2(ª(-(r¸(²‹( 9‚(,‡(Z(¿(á(Z(ÿ£(ì{(‰,(«(OR(¯(Hƒ(—7(\á(Â(3ê(†(uã(¢Š(å:(¯ø(,6(£ò(I(à(A(ƒ®(É‹(¤M(Žm(úM(z!(ÔÈ(çÅ(öÏ(ÓÛ(	–(ºÖ(M2(ûK(¾(ò©(
+&(/¸(L™(cj(·À(
+a(B:(ª‘(Ž¹(êO(!*±(!·²(D‚(Ô/((ú(¥–(w(ÿ‚(–Ó(k(œj(€C(é(‡(`(Tz(.e(((€Û(ZÅ(;Â(Ý(¦a(VW(a(]â(Ï(Ö(x(ÜÏ( Ðé(Oã($™õ("Ì&(’‚(ËK(-’(("(È×(ù4(Oy(ü¸(/s(Îo(ÿ^(fÙ(bg(°(â×(ˆ(Ññ(
+“(<p(ðH(ä`( º½(~(P( M\(È›(µ(#G((!(üA( 2Ë(¡‹(¼[(ÄÜ( ^Ü(ßæ(×y($Ö(/á(·1( ±’(  Ê(*_(ê0(!nd(q»(UÓ(!¤Ñ(0<( *ã(÷(!«á(Eý(!€¥(_(H(.(à	(#»Q(Ÿ¦( G(}‡(>“(ùi( N( ê	(œ%(3d( 8!("*v(!ïG( ½h(?z(!@W(S8(" t(¹9("S!( žÂ(Ëð(!ù(f( 2ë(!>‹(O(˜¾(5Ù(!éš(Ï´(!(mÈ(Ü( (!tœ(#Ë™(!=†( Š.($xG(Üˆ(#G( YL("‹D( bÀ("`("Lu("Mm( 2( É›(%‘|(#>(#¸Ð(!“²("Ä›(#Ý)(#f‘(#éu("”o(#l{(#,•(%—($Y×(#- (&DJ("×x(&±Ý($ õ(!§/(#"s($\("û	(%($ô(#ª(%g
+(#êƒ(#n(%š(#ÍÝ(%b8($¤(#ic("ú($N("ò@(#I¨(!‹Ò($(( ¾ó(Ÿ¼("E¶(#{8($¨f("'x("‘¬("fg(!þ("ÿb(+ó("I[( r( £6( (ùŽ( ´†( /#(¼ (‘`(#áL("Àù(»(™(‘Ä(iE()<(ûï(‰÷(ºþ(D}(B(i!(¡}(’6(£(þš(¹8(Ê („~(ã{(„Ê(‡é(Óò(Ã(ñ§(Ã»(ô({(å(S¡()ç(×g(P§(Ä](&º(P™(Ï( (\P(K(Ð>(Kš(«4(×(9Ò(ŒÍ(šû(š
+()Œ(=¯(Á(¢(8ö(úé(™ÿ(XÔ(Ä´(UÍ(ï (qu((MÌ(qÆ(’(‰@(ç•(AŒ(&E(ôù(X÷(§K(ÁR(yÎ(ßŽ(Åz(Ÿ(ßÉ(	($Ð(¸Ñ(²[(j®(ÀK(„(a³(õ(rÃ(=%(Æ(E (U((ª(á((
+‡(¿Ã(Á(êe(ÀZ(¤N(Ô(¬(Œ(xy(Ò(.º(ÀL(‹~(ßd(è(½](Ã1(õL(ÇP(íB(•Í(R(D.(S&(È¯(i(ÝÚ(•þ(‹x(ç&(â˜(Æ¹(Ñ£(;„(w'(ù°(«q(?·(Å6(Þ`(>‘(#Þ(¿^(KL(¯ž(¤ø(çš(7!(2ó(  (è€(g°(®L(§(Ã‰(d¾(zE(Zj(ÎY([ë( ¼((sØ(J((,2(Ú>(EÈ(go(?E(tz(µ(õˆ(©¼(T(H»(ãb(žT(“H(J3(¦ (°½(_p(TÚ(`Ñ(Mµ(ÊC(ÏŠ(àì(¦:(
+%n(	¹"(	r¨(¡<(
+D{(3(
+ï(§‡(v(,R(¸@(<»(;(È9(|ó((åë(	½(	ÜË(Ò(Ö
+(	“(þ(
+:Ó(Ú[(¤…(«å(	Sô(k(|(	ñy(
+6g(0ü(	ò(+,()(€(Ró(£Œ(X3(![(÷Ã(OÙ(¥k(¤(­?(¥(&Ô(À§(§¯(¹(—}(«/((Âœ((U”(Dê(•Ò(’ç(ãž(ÙF(â8(Æô(úW(ô(†‹(™Á(G(~\(®»(Óe(id(6(¢(((øT(8(ˆo(vÃ(^Û(÷(j!(qh(ÅÍ(d^()¹(Z3(g(ëò(-'(¿·(*²(}W(Ïþ(â^(y÷(©Ò(DX(Âc(1U(Ia(Yõ(«3(†6(a(îÆ(¯I(qû((ƒZ(Yt(îd(³(’(?z((S(*t(”T(úz(Óv(Ða(x
+(M¥(o(~-(å;(·J(üß(¸†(9´((|(Lä(Ì(‹Ÿ(…8(Ìƒ(ÿB(œ'(hä(I-(Îõ(áï(ñ@(‚‘(r'(ÝÞ(N(E‘(ûã(V((Ø´(Ã?(§((i£(
+…Ž(ã(	ú6(	¦'(Œ6(
+SŽ(
+`ð(/ä(hO(Pä(iN(	ùÄ(oˆ(hè(È¿(	Zg(ðx(
+€(
+a(	ôZ(
+ø@(ð¯(=m(-û(t4(¸Ü(R$(ÚQ(xÌ(y“(3Ø(ób(‰(iÓ(
+×w(ìµ(
+A(ïv(²Ä(Ê‰(ÿ(uT(ˆC(Þœ((Ãã(	Åø(»ý(TR(ÙÀ(ÁB(ÉH(
+Í	(	ã&(Ç…(þÌ(-(U(Œ(•ž(CW(k(	 Ú(Á¹(’h(	È(m(
+°(ûù(	ÿè(øN((	ø1(m–(¼Õ(“@(x(;¨(/”(©é(Z(\(´(
+Äô(Ž$(
+mª(üö(
+Õ°(¦‰(§Æ(
+)ì(k(x¡(9e(3P(
+‘ƒ(G[(
+Éx(	’ð(2I(—k(¬õ(W¦(È((ª(GZ(Ìº( l(Y¿(&ã(
+ª!(Ø$(ÛB((†(ù,(ù(ˆ4(+æ(ä(Y(
+ÀS(k^((`O(‘Y(7((
+ Å(
+ÓÇ(v„(
+ÑÇ(/¼(N¶(
+v|(ˆ¶(ãw(oé(ld(Kj((ùu(Ê(	¯˜(Ž(
+2(Ì™(íN(	©r(	ã!(
+$…(Gp(}(	ÃÓ(À(î[(
+F(@^(
+®Á(Ãô(	S(-%(ËÍ(	Ç(Ð(^×(Q7(¾Ó(	„-(åÇ(	™6( *(iq(Ë((ù™(ø'(
+d(
+â9(w(ô	(Í(œk(¶#(þ(C(4((	r(N–(g±(üb(¶¾(âï(7Ç(×(&I(àC(6(n(ï’(Å:( ä(Ní(ä*(U(
+¾(Â×(	r:(1(ëK(è(½ó(Q(·*(­](ôŠ(	u’(Ž'(
+Ì¦(
+(Y(ô?(
+Á'(ÌŸ(Žÿ(ÂN(h(^m(	’W(	¤¤(zV(„µ((ŠU(•(I(9»(éE(e( á(ˆi(š(hU( ( 3(¦m(…(ÊŽ(ˆÜ(õí(,×(ÿ(Äg(‰Ö(ný(.(ËŸ(5•(¡q(iY(8¯(“(³(‚Ë(<(ˆ…(€ï(A0(†ñ(âp(Én(ÏG((	ÿØ(§™(/Ö(cB(	ù(Žæ(		(#š(8"(Üt(¢(wt(¢ò(®‘(Pþ(ž(š ((
+y(§4(	àG([ý(%à(‘(fj(w(ð³(~a(VÍ(
+¯à(1ï(¶­(‚n(ò(DÁ(W(6Š(;(J©(ß˜(¸¸(òZ(Ëñ(ËB(n¬(Ý$(¬k(S4(šç(i"(nß(.ö(L(ç_(«<(N(Œü(^C(¨°(	áf(Û(=¦(»:(QÝ(‰(Œ(
+‰ß(F<(|Ž(–ß(’R(jh(
+(Óº(k•(íl(7(b(-5(_	(7ó(	$(
+õm(
+òÌ(
+Z(	çr((
+3&(Î6(K(4](ûÂ(.(Ã©(½(°(,V(}G(í(Ü:(½f(
+w (†2(…(¨(ã(ë_(’(Ú»(=†(î1(	è!(¡’(Wæ(Ê‡(	Ô¹(Â(ðé(,f(+1(kø(ÚÒ(kx(îÜ(™m(ïÅ(16(t–(f¾((ç(d·(lo(kò(ÕØ(âÚ( (¡(¯(šC(0C(gà(qœ(	È}(©M(–(Äþ(Ä(Í9(
+œ(%'(çU(Qk(Ì£(y(ê(‚(•(Çø(Wã(¢£(@÷(ýÔ(8ñ(³K(u(üJ(nÿ(ÊŽ(¤‡(½î(µ(dŠ(05(`{(à(I¯(´(d?(*†(ÿf(Q(µ³(;(ÝÊ(DÌ(3(³z(¡§(é(:-(á³(²Ô(-k(Ï(íx(C"(	µ(I­(0 (
+‘( „(‘!(ÿó(x(×(kr(ÑË(à(Ì(Ÿ(|(d=(É(T"(w(®(ª(°`(óÿ(Ž÷(ßÓ(Žé(µù(Ij(F(“(!g(Ê¥(p(U(b\(ñ'(î(dÊ(˜>(Æ(5(!¨(¨'(ÂÆ(@(Åœ(ž(à×(Ü (¤c(#v(ú9(2($ (Ÿq(¤(> ((4«(\7(öÛ(¨®(ùO(…Ý(D"(º(® (äà(uX(Ü4(
+(M#(™($](I‰(¼|(wH(gâ(**(I(gà(“ß(­6(äú(½(	Ý()(Ùb(Þž(à&(§‡(y(ÇÒ(J(Ñ(ïx(\3(e(;(vª(ö¯(øa( H(!(õ;(Tž(§ã(…ö(ÊÁ(8÷(Î¶(Rß(’^(,Ë(Ùh(l›(íâ(È—(«¥(5 (Â¤(§U(Û‰(
+(£ž(U0(Àò(—(Â1(ab(U©(%Ë( õ(5ž(s([^(ôQ(Lµ(ju(ÊÛ(?(ËÖ(@è((b(×í(J(Ö(%8(N¿( ¦(´(°â(¥(ÝÂ(Ûy(4U(™±(xÙ(X;(r(À¦("°(CÚ(“((ù(ƒ½(?(Ïm(¾[(.Õ(9(Î«(´t(Lß(†(t(\…(³)(gj(F)(÷ô(™«(û„(Žm(Ä#(1ä(—œ(‡È(g@(y¦(ù®(·{(?>(Ù˜(Xì(5\(ÒØ(K(þ(š(©($Š(ã(8(Bj(o}(æD(>n([(/b(8(™(
+(õê(vÔ(¥í(¦(	Š(ø(§	(>(Åô(,Ò(–(Ÿö(÷B(½«(6(&(t(`ž(°—(Ù‡(°0(gn(læ(¢œ(æß((QŽ(úÊ("Î(À(V(ˆ˜(á(ið(d:((_Ä(Ze(¡€((e·(æ({Ø(0_(í:(! (³_(Äï(Íä(gn(sË(Zò(¥Ž(]C(¸Ö(aÃ(N(ïq(­ù(_0(xW(€Å(p«("C(gÀ(Õ (§õ(1S(ƒî(Á²( (°(î(M(iÄ(p¡((‰ð( Z(®r(ÿ(’(òï(„Z(+(sØ(X(«@()K(‰(ªG(VÇ(œ(ûß(	l()õ(Ã:([2(àY( ð(Áÿ(Ÿ‡(‘‰(SÆ(Bµ(H(h`(Œ5(çÊ(;(´(_ (™Þ(ée(ðT(‚ø(g2(¤Ã(6B(ƒ=(h(-|((4H(](T(F¡(Û[(üú(Á(Þq(C‘(8è(ß–(x½(©2(^ë(èž(c(ƒW(½$(wì(J(4ê(êÏ(]È(ãÕ(_y(Ô(%Â(ð(£f(=(j{(u¥(ç¾(ñ(tª(cE(;ƒ(,B(,U(g(0•(Æ (LÛ(ü3(kÿ(|X(ñ(Ž(Á(è(b’(á(¡(ï(tÇ(-ß(±(Þ(óë(8&("(­-(ê¬(w(¼v(zÅ(Ù(›­(˜§(•`(y(ÂV(ï(í(}á(äK(Š¹(H%(°$(û(»(¥o(ÄŒ(pË(mÓ(RÊ(D[(^(:(!8(‚(©(‡Í(9w(‹B(¶Ž(Ö(l(Ö(¤((„z(ÖM(&c(aÄ(õ­(ú(PW(ÄA(¦(s(¿}(Îº("½(Ù(:(
+î(7U(¨@(ßO(r(ÜA(‡M((å(S+(£(­({0(Lî(3¡(å(×/(§c(\˜(wü(Æ¤(=_(Ê(‹©(Õ(
+"(	(Õê(cÛ(/c([N(I(TŽ(Ü,(“Þ(ƒ«(óÑ(õz(r(A)(ex(aS(j1(¬µ(ò¾(1V(.¼(N(¸C(‰(`7(ˆG( S(¸Œ(F²(Œ@(8ý(²(ÆË(ýj(õÝ(‘1(I(UÙ(è
+(²(ðµ(¬˜(­è(¨(eM(el(²(Ú(	(°)(y¶(æ¯(‘¢(L((»Ù(°(”(­(±Á(-(„ü(šß(	š(wa(gÅ(õ(9Ú(9‹(RT(%¸(›(A(HÆ(-W(µ(š°("¢($Ã(´/(ñA(­(Úõ(î¾(Ê9(ET(6T(È.(€s(¼×(?Ö(6³(nÁ(Ò(Kâ(Ì`(F(s‰(|(³(ÇØ(,-(¥b(’°(û¹(€¸(&(«|(l”(¾¨(¤((Ñ6(.(šº(^K() (l¢(•(ÚF(Áä(I (‹(%(G(¯Ý(¡(?‹(U±(Ó([!(Å(rì('E($(s(–_(‹G(ÝÎ(’Á(Ëv(	Þ(ÈØ(Ê((þÞ(F¼(B(ÒÐ(!¥(ÕÑ(îÎ(p’(+(Ÿ¼(¤(q(RÂ(b(Ì(²Ð(ÿ(êò(˜A(øu(7J(I(Ž.(â{(_õ(AÄ(÷S(ðÕ(Ot(„e(»¬(–(›n(Y›(¶S(³Ó(‡2(	Å()¸(~(8m(8(!(Ü¥(Þ(ª(!I(áR(ô¥(ÔÜ(»+(S£(Àñ(…ð(¤(¥s(žð(L¤(û(®Â(È,(ž¬(€“( l(—ø({‘(€{(°v(	œ(?­(s€(5T(ûó(¢‹(&Ø(I(Mó(‡­(ÝÔ(€}(V¯(¶®(-(2\(žÛ(W(þ(…ƒ(·(sr(¨[(ÅÓ(~Ä(ÿÊ(åd(¡²(‹Ý({Ø(Ë(0©(3ì(“(½ü(í£(³¾(+(Ó'(Nâ(ƒˆ(å(õ(4ž(÷W(Qr(®	(há(´µ(q<(ÙÞ(ý(ÕÊ(¸G(öÔ(PŒ(>(?( (Ñ©(Q(y(r‚(ã(‘ð(Õñ(£,(¡U(Ý“(èÎ(Òô(	9(ÕH(º (ž$(R(ãS(bá(p(Ã(×(½(ü2(yk(ÿ((4(µ|(0u(3Ô(„ÿ(ø,(J((jÐ(¼ù("¨°(lÙ(Ã(ùÊ(A¨(a(Ã¸('ì(!,Z(ÓQ(¦¨(íÜ(ØÉ( dé(¨(!yÙ( J(Ø( –(Î(·A(!~(ÿ(Œ‹(ÜA(ìR(!Ì¢( µí( ²&(!{o(!ú(!c( 6ÿ(#\§(#ëN("…‚($—( %ª("e($–?(#º»("ú	($>("ïw($G(!ãô(!rz(!Þ¬( 2†("Sð( ‚Ê(!‘](!JM(#r(#nï( á‡(!Ñ("G}( 9(!¡( Ññ( %¯(!ˆü(#NÁ({¸(!âì(!qÞ(!±("™("»¾("ùË("L(€q(!8(!¨+( ïm(Îr(+m($-l(©á( ¤û(¦(ˆW(dÁ( D( 
+L((y|(¾\(!1ž(÷¸( ØË({â(!ÄÙ(Js(!dˆ(³-(¢l(šQ(Íµ(kr(Ü°(¬N(¤(¤‰()x( 
+½("(<(#(!7Ï((z (¯³(Íg(÷E(¶Š(ÕO(´Ó(þc(„k( Í(W¦( Ï(Jè(Ø(”Û(`÷(£(Aî(j®(Lš(!6V(¤ä(Ñ-(Š9(sy(Œ(8?(!{ã(7D( B™(‹æ( V(©e(!\U( ¸?( %æ( 	s( g(#S@(!ß‡(•é( @’( '5(#¿( w(!:›("I(!²É( i("™{("?‚(mX( õ©("ÃŽ(²(#SC("a	("ÓÔ("6¨(òR(#ÚÂ("+ê("fØ("¬l(%("˜‘("èü( çê("Þ—(aŒ("Á=(!#ç( n¼( *("í($€«(à!(%=Î( ‰ã(!›…( y†(Ð-("ü(" (#8C(#•ä(!åà(#¿(“=("ið(d+(!¢(#âM(DW(!Nd("üÇ("å/( që(#\(!¾”(êï("…("j(u("Rè(!Áæ(! H(¢“(Àí(!2(!¦0(5#(!š®(#( ¤W(Ú—(f‡( |`(ô¢(´Û(×((!Ÿ(~Ž(–( ŽÂ(¾w(6¼(!ó(™<(i½(´è("Ã¿(‡(0(Y( Æ(  (î‡(Èm(!H(üÿ(u(’( 1r(²(]¥( Œ(êÄ( rk(|_(õ(®®(â²(«™( pø(!$(Ìð( ô-(z¨(¹(:A( :(±´(–Y( Í(w	(ZÉ(´(µí(!}¸(„(ÖÍ(qž(-È(o( åR(ßo(!‡~(!•(! ( )("‘…(¡(!ñ7("Ææ(#DË(!VV(#¼I(ê±($¦ä(%,(ì§("œá(ë¬(#F("žS(!¬2("/ú(#wÿ("‡é( ðq(!…(ÌN("}Ý(#2T(!Z($N¥($Ç(%(#¿	(#·("-	(%_(#,|(&†( ½¦("(#áí(&»G(%Ÿ7(Ãê(&îØ("=J(!à(#ÉL("@($gJ(#TÇ($·Q( ´<(#¸(!)](!òÑ(!¿²(#û(!!(#ö>(!‚£(&cÏ("´Q("Õû("èü("“Ý(#ªl(#ZŠ("Ãq(!¸.("ãÉ("T<(!ùÂ($	á("€ã( ü#(!˜ë(#|G(!-("(…(#› ($'u(#`N(«”(!¿¹(!ak($qd(Ç,(!Òç("¼("w™(!{$("( ®¹( ÷©(!g9(!$)(Ùe("tÀ(!ôÞ(#‘( N(!õ("vt(#)("
+z("µ(%5("~u(!ð ("¤("L\( á(($Ý ("D(#Ÿ(#;D(#&–($‰($–‘(!/¼("Þ°(!‡R(!P&(d:("Y
+("û=("°
+($Zë(&3Ö(#Õ	($»¦(%0Ú(!ó(%°ª($¨(#8T($·×(%«E($	z(!xÃ(#ÚR(!Üc($0Ë(!(Ÿ("êí("_(%Ò7(%¢ú(#q(#Í…(&Ï_($6O($–_($ÿð($Ÿf("‘k(%¯(#oB(%+†($`\("‚($†ù(#B(#±ü(&Zù(#»Ý($¶c(%mº(!SA(#3¶("ç»($$Z(#º@(!0(#ÓQ(#?À("æ6(%½r(#”¯(!f°(#…È(%cú(!&³(#Û($>û("äß(!Øm($ts("zí(#,ð("š¡( À¼($t€(#0‰(#Rƒ("G("çh(!T(!áS("‹i(!Sl("$y( …(#½("ÎÚ(!’(!,M(!ã‘("	¥("®("„Ä(!¦j($ž€("µ("{X(ˆq( E±(Yt(Ú(ªÇ(ŽQ(Bº( nI(ÕX(!h}(!€€(öá( èR(!‘Ó( kù(!aI( (º( O—( Â(!GF("}ô( ,Y("Äm("¿Ÿ(#cQ("qö($/("£/(#¼‰(!uÔ( Ü
+(!`( _J("±é($„(#cï(#º("ÆL(#dŽ(#y("…Ÿ(#IŽ(!—(J×(Ã(ÜG(J(b‚'íà•'ß¨¨'Éû'¹î'³Ï'´_ù'¬U'£Z!'šð+'†ú|'vZ'‡mÛ'–%à'”‰V'ŒãZ'‚ú'‰ËE'ŸOò'©Ø'¨â'™('ˆ ¡'†4''Ž¤ÿ'•Ó'Š‰'uçÔ'l±6's1U'hÀç'T\t'L@ž'H«ø'=ð'@}©'C01'UjD'T«'@{¬'$ÒÞ'$Þ''$só'2
+M'4Šw'1ÝÑ'O¥±'Mè'){Ø';R'u.'v'(y '.Ý' ˆ'9¬'*¼T'=Ø-'H6
+'-ôÙ'qŸ'ñ\''x'5.='DÄ''yÌ'­¤'Aø'3’|'J*Ÿ'ZYÛ'U*^'Oñ'E'Rûé'^Ý']ãY'DéÊ'%ƒ¹'a'(µ7'Y®i'n€='¨¡'ŠÈ 'ˆ'ŠQÊ'õ2'ŒÞP'ŽhÎ'ˆUï'ha'>ºQ'BÞ’'b}'ƒÿô'˜ï'¦Â'©½œ'Á?'Ïkù'Õ7'Èâ&'»„L'±F§'­o€'Ÿ´u'ŒQ¯'‹žç'¤Åß'Ãüþ'×G'ß†»'æû×'ÿ(z(Âx(áF(Ì!(Í(ÒH(Ï?(dQ(hD(É(Ml(þß((Û(È(	ü'ïæ“'áZm'Ï5'ÂÅ'½ÑE'»Éª'Âæ‚'Õö»'ô~É(Ò( Ç'ð7é'Õ‡'Ä»è'·õw'§à'™öª'¾	'Y›`'h8B'ˆZ'”!¨'š+'œûr'±-E'Ëú°'íx(™ü( æ'ùr3'ÜvB'¿þp'®`€'›[±'ŽÕº's?R'JØN')1©'Lˆ'uÊ'‰ö«'Œƒï'œí·'µ"”'Õå]'õe?(™Î(ø}'þlð'ñ!È'Öåë'µ,p'¥
+Q'’{­'„úÝ'g¨„'2p.'(H['K	,'v£u'ˆi'‘h!'žÀ‘'¿y7'à.u'÷À(€|(Ì[(
+)(Ý['ñ©x'Ø¼'»C'¥P,'›ÛÌ'‰è)']"}':y'5bØ'Yû—'‚cv'«'™zò'­(õ'ÌÉ¡'ì¹·(ÙG(	_–(¦µ(Íä(ó(	_…'üp'Ü¹q'ÁO>'³hÑ'¢i†'‘¶‰'jt'A«'I¼*'v\s'‚Û'–6¨'¢Ý'¹›&'Øig'û’(Í(à6(,½(–ÿ(q§(žÍ(d(öÚ'é.|'ÔƒA'Àé'µBÎ'¢Ô•'ˆ¥Ÿ'hÕ'h›J'…Ò'¤ÃD'®'³fx'Ê;.'æ^(ƒ^(Áœ(›¢("(€Y(Í(·`(Úà( Q(Qå(„'êsp'ÚÚz'Ì8O'»Ð'¥pž'Sß'Žýø'¤”'½cd'ÄÚR'Éj»'Û1\'ó_“(3(Ôø(›ª(œ•(Q(­¨("/¸(Ê>(o(¥(ÒK(Ô¹'ÿ™'òË'ç%©'Ûÿo'Í$Ÿ'¯…@'¦r#'¹(™'ÐüÄ'à73'â:'î­Æ'ÿ,E(m^(Qf( '¿("½(!R;(!(#‚ß($ä("”S(!Ü•( ÖW(LÇ(;é(œÜ(A,'ý·{'öX™'ðÁ'Ùõt'É=û'Íj'ç‹Ã'öË'üåß(ý(N(I8(Õr( åÀ($Ì("w3('U/($ûŠ(%($Öš('—l(%ºà($ëæ(!g("(÷f(fê(#™(
+x(1œ'ýû&'çó‰'ä5\'ôŸç(î¹(ò(	6¨(	ƒ~(TW(®«("º[(!¬ç(%þ¼(%ìÝ($Ê£(&n('é($](&5($´A(& Û(&¡†((º("LJ(ˆß((f«(¨´(t(Mk( Ð£(](G(ï%(¸õ(àï(Ü(lm(%6<(,dG(,²($Ô3($ßÂ(%Žå(' •(&"E('ð(&‰+(%åü('1à(% c(&I(%`í(#Õç([û(º(v’(K¥(¡5(®Æ(ˆ×(Œ¿(»³(+(×Ì(Sà((û('wW(%'((°Á('¹’(&ƒv((,ö('ë	("×(%M•()@=('Ô('8('ÞÄ(%CÞ(%	('Z($WB(#;(ä¸(ä:(YÑ(ãB(:y('Q(ˆ(U¶(18(˜Ð(%`(Õ(%±f(&óÀ(%‰î(&n('bs(%°'('01(%µ@((t	(&™('R(%úl(&VÏ((ñŠ('µˆ(&À¥(&9å('Ã(%W($k("BÜ( ì(ò2("Å’(óé(b"(#ü(²>( >g(Òö( Zg(!lí($3m(&}(&îÑ(&œ(%¾›(*-S((™z('çƒ()+()K–(&ö²(&Œé((ym(%`K((”¥(( ((a('Æ¼((I((ó(&Þ($è(%Æ(%I}(#e(#µð(±<( ¸·(!‘ç("ü($ˆ”(#+l(#|6(&ä‹('Ïç(#('À(%í|(%—m(&ÓÎ(&œ(%â(%"('9¿($(&¤q($¨€(%N((³´('úù(%V(&.|(&˜ð(%ÝL("í†(#å»(#aü(#¬á("ª›("?Y(!Þ( Ôó("/(!<u("çt("Uó(#b($ý»(!õ (!X("e%( è‘(#ëß(#O…($TÞ(!Jä(%\(!f(!Y ( ŠO("ó( YÌ(!	Î(!cö( ²Ô(ñÌ( Ó@(!§*(%0a( ùÁ(È_( ‰0(!ü`(v(„~(  ( ›‘(ÿÎ(bï(Ûb(R(ªü(¥%(åï(’+(“#( Cz(„È(Àñ(‘ö(Ã.(G«(œ¥(ª(›("é(a(ç‘(·û(N¸(Y„(6(ç(m(‰E( Ä(ßD(èÐ(~n(Ú(½Š(¥}(âà(?ê( $Ò(žû(ûW( ¥Ú(ù¬(œS(Z(Õ(m8(!d¥(x('P(¿(ùm(TÃ(O­(_(ÑT(
+(º({®(â%(î((òV(ë(vµ(]((à(N¼(+Y(4(.(‡ò(T¥( 7 (ò(d(Ç"(·a(™-(§Ü(nÃ(W¿(2q(â§(¬](}Œ(åÓ(ˆ7(-q(Óí(04(Èj(J}( ð«(Cö(Ç€(jS(ZÔ(Z“(ëµ( n(¥Å(Pù(«0(ƒ(¥‹(MZ(¾(9§(:(q-(®ë(¨¹(¶Ý(ë(W(]z(†f(:ö(ŸÂ(p¬(Ü@(]:(ã&(s=(§L(ÁŸ(Œˆ(v(¶ã(¤0(^("H‹(!Ê.(<„(r(,Ë(î5(£(Îš(Ùi(–(eî(r9(øX(¨<(Ñá(?F(}æ((H:(ù(|(á%(T(a‰(a¦( ‹(éì(àª(ˆ%(Ã(¼u( (Ü(N(÷=(¦!(VÙ(Ëz(2Ó(!×(”((‹r(01(#(1(èä(RT(øá(¹[(jÐ(e¥(–@(ÿ}(„â(ÜX(ÿV(½€(s?([¾(Ó"( ­º(9	(\ˆ()Ž(’P(D(¹(Õ$(7‰(Œ (}Ÿ(x(ÙÝ(½D(w…(H*(0(È{(,#(J<([Ò(¤å(e(†Š(^(L8(KÀ(Ó<(Œú(_2(÷'(ó(‰z(œC(ç´(–J(V›(äþ(B‘(Êé(»r(Ž(9›(iˆ( `3(t(Ü/(!æ9(F™(ÈQ(C(Cî(GZ(›Z(™(»÷(+/(@(ä9(T1(~(ø^( ?([è(÷(1“(¦Y( É(£(Ëù(…Ä(')(9(N(ï(‡(§o(Œª(  u(¾ô(L-(o(•‰(¯T(r5(Ð(†Æ(²é(Es(æè(‚à(a(%ª(È2(qÕ(Jm(±æ(Ç–(Œ(lJ(NF(ƒY((~ì(‘b(ˆk(ì•(@(â(ï‰(ï(J8(‘î(’4(¾§(ºŽ(N(Z(gÖ(òê(ÈÍ(^Ì(—H(`¨(K(:m(úÓ(#K(âÍ(3(Sc(^•(
+È(Ý±(¨Æ(³L(G(R|(D3(§S(((‚(6¶(&{(›F(p(øÙ(¤_(j=(òg([F(Îæ(KÖ(·(Oý(àt(àõ(lP(·‚($ˆ(¼((b\(Ûm(XÂ(ó](PT(Sh(ì([ô(iµ(b(	(•6(i()Û(Á(ðG(È(÷×(h8(E("Ð(§-(äÇ(@î(­(V¼(ŽÜ(—_(°(÷Ä(_(C (è÷(w(F8(æl(h(åM(øz(ïS((>×(qw(ÖO(éM(†Z(((QÊ(Z‹(J(#ö(×þ(K(÷n(4‚(•–(c	(äL(]”((-(0é(Á9( e(ÂŽ(!ó(„(<µ(#Ó(£1(‹Ë(Q²(¦(é¤(U‹(Ç*(ðw(ÑÑ(‘R(øm(³(ãê(*(ÉN(Ìø(‹Î(Â‘(ÚÞ(¤q(=p(¾(.7(•0(þI(Í>(¸³(_({>(ki(æ(d(kÿ(ÏU(®¸(‹-(QÄ(wº(Fè(jQ(„ü(,Õ(¯(C‰(Ùæ(“ð(H‘(ô[(‘R(âÀ(J(v-(²(N7()B(n«(“g()½(ØÞ(CV(rù(S¯(m (³((ÿ(R((Z (ó(ë½(®ê(¡(Ÿë(à(/_(I(,°(N(þ{(Sê(—}(
+((×(Œ†(a>(àc(vµ($i(ÐØ(Át(qË(Ì(iJ(wh((‹(H(yk(±í(?Œ(¨Ê(ïŒ(n(Ø<(î‘(¿Ã(íË(Âº(m(°(±‡(ÛB("ÿ(Ë¿(fp(u8(oe(ùŒ(0e(PK(H({{(’(Ù°(b (¾é(ú(Ã¡(ƒI(ÎÃ(ÿÕ(e¬(âÚ(r(ªü(Ë¸(š(\!(•B(	Û(V(]M(|(m²(^Ö(N7(›c(¼((Y'(“5(ìL(+€(´((¨(ñ(#Ê(1ä(Ž((®q(j!(%»(×=(—é(Á»(MŠ(xù(mâ(c´(Ò†(6(Öœ(ì(µÔ(‡Œ(’¿( h(¯-(è(Í(±(F(óä(Þ(´(J(º(‘U(n‘(´(™(¹
+(H(¡(¬Î(qÅ("é(}(ÀA(Š(Šx(kD(´(¼(Ú(w‘(ãY(X_(º–(c((6R(Z¥(,(t5(òA(™ˆ(@[(´(§É(Q2(ÿe(ÉO("ô(Š(g(Žf(‚t(]¬(:Å(‹a(tå(0™(Îø(Åî(ós(X9(tš(v<(7¡(ä(ÑJ(Ä¸(,„(Ý	(¤ç(LË(6((É¥(?(OQ(°(Åä(iŸ(b(>(ð(à( `(C½(c(v±()Y(´()•(Å(§?((í=((K£(,(zH(ÝÎ(s((ÜÅ(Ý°(^š(qÃ(û(o(2(¦ð(ÊÞ(A*(1µ(¥á(W¤("(ýM(K)(Ü(Î#(Í(r:(Œ^(ŒO(ÿŠ(1Í(ËC(¯(¥Ä(!w( i( ú(ó(`î(‰é(§(J(8n(2Ó(Î (¢(d½('(qð(((%_(QC(=((œÓ(÷§(Gv(„Ð(Õÿ(pY(€Â(”Ö(ìí(e(õ(
+K(×Ð(Õ­(v([î(CÀ(u(’”(ì¬(¦M(PÊ(þé(G[(é((j((¼(ƒý(?_(Gò(ué(qý(„e(<$(öë(x(¿y(SÛ(f§(!z(âž(O÷(9‚(ô(3Ç(..(§µ($V(^¦(‘B(-(ÂC(º(E4(Ý4(ºÔ(Á1(lÃ(…ö(¯B(7T(ž(<( Õ(û“(I(”«(Ã((„f(
+í(td(KU(ê‰((…(ï,(3E(óº(Ê¡(E (o(MÖ(—J(2(gZ(¸X(]w(žþ(Íî(„0(4(ŽX(Ò(´Ï(°(­g(öï(BÇ(kf('¤(ÿi((	(	(©e(ùƒ(°¨(_(hR(7š(ã¹(þ1((ˆ(Ù(Ó(ý(ot(7(÷)("ý(B9(uS(®(Z($3(G…(ÝÈ(éN(¢c(¤(³è( Û(‚&(’Í(=š(“å(G,(Ê(~Í(Û=(ò(¨(Œ(­z(Ùi(¤–(¶ý(žý(©–(¢ý(c('(#ê(ŠX(rI(»Å(Î(e	(Ã^(œø(©(ÌC(´£(:(Ï4(‡0(™&(7²(«(ö(‰*(ˆ(·X(Vˆ(N(è( Ð(mù(ÇÂ(­^(Š(Žu(ÖH((ƒ@(·(g6(M¸(ª®((•(–ï(üW(J(~(2×(ÏÜ(s(:(M¬(#’(&õ(×ö(±9(Ÿ(ßù()þ(iª(¸å(Äš(­Î(ít(A(­((‘M(ì”(X(¿=(•(Æ(¡·(¦Õ(’õ( (e'(€d(Z(©«(Ù†(*(‡(0D(®O(¡(QF(æˆ(Ñˆ(ù\(æ(7Ù(Šû(;Y(‘a(§(%u(£(_W(q§(û”(Öå(P%(áÍ(ÍÒ(áU(±¸(§–(KZ(!t(Ò(TŒ(uª(Y@(b‰(üâ(îè(1.(áb(P”(TG(Öú(œY(•(ŒO(H(EŠ(x»(§Ù(_Â(m(©`(¦g(x(¯)(¼(—Ÿ(+6(vâ(5z("(½µ(3(··(P)(Ÿ([¤(I*(Ù(Ç(ˆ({A(d((å5(©e(î™(Oa(º (c(Ã'(à(Ì(sà(*‰(O¾(Üd(Y,(C?(Å¦(ÕŠ(Û÷(Ý‘(«¾(G,(Íì(ã(Œ·(®Ô(¬( ¿(—ü(„˜(&i(Y(i»(®‹(½((ò•(•ä( (ñ(rB('ƒ(É(‹(ÿv(a(ï(¾ø(Ìf(×1(ã,(ÞW(d(ÿ+(žE(÷.(!‚(|ß(ÕÍ(	I(Âï(KÄ(ÛG(Çç(¿¨(¿<(p(V(„p(î¡(*(·ƒ(âN(](N (Öx(Î¤(Jþ(ë/(Fa(—†(	Ý({X(Ô°(í(å(P(Àï(¥ê(ÿ(ð(¦(ÅÈ(S,(0š(_ô(Y(Bþ(v(Þ&(5°(äG(]Õ(RÀ(kË(u(…_(±(`û($ý(™»(ª?(·W(¬9(îs(¬,(O”(æ1(!O(|ð(/M(=;(%(](Ó*(Ôµ(Hí(¡«(f(H±(û_(÷(°(\o(m (Æ(ÂÊ(¢ë(3û(ð(|£(šŠ(¡H(Ç&(ˆ×(«(ñƒ(k(1K((¬`(OL(:(£(áa(w((m(Ðõ(–"(Ó©(D?(2â(êB(ã(tT(D(æ(&Ã(]	(;8((÷(Ðg(%Y(·ã(÷r(yØ(aK(2(Ï(Ð)(4(y(;i(dÕ(s‡(ƒP(S(^Q("è("(³ (êÝ(Ê:(ká(üá(gŽ(å)((¡(…(Ð÷((&(°w(9Ö(Ø»(E[(ß^(r&(«x(K7(@4(ó§(´(VA(š§(Üt([¥(ê(aÉ(ÊX(Ut(þS(…ü(vŽ([(¥õ(–L(ðp(®Ì(ãÜ(Ug(½e(á•(Ò(+h(b°(‡(°(š‚(Í¨(Iû()7(y(Ðy(ùì(©â( (eh((Gá(Ý(Ü(p(¹(Ï@(è(ðÍ(Øæ(òu(e(6€(ŒÄ(¬(Äî(ŽÚ(¨
+(uM(ªH(_ß(Ù?(ÃF(SŸ($[(på(¤d(.C(I((¶( (ãm(Ä(‹µ(g(»(Eó(;S(0K(O(Þ(ˆM(X‹(@G(´ý(…¥(M(~|(Ù–(ˆ‰(­î(	(þ·(¥^(F(N(O(Åú(÷r((Äç(H(cs(nÛ(7z(‡ù(J(Y(És(E£(¸{(±É(°ì(ú…(žÕ(]Ä(©x(| (Øè(·Ó(dÿ(©¨(Ï“(‹(]|(Â(Ò|(Þ°(ô(1B(íÒ(Ò~(Ác(‡u(_¬(Ý9(kæ(å¥(Ý(÷(›"(É+(*(Ã(b((Ÿ((Á¡(¤‚(v_(ª,(ªù(ÿ)(Á†(¿z(íŠ(Ð(¶/(±µ(ý(/(›Ú(1L(PÛ(g™(ÿ(re(]-(†(N[(%B(ör(%N(r!(×Ä(mÂ(Ìn(s$(êM(2(zÅ(9±(¢(5(N™(†×(J2(ªà(kr(—@(®`(Å…(Ê9(ö(ÇÔ(öý(¡†()Ñ(]$(¸Š(Í(Â4(VY(9z(³(OŸ(~((°e(0‹(w(ˆV(ÛB(Ã¹(dÉ(Y(¦ì(b”(bÅ(ÄÒ(¿H(÷Z(Ìn(Š(=(ªÑ(´( o(åE((ºß('T(MÇ(vÃ(@6(+ä(Æ(9û(Å(.(Ÿý(uÁ(ˆl(HL(òò(²ê(6×(Mý(œ©(m†(­(3(‹(ê(œ³(¦(è(ßd(©(Œn(~y(Â((ýp(>N(Uö(úz(#(Ÿû(8e(Ò(šÂ(O”(Cµ(ÎÊ(›(;K(~€(\k(ÉÑ(’‹(6(ºÓ(¡2(Üƒ(?u(ô\(Ãª(¹(ÎÕ(õ!(ûÅ(sÜ(v(¹	(Võ(ÆI(iæ(Rƒ(Ð8($|(D(“ü((˜W(w(M(½(¥(pŸ(¼A(Û(Ò!(Lv(±(¾8(€=(Nj(¹(žð(g¨(P(Þ(»¾(Î˜(º+(º(™;(Ñ(þ>(¨,(ù(†(iü(:8(Uã(&?(D("þ(s¹(Öç(æ¯(ò(ö(Œ'(>	(7(k7(^m( v(v®(Ãì(b³(Ÿ(ÿÒ(Í~(P€(`Ÿ(ëS((²ú(ŸÖ(zÜ(w‡((Qï(µù(-b(<(Á(]ô(/H(ÄÖ(“Ï(œ\(´R(ù8(-Ú(Ê¼(6–(oê(Wd(¥˜(+G(Íd(fÓ(i(W‰(xž(>(Þ¯(­E(£¾(n1(j(I(ÔÄ(Í(Éb((@F(‚n(‚4(ï¾(Xo(|!(ª´(±’(ÍÍ(({ì(a°(Ç	(è(#™(ˆÈ(<ð(æ<(u(û=(RX(Û#(³ˆ(Rä(Ä(ß( Ü(UÕ(Ÿ(/z(/s(E}(1°(] (§}(z_(‡(Ïy(Pé(GÔ(G‰(Øº(+ç(—U(€A(ë0((”k(·N(}Ñ(‡¶(tâ(šÂ('°('N(ì (Ñþ(Áw(z+(R½((¯¥(œÏ( º(jÒ(ð#(ª¦(4(¬ò(Îô(Ä!(g&(­¦(¹Í(f(Ø:(ÉÓ(ƒ«(ˆk(([¥(_{(r(•¼(å(ò(å²(äN(©ï(HÉ(y¯(ôù(N($M(±V(le(ž(›Ì(ªÖ(Õ‹((ÅO(Š(+¬(R (Æ(¹(î((U(Þ`(­¨(3(ŒD(ûj(ñÝ(ÑÓ(öG(:ë(óÔ(Í„(#¬(m6(K¼(m*(=¢(ì¦(.¬(
+ï¡(À–(
+¡(?ó(¯(ˆ‚(
+Ÿ(…t(P(g‹(²t(L‰(&Ç(À™(½(üº(Ÿè(Fr(ä	(œƒ((8(oÉ(Ä@(¨F(­(óN(Í+(½™(„M(þä(ß¹(s(÷(bR(¬(ô(a(„¨(8S(fg(ú(Ê (é»(0š(ò (H(•Z(:Ú(?x(³è(¤5(*(¹L(u({x(QT(/
+(L5(»(µp(¯(²(#E(¨¨(þq(óÃ(Œ(#(9_(th(»)(€•(
+»(AE(Â1(˜T(ì%(9á(•(l§(,(œO(N®(“R(â_(K^(<(	£([(Ÿ5(P1(Nî(Óx((ô(áô(Ò(v(†£(:v(Hp(Æ(Æ×(HK(ò”((Š!(÷{(a€(÷•(Ì(Ï`(È²(=w((u_(š1(hª(`Z(8W('"(n|(>((”“(âV(ÛÊ(Ñ(˜°(…t((¤ž(±Ó(2S(«(ôñ(Ï°(¨¶(¯'(!A(Ö(ÊÞ(D(
+y(_ (ã(8A(`÷(U‡(¡a(öð(fà(g.(v…(‚Å(¿Ý(Œç(é'(pG(I}(ï„(P%(¤?(ß8(#(`Ó(cS(âi(¥Ü(°¸(¢û(pé(pl(eg(Û*(U8(*–(jz( (û^(
+L(Ž(¤‰(FK(M(‚ß((…È("(ß(š=(5((š(Þñ(((%(œ"(Ñ”(iš(ä‘(•í(ª®(ÂO(4w(ýÞ(Þ·(s+(ÖÛ(.­(R‡([(ú(Ëñ(¥†(ÚH(ê
+(cI(nÕ(Œä(îð(É7(²u(´ò(Kp(´ë(L1(S4(é¯(ý¬(ës(Ì0(–ú(F·(|Ð(s=(e9(°P(xq(T‘(‰Ã(ç	(Í(Tô(OÀ(–p(sD(dR(-n(†X(¾Û(VÂ(—ô(`ì(§(oÃ(³ì(2Ê(gl(t(§M(CD(¬Ö(µ( Ç(Ï(f*(õt(7Ú(¿-(û(`(¬•(,ž(7Ê(>Í(Ò(0L( F(¯ÿ(êÐ(W(gß(›(kØ(ZZ(Sã(å?(£û(us(œ"(š•(Z¦(Ï„((a(±ÿ(À¤(vA(8å(Q( (¿(¡Ö(Ó(6œ(hu(èâ(š*(‚Œ(Áô(Eí("%(
+(‰Ë(µ´(2(Š(G(Q(Ó%(N*(¤(•„(¿x(d`(ÙK(ä(Pê(Aâ(µ(•(ô(IÆ( *(1Š(Ï(		(ý(¤(—D(˜b(\§(Dí(õ(™Ë([(žk(.Ð(ß¤(d(aù(z2(*(„b(¨ÿ(O€(
+¿(Hˆ(–Ô(Â.(’(¿É(Š(Î(ÚÐ(Õ˜(«½(›,(ƒ~((4c(qi(z6(#(*ð(à„(ïƒ(sa(Åã(ñ(°(‹Ï(Êê(²/(ç(Šš(‘(ÓÒ(…ˆ(]™(xO(Šõ(ëg(ÍÏ($j(¹ (Pâ(”¶(Ù(Å(SH(tÂ(y.(¡‚(B(—­(‰é(i(³(X¾(²V(…(Zð(<–(š<(|=(ã(—Q(–Í(q(D
+(ñ(¨(sª(@(˜k(çß(8â(÷-(eò(¢3(N;(_(Ÿm(å#(yS(´‘({1(^5(Sg(Ò(’?(ËÐ(¶J(Ý>(¡h(žG(Âï(Æ(¢5(÷Q(1o(m(+(…W(ß¶(Y(½‡(!(m(•/(8€(ú?(ó²(vb(l’(‘Ý(ØW(™(ß¬(õÉ(@(Ù>(”µ(¤¢(¹y(p(ºç(0(CË(Ûv(s(ºW(¬I(&(Sæ(uA(ì
+(þï(z:(Uà(öÒ(ÞV(¶…(Ôl(Ìµ(ØÏ(ÅŽ(c`(\(·,(6â((¼(%ñ(Ÿp(Qƒ(\á(ß#(~(´’(]>(Ÿ6(p×(K~(¤·(Ûk(]R(i(êà(ÐN(¹(S)(k(ãš(WÎ((øe(ð(Î(>Ú(8M(õ³(ç¾(ª(‘a(á(s((m(Èj(Øœ( Š(8ý(÷(™Ê(¨å(üA(ìÇ(
+<(Å(û^(y¬(¶®(/°(Û½(Ç (nH(á5(žà(*‡(=0(Ž¦(Âd(j#(Ë9(&ç(c(üå(_(21(œì(%»(R¤(Fá(M–(s(‚\(2(¿g(;4(p(Y(”å(c(ÜÒ($(™(˜(!E(dð(‡Ã(Àñ(a’(¯D(—L(·<(L–(=[(Ed(ÏÌ(ó(´("-(ï(p(ÒÞ(n@(Ž7(Ìm(Qˆ(n™(ô˜(Ã(º(Ó™(Hj(²·(K(³((<I(Z¦(L(N(-È(†(¢*( _(‰õ(Cñ(À×(=(Ê9(°–(Ê(_,(œ¤(?Ö(ä(ÍÚ(W(•(+(ÏD(šŽ(z¢(Œo(†­(ÁQ(§Ð((Ô(¬(Fö(qk(Kf(›Y(5(”(æK(Û
+(Øæ(g(¦ë(í<(ÞA(Y(˜×(C((ªè(¾B(B(™(š°(å(Í›(LØ(‹«(zÑ(³7(ÙQ(ÝÝ(Éó(ó­(("(Zƒ(›(|o(èª(Ðž(º9(æ	(œª(]~(”ô($ã(½˜(Lã(w•(í(G#((éC(¸œ(¬(<r(2ü(8³(MS(Gr(Óÿ(º(Œ(nZ(¾Õ(×d(¸(lV(W£(*8(;†(Pö(u(’ž(­I(&(Ÿ5(À(ïÍ(!í(j-(eÄ(‘ï(âì(³(£ë(G4(	¸(â$((l×(¾a(´'(Š(`û(áZ(J.(£(2Ä(Ë¢(í(¡Ñ(ÙÒ(Jþ(CÖ(õ6(Ñ¶(&(4²(an(»„(CT(/ª(Š‹('R(ˆ(ÉD(±Ò(Ô'Ù5Ã(<(¶(ä¤(¶(í¹(‹½(€W(ï—(l(Îô(7$(7…(Òï(Û‰(é (hº(û£(¾†(ŠÌ("(CŠ(¡º(>(œ£(l;(t(ý|(¸(2&(B¤(
+]½(S9([¡(qZ( ý(ÿ(%(gO(S"(Àd(ú(¸‹(z\($(¤¢(	5(Û­(J×(î(ož(C[(@=(äi(‡b(ðw(è(Vì(Š:(
+ò(¦’(øQ(Í(tC(H"($(›Ä(t¢(KÛ(’r(EO(e
+(ë˜(©J(Eø({N(º‚(@ˆ(#Ù(ƒ(vÍ(‘ý(‰(\­(©W(g°(BŒ(N(•((ôœ(x>(³™(Mt(Q–(Z´(€“(9e(=½(RM(ä¸(üº(c(x(È(¢Û(üj(º_(aB(7ý(ï$(Í(øÑ(ˆ¯(È("à(3Œ(»O(Az(K(ŸQ(ìò(y(…¦({8(êÇ(ÐÆ(c(æ¬(NG(VÒ(Èy(œš(¾¨(ˆ‚(dŽ(«2(×Õ("(?¸(ü(4(f((F¦(ÇÁ(ÚÃ(«(Nö(^(ŒM(ñ( («x(Ë~(XÁ(gg(¡F(ðu(’( ¨(Þ”(–>(ÛÒ(ò(©(îû(ÿª(Òí(­i(z (€Ù(ì²(»B((b(ÇQ(,n(¢(áá(i(Ej(B9(m±(ç(º(/í(4…(t#(ã(ÚK()(Â{(Ù\(†ï(è (7Z(ÎE(ï¬(\E(ô(l(ã(¶’(öh(õ¡(ß(í’(xs(4º(’Ö(Xg(…(7?(OZ(*(Ô(£(b(<(%G(ëX(˜"(h;(®[(çÝ(kˆ(¨(É(ûæ(D(P.(f‰(¤y(Íw(½(2¤(È»(¿`(cá(ò(!\(KŸ(Åû(Ò(¶(o™(M(¹@(ã³(œB(Rá(+Ç(pÿ(õ0(Ë„(„ü(©O(EL(®†(›:(Òj(q²(¦ê(áX(ð(…(¢(z¾(gÖ(;s(E(T×([—(11(•¬(Ò
+(ƒ=(ýö(¾%(Üv(!0(—€((—3(´](X·(Õ7(w»('-(úz(ÙC(ù(OP(ÚN(WÁ((í(‚(·ÿ(Z_(jß(xµ(`ø(¢»(ë(ÁÈ(£«(;u(7×(ªC(6î(ùp(ÈÌ('Û(!(ºˆ(:7((z5(š\(Ëá(à-(D((»Õ(nè(†‹(µ©(&(5(Ø(çš(é((éc(<³('S(0Ë(ûî(,³(s—(Üö(±í(´ß(vã(ì¶(ãÞ(uH(RÁ(ì•(vG(>(£è(Ø4(õû(©3(³Ÿ(n7(ÈÎ(Â (x›(1^(¼t(=É(YÐ(È`(kç(AŒ(g('¼Ý(Žî(1(÷(k§(è(WŸ(ó((†h(ÐX(µv(‹0(±Q(‹¬(˜J(¢(a(«¾(“(Yå(€¬(jþ(Gq(i\(±‹(ŠÈ( Fœ(‚j(Åä(‹Q(‚ˆ(*(êÐ(1Î(£Z(ã($é(ÐÃ(9R(Âê(ò5(‰9(U¿(ÓÞ(ßÊ(¦"(,(ÒÞ(µù((ú—(à(¾;('–(	v(Z(Ì:(Ã(Þ®(Z\(Éø(7©(Œo(hj(¸Æ(C$(ª¸(ŸZ(3(´t(1(œý(èA(“‰(¥¹(€Ë(8(ME(b(]Î(U½(Á(
+(µÈ(Ô.( ×(û(ß”(¯,(´û(ô(÷ý(ø.(ð‚(j¸(±(q(²J(Eš(lf(Ùï(†È("1(ˆ(1B(åð(Õ6(l_(9º(é,(³”(Ó.(Ú…(—(­(h(YÌ(Û<(Ÿ(MT(‚Æ(=Œ(î(_(wÆ(?F(Ä:(jº(n:(n¯(ùc(;(9š(“‘(7Ð(ß—(jÃ(Éã(þc(¦0(×ž(“(#%(ú(óÌ((×¸(RÇ(»•( >(	8(¬#(zå(…´(8(í>(¨(Ù%(S(Úo(¥£(|à(…¦(5z(á(ß$(Ï(ß‡(´	(4d(bã(±a((2å(\(Î·(šË(¹¬(­ƒ(Í¸(MÍ(Ì\(+ã(._(G;(};(ô|(P(7C(„™(jƒ(o(@Y(©m(¶ð(Æ™(pk(Eª(÷(L8(Öl(ü(D
+(ìÓ(a|(Et(\((½(§º(@(`)(ÒE(ÜA(»(®(tÒ(S0(IÓ(\(º(àj(ì´($«(H¬(Ži(nŽ(Ží(—á(Â(™·(¼$((oc(At(¦d(I¸(ÞS(ð}(/ç(K((„‡(ÅK(Œ…(Ñ¸(™(ã¼(µ((Ù(×ª(H((Fx(³(5’(b4(|d(…¸(Â(VM(Ó(](þ:(VØ(“((½(ß/(•(€°(£( '(ª©(PÀ(¤¨(Žº(n¶(~o(P	(d(8á(”(S<(ô (°Ž(-(</(üS(þ(\Ð(¸P(½ä(((Uh('Û(¸:(™(rW(ò(JÎ(º(€>(\i(ãf(BQ(cÎ(ê{(yÊ(&²(Cê(™W(´\(ä—(J(Æ‡(ýg(øv(4 (3r(Ó‹(µ~(Ñ(ÍE(Æˆ(Dƒ(ÉW(›<((°Æ(¦°(Ñ(å¿(«x(Æ?(ñ¹(:[(¹á(eª((´z(™á(…7(Ù/(R(È¼(º (q(šƒ(¥(aˆ(—œ(9d(õã(Cõ(<i(Ù(¥&(J(â£(û(´Õ(¡((“¾(¾Q(ø ()‰(ot(m(A½(Ëè(ñç("ð(M=(8(¨õ(ñ‚(=(5Â(˜7(a(/B(/–(a](´(¼-(»(sf(®("ã(W(Ñ@(Þ³(6)(ßZ(7D((*´(_(l"(ã(×P(ž{(sB(ÿ-(ë+(M(†à(ë(‹!(xª(Û¤(ÙŒ(A‹(/ø({ò(Á	(W<(K(ŒÆ(©÷(3H(ÂÒ(‘(5(Y(©()(O7(è:(u(ìŠ(.ö(²¦(Æÿ(>Ö(I#(v(Ì(â(O(+;(.0(ëÍ(ðR(Sb(@³(ÙS(ßW(öç(œœ(‘t(óÖ(˜Î(Kœ(²Ñ(Y(`Ø(æ+(¶Ž(Õ€(B (E(B(˜(¾0(\Þ(F½(í(y(ÊY(§Ä(ë_(wË(\ð(Ä¨(‹((Ði(ŠŒ(0Ø(n_(Eß(¹ƒ(™(Z¯( ã(?Ô(	X(¯—((Í-($(,(Ç(lÏ(ëK(>Ý(ÄJ(Šà(úJ(ýÀ(¼*(}ü(d((pñ(#h(Œ(¬ˆ(Éå(YQ(Þk(l¡(5!(S(0Û(Æj(Q(oÝ(j(©‰(W(hæ(Gy(h(ˆ£(ÃÌ(L (®™(¡)(ƒÞ(ôè(ŠÑ(¡(tï(æ(“(S(“D(êà(èõ(¨(ç(Gœ(%è(. (,î(ƒ‚(qŸ()0(þ(5(ñ5(0Û(.ÿ(ù:(§©(C³(B(Õî(Ÿ(K‘(ø-(-Ý((ŸK(^¯(*5(©õ( H(’©(xÓ(8^(E(ß(ÂÏ(Än("ø(RL(ñ®(-”( 5(óp(¼™(Ñ(·š(bå(”ø(¶Â(«(LA(ÿ}(hg(Â-(è¯(j(¼_(>4(}>("š(2-(Ç(†>(Ùr(ä|(tK(×ö(G?(‰&(Ó(o(_=(ZŸ(ÏW(zG(®(Ü(œ(?w( ž(;(EW(N6((ç(Ó‰(Û"(¼Ñ(vm(Õ†(SA(ÿ•(e(P(b(€Ÿ(#à(Œ«(Zh(Ÿu(¸(¸(Ð=(”u(ŸÂ(F(t(½(*0(Œ¢(aÜ(·I(¿4((H(Pä(T‹(xÁ(D (9(á(¤ü(8(®(Tï(mT(x¿(?(þ(à"(Ç(k(¶"(q(¹Þ(ÜÕ(ôW(3‹(³}(/Z(¤¦(4É(œÏ(Æ(ÀÄ(”((®ø((¦(§œ(’G(ü·(µž(C(Øm(3·(ò»(£"(äì(è®(±l(YF(ù†(ÆÆ(Ž¾(¯³(‘j(ÒË(ŽT(#{(ž‡(ƒ§(ÞÆ(¤´(™^(‚(«Á(Œõ(Ñ((j(¢(¬(Üý(G(­(¤‹(þ¼(Kœ(fÅ(Ln(9‚(K(o(&è(Þ"(¦0(i¬(¯Ú(Ü (O¢(`
+(yê(Ñp(ªâ(¿Ê(;y(9˜(ÝÐ(œ†(Sµ(S²(X°(
+Å(Ú(Ú+(¾V(]$(¢(àÅ(w(!ìd(Ö(ú‰(I(ìÙ(H„(ÁŒ(a¾(ím((Á(V’(R(2ö(.(Ä(‘(nv(~§(zÂ(U†(û(EÀ(:4(S{(Pí(\8(^D(&Ã(¡(Î((GQ(Ÿ»(ùÏ(µæ(ÏŒ(`-(¡è(M(Ïý(p(µC(­(ºv(U (u¸(õk(jù(`(•(‚Ç(á`(ìB(0‚(>â(šú(eÂ(5û(KJ(ý(œé(0/(µa(Ôæ(°y(±(Ä(€Y(eX(O^("Ü(#:(©~(“‰(œµ(7C(‹R(¥(3`(ÁN(‡m(?h(où(I¢(J(ôq(X8(€å(Àã(m¨(ŸW(Â€(¥B(±n(ZÂ(“ô(A2({
+(o$(Wê(á®(Ìþ(™s(«^(S(#@(Þ®(5(œ£(2
+(e¯(å›(Ìg(áÇ(nÌ(¡ë(â(¸(j"(`ò(Ý×([D(²c(“(ÀÀ(Ãh(AŒ(Ä(œ(v(($Ì(“à(b6(ìÓ(¸((j%(V{(Fr(@(çe(Û(ºà(û(;ö(Í­(Íà(-\(Šð(Ÿy(²ƒ( (:(Gf(†è(1î(rÊ(5_([é(‘r(}¿(Àp(¿«(^(àb(;()(ÕØ(å(§(Ôÿ(W(éÖ(¸–(ï±(rý(Ü(À(¤·(z (^Å($m(cD((À(¯¼(&y( £(%þ(&(šŒ(”j(ÈÕ(¯Ã(ÛË(»þ(ïC(5Ë(´k(¬M(ÕA(8Î(B±(° (ëK(G\(4s((‡‰(CF(‡(,(åÃ(¬(Æ÷(2è(gg(_V(ÏA((Ï(l(ëË(‘é(xú(˜Ã(©(1v(}:(£0(Ñ(åÍ(ž(‹((${(8‘(e(ø¸(¤(ÜP(Z(mß(ŸÎ(¸(›´($(Ÿ¤(Åõ(c£(*!(`n(ƒx(­É(nc(û(!(æT(aÒ(µx( Å(’E(ñ(˜}(`	(‹Ö(ôF(ðä(ú(¤(,ê(M·(¦(SÅ(
+9(É(àz(65(µá(ß(P‡( Ö(Ô6(¶f(ö­(±l(ßB(4E(lã(p(s(=Ú(Ð](ý¯(•l(º»(ø¹($á(
+!((&á(³ï(æ(ëã(êù(º(&(¦(mK(.(E(ƒ(én(ØS(uô(` (Aå(D¾(qù(…I([((d¥(}Ø(Ñ<(«(õ"(Í1(¯^(]õ(¤(“À(Ë(tú(l’(Œa(În(S!(î(Iu(Îu(CŽ(m(œp(É†(·¡(eV(‚I(w¶(>î(ß(-(M‚(ê©(ýÙ(X&(6*(‡ñ((P}(²©(½ñ(Æÿ(çº(Tè(=ñ(FÒ(ê‚(:ˆ(ä(z¢(S•(Ò­(W(DR(>Þ(&(Úê(J(zý(«(Ù(à&(Fê(®æ(	p(¼–(Ì’(¡*(o¶()(.ˆ(.(]©(D(®s(é?(á"( (¼z(É(¨b(©Õ(ì(L|(	r(
+ ((K—(·¡(Þ8(@2(Æå(-!("(h(t(¨(k"(ä(í(™H(Ÿ(k³(Ï…(Éá(Qh(6?(ñÁ('Ö(°÷(FÕ(fš(Ù(j×(âˆ(j:(œR(Ój(~‘(W¸(p’(<¶(n¹(•¿(Ö—(®Z(šÚ(•a(<m(Ö(“(µ(û˜(yN(®×(Ë´(‰^(–”(vÇ(} (}Å(ðÔ(¨µ(³è(¯š(GÁ(‹í(Ú(/â(qY(-o(ª	(Üû(_/(aù(¶Z(v<(y(lé(G (J¯(­	(4(áÝ(~¿(Õ{(DÃ(AÒ(Ž˜(eÈ(ÿ{(›(Þ(ÇV(0&(eý(%û(º(n>(Ì(ÊI(ÃR(9+(mè(aR(p (§•(Ç(»'(s€(í(ŸÚ(Ç§(‘N(ý(¹(ˆ(gx(Ÿ(ª{(ƒð(‘Y(:+(j(·í()‰(Ô‹(&ü(H(É(Z(k(@é(ÁK(I(|ò(D(äL(ˆ¾( "(+D(ûY(áÃ(š(v (¯(wy(5x(´º(=Ñ(!(m«(‹g($ (¢š( Ï(³¿(}û(á(f(/G($ (Ú«(°R(„®(Ÿç(»Õ(Q(D(ß|(‘ô(/å(z¬(Eº(¦Y(c](íÑ((A(–7(ºq(w&(‹p(ª(†b(¾v(áû(à}(îÏ(Õ}(Âï(<s(éÀ(è%(†—(©Ÿ(Æ÷(
+ù (ê0(Æƒ(˜(§»(ûá(¤(
+d(Ÿ(l(Ýz(m7(Yê(Ã3(X™(
+öy(à(¡1(È¤(T’(Ñ³(
+Ý(
+T((ó½(ì(†¿(Yµ(D~(
+óæ(
+ê (ÚV(:•(6÷(«(
+¢Ý(
+g9(	ÅA(¾Í(5ó(	Ó6(
+]ä(žã(8(	á(³Ë(‘(
+1I(
+æ(
+5p(	À%(.Ÿ(°£(
+.(¦’( ](
+‚ï(;ç(³D(
+Þ–(YD(’U(Ï©(ú"(Æf(=(ÛQ(ñ(
+‹ø(
+S(³û(
+ºÞ(†P(
+¡(Ä(e„(
+›2(m˜(Í(ñ(´¾(»Å(
+ð1(
+sS(·ò(
+¾A(	ì‰(
+¾œ(UÖ(
+×(í"(C&(ß“(
++#(ø(
+C(	Ö(	´¦(–¶(	þc(	‰¡()(
+òF(«»(Ô¾(Àï(ût(jg(	´å()I(
+DK(„´(‘<(¢( ³(
+ñJ(®p(6ê(o´(­Ž(Èö(ü("4(
+t(
+Í-(ÏÍ(Hè(
+‘Á(¶¨(µ(
+:“(!(ÆA(-û(¹I(
+ÐÄ()(
+-(
+Œ3(á“(Û(ØÞ(	¤+(
+Æ*(
+¦’(ú‹(	l	(	¨(
+›6(k(²¯(	é¼(
+àM( …(	ø(bÖ(
+Ì	(†‘(™(Dà(ÏX(	ö£(M(	|s(d(
+‡,(
+E-(§(Æt(÷ª(	—(	#Ê(
+ò(ž(ð¼(çt(c(	g¨(	–œ(	¬O(	B(
+ù(	¼Â(µ( (	«¸(	Œ(	íÈ(	=(
+3¾(	‡(
+tÌ(
+W|(	x•(
+©(	nà(	—(Ðø(
+™m(	Mº(	p`(þÒ(
+qà(	¨—(-™(
+Ø(FR(nÚ(	&)(€(²\(gò(
+(z(
+Ää(ub(FV(
+(²p(	î(
+¾ („V(ì8(Ö(³!(3s(a9(
+„X(ê,(ãÅ(a(Fˆ(²}(IX([É(
+]­(ˆ€(iœ(>N(*ä( M(ßÅ(
+ú(“1(§ô(-.(˜f(à(D{(s(ÓF(3 (B–(ßb(
+–Ã(YN(àw(ož(nÛ(
+×((Þ(
+f(
+ô/(*!(Š(ôÅ(é(^ª(.V(	£‡(
+ãí(
+è¹(L(
+Ñ(ý(¬(_s(Ç<(	õí(
+9G(É(n¸((E(^Ð(ûR(	Ž(ÿ³(¦ë(	\û(§¸(0ð(àb(¼(e½( ª(µ)(
+{Ÿ(ô(×(®6(D“(d¾(v8(õØ(Š­(ïs(¼Q(vÇ(?W(Šq(œ¾(ø¶(‹ž( ©(Œ”(Þg(ç( ãö(3õ((§(Š±( ¿Ì(ûT'ÿé(i3( Ëá(q(%''ö—l(S­(ß°(P(‡ñ(+m(Ó¤(Q]('( pè(^ƒ( o–(²}'ÿZ (Ñ(½'ÿ+¥(Ë'ÿ(WÙ( ³Ö(P¨(:¡(Žw(´¼(ØU( ðQ((	(Î'(Õ0(,é(mK(¥+(G(Ät(˜*(:Ù(ƒê(ø(ÝW(9(¨(ËŒ(EÁ(‰(8g(z(?é(Kû(ÞG(%C(oÆ(Éé(92(bó(Îq(òy(Y€(e¸(±î(º(éì(è(´(	‡6(wÊ(î(èF(Ñ(
+÷(Ûý(íC(+³(	E(¼(
+q(íŒ( (	P((	Å(„-(¹‚(	¾ô()œ(N/("(	d(	'—(
+Y~(a=(êc(o}(ßà(	¯9(	ÜS(6(
+(	B(	¿Å(	WJ(};(	¨(u-(H(($(	$O(	ËÒ(WX(…(ÝÓ(£Í(!†(d¦(â%(c—(	JS(	ë(ªÎ(QX(-^(	»(•†(	»,(28(ôA(
+Ø"(jM(ïF(V{(âi(©(Vù(%Ñ(ó=(	^/(|ø(	zå(RN(
+¾µ(.(	+º(´
+(=«(ŒK(a(Ý£($Æ(et(Ì#(	ù£(¶(8d(£(Ì(CD(ÍÊ(0!(¦£(Öã(’î(‡(-(	Æn(À&(*¼(4(¬0(ç?(ŽB(CS(Q(*.(Á,(‰(/(š("7(È(]7( $`(((U…( Â‰( µ'ý’î'ýE0'üÃã( Kj'öÄk'ø¥»'øx
+'ù‚u'÷è'õE­'ö¼+'ûV'ó@â'óv'ô7¤'ïeË'ö¾''ðg'ïäA'ôK:'í£;'î!ß'ï¼A'ï¾à'ðC³'íR‚'éúé'íšT'ð„½'ëîË'èèÞ'èÔ'è¶:'ëØÖ'èÿÈ'çNå'é8"'êÑÐ'êË”'ç:Í'ê3'çÌ!'ï\S'Þ¯¦'ît'éþn'è@ô'è['é„ 'ì'è'ì(?'éšF'ík>'åBë'ì¡('ìÐ°'éó'ìZ«'í;¶'í}'ê./'ï	;'ô,„'ïwI'ðS'óSg'î2—'ó™n'ñ¹b'ôA·'õo'óÿ1'òsF'úÀ'öÕ˜'ö‹ô'ø¬ñ'ý|…'÷³˜'üÞ( Ã'ü	¹'ÿs§'üÌu( +…(Ÿù'ÿóJ(Ò( 7(ƒ†(5(AN(KŽ(ôÏ(OÈ(@1(–×(Ìq(i(1(vT(ÿQ(³(+(+Õ((¼(Óð(Ô¯(	SÆ((cß(K=(uj(Ç9(	šµ(	·¯(	ü`(
+#(þt(
+œì(
+¤(T(AÖ(	 Ý(m˜(	Ó^(¡¯(>µ(\ñ(	‘(Y(¡Ï(¸¡(™„(À^(U(Ã¦(Ÿ(ÃA(
+	[(4(Á(0q(ÚÁ(ºÞ(É(±.(×8(Û(Xl(~Í(X
+(j(µb(ü(s(¡ÿ(˜ô(((Ð (Bµ(1±(¿(1´(h2(]›(õR(f5(MŒ(ëO(Ã6(~{(©¶('(¢!(÷(*C(†(
+(Fk(€C(3µ(d*(åã(î(”Ø(oÐ(v‹(´i(÷(`Î(ì?(ðV(	
+(§Õ(·ƒ(QW(Îá(·(eø(½Q(¢(œ@(ƒå(Žô(Ê(´(ÿt(s¢(<ã(#(Ñ(x›(˜(íÿ(q_(+p(Œ½(kª(
+6(ä¿(ØÈ(ª»(-t(»(tò(¡A(WÈ(©Ä(1(ü(³>(•¬(ý(9Ä(K(—_(ò—(_Ù(gs(Nv( (Ñ(_(Ó (û}(u“(>(‘(“X(R³(ñA(7](½˜(¶n('¸(E`((¼ú(¥U(\(Ç}(T(Î(
+¨(D­(»(Ñi(¸Ë(#(B(’(H»(Ø&(×(UH(6á(`(AR(ð2(?˜(a( (Ù(Þî(Ï(Ç(qm(ÿW(Då(q@(ý(]^(òÏ(vë(«ü(eÞ(ÑÓ(8}(Í(Z‹(3_(	5(yÂ(Y?("(r_(åã(	é(T÷(ºj(eG(‹ƒ(pŠ(áå(÷W(¸Ì(T^(1(oZ(‹>(¬(Zf(%(&¤(Ês(Ñï(.Ò(†4(bü(O(Øæ(>¾(Ñ»(|(Mè(w(~õ(zÓ(Ê(a(#(¥Î(ü(úS(Ò3(‹Ê(¶ì(íã(¸(À(ÁÂ(ÆÀ(cŠ(ì(BX(Æú(n(ðÆ((šÚ(Ž(ž(ê{(Ó(ÚÍ(;°(y(©v(É\(á(ÎÙ(ü(î@("(«Ú((Ö¼(Ó(ÄÃ(Ö¸(¼ö(bW((¶©(Úh(°(#(°f(/ƒ(e(‚q(5(„Ô(ï(è((è}(Iÿ(D(Œ (un(®Â(¾Ð(K&(Jµ(¢³(‘(C(¸Ý(gM(@¾(¹½(â(ø(€­(ø(í(5¹(Ü“(¬(MP(î7(ài(i(ß(í(ð(†p(”÷(yY(Ký(‹Ï(ÅP(uæ(	(4´(& (¸9(¨'(@ü(Ú°( ¤(ú„(k(p( ¿( (*®(2Ì(‘Â(Þ¦(È•(e(U6(y
+(™Û(](µý(
+»(¬³(„(
+ã²(è¥(Ì?(ø‚(!­(v(^	(½r(»û(à(M(¦É(eF(ßÉ( (D(vo(3Š(Ÿ6(æ(mÔ(˜Ç(¬l(&õ(>f(È(.Õ(Š†(ü\(p¢(Él(„Î((ï(óá(Ôn(s(d( (…‚(WY(÷(ø(îá(ô¥(F´(‘Ò(ô‹(3×(ùƒ(ù2(¼((N¹(ïï(7z(º£(…©(=ø(ð(¢ó(9ø(§(Ÿi(Â'(¹˜(èõ(#z(õ(cð(nt(Ÿ•(œº(”("ñ(›p(êt(®È( b(Ë(˜(õ](•­(;r(—V(ºó(óÅ(Ñ±(Ï(/u(þX(¢((\(Ãò(š(@¾(.f(_L(4b(¼W(¤h(Ü»(õé(~³(âT([($Ü(f(=Î(W¤(jB(x(!*(¹¾(2(!þ(«Ü(Þê(<y(8i(_Ÿ(á‰( 
+(Ol(bï(<W(1à(¬Ï(50( ”(Â}(Å(EÈ(
+R(
+$(	x(}](õ(Òt(
+0q(	?(	<µ(	LÃ(	Ç(	o(¶|(úÂ(	0¼(›(’( )(1(= (B¤(Ø‡(kØ($(3(£(Z¸(IJ(}‘(‹À( ïF( {(( -(¶'ÿu*'ü©µ( ë£( fL(Ñ'ÿSØ'ü©w(Aï'þ-='ý—þ'ü"x'ûà(Ë'úÄŒ'þÇ*'ü>Ý'ü™'ûý$'ö¼'ûÊø'ù75'û‘D'úÎ›'ü'ýÔ¸'ÿb™'û•”'úlg'üÍí'üõ'ùL( nN'ýVØ'üq='ýˆf'ýã'þk 'ü2È'øøq'üGU(`ì'ú`Ä'þç5'ýi( ¨'üÄ( ð~( íÔ(]m(uŸ( Jx(ˆ(aQ(¨w( ­( Ö(–(¼Þ( ‰(É3(y(ì&(Z(ª¼(k”(­(Pò(ú†(•£(Ál()(Ú«(“x(Ok(	öû(­å(vØ(,0(+¤(Ìg(;®(äb(W(ü(	ƒ (–²(
+(”{(
+àô(
+Å(	Ñœ(
+1é(5ÿ(
+:ß(	÷Ê(		Ì(tß(·Ð(	ÿÊ(
+‚±(ƒ(\!(™N(R±(
+[(	Ö](
+Ý(ÎÈ(…¶(Bä(
+§{(Àg(7…(ƒ(
+f(Ë¿(Qv(Þu(A,(ˆÈ(t¸()((ö(Ê‰(al("Z(h=(”ô(
+µ1(È(}(	ma(
++á((g„(Ã(¿.(œ’(]§(,(-(9û(g´(/o(@(Bâ(Sõ(_?(Ôm(	Ÿ÷(ÕE(¢(eW(9Á(
+È$(æï(Û(	7Ê(äý(’W(dæ(
+€;(<(±o(
+†Ï(¨(ŽÉ(ºf(ê(Vš(•(á+(Fd(‚â(](l!((Oz(çX(Åÿ(.Ö(‘P($š(M(c(ü(¥(Cà(Å»(·(
+b¨(œ(b(Ž½(º²(åª(6u(ñµ(ë'(+#(„ÿ(Éy(À©(³(+u(ºÝ(Ü(°Ø(²é(œ¥(Ö%(ë(jg(Ù…(5g(U4(T(F’(Ž(ÿ½(l©(ò¡(O(m•(—Î(Û“(¼Ç(&–(Ö(©Ç(Œ(nË(ùá(Ó÷(ŠJ(#(¦~(cž((5ƒ((õE(“1(Û–(>Ë(‘Q(ì(Ôß(ZE(>À(¤8(T(.Ï(fÆ(‡=(%ÉP(Àé(¨(8)(Æ(ÓÅ(±(å"(á(¬¼(Nq(Ží(œ°(<(Mˆ(«_(»ù(í(>µ(¾â(g(½(_(ç+(2%((î(«t(uD(”!(×O(or(è"(?(Ë#(ïq(Á(ªë(Iy(ï²(-v(ö#(8Ü(ú(
+()º(s(v~(Ìû(;(5((!;(­3(æß(ûY(¾Á(UÇ(K—(P/((c½(O(Â(%,(þ(O¢(T(((}()&(¨±(m(‹-(‹&(Iœ(â¢(ªö( ¯(yÇ(ÖY(E(ë¿(ü1(,¯(5+(ƒ (*(¾™(3“(«ß(ø~((^¼(ïÙ(?(ù (%(™(¶(y9(q (ûÌ(÷¤(³Ñ(w(.h(D×(p>(v(ã(›ÿ(U•(‹(3( …(1D(
+M(ãž(¨4(_Ä(LQ(1w(+((hÕ(}(ön(ä!(þ (À(Õ(gì(µá(Gl(ì(Ö.(+(Ö¹(§›(a>(‡…(†£(W·(ÝÃ(ca(.‘((½!(«U(/y(óô((½J(>(üc(/ (J(¯ê(<(o­(F:(Gt(g(4(Ç"(A(·([
+(&@(ãõ(Ÿž(×(¤(>ª(Ç^(ð!(P‰(Ðj(@„(ó-(Â(ï(¿)(B(’(Ý„(š(t+(à(Z(œ—(åâ(ªÌ(U/(þ/(ÑA(9³(2½(ú((€r(	Î(=$(i…(ÎÓ(Æó(¨Z(ßí(é(Ê°(ó×(&¿(o(¥Å(´X(/(‡ƒ(*í(ª[(-÷({X(Ó4(©^((\(²P(K¶(yt(l(‘Á(sÅ(Î(lN(ñÿ(Ò»(s-(Ùá(-Ñ(ß (:Ô(^^(Ôs(óN(®4(é^(©S(t(ß(~v(¥Ü(;=(„ÿ(Ž•(U0(Ë(Žû({((ÃL(®³(ã(¤Á(D(œ(zÝ("ç(Nù($(ˆ(	›(TÌ(¢Ž(¼Ã(lj(üÉ(o(*((ÈD(äK(›ù(k…(“­(‰'(Ë(wŽ(Ól(ãà(Í(ž(T_(Ë(´X(Ú((¿$(5Õ(¼î(Âg(ý(d`(7¿(0P(Ó0(»A(b(ªó( ‡(ºë(š(Ê>(ni(\¢(sÅ(’c(›E(¬(ÿ(I(Û”(}Ä(—^( ¥(‰Á(™Û(-Ç(!Ò(Ù\(t(m(z(#I(öS( (?‚(Îb(Ip(UU(2 ({·(‡Õ(´Á(ê¤(a(«(?­(ÞA(|¡(ÇY(–>(L¸(Z£(=–(¬5(‡Â(Š~(ˆÃ(:@(À(ê(°€(¦(Š´(b½(Õ(å(Æ/(­(”(M((î!(ýª(Ï(_	(SÙ(A4(Óá(ÃŒ(K(jÕ(Öð(‘¶(ý(ãŸ(d£(Þ (³ý(u×(¹(Ý“(éO(%Ü(Ñ(âi(e°(((U	(n("((¨(µ$(0(mû(!·(?Û(ÐÈ(èÆ(Uã(×E(7²(ª[(](Dµ(uA(àB(X(¯¦(ê,(Õû(=þ(
+H(Ž(˜Þ(¢–(´(!(».(ïl(9œ(0a(9¡(“þ(#ú(gÇ(––(Š(Â»(Í·(‰–(œã(òÂ("D(˜Æ(`(s­(`V({œ(HÀ(Æã(dë(¸'(!ï(	(1 (gY(Ü­(\;(o(¡(w%(¿>(u©(°(…·(¶£($	(j(HJ(Vv(`­(®(°:(‰(E5(€+(O›(l(â(e(,ê(ì–(Là(U(„ƒ(Ÿ–(wN(t€(,ª(6À(Û‹(Œþ(éÆ((ä(Ê(i‡(±š(Œ—(0n(¤(Oã(‰‚(Êá(ƒñ(®÷(@×(jz(Ä(cï(¯9(ý(°b(ä£(¬(‘ˆ(Ø¾(¦(±([ (HL(ÌÃ(ÿ(B»(¡-(((6(¬¯(¦Ë(5 (f(°²(ñ(3‰( ¨(	À( ×(›ª(Þ,(e˜(ž©(T((±(Œô(›¶(Ì(y•(wû(çê(¼¹(É(f®(– (s(×ø(a(!â(‘(db(ú(ÝŠ([â(t(}€(MÈ(u°(½Õ(˜(SV(8é(É(ôæ(ab(&¢(èL(Et((ßd(þÔ(û(Z°(…œ(j|(Xå(¥(c¢(Ñ[(ig(>(Ó¶(ªî(ð‰(¤@(sÔ(s((øœ(¬È(½q(”ï(™(
+x–(0(…°(Ž³(-ø(–(s(TÒ(u(ÙÅ(©î(](;Ù(àç(®‡(dˆ(Èõ(vD(ã®(§_(2ƒ(Mþ(µ0(­Q(’ (%C(û"(y(/_(8v(¥k(V¬(´((F?(ø†(íÇ(Ûß(ùk(;œ(€(E¨(ó¶(q1(IÙ(eŠ(cÈ(ñn(L)(@c(?(“Ã(ÀF(¶n(<+(âï(ék(ùµ(*]~(-Å8(×$((AF($ß(¶;(¾b(¶(l&(`(a(?(`(AÜ(,¶(9()S(
+žà(
+}y(
+6Ú(|ï(Ç (ÓÑ(äT(Õ0(mË(Í(Wå(®(5
+( ,(;(´"(¹¾(9£(¦«(¾Â(±ê(ûÆ(ÿ(!ë(³(ÍŽ(ö6(8X(O(^(¯ë(¿‹(Ø(ïÁ(È(	Ü(	ì((G(8ú(ˆ_(pÊ(QH(ÊD(1_(¶.()ì(í(óþ(Ša(¿(9É({A( ºT(f´(¥š(‘r(ñ((V(Èz(‘‚(4S(ûÂ(Ñ~(4é(8(Ÿf(Ýà(æ(¢Î(ù«(Œ(ßd(Ó(‹Œ(Bc(‚(MI(Ab(”o(ÃÀ(0(4(Q¼(¿B(6þ(—ß(6ñ(*F(Þ«(&Z(0R(Ú"(	ò(Ú(Ãn(+( w°( ….'ÿÖ8'ûr5(mk(-y(êí(ž†(µ–(åæ(Õ($Ò(!ˆ(´‰(	S¸(2Ä(	Å(1(p™(Áæ(¨•(´()w(L¥(‘t(Fê(pÊ(®([¥(ì(;(öB(	TŽ(	L"(‹ (¸À(ŽL(tÃ(	†>(ßŠ(Ü_(
+‹(¤‹(E0(„l(†Ø(
+b'(Á5(V¸(Îõ(â­(eû(Ð`(
+ÿ;(	ç(N®(_(kÞ(ÊE(Ð}(J(G(e(ŽÙ(@™('(³·(¬|($E(½†(C(Q(n	(7Î(¿X(£Ú(Ù(	Iž(ý6'ÿàÈ'û‚'ôé¿'öÔ¾'õ[ü'ðŽí'ñƒ%'üëÑ(@è(€j(?~(+(‡æ(A¡(ëG(eS(ã«(%z(#x(aK(À¦(ô?()µ(Œà(Ó(LÊ(cÆ(û(!M(¶æ(’¨(9(Ú(qA(T (H(–x(j(
+ÀÈ(×7((T(D(­—(no(Vt(8õ(¿€(Ê8(ÐD(zŠ(¶,(ä1(¾(
+á(i(z('k(T2(üM(f(ÅJ(1—(–ï(.ù(S(AM(Ï¬(CÊ(xn(MJ(Wâ(q}(>}()°(
+(S (ÿ(ÄË(>þ(ûP(šê(Q((‘”(ï(¨ˆ(=(ô+(øk(D(Š?(Y(íT(ÅF(t<(l6(jo(‚(‘Ä(Oz(ˆa(#ˆ(@ñ(Ì(¬(Çã(þ‘(Ð¸(‚Ó(Óé(g7(Ñ5(ã`(®U(ðõ(h(à(ê¡(8(Ñ((ÀS(h§(Z[(æÒ(N*(ìÁ(Á(>Ï(vm(–T(ÃÀ(ì¼(N€(V1(Y÷(d‚(ŠÓ(íá(ü‡(NÖ(ÏÞ(Æ(Ù$(#³(=5(u(–l(](›·(LÉ(³†(k½(,‡(/$(]¾(š+(˜(Ó£(t(íš(Ôÿ(º·(3Á(úì(I*(^(j=(Ä(‡à(I©(Oò(ç“( â(N#(£(ù™((3(œÊ(‘((?(dê(
+;q(~\(ü(b(¢(LD(ã½(+`(+(‰c(s@(›M(7v(Ü5(Øo(ãN(Ï&(V0((Q(ÕŠ(úº(Ü›(Þ³(ÂÂ((g(0Î(ë(Vú(o“(+($(}Ø(/3(ªø(²H(¯(Ì½(ö6(wi("`(ã(:Ü(†­(ûe(p·(Àx(•(yþ(«Ä(µN(„L(œÑ(PA(Í€(B(‚ê(‚(iN(;Í(»ï(ðÞ(Jï(½ (Dº(´‚(eë(x((‡(¸(j(Ká(Çà(W´(¿Ù(	y(
+oc(eš(¨
+(«ˆ(×(š(¢(D™(Ô˜(+Ù(,„(Ã!(;"(
+ž(	àª(	Qî((5p(XÀ(To([^(Hû(:Â(Èõ(É(È²(,ô(”ô(–[( _(Žµ(T(S(Bf(@ (Š(±%(U(4™(ün(äg(Y(.h(n—(2©(¢(Õ(T(m(¸#(u#(»/(¦(¾k(š(Ag(	XH((91(/Ù(³F(	ƒ(€M(¦G(ËV(çG(z.(¥Æ( ‹(
+Öe(Ä³(.[(9(µ;(k(K(\®(N—(tÍ(<((Tƒ(êH(…õ(º(fÖ(
+|„(K×(<{(²7(uç(Å (îõ'ÿnû( /à(µQ(ä
+(è@(…ƒ(Z«(r(íé(ZÆ(ì(jš(øª(×(k³(&3(Ì$(W>(¡z(ŒP(ÜÞ(ô(-É(:ò(ú"(þì(²E(—(dé(p­(Hd(
+w(põ(?™(ÙU(“¢(Ói(Ì(>¡(NÉ(>þ(9™(\(6(‡ƒ(+(í(y(øB(
+(åt(X^( „(çµ(^O(±l(72(XN(*Ø(	Ëï(	9(
+
+w(ÚZ(?û(,h(
+Ë(PÌ(F(=^(	ÞØ(
+Å((®É(¨§(e6( :(°°(„+(~®(ó(ƒ“(Ö&(]²(Il(t†(n(.¿(Ø()ë(ï(ÌU(>(
+„;(`#(D‡(
+Å1(
+/”(’(I¹(g(ú(j(±(		D(	èÊ(^·(Rˆ(a,(›ä((š†(í¡("(ð(Å(>·(ñò(Y—(Öl(7g(®@(ôY([s(M“(À(d(Â™(¦ý(×(†Ù(w”(qÿ(‡ž(µ&(à~(ir(’(‘1(ÉÄ((ÜV(Þ:(7(.Î(Ïò(Ú|(w"(»(‚°(EX(QÄ(<ö(Ff(	ö±(›é(¹­(j(¿(qˆ(^È(ë#(¯(Ø(—(Dô(Ä({ê(ý>(o(ìX(˜:(›ç(Öó(÷¢(I(çÌ(?c(x€(Rt( v($g(˜ã(TÐ( ‰(¬Y(+Û('ˆ( Ê(e(XL(pc(ù÷(¶ƒ(Ý("€(Õ%(8ì(^Š(Øe(²ý(‚v(`(U>(ý (¾O(H°(üw(¾(æh(¿€(‹¯(Ÿƒ(	ºt(	\Ñ(„Ó(	Å(((sŸ((MÇ(Ì(2ê(‰(öó( (Œ(Š=(k(åW(­¿(º`(%C((¯(b(¾R(µ(@õ(Ò(J§(µÉ(:(
+&¾(øÞ(•j(3ò( Üø( 1¨'þ{2'ûÄL(™8(qð((âf(up(CÒ(ß‹(òh(u(ÄF(‡ñ(jŒ(âÍ(fá(ær(—(úc(™(ÈÈ(ëÜ(Ö(Š½(ÅT(ûh(c¾(S(u(-Ý(j<(…(»&(Ü(¾ý(¸è(oÍ(Kv(ØF((ú(}¤(—ø((ZS(I>(àZ(ß(þ(òZ({(T_(N®(VÝ(bÂ(1Ã(ä(·Ø(‹](Ç(!(²3(œ‹(Nñ(²
+(–P((ä(Ò¡(µÙ(²“(
+¯Ú(	‚H(©2(c%(öÉ(ª( ·(Ý”(Ï(ZÔ(ç%(¶(ßá(*†(…Å(†ô(H(	Ù($~(
+£N(j¾(Ê!(Öm'üâO'þXù'÷Yó'øØ'ü`8'ùï(ê(?%(b}(	dt(w(WF(	ð{((^('((o[(Ñ(i(ÂZ(c(	‰ƒ(
+X¥(«>(	KK(
+G¶(÷z(
+;ß(	=¹(	~ (—5(\‡(
+ÿa(ÜB(DD(v½(
+S\(~¼(
+Á(’`(
+&(Æe(è&(Ý8(~(*(¿!(
+(Jk(¯ò(áÎ(m(ã0(v(H(Í(
+(·+(Të(	”Ã(úÓ(¿p(	°æ(
+¿Y($X(
+X(	a?(¾R(
+ŒÝ(¶(p(Úõ(,¹(§U(h¼(3Ö(|ð(ßX(°8(o(ñ&(Þº(
+ù(s½(±Î(õ‚(oÃ(é#(¤â(	Z2(é£(Ú'(éU(Øç(##( \h(G(L™(q"(¦ò(	=
+(æ5(
+Jd(	¤ì(
+yî(E^(
+|k(9æ(89(
+³Ä(]a(—(’+(Ò#( ö(èÂ(x4(Pò(Ç#(û4(Øä(uï(¢Â(GX(Ò5(2(É(F¥(žÕ(P(\Ï((i(—(k$(’œ(&ß(õ(–—(Þ(©÷(`A(£#(1(¯f(5*(Ä(.
+(	“p(DT(ÔW(qÙ(¨r(iÚ(aï(è³(2Ž(î(E’(÷ï(ª¿(Ž¬(”ê(,(a(bo(™ä(Ê“(Ÿ((%¶(Ï(»°('¹(­^(é(Íl(¯è(ÜŒ((&6(ã•(~$(·(~4(êº(<‹(¡(ö•(F‰((Î)(f(šŽ((DÂ(²˜(œ¾(C^(
+îŠ(Ž(
+íç(	—(Þð(ñÂ(Ø”(ðw(ø¥(¦³(¤a(‰œ(›²(?Û(D‰(Õ–(Ù(Ú((p(;Ë(Þ( :(Ó@(³(ñ…(H(—…(Ìn(‡´($](Žm(äÈ(;6(‡è(àº(râ(ÖY(«j(üb((ñ!(?+(¯(…÷(Hž(BÆ(@‹(Ðü(c*(«(ïš(}r(ì¥(¾l(ÛY(×(Ï7(4T((û(À(Š"(0‹(u5($(¬&(Ð((‚(nH(éx(|Ð(²U(>×(€Â(;(ªš(‚G(4(Õ(¢8(cá(qÙ(Ï„(9”(ñõ(´æ(–(¤ø(d-(I­(9¦(y™(ö„(Ìð(9Y(H(¤1(¥Ë(hõ(žO(d(ð(C™(ô((Ý8(DÈ(2w($(°(zo(ÌB(*(Ê7(lÃ(ß†(jj((’(™M(Î9((E(g(,‘(r(ƒã(@¯(³(©7(t+(V/()(ð>(mz(Û(‹B(—Ò(ò9(rõ(î(ëÒ(Ö”(ä(D“(Æ(Üœ((?q(áQ( â(—~(š¼(ôõ(Tø(;O(¸f(>Å(.¿( (Ç(9(q²(Y(þ¾(+á(ª(<›(€´((K¸(c(Í¶(ôº(H(’^(ny(`(8G(˜å(I(£\(­e(W#(%Ü(®â(4f(
+Ô´(Ÿ(îk(¶@(ò(q)(>v(ÿè(|Š(Ñ_(üe(¬»(@¹(~’(yž(†f(Ž#(
+†(/(à](F_('(Æ·(ƒh(g'(:à(ÏÇ(Úí(v(î(7/(D(gé(Ñ(Äñ(V¾(Bz(ƒ2(Ê;(Œ(Œ(“£(ãÍ(vd(Ú:(-Ê(·è(S(b(†6(j©(Ñ®(Ð|(†|(Ð(®+(C¾(`†(~½(
+ï(–Æ(T<(Ññ(¡(KO(·Ä(° (b”(£(6(¸K(xþ(Sh(2Ê( Û((3²(Øê(ó|(Áº(ž(Kc(¯u(z(¦W(7(R[(âý(-Ý(?y(nï(e(½ô(å(wà(¥²( (~ô(Í+(6R(§U(1*(‚	(]Š(t\(,'(8ó(DM(Ó’(Œ((Q¢(({“(›.(\õ(»¨(äD(QÁ(“Ñ(W(=(Ó((Ó(µ(6Ú((G(0“(}Í(c(fC(÷L(i$(¿è(	((¸(Ü6(m~(\±(´(Çw(žÚ(MÊ(áO(M(‚(ÿf(7($(³Í(†,(”(ª(Û¾(X÷(›×(aU(æO(¥ (|(½(ý7(ë(±†(Sr( s(Ýà(r×(Å"(Ð(ä(íå(Ü(½±(æœ(GŽ(P(ª¨(›K(5P(íý(ó	(ž6(¥ƒ(9—(4·(û­(Ñ‚(¹U(“Ö(½3(S+(æÚ(žP(‹ë(¶#(+*(~j(f¼(×(Õ5(þ·(ù(Ï7(+¤(î2(l°(Ä¾(ê’((i8(€E(ìº(ŽU(xê(³E([4(‡¸(¦(wä(x (=ñ(­((ç0(8Ã(*©(\ï(
+ø£(LÀ(	€ß(œ(=(K-(»ã(
+2(
+A°(
+¹Ÿ(uG(½(Â6('(ÎÒ(_Î(#æ(&²(0=(qä(ºR(>¶(›x(^¾(ËÑ( (óf(Ê(1¹(Hd(ºÅ(
+Vc(
+³±(
+»,(
+±Ð(™
+(	&(J(VÙ(
+@ú(&)(
+œ(
+P¡(	ž(
+$(~_(x3({A(aÐ(Ô(ý (³A(8C(šÎ(
+uì(öÂ(Y(Ê(œÄ(Î(ÁÙ(¨±(
+±¤(ôÂ(Rz('P(²{({(	®Ä(
+(R(A(`(Æ(è?(K»(N
+(¼Ì(
+GŸ(:‘(;N(õB(šÂ(Ã4(K:(€(	SŸ(æ;(€(i®(é+(<ü(øÿ(î%(	ª(ßž(h¢(t4(±(â¢(…(]¹(
+a(	(eN(nB(æô(	îf(jQ('Š(“B(‡Ö(uÃ'ýˆ+'þj‹( Y`(:($è(×õ(	o(4Ì(±Œ(x2(	½+(	ò©(oT(Jè(vÉ('a( s"(so(mÄ(Â(Eö(·Í(5?(Â~({s(ú¤(Œv(ú(ŠY(„•(œ¾(×((êµ'ú`}'ùÛ'øB:'ò¹Í'î*'ê¤'Ùhu'ÖJÕ'Ûé«'â.B'ãèØ'çýî'æ"'èWA'îfg'øOY(¼²(rl(	‰ö(	ç'(
+Bµ(hó(
+ñ](	¬Æ(^¸(u8(µ¯(×|(	ì(:\(	º(€(¹£(@—(>À(~( õÉ'øŸ’'ò©#'éõ7'ÚÔZ'Ò G'¼U²'±¸Ï'®ÓÛ'®Ac'®=³'´Ž÷'ºÀ¼'Ã³
+'ÍÛ´'ßÝ'ô$'üI'ýSK'÷T'øŒØ'õª'óÞK'öq®'õf'óÇq'úÈý( w(¬ (‚(—Ž(	{|(
+üÃ(	b6(
+ó“(nÃ(!()j( U˜'ý@w'ô|'ìC`'èŽ'çìO'çRK'æFs'áÀª'Ú¸9'Ú÷¨'á0D'Ïcí'Ä¼½'¸|'¼'Ä†¤'ÇKS'Ï‹Ù'×'êùB'ø7(ë(mW( }•'ÿÝ5'ÿÐ]'ö›‰'÷õ5'úàM'þç'ù£'úëˆ(Üû(\(þL(ñ3(s»(8(‘(žò(´ƒ( -Ö( 
+A( kö'þ}H( ±6( fM({Ð(Èú( 0Ô'ùŽ^'ñ´¶'é¦'ç€I'Ú¹V'Í„ä'Â<É'ºû'·O'º6‚'Â°š'Ñu„'ÚOY'Ø¬§'ä£'èG'ðÛa'û=ú'üÉZ'õ—;'õyª'õ‚Æ'ô2'ú'ýµÐ'ù®¡'ø÷'ïºÙ'íc'ã¨õ'ßHÆ'Ó2Ž'Ø°Æ'Ö˜¨'ÑvÊ'Ùœi'Ý¦°'ßi<'à|Ì'íÄÓ'û/Æ(Ã(	ÅË(gò(ó'øÁ3'æ
+'Ø^'ÈX'¿óø'²wF' 3Ž'”°'ŽZf'A$'$Æ'“³'œqF'ž9r'žüW'ð'šZz'®'¤Î'³O²'ºGL'¿0è'Ãþ'Ä&9'Ð 'è=r'÷–;( E(Žn(Úá(^>(”Ø($÷(
+l(ùÖ(èm(%l(	#:(|f(Ú+( }(á(»(ã*(	0á(Ct(žÒ(ü¨("j(0Z(þu(Œ((¥&'ýYh'ûmE'í&…'âêW'ÚW'Êy„'·K¦'¨à'œj’'›õ6'¿'¤¬Ÿ'«'´]!'½˜¾'Ì"]'Ù}¡'ðœÆ'öÔ( 0U( Îz(ÐÅ'ùÐð'æ§'×Qâ'É{]'Á''²dJ'¥
+D'”Øq'’ùä'Œ''”Ot'¤À%'´*'Â'Ñœh'Ýy'ë»‹'ýt¡(´5(­;(°p(î((°Ê(>7(=(`8(©à(®V(‡œ(Ç¡(ä9({P(åä(	š¿(ëÞ(Ç'÷g°'õ,'ïµÎ'äÁÒ'åq2'äÚ«'ßº)'ÕÓE'ÌV˜'Æ†H'Ï/'Ó‰Ü'Ûá'×³Ä'ÕG'ÓK¸'Ú‘'çQ'ò(C%(°( "-'üSñ'ñ…'éG¨'Þ8'Ù‡Ý'ÖKô'Í&¾'ÌÑ]'Ë£´'É‚'ÄFÌ'½Å#'»Ç'¸¤y'·æ'±Y†'²J.'±1'°Ôœ'·‘j'È2ô'Ò¯'ï à'þ(‡(ˆ(<£(¾ƒ(à‚(ê›([·(uL(Ô~(Q;(ÍC'÷¼('üÐœ(
+-µ'ÿw–'ì|(È(ë+'ù!Q'ôè'â1ž'ÚT×'Òx'Ò‹)'ËÁ'ÄP˜'Æ¶|'Í/Ó'Õ”Ã'Ýmù'í‹'õìÈ'õ¥Ò'õ½o'ñ=ç'êïŠ'Ü¸ý'ÉJ÷'ÂÝ÷'¼ÊŠ'·Ôi'¸x§'¸á'¹mM'ºâ'ÃÌb'ÎÈ'çúÝ'ö#Ý'ÿ·'ü˜&(R‹(^Æ(‡Z(û§(•}(z((Nñ(iÔ(ž°(	/ú(À€(Z(\ü'øê'åê`'ÞÀn'ÓBÖ'Å'Â+'ºn'ÃØn'ÌŸÀ'Åa'Î1?'äÔE'ôÑC'ÿ7Y(†E(B¯(<(y0(V'()C(ý„(×K(»6(
+®B(
+ V(
+\Ì(†z(ä(¢(`(­(T¯(Î(ß†(ï	(MÃ(x²(	•É(g‰(Mv(Ý‚(
+ì€(m(+Î(	Þò(dE(	/ä(	_(ÿ(V(	å¡( (èÐ(‰ (
+›6(	Äô(#(;Õ(ë¾(
+M(	~[(¸$(	(E'ýø'ùæé'õÉT'ñû='ìk'ðóñ'ïW‰'íG­'÷ùò(ï¨(	h( (a'þÿÕ( í}(˜ú( –(>/(J[(gq'ÿËd(¨Ö(æ˜(Å»(†Ô(K±(;Â(ÛÉ((Û´(™Ç(“à(.¦(•(ï(
+(	¶(=ú(û(ì(BJ(œ\(£W(yç(	X»(m.(	D`(â[(ë(…f(
+@(Óy(ÍM(
+Ý'þ
+( )Q'ò)Q'éÄÛ'ä5¸'á¤þ'ãPé'á¯'ß°Á'èWÜ'ç”˜'íx'ü°3(Cü(	ãÜ(
+ÞW(	¿](Ð”(†R(	Ž>(
+î(	ˆ‰("Ë(—(r?(
+¸(
+P(ú(i\(~‹(¾z(Ts(À\(@(áz(¥§(
+Æ€(	ÝŠ(’( <õ'óº	'ï7€'ç`»'ètÀ'ì\'î®'í1F'õ|4'úò(G(=ç(í(©9(¦b(3Ý(Éž(F,(	Î(
+8ä("ÿ(aM(éŸ'ýÀ¹'ûÐá'þz ( Ó'þât( J((£(é(×(JY(b(¤(W‹((Ú3(AI(„X(
+U;(	®ô(
+Ñ×(Í—(‹'õŸ–'à‚'ÒTù'Ð}@'À$ý'¸·'®Æ'ŸÓ4'’cø'“Æ$'›²5'°|'»s"'ÀÒ{'ÃÙ'ÊÉ~'Ó×'æÁ'õA,'ôºm'ïí$'ë¤z'çwê'ébŸ'èÐ'æœ'èÈÙ'ëK'óÊ³'ü‚](ù–(
+)(	y<(èb(§3(Ù)(p4(z…(d(?D(PÛ(m1(@)(kB(	Ó$(ÍÓ(m;(×X(µ‚(Ç`(	{ (
+Ö(¹©(\ì( Ã''õ[	'åà¬'Ù‰ú'ÑñU'ÓúU'Ñª'Ë4'ÉÚ'Ëµ~'ÑÌÞ'à³}'ïñ'û¼X'ùOù'èŽ'×Ï±'Êì'·&U'¦Ré'©t@'¥}Ò'œ®Q'¡ 2'¢šö'¯}g'Æ˜Î'Ô='ãa{'à¾h'ä¨N'ß·Ø'á&M'Üîe'ÞKÑ'áC'æ¹â'èy±'ð‡)(iç(¡ý(7à(l6'ý‘`'ÿWi( 4…'þÖo( N®( z (‘g(b“(ÂZ(	B†(kÿ(ŽÁ(gU(ÒÛ(ÁÃ(Tc(
+¤\(Tt(e(Ëø(ˆu(;¶(®T({Ž( Ò’(¹(wg(Æb(q¦(˜(
+0³(	|(
+£s(3(òó(Ž–(kà(ðè(
+›Ã(èQ(°'ÿÎ8'ôe
+'éå¨'çÖT'á¶&'âÁO'Þéð'ß[È'Þ—<'Öz:'Ñ†'Ú\«'â+Ê'ám'ßÎÔ'ä”'ç~Í'éeå'ðìQ'ÿšb(ãJ(¶Æ(¢­(yŸ(
+¾ (	·ã(ú®(Ih'óä°'ß¶6'ÜŽ'Úù'Ò›p'È'Í'¸;‰'«âl'¨›'¯Þº'¼üð'È­D'ÎP'Ñð3'ÚDç'åÃÚ'ñÖ(æ (ÍÂ(Š›(	xä(lc(
+b¦(	G(‰X(ß(¾(à»(w(¿ü(((=(Ìú(ðÑ(Gë(&H(!(­Ž(
+€_(®(í«(î@(xZ(X¤(+ë'ÿ'ý Þ'ò[‡'è'ærˆ'â×¯'ä¹\'çŠp'ä-	'ë/^'íYÙ'ó»–( {Œ(©I(C†(ÑV(G(µ,(	í®(óZ(c(a(b‘([8(¼›(£(Ã°(„(3( Þ'ûÛ'õºN'óh<'îQ'ï.h'é½-'ìx™'ð,'øJ¹'ù©ï'øÁõ(ˆ}'ýß^(ÿ´( ‡(,(f¥(JU(fý(|}(/Z(Ù (47(
+Å(
+>(¥'þÝì'ï¡í'é0'áëŒ'ØÛ\'Û†¬'ÉÜ¸'¼ÅV'¯@­'ªÃP'°Úð'¶ë'ºª*'´7'¹)Ä'Áƒ¯'ÈÚ'áô'ï¸^'üv‰((½X(	–™(
+›Ù(˜£(
+uè(¥Û(›(Pø(
+æ#(	Æ·(”(
+r¿(Òh(K(¡¹(;p(ã1($(™n(QF((í(6"(	"[( å(	ü\(
+T(Àm(
+üg(
+¥Ï(Ò( H(
+G(‹’(ü(	âë(
+’l(žŸ(£T(
+8\(
+êÓ(ÿŽ(	8ÿ(U†(	â(8"(\Ñ'ü0»'õ×'í/p'ß§'Ï#1'¿ð–'º„í'¶/'¸æÌ'¾}ø'Ä¯\'Ì®Ë'Õo'æR!'øá3(ðk(v(¸Y'ûÎÑ'ôjŒ'ïŠ®'å§Å'ä€S'ãâê'Þ<”'ÝüQ'ÙùË'ßƒž'çfC'ñ\Z'ùÆ 'þ¥¦'÷ßø'÷¤9'óÝ'î|'×D¤'Âè''¾f‚'½$ü'°F¯'£IÆ'¡v§' p™'¢H'¥pú'¸m'É~×'ÔëÑ'â}í'ñ®Æ'øª¡( œ–(|(ªî(ÆÁ(æu(B}(“(½(¸È(˜›((Ð(²_(o[(·(*ñ(Ý-(8Ç(°‰(žO(¡—(Ä(Ãw(g˜(
+(È!(ýF(Ç(	}k(%‰(¶ƒ(	;V(9®(5r(¿?(îõ(’û(žŸ(¥(³(3‡((’1(¹C(£Ì(×õ(r(/í(g»(9/(ÙÑ(Ïþ(½¬(A>(sÄ(E†(~(¤Ë('Ý(*Ò(Ò¼( (øT( \'üAn'íÖç'àG˜'Ûk'ÏVj'Í/š'Ñ¤	'Ï1ó'Íî©'ÑÇp'Ú<Ö'êÚ'ìPõ'ða'ïd 'ìD'ê‡µ'æ;ç'äe³'êúñ'åßô'í×D'õ"( €¸('þÉÎ'ôÇ­'ã®Œ'Ò½r'Ì¯ã'Æ>8'Ã0'¿5q'¼¸È'¿¢Ž'Âî('ËÀš'áî;'õn'þ´F( ÇP'þ’'ûÆ'ûQ	'ò_ê'öÉ¬'ôäÓ'ö¥¥'ù¯'ûóÒ'û±r'þý“(®®(5¸(¸÷("d(K€'üËb'ö¡~'òÇ@'ìú'ê>^'æ‹”'àÐÜ'ãŽ&'ã²²'æw’'ç6Y'îu}'ú”'ÿ³R'üiy'þØ(Y×(P–( ¸(5ü(¬ (ˆ(|g(¡(#(ú(¹l(((å\(=’(N(,Ó(Ê6(¸à(»¥(¢(Sý(†¦(×ÿ'õ­ü'ïy+'åŠ'åèø'æÊ-'æ²ý'ævì'åjŠ'ä='ð©'ø'ÿ?•( 3'ÿ–€( ,'þê_(qe( ž((UÔ(·ƒ(»ã(œa(XŽ(= (ñÌ(¦'ùK '÷¬'ôüù'öe•'÷ÒÎ'ðŽX'øŠ'û¸!'ü¾a'ÿß( <(ml'þ²B'ôð%'ä>	'Ò5k'È=('Å9Î'½,9'¹t'¹PP'¾xå'½p'ÇŠù'ÔÖÑ'âÌ¾'óB/'úï<'úúÜ'öc'ødY'õ’B( ¶\( 4æ(šv(P¾(l·(ªÑ( ¶( 1'ÿ)G(( )( äÜ'ÿñà(]¸(Š(¢(¯ñ(' (yÒ(L(Ì8(¬I(µ(Á(‘(èl(‡('‰'ùT$'ê='ììé'ã¹å'×Æ_'Ù!²'Ïš·'Í`'ÌIÞ'Ì¼à'Ò_S'ÞÊ¿'é.o'êñR'ê}'ï›I'ñ5'ôGi'ô%ä'ð~Þ'êá•'â;L'ÜGÇ'Ùm'Û@J'Ú#_'Ûa	'ÚMD'×§é'Ü}ß'ç·Ü'ïYI'ö1Ú'øvÿ'ùü„'ùÒ_( =}(b'þåã(B(Z( ‚î(‚A( ˜'ÿ.'üt( Ép'õ²Ù'÷µ'öÝ'ê\'ï$'ï ß'å)y'à®Ê'á:'áÈ
+'çÚá'é±'å‰÷'à3ü'Û{Š'ÝÙ*'Þ*-'ßÿg'ß]'àa)'Ñr‘'ÉË'ÑÉÖ'×*¹'Ò	3'Ð¤='Ó'Œ'Ñä'Ø§'ÖŽß'ëß¹'ì~ž'óØ'øHN'ñÅÇ'ô\I'õêc'ûD'ò[Ñ'õg'öT	'öX:( 
+–'øvt'óõˆ'òÞ'îi£'ï'ð^è'óqÐ'ðe'ðú'ò3ô'ýK(²Õ(6=(„e(d²(@I(gä(Ù (Z!(á5(£9(“µ(Üô(ÅE(¹(Z(åS( Ó(PÞ(„( ŠE( ï( 9( Æ(A¨( àß'ø‰¬( ‡Þ( a(©“(( W~( Ô¶'ü»'ðeŽ'ó'êBâ'å®Ï'ãÝq'ÚA'ÓBU'Ðiá'ÒõÌ'ÒØ£'ÔlY'Øo'×xc'Þ	ˆ'áel'ê'î'õ;I'÷uº'û.ã( ·(M‹( ‚'ÿN(·'ÿˆª(Z( 4©(÷‘( ¦$( q?'þ 'þòi'ûÜ¨'ùã°'ù*<'úÂB'÷Ê'ú'òc˜'ó•'÷Éü'÷7
+'ò›'ï+'ëÌ'æÞv'æ†M'ÜÉ'×Ý½'Öìs'×wø'Ö£K'Ø&¼'à¥·'åöe'â€'æ+l'çÈç'æ[h'ä:'èN…'âñÄ'Û|_'ÝÀ´'Ø.ú'áðà'áÛ'å…;'æß 'é²§'çwŒ'íð'ñj1'ì£‹'ð™î'ñƒY'ðÝœ'ñSa'ò¸'ð›'÷+'øÄ`'ùÙE'û`'ú¡ù'ú)Ø'ü]'û/f'û…T'õmŸ'ó””'øÖÆ'õ|õ'ðøh'ñw''ëBÚ'êIn'ì
+'ð@œ'ó`¡'öüš'÷W³'ó|Ç'ùØƒ'ýÁÀ(Ïë'ÿA‡( 8;(T'ÿY»($g'þÂM(!(dQ( ¨ (³d(C’( Ð(yè(Ôò(tk'þ†Ó'ú’D'÷ôO'õé'êÞô'èº|'èÑ›'â¯('äVâ'Ü‰ì'à,ü'ã²'àó!'ê\û'öAö'÷ ý'÷_ü'îÐC'ùz'ÿÈ'þÍ'ù€ˆ'ÿc%'ú	ô(Ru'ý	þ'üL_(õ'ÿ1s'új3'ôë~'ùä'ø4'úCj'úÌÎ'þX1'ù^`'ù-;'þñ^(##(ŒÖ(Pž(×­(«,(Yð(Y((!À(è+(QØ(5 (7((`x(ì~'ýí~'ûÅ'÷fT'ñ[È'ôƒY'òCU'õXë'ò'õ‘Ã'÷Û'ùð
+'þµà( ‹¤(®)(ú( :Ç( 'ýk<'þjE'ý«'ü='ø™#'û=›'ø¨È'úÛ'ýØ¼'ü¯h'úA‚'þ-Ü'üQ2'óZÎ'çñ'îj'æ’Ó'éÀ“'é@*'îš™'éÏü'æ„Æ'æ«¢'ã™'ì±'õ ù'öáâ'ó`Y'÷Ä'÷ç'öî'ü”×( ƒK( ßn(
+(¹'ü¸§'üu¥'ôzà'÷¢'ñzl'ôØ'íÅN'ðòØ'ñ…('ðx1'òxt'öÞŠ'õu'ú‡Ç(•À(¼p(ï§(ËÅ(ƒL(“¦(F;(X­(å0('ÿŒï(™‹(°#(.(‘½(ºO(†(Ar(¥Á(²»(-º(¼¶(ˆÍ(Ò/(÷¦(–V(Ýþ(¹(=á(:h(Ì(u(¯ (íï(Ád(“Ý(]E(­0(Eß'ÿh 'ýÎ¯'ý[k'ûÏÉ'ô…Ã'ôõ4'ì¿i'æÃS'ãÚw'è«'Þ©H'æÏ'ë'è¼Ð'îJ©'ï['úHd( (Ñ(„e(6ý( Ü(!	'ÿÒ'þð©'ûL 'øts'üô£'ý]¹'ýêÞ(¯í( rì(‡4(ì÷(Á(kx( ²(G¯(¨(±õ(!( y(›ÿ'ÿ¢'ÿyÚ'þâ#'ôç¿'ì\'ë^~'ë*À'éþ.'ã ‘'ßy!'ârÀ'çí)'í`û'ìŸÕ'ûe’'ù†O'üíµ'öÚ(þ(æO(/(Ì½(Bª(†ó(ah(ßP(tñ( ´˜(>(°}(@Í(
+º(°(ˆÔ(Ê(Óë(Ž‚(q·(”(ƒ<(=( W€(.Ÿ(Ÿ‡(©ä(œ( ÿ'ÿ.`(#(yK'ÿ±¢( Þ(?k(|¿(ha(D£((zD(µí(k¿(D¤(|(—”(bß(=(óô( DY(ÖJ(F¸(Ì4(Õn( Ö½(jy(›î(?ç(Ðå(š(–æ(7à(µ%( Äâ( Ñ8'ýGQ'üµ/'õ[@'ü…+'ûƒØ'÷Ê‰'í
+w'è‡u'ê›Œ'ôÎ'ôÏ{'ê'ë¥ï'ì‘b'î^ò'ôÐS'ù6 'ýÁ‡'ýÿˆ'û–W'ú5@( a('ýº¶(jä'þwø'ý5ô( ß4(ÍÐ(\v(Ð(«I(v@(B(98(g(ÄG(t'ýWó(ú;(Ñü(C¯(é(4ê( ¹½(Nw(
+¨("Y( ò8'üqØ'û'|'ûiœ'ûµÒ'ü²Ð(ÇÐ'þ¸”( HJ(–Ç(×J(hG(³þ(¶²(eù(˜È(	+Ê(
+äâ(	Bú(	•w(	×d(
+Š«(Æ‚(¤¬(¯(ÝÍ(&ç(ZT(
+ã(	ãÒ($Š(ðÆ(6W(	â(žk(Ù(ùÑ(1=(äž(¥(út(Ôþ(U(.2(jF(™j(\
+(U0(›“( t( Ð'ûmª'÷3'þ¶'øW4'ø¼ô'üÅ'øbþ'ü{$(÷<(ê|(ÿ9(\(¤¤(8(<C(ªi(‡<( (Ôè(	™à(I“(„ô(ô­(	cD((3(Ù$((´(øõ(Â(ùß(1^(a£(f(Ï{(~«(îí(×(._(¹R(&1(’(»ë(;A((Mó(,A(/	(ö(]ˆ(D(€«(Q²(Í(£#(˜î(ï(d#(1Ã(ð´(1¹(…(K9(Yà(º€(a2(áé(2¾(¹((&Ï(´(q‚(•(KM('Ô(àù(¦Ÿ(=(¸ˆ(•(Å(]ÿ(Íö(ÿº(Æe(3(ÊI(O(»3(*(æ÷(ò¶(„_(ã±(;D(H(1o(Æq(…‡( ¡(*(ñ(oi(áÓ'ü[o'ýp'û8l'ö€í'ý«'ùÑN'þ[©'ý@Ž'úB§( Ý¶(´ß(þ(¼x(ÈR(Z(Ð(^(óW(…c(;Š(;›(h(g<(¢(0ü(Ã±(!“( (¸Ã(÷¬(ˆØ(-ô(ß"(Ò(@î(G(æ(fæ(Ä(vÀ(Ÿ(JZ(L?(.£(`‡(Åõ(×"(Š(m®(YÀ(¨ê(AU(€x(Ö6(©(º¨(—‚({ù(¦(æC(±.(èý(¥(Šx(¹±(óh(–D(LV(aû( ç©'ý­Þ'ÿ\Ì( ½Ÿ'úá'øÊ@'ú=Ë'ÿã( ›3'ûß¹(Ýé(Yv(	as(r€(xá(Óâ(c(5(Ù+(5Ÿ(¼S(3=(±Ö(˜{(³ï(‚O(0Í(kº(	QÌ(Š(ÿŽ(×ü(	
+.( ³(¶¾(_ (¼Ä(¡(£L(«Ã( ;/(>•(C‘(^(a'ýY'üò<( 'û`( ×(j(»(Öÿ(ÕÔ(ME(G™(.G(Ç†(<(Ó(ÀŽ(º(÷¦(ê¶(e(6(Ì»((’¾(ã(§	(­ (Ò(ØJ(—à(¹(sv((D9((å–(}¸(ß( ¾€( ì(fì(Ms(±K(Ûb(¤ù(<(x8(ÍÈ(´(«È(UY(i(ûd(é½(+( Gˆ'þ+Z(‰S( Mm(^'üó8'úæ'õîÍ'ýö'þ( šñ'þQè'ÿ·}'ý$( M'üÂP(qT(`¦(R;(þz(Á(	Yå(£ü(®(](A‚(<O(ÖÞ(M(§(±”(°û(A(Õ(2 (ë¢(Ïg(ÂÄ(7‰(æf'üí'þ?'ýŸª'úm'úTÏ'òÙ÷'ùãg'úŒ'ózŠ'öç(  d(®(¶j(°ò(s«(Åó(¨( Ô(()0(Üm((Šh(š( ø(å	(ë(U(ðK(Õ(­'ý™='ü›ï'þš'ù=ç'û-s'ýÂK'ö‚¹'õ0¥'ü^j(h–()º(S†(
+Ê("y(ïõ(ž(	ë(½(",(@(Ù(ŸÒ'ýf
+( »s( *š'øSí( Ú&'ý‰æ( “-( ^‹(pt(®x(Ùâ(\Ó(J(n(àì(Bµ(ñ‰(~ù(*Ç(è¦( Õæ(Ÿe(¾;'ý‚3'òþ]'ö· 'ü C'÷‚'ý¥ô( z(=X(Ò}(Ÿî(òÊ(	M(
+y(\-(˜(Ú)(·ò(ç(ƒ
+(ô×(	êï(j'é!p'u-*'Óñ'ùñ"'ú7V(Z(ª¹( 'ü€Ö(Uz( ä“(n*(:ë(¿k( ù2(Ãq(í(Û (v3(( Ö((ð™(”í(C(ÚÝ(	UT(ã(s•(=,(\(Á(âÓ(
+g(¹Î(+(jÂ(tý(Ó(
+}-(
+ê(µ2(›q(Ÿ(
+wÝ(Ïˆ(&B(-(gf(¤Q(L[(¿3(	_†(	ý(5¢(	ô(–(x(
+-('ô(Ž6(³e(h“(Âö(Im(³›(Ëq(	í“(Ðï(½È(5;(ì’(´(ðô(äp(É^(I(Q†(|×(Ô0(?N(–Z(·º(¥d(Œ±(|(FW(j(g|(rú(Ú(Ôl(J0(¡ˆ(<#(-(ðb(d%(	(Kô'þÈ‚(a¹(d<(G( Æ(¯O(¥\'üOà( ŒL(Â˜(…‹(ì(l(ÂÝ(í¸(	?‘(pa(	 û(L(Ë¢(ŠÜ(¢…(îN(D´(r)(I½(¢é(Æ\(“0(n(z(íá(a(‘ö(
+².(
+'l(-(q·(Ön(ó÷(
+0°( ¨(j§(ô(ô»(ßs(F(ùð(õ(6×(•Ê( ƒ(D7(©'ÿ¼”(l?( šÖ( lô( ®)( X(HÌ( ¨( °r(Þ\(Rý(;÷(\%(À(í(øø(Çä(¥Œ(FP(¡}(5(;¨(ŽŸ(.(Ä€("õ(¤r(–+(NV(¨E(â(®R(Uà(@Ô(®(ù(B(Õ„(ˆó((PR(þi(,‹(%Ï(ÛË(ñ (Mb(•,(`(‚(æã(È(¨ˆ(•í(NÅ(«ñ(Q(Rø(!p(=)(x(ÅÀ(	f¢(y%(°(J(#(O«([È(³(&³(Éä()(4½(
+h(lè(
+Í¬'èZù'À:§'ê!v'È%B'Ém(öK(äÛ(h(7,(6Ñ(ñ(	'(¸L(Ë;(&û(	ín(7(ä(Õð(èÁ(Á(Z2(6Ð(”º(ªG(¤„(Ê@( ?î(Ô>(‘l( JØ(#_(>(3V( û(Ó( pÍ'ÿ €(¶ï(ãÌ(*Ÿ(GÁ(U(1a(n;(2æ(Ðº( m(OÒ(SÁ'ýƒ¾(´'ýŽ§(d’(8(µ5(/Í(èƒ(q2(zb(s®(«(ùd('{(¢ö(ƒ( ýN(_z(÷¡(²³('þþJ'ýÅ(b½(kX((ø( …™(S†(„
+(©'ÿªË(ËH(N¶'ýJŽ( õ$(Á( ô±( ³'ûÛ'úŸ'û~'ÿç¦'ÿ6µ'þ}¥'ý£š(ÈX(“( L(Œ„(.=(ì‰(Z‘(R–(ìs'ÿú)(;‘(û\(›Â(Zo'üx'÷”¢( îÌ'û|1'ÿVp(¶Í(«'þ÷!'ûÃ (*(}(æî'ý{w'þì(3„(@t( ³­'ü–í'ý›0'ó|Z'ð{+'êá}'ýMÏ(Ô¡'ÿè( ûs(åÌ(†µ'ýýV(ú¦(‚•(È(Y(á(7ò(¸˜( “Ø(( üÌ(õ(hF'ý§ª(û¯(çC(!a(B(( þø(!({w(ñx(¸)(”+(¡ (	v(bq'ÿü/(–Í(rP((](‘(³(è(*Ñ(2Â(3(	A(´l(ªc(Eª(Fí(ª(F(ë(Q¥( Z¥(£†(HŽ(¹"( E(pã(eÌ(Ð‚(Nª(Í8(<(1›(´(²'û¹F'ûšý( æ(´õ(Å(’(*Ñ(+’(Ÿd(2(gÜ(bÊ(|É(Bê([(>(£2(ä•(æ(\i(“…(Ÿ¿'üáï(ØÏ(z()±(°	(ü8(J(b·( Í(l6(5!(o(°(xé(	'(µ²(ø8(b5(š’(¡(õY(œ(ƒ(Áð(‡õ(~¯'ýÈ¹'þwå(ét(¢(Äd((vü(Æ„(”ê(ú‰(	üÖ(lÉ(Å(s(oû(Ú(¾<(¯J("â(7”(mÝ( (©+(s‚(sj(¢(	"9(<(‹Œ(Ï‰(ï(œ¼(.þ(µ)(6»((¥æ(0(kÛ'ÿ«í(”V(Pv(0(	ò(Ê<(Ä¯(|X(|(Q(¨0(dâ(¯¢(k“(úý(¹˜(á(
+8œ(&*(@Ã("Ñ((9G(k…(#b(
+y˜(Ûý(mT(@(OÐ(A‡(Vc(
+ÿù(
+ž(	(ÿ	(æ£(”Î(	a(¦E(Cq(:ó(ŠL(§(i/( öî(=(†(³‘(‘(6š(G(|­(›( ½ã(cé(
+EX(Æö(â(( 7§'ÿûÑ( /( î¸(7z(»ï( C6( £³(vß'þ›ô(¾9(( õˆ'ý´D( H„(¦(Z†(U(ÇY(9x(/(©˜(Y±(jù(i({Ó(D"(Ci'ÿkÒ( õ(äè'úi´'ùý(¼z(½È'ý‰ò'ý®Ü(»Í(Ëy(@±(¦¿(y(þ()¥'ùªÙ(ÄÑ(œ(õ(œ{( fÎ(ç(](øF(÷/'þœ;(ìŸ'ÿÂ”((ª°(én(¡¬(¸Ý(j-(wC(›Û(›\( (¢¬( ¿¼'ûž©'þtV(H
+(é( 'ÿa™( ¤¢(0í( ã(¦:(mz(­b(I'ÿ÷](­Œ'ý¸ë(0'ýDz(êv(FG'ÿB(}7(è[(fŠ'üqr(øÒ(¥L'üF'ýµ'üÕ-(IN(  ¡(?.(â±(t'üƒ(&û( ¹( E( ºc( ±6(IØ(È$(^1'ýÔp'ÿtÜ(„(àÃ(x(Št(€É(i( ½l(Î(úX(Ø[(ž›'þ¶H'ÿ›¶(h(´
+(îž(;7(¶J(vÍ(Õ\(6Ç(äƒ(ìØ("Ò()Ë(>ó((GÃ(4C(î¿(+o(žä(¥ô'ÿ,Ž(£A(|O(ÿ%(áË(¿(}Ñ(rì(¾Ã(\Û( Ço(÷‰(ÏÈ(Š("¨(1Ó(£Q(¶(B:(¸ó(1T(xÍ(QV(Aî('(Ÿò(_‡(û¢( .(p(K(4æ(æö(Üœ(~†(MÍ( M'ü0Â(žV(ƒ‘(Nñ(	ü€(ÌQ(‹(w (4í(’ ([Š(dQ(™(<(Ø(EF(	¶ý(f¦(˜ù( œ'þº]("†(GA(Û(Ä(Þ(µ"(­‡(¡( )(ßz(t‹(ôŠ(-‡(3²(g(Y3(	m>(3(¢.(ß/(I-(DÁ(çc(jp("(”Q(ˆ(Ó(UÎ(±'ÿ¹>'þŒß(‚J(P”(#v(&Û(P9( =¾( üj'þË“( ‚¼(7(€Ç(µ÷(÷é(ÕÌ(Ïß(	v(·;(Ã“(÷( îã(
+7(èÕ(©ë'üñV( ¨(ÿ(¢( Y(l&(‚X(G(¥Á(Œ(Ù( 7×( ž'ÿÄ¿( Â(x³( òO(2Â( Vð(*'úÿ(7w'û™)(29(•»(ù×(‚( L~( ÁÂ(G(}B(À¶( ow(ªî(R“( "d'þt‹(ôâ'þJc(Ä!(Ú€'þ ¿'þÎ€'ü¿“'û'ý(CY(_(“(³'þ³Ã(F<( S ( ¸-(v?(¤(Rë'ü)}(Ã.(§¬'ø)'ø
+A'þ…'øýõ(Q¹(f( ¸(3 (ùÛ([™([(Âk(3¸'ÿ?„(×ò(ì’'ýrÐ(Œÿ(|š( “€(Ö%(á(P[(«ú(ß«(!7(\	(_f(øý'þ(Æ'þ…½'ù@(õ(hu'ý©õ(KÔ(	(’‘(®¾(”Ø'úì8(•V(N(KÏ(*(#(G‰(Í
+(Û(>Ü(ÍD(Î(iJ(]ç(þ(–Ø(â™(KÞ(?{(î(3ä(ŠD(‘H(/Ä(Ð~(‰°()F(¢K(‚Y(éq(Xæ(„Y( Ù,'üF'ÿŸ“(b1(^\(
+Iä(LÔ(«\()Á'üƒ ( ïg(|K(	À
+(ž(¹F(£ô(Ð(¾õ([ë(/`(>U(	.Ù(ÒP(ò‰(n×(Éo(o!(1÷(	¸(
+²-(f1(	 Þ(S((Í•(š(
+îß(
+Ò×(	ÇQ(yÔ(j:(†(üˆ(0](@6(	ò(	ˆ”(á~(
+<(5](()û(ËU(ú(€('(§(|i(dµ(±í(yb(ãr(ÈÕ(íÆ(©(	£ä(	…P(û$(
+æ…(	’ì(¨a('i(tð(—V(Àœ(ŸM(	G¤(Aa(
+å(à4(ž&(ù(Sô(Ü—(º(ÁD(zŠ(>H(S:(Ob(´((³(fC(åì(Ü	(g(Ö‚(Ÿu(	±(
+8D(
+¼­(6D(
+šî(Nâ(ñ&(	À(
+2¿(((óé(q(Vò(ñX(Í\'þÕ8(ò’(tð(ý‹(
+•›(¹(|Q(à¾(–D(,(
+³(,(fÛ(®‰(ÓÊ(³þ(zë(´Ç(“v([—(¤(‰Š(úá(Ô½(	¡ (ñJ(i(ã(iº(õ$(O¶(	u£(‘(ã(Åã(ð!(ÿ(ªÓ(š—(‘.(•¾(x (+((0u(W(ß](ÞÏ(YÐ(Ô(ê(µ(­(º(Y(nB(¦æ(b×(Ø(pË(äŒ(Œ(q(™ã(çù(Š@(£(ÿ(ì´(‘(9í(‚‡(¡Ë(¦Ê(]Í(ÀI(„¦(HA(´‘(LÑ(á5(AT(2(¢r(c}(c(Px(p(	„_(	.h(	(™(	}Á(	Âí(Š9(¡(ƒÕ(!–(	…‚(Ûó(²â(OO(
+,¦(ñ‘(W(Õ(ºÜ(	?}(ÂÝ(
+Ù'è‰ê'S€š'Ì»(ß+(j7(Òi(	 P(¥¬(¦3(îÄ(	ð`(	åB(ñŠ(
+Ñ)(
+Z(g(_(ñý(i(j(Q(ü¿(ò"(	&8(	–‹(‚(Î‰(6p(Ž¥(
+·b(#í(£(
+ª
+(	iN(	¬þ(ò$(Ì(¦C(˜(	Ðµ(¯Þ(rT(í¼(	‚¢(	„²(ûq(\%(	Ò(IÚ(
+qM(
+(ŸR(ö²(fË(6(·Ê(>¿(zp(	ì»'ú_|'ú{á(¹(È3(n;'ý(W()(ÐŠ(úY(l”(ÏÇ(õ«(ö(F–(	ª(Vœ(Mä(	Ô!(‚A(8 (/W(Ô( Y(o(Ýð(î™(mÿ(	O^(¤ñ(€ï(×’(’(
+Y(èì(	"â()ó(z2(®É(î¿(²e(	qò(‰(,r(öµ(úÿ(Ï˜(	©²(
+óÉ(úë(ãJ(	Tt(¼(
+6+(	k(
+UC(ÄM(	5ù(E](­¨(f(
+](ý‚('üÓ¬(Œ(–(éê(òÐ(ÜÁ(!ò(G¶(ëé(¾Á(é“(Üx(Ùe(	‰;(¥¶(' (±Ý(‰(
+7K(«k(,É(	Mn(ð(¾(
+¬ð(	Ü”(H7(	I4(7˜((S(s"(7®(£Q(Ù’(>(uL(	[@(ïê(Î(¨[(Ê…(1(
+l(™(CŽ(	ó9(îÀ(	ä®(£9(¬Ý(
+R(þD(	øq(ð}(
+0y(ª(ÝT({p(¨(
+©(Å7(â%(
+ŠÒ(H](qk(÷:(±!(°‡(	ät(	+€(V(õŒ(	”€(Ô(¡©(O’(á4(ÙÚ(ó(
+B(	Ðä(
+â(…º(	«F(®˜(#w(	(_(T(
+GÍ(Çt(h«(?F(!z(W?(ÃW(K¾( ö(
+ƒÖ(	…(	Î(
+¡O(‰J(û(Cµ(g(¿º(	,‹(Žµ(#ù(¾B(·(‰Ã(|( ¼( ¬(	e(Í(
+õ (
+Ë+(
+8ç(òˆ(j˜(	7Ñ(('(<é(	Ý(,í(
+­i(7ã(VÄ(þÐ(¸Ã(	N2(¹¶(m(²Õ(	Îf(
+ša(+E(Õ(¹È(	 ((Î(iy(7G(G(_º(¨<(î©(
+Üq(Ã¿(Œ›(‚Õ(	õõ($2(
+Ú(
+‹(±y(×s({t(
+šq(óX(¥÷(£ì((M(£Š(	Î4(	+Ã(6g()N(AÇ(‡4(wú(ý¶(3þ(®U(
+}J(”ˆ(† ({E(a(:ú(@(Ø©(G(•((°Â(z7(	ð(œq(
+á(óq(”(
+}{(œ­(Í(5(¨P(˜t(
+u(D1(	ó‹(n?(Ù–(þî(Š(–ò(ç(Ðð(Î/(þ×(¯·(¤	(FÀ(à(£Š(«(xn(F(`=(úD(¬G(õl(Û(A)(ÐM(NÍ(ã(
+	G(	9(	K(¾%(	¤u(Dß(ó¯((	Ù:(é(Å(Þ(#s(&Â(Aý(sÅ(€w(‰(Ò&(ÊX(›æ( (K¹(w:(uû((Ü“({6(¬Þ(÷(vE(«@(ôå(1£(™–(O´(Ñÿ(±(ðÎ(B°(f(RR(h('ˆ(
+i(
+hW(‘ã(ó(WU(Ð?(Ç!(Î(üø(Ö
+(
+´"(Áì(	6&(ÿ²(r+(	0(àE(	1(/J(®¿(KÖ(¡Ò(š(¸°(äÀ(†å(
+ìP(Yà(tf(7(§(	OÇ(œv(S(AM(›¯(´ñ(ûè(û(F0(	?²(Î(ýÏ(7(Ê\(úÔ(W:(
+Q(
+->(	sA(
+:·(	K(	4(ê<(æ(Å,(	(V(ÃB( (>ê((™á(—ð(ói'ÿá«(J†(A6(K\(}G(«ð(ø(<(þ(ô¹((
+Ê(˜(žU(Ÿ8(¿n(
+
+(œ( ((A~(¾¢(Õ(Ž>(	c=(¢ƒ(Vë(ƒÖ(
+â(µ (Þæ(Ä(†F(ñu(¹(Íb(Òt(_±(bD(U	(º(	TÙ(TÂ(
+ó(
+J|(/(ëX(Év(–›(Çh(º(q([(	Æ¼(FU(+§(‡¾(E/(Y(–I(	jÚ(„(
+)(:m(º@('(Á(
+| (CÏ(6æ({[(y¦(¹Ñ(Uê(	ö((ßí(f#(™¦(Î¾(
+~‘(äé(
+¢T(þ›(XŽ(_¿(ü((}A(¨{(´þ(	‡(„((MZ(
+~(1¯(æÜ([((±(ê(Š(¡ç(ÎA(
+ë(–¢(“)(M(B/(l¾(|A(gˆ(ò(|,(™Q(Å(¡ÿ( ?(ðl(#!(5(Á‰(­,(­à(!n(—4(ä¹(Ý±( #(ÔÓ(®+(–Å(Â;(§T(m_(©(–(	ý(	uË(Iš(#F(
+ë(Ò(™(l*(
+y(NÐ(yž(’æ(·‘(c(Ñ(aT(¼(*a(;T(†^(Õ¹(+¸(«¤(¸ç(	æ(ˆØ(
+Úƒ([Ç(M‹('C(N(<s(
+m(	tÆ(2w(Vb(
+"(5c([é(‘w(ƒÒ(Œs(mÅ(ç
+(€ð(Du(|(§N(Æ‘(õ}(Á((
+þ0(u‰(=ï(›Ý(1â(uŒ(z+(;(ex( L(
+ÇR("›(`í((Žç(2(‘(
+¢Õ(Ãƒ(Â (k(® (£x(¼†(
+ÌR(¬(0å(„½(`î(_(xC(	·Ò(
+…_(2T(Rê(Rô(	`f(
+ë…(Ëª(ÄÑ(	’(	Š( Á(½û(]–(
+£_(Qt(	î"(øl(¹¤(-(Ï9(Ú9(	å(Ij(šÔ(˜^(°c(	’}(Ÿ(Ø(:ÿ(ªî(Øá(ŠÉ(ó©(ÚÞ(T(Ü·(•­(æ0(ª(w`(£(¨è( Ê(Î(¦A(d^(Ú(jr({Î(›(
+9À(o¡(…ª(Œ÷(Î(€h(	î“(Æ±(`m(((èÊ(ÎÎ(
+Éî(I¦(r(Å™(ä(Éâ(°„(Áƒ(
+›P(û(›*(©(\(† (úc(‰(ß¾(&t(x•(‘R(Än(‚\(GÝ(¦|(jo(K@(ê´(¼3(õ(vß(ïä(‹Ê(«³(†€(yà(\(ÕZ(<s(/,(—G(Ä(
+„(wš(z(ID(
+D(	üZ(é(êÓ(ÝN(È('^(œ(¡b(”X(þ(ˆ¨(	ÏÃ(ÿA(£Ÿ(ðS(ùÑ(ÿû(¶h(
+ëg(`:(h(Î÷(Ü(æz(¼î(ð (ÀL(Ãn(Ö(_r(“Ž(\Ñ(\i(Ïm(w (¬(W(Çu(›Æ(Ä(~$(ƒ(Gñ(X3(ZA(û(ãl(d4(l”(	¡É(Œ(DA(±É(5S(¦(gc('(rï(…(](Û(f*(û=(V†(\*(PX(ºS(¾(
+˜è(ÖŸ(¨x(›!(ò-(œ(È–(|¹(„l(«À(Ôƒ(yÄ(7(™t(0¤(O((e€(Ž(Gë(§6(Â(|-(/Å(Çý(lÿ(Tx(ÇÉ(ê(òÅ({(ß(Q¦(¼u(¹c(_.(7Ö(	²(‚(•§(ž&(
+^»(I£(	—((ð(²ì(*L(e(
+È¦(qö(,(âÌ(ßß((èD(Ú©(	¢(
+ó(	æ?(ˆo(
+¿ã(a«(¿x({S(ê~(©4(€(¥¤(œ2(¦(GI(
+ñ|(Ýä(
+Å‘(y}(
+­Ð(çÖ(Ûs((3é(	k¤(æ´(Þ™((a­(	 W(3(F¢(;m(¦(¾](/(ýž(å(’…(à®(	pî(`h(é(#µ(ÿs(Ý¹(ö(îÞ(½®(we(6î(k½(Gµ(ˆ( (R(mÃ(ßÐ(
+q(’(Š<(ò´(:€(
+4(–(YÇ(M($Ž(Q’(í5'öµ( Q(7-(
+K+(OÃ(žœ(@(÷è(¼O(	£è(‹(~S(=à(ÅH(P(×L(
+pÅ(dÛ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        

@@ -1,0 +1,15 @@
+#Spectrum
+example_files/templates/Eku1.30Zp0.06T01.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T02.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T03.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T04.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T05.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T06.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T07.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T08.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T09.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T10.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T11.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T12.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T13.0000_iTp0.00_baseFe.fits
+example_files/templates/Eku1.30Zp0.06T14.0000_iTp0.00_baseFe.fits
