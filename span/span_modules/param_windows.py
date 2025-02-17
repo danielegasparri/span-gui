@@ -507,7 +507,10 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
     sigma_vel_file = params.sigma_vel_file
     ew_list_file = params.ew_list_file
     sigma_coeff_file = params.sigma_coeff_file
-
+    result_sigma_coeff_dir = params.result_sigma_coeff_dir
+    spectra_list_name = params.spectra_list_name
+    result_plot_dir = params.result_plot_dir
+    result_ew_data_dir = params.result_ew_data_dir
 
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
