@@ -67,13 +67,13 @@ Run SPAN using:
 ```bash
 span-gui
 ```
-Once launched, select the folder to store the results in your device, then click "Load!" in the main GUI to load the example spectra in the listbox and start to play with the GUI.
+Once launched, select the folder to store the results in your device, then click "Load!" in the main GUI to load the example spectra in the listbox and start playing with the GUI.
 
 
 ## 📂 Working with Spectra Lists  
 SPAN has been optimized to work with a series of n 1D spectra. The spectra are passed to SPAN by creating and loading a spectra list. The spectra list is an ASCII file containing the path of your spectra and can be created with SPAN, using the button **Generate a spectra list containing 1D spectra**. Just select the folder where your spectra are located, confirm the selection, set the wavelength units of your spectra (assuming are the same for all) and then click the **Load!** button. 
 
-The spectra list can be created also manually and should include:  
+A spectra list can be created also manually and should include:
 - absolute paths of spectra, ore relative path if your spectra are located in a subfolder of SPAN
 - A commented first line (e.g. # Spectrum)
 - It can be stored anywhere in your device 
@@ -82,8 +82,8 @@ The spectra list can be created also manually and should include:
 
 ## 📊 Basic Usage example
 - In the "Prepare and load spectra" frame, browse one of the spectra lists contained in the example_files/ folder (e.g. ngc5806_bins.dat). Set the "Wavelength of the spectra is in:" to "A", then click "Load!"  
-- Visualize Data: Select a spectrum in the list and click "Plot". A Matplotlib will appear showung the spectrum. Take a look at it, then close the Matplot lib window and return to the main GUI panel    
-- Modify Spectra: Open the "SpectramManipulation" panel located in the Utility frame and activate a task, for example the "Add noise". Confirm the selection (button "Confirm") with the default noise value, then in the main GUI click "Preview Spec." to see the processed selected spectrum. If you are satisfied and want to save this noisy spectrum, click to "Process Selected". To apply the task for all the spectra, click "Process all"  
+- Visualize Data: Select a spectrum in the list and click "Plot". A Matplotlib window will appear showing the spectrum. Take a look at it, then close the Matplotlib window and return to the main GUI panel
+- Modify Spectra: Open the "Spectra manipulation" panel located in the Utility frame and activate a task, for example the "Add noise". Confirm the selection (button "Confirm") with the default noise value, then in the main GUI click "Preview Spec." to see the processed selected spectrum. If you are satisfied and want to save this noisy spectrum, click to "Process Selected". To apply the task for all the spectra, click "Process all"
 - The "Spectra manipulation" button in the main GUI now has an annoying red color, meaning that at least one task is activated. Why this is so important? Because if you want to perform any of the Spectral Analysis tasks you should remember that the activated tasks in the "Spectra manipulation" panel are modifying your original spectra and this modified version is passed to the "Spectral analysis" frame. So, open the "Spectra manipulation" frame, deselect the "Add noise" task and confirm this choice  
 - In the main panel, activate the "Line-strength analysis" task and open the parameter window by pressing the button "Line-strength parameters". There, make sure the "Lick/IDS indices" option is selected (it is by default). Enter the redshift of the galaxy (0.00449) and confirm the parameters. Now, select the "line28.fits" spectrum in the listbox and preview the results of the analysis by pressing the "Preview result" button. The available Lick/IDS indices will be shown in the Matplotlib window and a second plot will appear showing the position of the galaxy in the index-index grid built from the SSP models of Thomas et al., 2011. In the output window you will see also the luminosity-weighted age, metallicity and alpha-enhancment calculated for this spectrum. If this is cool, apply the task to all the spectra by pressing the "Process all" button. It you also want the plots of the preview mode to be saved, activate the "Save plots" checkbox at the bottom of the GUI. SPAN now will work for you. Grab a coffee and wait for the task to terminate. The results will be stored in ASCII files in the "SPAN_results/ew/" folder. The plots will be saved as PNG images in the "SPAN_results/plots/" folder. 
 
@@ -95,17 +95,17 @@ The spectra list can be created also manually and should include:
 Well, this is a quite general question. Here I give you some advices:  
 a) If you want to load just one spectrum, load it directly without generating a spectra list, but activate the "I browsed a single spectrum" option before pressing the "Load!" button  
 b) If you have a spectra list file which has not been generated by SPAN, check its format. Remember that the first line should contain a comment (#comment), then you need to list the absolute path and the full name of your spectra, unless they are stored in a subfolder of SPAN: in this case also the relative path is good  
-c) Check the architecture of your spectra. Due to the fact that astronomers rarely agrees with each others, there are plenty of spectra formats out there. SPAN try to consider all, but it may fail. Try with different spectra to see if the problem persists
+c) Check the architecture of your spectra. Due to the fact that astronomers rarely agrees with each others, there are plenty of spectra formats out there. SPAN tries to consider all, but it may fail. Try with different spectra to see if the problem persists.
 
 1. **Why do I see a weird wavelength scale in my loaded spectra?**
-SPAN will always show the wavelength scale of the plots in nm. If the "Plot" button will show you a strange wavelength range of your spectra, you likely selected a wrong wavelength unit scale for you spectra. In order to be as general as possible and acocunt to the many creative ways that astronomers have to define the wavelength units and keywords in the spectra, SPAN does't even try to guess it. You should set manually in the "Wavelength of the spectra is in:" option in the "Prepare and load spectra" frame. Of course, all the spectra in your list should share a common wavelength units (but they can be both logarithmically and linearly binned).
-If the problem persists, it is possible that you spectra have "fancier" wavelength units and cannot be properly read by the program. The available wavelength units handled by SPAN are Angstrom (A), nanometers (nm) and micrometers (mu). If your spectra use different wavelength units, SPAN cannot read them properly.
+SPAN will always show the wavelength scale of the plots in nm. If the "Plot" button will show you a strange wavelength range of your spectra, you likely selected a wrong wavelength unit scale. In order to be as general as possible and account to the many creative ways that astronomers have to define the wavelength units and keywords in the spectra, SPAN does't even try to guess it. You should set manually in the "Wavelength of the spectra is in:" option in the "Prepare and load spectra" frame. Of course, all the spectra in your list should share a common wavelength units (but they can be both logarithmically and linearly binned).
+If the problem persists, it is possible that your spectra have "fancier" wavelength units and cannot be properly read by the program. The available wavelength units handled by SPAN are Angstrom (A), nanometers (nm) and micrometers (mu). If your spectra use different wavelength units, SPAN cannot read them.
 
 3. **How do I load just one spectrum?**
 If you want to work with just one spectrum, you DO NOT need a spectra list. SImply browse your spectrum and activate the checkbox "I browsed a single spectrum". Set the correct wavelength units and click "Load!".
 
 4. **How do I handle a lot of spectra stored in different folders and within a lot of non spectra files?**
-There is a simple answer for that. The "Generate spectra list containing 1D spectra" will scan the selected folder and all the sub-folders looking for fits, .txt and .dat files. You just need to put all your spectra in this root folder, which can contain as many subfolder as you want. Then, once you load this spectra list, SPAN will recognize automatically which file is a spectrum and which not and will delete from the listbox all non valid spectra. Anyway, I advice you to create working folder or subfolders as clean as possible from non spectra files.
+There is a simple answer for that. The "Generate spectra list containing 1D spectra" will scan the selected folder and all the relative sub-folders looking for fits, .txt and .dat files. You just need to put all your spectra in this root folder, which can contain as many subfolders as you want. Then, once you load this spectra list, SPAN will recognize automatically which file is a spectrum and which not and will delete from the listbox all non valid spectra. Anyway, I advice you to create working folder or subfolders as clean as possible from non spectra files.
 
 5. **How do I reset the parameters and the tasks if I played for so long that the entropy of SPAN now tends to infinite?**
 Don't panic! Click "Edit → Clear All Tasks" to deactivate all the tasks, or a more aggressive "File → Restore Default Parameters" to restore the default parameters.
@@ -123,7 +123,7 @@ folder, whose location is determined by you the first time you open SPAN. You ca
 
 
 ## 📜 License
-SPAN-GUI is licensed under the MIT License.
+SPAN-GUI is licensed under the non-commercial License.
 See the LICENSE file for details.
 
 
