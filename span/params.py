@@ -1,3 +1,29 @@
+#SPectral ANalysis software (SPAN).
+#Written by Daniele Gasparri#
+
+"""
+    Copyright (C) 2020-2025, Daniele Gasparri
+
+    E-mail: daniele.gasparri@gmail.com
+
+    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+
+    1. This software is licensed **for non-commercial use only**.
+    2. The source code may be **freely redistributed**, but this license notice must always be included.
+    3. Any user who redistributes or uses this software **must properly attribute the original author**.
+    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
+    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+
+    DISCLAIMER:
+    THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+    How to run: just compile the code with Python 3.X and use the pre-loaded example files
+    to play with the GUI.
+    Check the Python packages needed in the "readme_span.txt" to run this source code.
+
+"""
+# Dataclass to store all the GUI parameters to be modified by the user and by the GUI itself
+
 from dataclasses import dataclass, field
 import os
 import numpy as np

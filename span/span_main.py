@@ -458,14 +458,19 @@ def main():
 
         # If I load a single spectrum, SPAN needs to check it before loading
         if values['one_spec']:
+            spectra_number_check = 1 #for checking if after I loaded a spectra list I acrivated the "I browsed a single spectrum" and did not press "Load!"
             if event == 'Load!':
                 # Validate and load spectrum
                 params = check_spec.validate_and_load_spectrum(params, window)
 
-        #Warning in case I load the spectra but I don't select one!
-        if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and params.prev_spec == ''):
-            sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
-            continue
+        # Concatenating events to prevent the GUI crashes when no (valid) spectrum is selected or loaded and you want to do something anyway.
+        if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and (params.prev_spec == '' or (values['one_spec'] and spectra_number_check != params.spectra_number))):
+            if (values['one_spec'] and spectra_number_check != params.spectra_number):
+                sg.Popup('You activated the "I browsed a single spectrum" option but did not load the spectrum!')
+                continue
+            else:
+                sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
+                continue
 
         #every time I select a loaded spectrum and press plot, I read the spectrum and plot it!
         if event == 'Plot':
