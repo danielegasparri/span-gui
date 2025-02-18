@@ -34,6 +34,7 @@ except ModuleNotFoundError: #local import if executed as package
     from .params import SpectraParams
 
 import json
+import numpy as np
 
 # from params import SpectraParams
 from dataclasses import replace
@@ -209,6 +210,12 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'band_nad': params.band_nad,
             'band_h': params.band_h,
             'band_k': params.band_k,
+
+
+
+
+
+
             'resolution_spec': params.resolution_spec,
             'resolution_template': params.resolution_template,
             'band_custom': params.band_custom,
@@ -216,6 +223,13 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'high_wave_sigma': params.high_wave_sigma,
             'low_wave_cont': params.low_wave_cont,
             'high_wave_cont': params.high_wave_cont,
+
+
+            # 'band_sigma': params.band_sigma,
+            # 'cont_sigma': params.cont_sigma,
+
+
+
 
             #Line-strength parameters
             'ew_idx_file': params.have_index_file,
@@ -529,6 +543,9 @@ def load_settings(filename, params):
                 high_wave_sigma=params_data.get('high_wave_sigma', params.high_wave_sigma),
                 low_wave_cont=params_data.get('low_wave_cont', params.low_wave_cont),
                 high_wave_cont=params_data.get('high_wave_cont', params.high_wave_cont),
+
+                band_sigma = np.array([params.low_wave_sigma, params.high_wave_sigma]),
+                cont_sigma = np.array([params.low_wave_cont, params.high_wave_cont]),
 
                 # Line-strength parameters
                 have_index_file=params_data.get('ew_idx_file', params.have_index_file),

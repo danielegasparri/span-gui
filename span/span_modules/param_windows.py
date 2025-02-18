@@ -442,6 +442,8 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
                    band_h=band_h,
                    band_k=band_k,
                    band_custom=band_custom,
+                   band_sigma=band_sigma,
+                   cont_sigma=cont_sigma,
                    low_wave_sigma=low_wave_sigma,
                    high_wave_sigma=high_wave_sigma,
                    low_wave_cont=low_wave_cont,
@@ -1093,8 +1095,6 @@ def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
         sigma=sigma,
         m=m,
         c=c,
-        # wave_interval_fit=wave_interval_fit,
-        # guess_param=guess_param
     )
 
     return params
