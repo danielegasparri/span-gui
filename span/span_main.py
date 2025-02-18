@@ -33,10 +33,12 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))) #adding the folde
 #SPAN modules import
 try:
     from span_imports import *
-    from .params import SpectraParams
+    # from .params import SpectraParams
+    from params import SpectraParams
 except ModuleNotFoundError:
     from .span_imports import *
-    from params import SpectraParams
+    # from params import SpectraParams
+    from .params import SpectraParams
 
 #python imports
 import numpy as np
@@ -438,7 +440,7 @@ def main():
                     continue  # Skip further execution if a critical error occurred
 
             if len(params.spec_names) != params.spectra_number and params.spectra_number > 0:
-                sg.popup ('I was joking. I will not crash, but the format of the spectra list files is not correct yet. Try to adjust the spectra file list')
+                sg.popup ('The format of the spectra list file is not correct. Try to adjust the spectra file list')
                 continue
 
             if params.fatal_condition:
@@ -458,19 +460,21 @@ def main():
 
         # If I load a single spectrum, SPAN needs to check it before loading
         if values['one_spec']:
+            valid_spec = False
             spectra_number_check = 1 #for checking if after I loaded a spectra list I acrivated the "I browsed a single spectrum" and did not press "Load!"
             if event == 'Load!':
                 # Validate and load spectrum
-                params = check_spec.validate_and_load_spectrum(params, window)
+                params, valid_spec = check_spec.validate_and_load_spectrum(params, window, valid_spec)
+
+            if not valid_spec:
+                sg.popup ('The format of the spectrum is not correct or you did not load it')
+                continue
 
         # Concatenating events to prevent the GUI crashes when no (valid) spectrum is selected or loaded and you want to do something anyway.
         if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and (params.prev_spec == '' or (values['one_spec'] and spectra_number_check != params.spectra_number))):
-            if (values['one_spec'] and spectra_number_check != params.spectra_number):
-                sg.Popup('You activated the "I browsed a single spectrum" option but did not load the spectrum!')
-                continue
-            else:
-                sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
-                continue
+
+            sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
+            continue
 
         #every time I select a loaded spectrum and press plot, I read the spectrum and plot it!
         if event == 'Plot':
