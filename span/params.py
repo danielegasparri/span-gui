@@ -198,8 +198,8 @@ class SpectraParams:
     high_wave_sigma: float = 890.0
     low_wave_cont: float = 856.0
     high_wave_cont: float = 864.0
-    band_sigma: np.ndarray = field(init=False)
-    cont_sigma: np.ndarray = field(init=False)
+    band_sigma: np.ndarray = field(default_factory=lambda: np.array([840.0, 890.0])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
+    cont_sigma: np.ndarray = field(default_factory=lambda: np.array([856.0, 864.0]))
 
     template_sigma: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "emiles_template_extended_younger.dat"))
 
@@ -493,9 +493,6 @@ class SpectraParams:
             self.z_interval_corr = np.array([self.low_z_corr, self.high_z_corr])
             self.interval_corr = np.array([self.low_z_corr, self.high_z_corr])
 
-            self.band_sigma = np.array([self.low_wave_sigma, self.high_wave_sigma])
-            self.cont_sigma = np.array([self.low_wave_cont, self.high_wave_cont])
-
             self.cont_mask_ranges = eval(self.cont_mask_ranges_str)
             self.index_usr = np.array([self.idx_left_blue, self.idx_right_blue, self.idx_left_red, self.idx_right_red, self.idx_left_line, self.idx_right_line]).T
 
@@ -511,8 +508,8 @@ class SpectraParams:
             self.z_interval_corr = np.array([])
             self.interval_corr = np.array([])
 
-            self.band_sigma = np.array([])
-            self.cont_sigma = np.array([])
+            # self.band_sigma = np.array([])
+            # self.cont_sigma = np.array([])
 
             self.cont_mask_ranges = self.cont_mask_ranges_str
             self.index_usr = np.array([])
