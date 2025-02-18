@@ -81,7 +81,7 @@ def main():
     print ('********* Welcome to SPAN version 6.4 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
-    print ('SPAN is a GUI Python software to perform operations and analysis on 1D reduced spectra\n')
+    print ('SPAN is a Python GUI software for performing operations and analyses on 1D reduced astronomical spectra.\n')
     print ('This is the output where the infos are showed.')
     print ('If you prefer the external output, just comment the proper lines in the layouts.py module\n')
     print ('If you just click the Load! button, the example files are loaded and you can make some practise.\n')
@@ -212,7 +212,6 @@ def main():
             filter_denoise = False,
             dop_cor = False,
             helio_corr = False,
-
             # Spectra processing frame default parameters
             rebinning = False,
             rebinning_log = False,
@@ -222,7 +221,6 @@ def main():
             sigma_broad = False,
             add_noise = False,
             continuum_sub = False,
-
             # Math frame default parameters
             average_all = False,
             norm_and_average = False,
@@ -236,7 +234,10 @@ def main():
             add_pedestal = False,
             multiply = False,
             derivatives = False,
-            reorder_op = False,)
+            reorder_op = False,
+            active_operations = [],
+            reordered_operations = [],
+            current_order = None)
 
             window ['bb_fitting']. Update (value = False)
             window ['xcorr']. Update (value = False)
@@ -935,16 +936,16 @@ def main():
                     # WARNING, CHECK IF I AM USING PROC WAVELENGTH OR NOT
                     params = apply_spec_tasks.combine_spectra(event, save_plot, save_intermediate_files, params)
 
-                    if use_for_spec_an: #If I want use the combined spectrum for spectral analysis
+                    if params.use_for_spec_an: #If I want use the combined spectrum for spectral analysis
                         print ('Using sum or average to spectral analysis')
-                        params = replace(params, wavelength = proc_wavelength)
-                        params = replace(params, flux = proc_flux)
+                        params = replace(params, wavelength = params.proc_wavelength)
+                        params = replace(params, flux = params.proc_flux)
 
         ######################### end spectra manipulation tasks ##########################
 
 
         #******************************* SPECTRA ANALYSIS *********************************
-                # The following tasks are not activated if "Preview spec." is pressed
+                # The Spectra Analysis tasks are not activated if "Preview spec." is pressed
                 if not event == 'Preview spec.':
                     #1) BLACKBODY FITTING
                     if (bb_fit):
@@ -1058,7 +1059,7 @@ def main():
                     # b) line fitting user line
                     if (line_fitting and not params.cat_band_fit):
                         i == 0 and print('Running line fitting task...\n')
-                        min_wave, sigma_line, sigma_line, params = apply_analysis_tasks.apply_line_fitting(event, save_plot, params)
+                        min_wave, sigma_line, sigma_line_vel, params = apply_analysis_tasks.apply_line_fitting(event, save_plot, params)
 
                         if event == 'Process all':
                             #Updating and writing the file
