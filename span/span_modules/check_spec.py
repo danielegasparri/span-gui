@@ -181,7 +181,7 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
 
 
 
-def validate_and_load_spectrum(params, window):
+def validate_and_load_spectrum(params, window, valid_spec):
 
     """
     Loads and validates the single spectrum, ensuring it exists and is readable
@@ -192,12 +192,11 @@ def validate_and_load_spectrum(params, window):
     cond00 = os.path.isfile(params.spectra_list)
     params = replace(params, spectra_number=1)
 
-
     print('Guessing the type of the spectrum. Is it correct?')
 
     if not cond00:
         sg.popup("We don't start well: the spectrum does not exist. Try again...")
-        return params  # Return params without modifications
+        return params, valid_spec  # Return params without modifications
 
     # Assign the selected spectrum
     params = replace(params, prev_spec=params.spectra_list)
@@ -212,7 +211,7 @@ def validate_and_load_spectrum(params, window):
                 params = replace(params, spec_not_valid=params.prev_spec)
                 sg.popup("Your FITS file does not seem to be a spectrum. Please, load a valid spectrum.")
                 params = replace(params, prev_spec='')
-                return params  # Exit function with updated params
+                return params, valid_spec  # Exit function with updated params
 
         # Read the spectrum and update parameters
         wavelength, flux = stm.read_spec(params.prev_spec, params.lambda_units)[:2]
@@ -224,9 +223,11 @@ def validate_and_load_spectrum(params, window):
         # Update GUI Listbox
         spec_name = [params.prev_spec_nopath, ' ']
         window['-LIST-'].Update(spec_name)
+        valid_spec = True
 
     except Exception:
         sg.popup("Oops! Cannot read the spectrum. Are you sure it's a spectrum?")
         print("Please, reload a valid spectrum or a list.")
+        valid_spec = False
 
-    return params  # Return updated params
+    return params, valid_spec  # Return updated params
