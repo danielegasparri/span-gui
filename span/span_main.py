@@ -87,7 +87,7 @@ def main():
     print ('If you just click the Load! button, the example files are loaded and you can make some practise.\n')
     print ('NOTE: all the SPAN wavelength units are expressed in nm, except where clearly stated (yes, I know you prefer Angstrom)')
     print ('***********************************************')
-    print ('SPAN will save the results in ', params.result_data)
+    print (f'SPAN will save the results in: {params.result_data}\n')
 
 
     # starting the dynamic GUI window
