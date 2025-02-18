@@ -5,6 +5,7 @@
 ![PyPI Version](https://img.shields.io/pypi/v/span-gui)
 ![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
+![span-gui](https://github.com/user-attachments/assets/a6eb1bbd-38ae-494f-b8ce-7b22092ff87e)
 
 
 
