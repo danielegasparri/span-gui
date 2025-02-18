@@ -173,6 +173,8 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'derivatives' : params.derivatives,
             'reorder_op' : params.reorder_op,
             'current_order': params.current_order,
+            'active_operations': params.active_operations,
+            'reordered_operations': params.reordered_operations,
 
 
             'sigma_coeff': params.sigma_coeff,
@@ -210,12 +212,6 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'band_nad': params.band_nad,
             'band_h': params.band_h,
             'band_k': params.band_k,
-
-
-
-
-
-
             'resolution_spec': params.resolution_spec,
             'resolution_template': params.resolution_template,
             'band_custom': params.band_custom,
@@ -223,13 +219,6 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'high_wave_sigma': params.high_wave_sigma,
             'low_wave_cont': params.low_wave_cont,
             'high_wave_cont': params.high_wave_cont,
-
-
-            # 'band_sigma': params.band_sigma,
-            # 'cont_sigma': params.cont_sigma,
-
-
-
 
             #Line-strength parameters
             'ew_idx_file': params.have_index_file,
@@ -501,6 +490,8 @@ def load_settings(filename, params):
                 derivatives=params_data.get('derivatives', params.derivatives),
                 reorder_op=params_data.get('reorder_op', params.reorder_op),
                 current_order=params_data.get('current_order', params.current_order),
+                active_operations=params_data.get('active_operations', params.active_operations),
+                reordered_operations=params_data.get('reordered_operations', params.reordered_operations),
 
                 sigma_coeff=params_data.get('sigma_coeff', params.sigma_coeff),
                 sigma_corr=params_data.get('sigma_corr', params.sigma_corr),

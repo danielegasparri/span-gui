@@ -71,19 +71,12 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
-# def apply_blackbody_fitting(wavelength, flux, wave1_bb, wave2_bb, t_guess, prev_spec_nopath, event, save_plot, result_plot_dir, task_done, task_done2, task_analysis):
+
 def apply_blackbody_fitting(event, save_plot, params):
 
     """
-    Applies blackbody fitting to a spectrum within a specified wavelength range.
-
-    Parameters:
-    - wavelength (numpy array): Wavelength array of the spectrum.
-    - flux (numpy array): Flux array of the spectrum.
-    - wave1_bb (float): Lower bound of the wavelength interval.
-    - wave2_bb (float): Upper bound of the wavelength interval.
-    - t_guess (float): Initial temperature guess for the fitting.
-    - preview (bool): If True, generates a plot of the fitting result.
+    Applies blackbody fitting to a spectrum within a specified wavelength range,
+    using the blackbody_fit function of the spectral analysis module.
 
     Returns:
     - float: Best-fit blackbody temperature.
@@ -92,7 +85,6 @@ def apply_blackbody_fitting(event, save_plot, params):
 
     wavelength, flux, wave1_bb, wave2_bb, t_guess, prev_spec_nopath, result_plot_dir, task_done, task_done2, task_analysis = params.wavelength, params.flux, params.wave1_bb, params.wave2_bb, params.t_guess, params.prev_spec_nopath, params.result_plot_dir, params.task_done, params.task_done2, params.task_analysis
 
-    # task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
 
     if event == 'Process all':
         task_done2 = 1
@@ -134,21 +126,29 @@ def apply_blackbody_fitting(event, save_plot, params):
 
 
     except Exception:
-        print("Black-body fitting failed")
+        if event == "Process all":
+            print("Black-body fitting failed")
+        else:
+            sg.popup("Black-body fitting failed")
         return None, None, params
 
 
 def apply_cross_correlation(event, save_plot, params):
-    """
-    Performs cross-correlation between a spectrum and a template.
 
     """
+    Performs cross-correlation between a spectrum and a template,
+    using the crosscorr function of the spectral analysis module.
+
+    Returns:
+    - Measured velocity or z value
+
+    """
+
     # assigning params to local variables
     wavelength = params.wavelength
     flux = params.flux
     template_crosscorr = params.template_crosscorr
     lambda_units_template_crosscorr = params.lambda_units_template_crosscorr
-    # lambda_units_template = params.lambda_units_template
     low_wave_corr = params.low_wave_corr
     high_wave_corr = params.high_wave_corr
     wave_interval_corr = params.wave_interval_corr
@@ -205,8 +205,7 @@ def apply_cross_correlation(event, save_plot, params):
         if is_vel_xcorr:
             interval_corr = vel_interval_corr
             rv, cc, rv_at_max, max_corr_fcn, wavelength, flux, wavelength_template_crosscorr, flux_template_crosscorr = span.crosscorr(
-                wavelength, flux, template_crosscorr, lambda_units_template_crosscorr, wave_interval_corr, smooth_value_crosscorr, interval_corr, is_vel_xcorr
-            )
+                wavelength, flux, template_crosscorr, lambda_units_template_crosscorr, wave_interval_corr, smooth_value_crosscorr, interval_corr, is_vel_xcorr)
             print(f"RV: {rv_at_max} km/s\n")
             print('')
 
@@ -307,18 +306,26 @@ def apply_cross_correlation(event, save_plot, params):
             return z_at_max, params
 
     except Exception:
-        print("Cross-correlation failed within the given range. Try adjusting the parameters.")
+        if event == "Process all":
+            print("Cross-correlation failed within the given range. Try adjusting the parameters.")
+        else:
+            sg.popup("Cross-correlation failed within the given range. Try adjusting the parameters.")
         return None, params
 
 
 
-                    # sigma, error, chisqr, task_done, task_done2, task_analysis = apply_analysis_tasks.apply_velocity_dispersion(wavelength, flux, template_sigma, lambda_units_template_sigma, resolution_spec, resolution_template, band_sigma, cont_sigma, band_custom, spec_names_nopath_to_process[i], event, save_plot, result_plot_dir, task_done, task_done2, task_analysis)
-
-# def apply_velocity_dispersion(
-#     wavelength, flux, template_sigma, lambda_units_template_sigma, resolution_spec, resolution_template,
-#     band_sigma, cont_sigma, band_custom, prev_spec_nopath, event, save_plot, result_plot_dir, task_done, task_done2, task_analysis):
-
 def apply_velocity_dispersion(event, save_plot, params):
+
+    """
+    Performs a simple fit of the spectrum to retrieve the velocity dispersion
+    between a spectrum and a template, using the sigma_measurement function of the spectral analysis module.
+
+    Returns:
+    - Velocity dispersion
+    - Uncertainty of the velocity dispersion
+    - Chi2 of the fit
+
+    """
 
     # params to local variables
     wavelength = params.wavelength
@@ -335,8 +342,6 @@ def apply_velocity_dispersion(event, save_plot, params):
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
     result_plot_dir = params.result_plot_dir
-
-
 
 
     # 1) HEADER
@@ -381,7 +386,6 @@ def apply_velocity_dispersion(event, save_plot, params):
             else:
                 sg.popup("It seems we have a problem. Did you invert the wavelength range?")
             return None, None, None, params
-
 
 
         # 3) CALCULATION
@@ -437,28 +441,19 @@ def apply_velocity_dispersion(event, save_plot, params):
         return sigma, error, chisqr, params
 
     except Exception as e:
-        print(f"Velocity dispersion measurement failed: {str(e)}")
+        if event == "Process all":
+            print(f"Velocity dispersion measurement failed: {str(e)}")
+        else:
+            sg.popup(f"Velocity dispersion measurement failed: {str(e)}")
         return None, None, None, params  # Ensures consistent return type
 
 
 
-
-
-                    # idx, ew, err, snr_ew, ew_mag, err_mag, task_done, task_done2, task_analysis = apply_analysis_tasks.apply_ew_measurement_single(wavelength, flux, index_usr, wave_limits, spec_names_nopath_to_process[i], event, save_plot, result_plot_dir, task_done, task_done2, task_analysis)
-
-
 def apply_ew_measurement_single(event, save_plot, params):
-    """
-    Measures the Equivalent Width (EW) for a single spectral index.
 
-    Parameters:
-    - wavelength: array, Wavelength values of the spectrum
-    - flux: array, Flux values of the spectrum
-    - index_usr: array, Wavelength intervals defining the index (band + sidebands)
-    - wave_limits: array, Minimum and maximum wavelengths of the spectrum
-    - prev_spec: str, Name of the processed spectrum
-    - result_plot_dir: str, Directory where plots should be saved
-    - event: str, GUI event triggering this function
+    """
+    Measures the Equivalent Width (EW) for a single spectral index,
+    using the ew_measurement function of the linestrength module.
 
     Returns:
     - ew_array: float, Measured equivalent width
@@ -466,8 +461,7 @@ def apply_ew_measurement_single(event, save_plot, params):
     - ew_array_mag: float, EW in magnitude scale
     - err_array_mag: float, EW magnitude error
     - snr_ew_array: float, Signal-to-noise ratio of EW
-    - task_done: int, Flag indicating that the task was executed
-    - task_analysis: int, Flag indicating this was an analysis task
+
     """
 
     # params to local variables
@@ -476,6 +470,7 @@ def apply_ew_measurement_single(event, save_plot, params):
     index_usr = params.index_usr
     wave_limits = params.wave_limits
     prev_spec =  params.prev_spec
+    prev_spec_nopath = params.prev_spec_nopath
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
     task_done2 = params.task_done2
@@ -544,32 +539,19 @@ def apply_ew_measurement_single(event, save_plot, params):
         return idx, ew, err, snr_ew, ew_mag, err_mag, params
 
     except Exception as e:
-        print(f"Error during EW measurement: {e}")
+        if event == "Process all":
+            print(f"EW measurement failed. Try adjusting the parameters: {e}")
+        else:
+            sg.popup(f"EW measurement failed. Try adjusting the parameters: {e}")
         return None, None, None, None, None, None, params
 
 
 
-
-
-
-                    # id_array, ew_array, err_array, snr_ew_array, ew_array_mag, err_array_mag, task_done, task_done2, task_analysis = apply_analysis_tasks.apply_ew_measurement_list(wavelength, flux, index_file, single_index, spec_names_to_process[i], spec_names_nopath_to_process[i], event, save_plot, result_plot_dir, task_done, task_done2, task_analysis)
-
-
-
 def apply_ew_measurement_list(event, save_plot, params):
-    """
-    Measures the Equivalent Width (EW) for a list of spectral indices.
 
-    Parameters:
-    - wavelength: array, Wavelength values of the spectrum
-    - flux: array, Flux values of the spectrum
-    - index_file: str, Path to the index definition file
-    - single_index: bool, Flag for single or multiple index measurement
-    - prev_spec: str, Name of the processed spectrum
-    - prev_spec_nopath: str, Name of the processed spectrum without path
-    - result_plot_dir: str, Directory where plots should be saved
-    - event: str, GUI event triggering this function
-    - save_plot: bool, Flag to save the generated plots
+    """
+    Measures the Equivalent Width (EW) for a list of spectral indices,
+    using the ew_measurement function of the linestrength module.
 
     Returns:
     - id_array: list, Index IDs
@@ -578,10 +560,8 @@ def apply_ew_measurement_list(event, save_plot, params):
     - snr_ew_array: array, Signal-to-noise ratios
     - ew_array_mag: array, EW in magnitude scale
     - err_array_mag: array, EW magnitude errors
-    - task_done: int, Flag indicating that the task was executed
-    - task_analysis: int, Flag indicating this was an analysis task
-    """
 
+    """
 
     wavelength = params.wavelength
     flux = params.flux
@@ -593,8 +573,6 @@ def apply_ew_measurement_list(event, save_plot, params):
     task_done = params.task_done
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
-
-
 
 
     # 1) HEADER
@@ -648,7 +626,6 @@ def apply_ew_measurement_list(event, save_plot, params):
             sg.popup("It seems we have a problem. Did you invert the wavelengths of these indices?", bad_idx)
         return None, None, None, None, None, None, params
 
-
     if event == "Preview result":
         # Parameters for EW measurement
         plot = True
@@ -682,53 +659,28 @@ def apply_ew_measurement_list(event, save_plot, params):
         return id_array, ew_array, err_array, snr_ew_array, ew_array_mag, err_array_mag, params
 
     except Exception as e:
-        print(f"Error during EW measurement: {e}")
+        if event == "Process all":
+            print(f"EW measurement failed. Try adjusting the parameters: {e}")
+        else:
+            sg.popup(f"EW measurement failed. Try adjusting the parameters: {e}")
         return None, None, None, None, None, None, params
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
 def apply_lick_indices_ew_measurement(event, save_plot, i, params):
 
     """
-    Measures the Equivalent Width (EW) of Lick/IDS indices, with optional emission correction, Doppler correction,
-    and velocity dispersion corrections.
-
-    Parameters:
-    - wavelength (numpy array): Wavelength array of the spectrum.
-    - flux (numpy array): Flux array of the spectrum.
-    - lick_index_file (str): Path to the Lick index file.
-    - lick_correct_emission (bool): Whether to correct for emission lines.
-    - dop_correction_lick (bool): Whether to apply Doppler correction.
-    - correct_ew_sigma (bool): Whether to correct EW for velocity dispersion.
-    - radio_lick_sigma_auto (bool): Whether to automatically estimate velocity dispersion.
-    - lick_constant_fwhm (bool): Whether the spectrum has a constant FWHM resolution.
-    - spec_lick_res_fwhm (float): FWHM resolution of the spectrum.
-    - spec_lick_res_r (float): Spectral resolution R of the spectrum.
-    - result_plot_dir (str): Directory for saving plots.
-    - stellar_parameters_lick (bool): Whether to infer stellar population parameters from indices.
-    - ssp_model (str): SSP model for Lick indices fitting.
-    - interp_model (bool): Whether to interpolate the SSP model.
-    - event (str): Event type (`Process selected` or `Preview result`).
+    Measures the Equivalent Width (EW) of Lick/IDS indices,
+    with optional emission correction, Doppler correction,
+    and velocity dispersion corrections, using the ew_measurement
+    function of the linestrength module amd the ppxf_pop function
+    of the spectral analysis module for gas correction, doppler
+    correction and auto sigma correction options.
 
     Returns:
     - tuple: (lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag)
-    """
 
+    """
 
 
     wavelength = params.wavelength
@@ -756,9 +708,6 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
     task_done = params.task_done
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
-
-
-
 
 
     # 1) HEADER
@@ -985,7 +934,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             lick_with_uncertainties = True
             lick_normalise_spec = True
 
-            lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag = ls.ew_measurement(lick_degraded_wavelength, lick_degraded_flux, lick_index_file, lick_single_index, lick_ew_plot, lick_verbose, lick_with_uncertainties, save_plot, prev_spec_nopath, lick_normalise_spec, result_plot_dir)
+            lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag = ls.ew_measurement(lick_degraded_wavelength, lick_degraded_flux, lick_index_file, lick_single_index, lick_ew_plot, lick_verbose, lick_with_uncertainties, save_plot, prev_spec, lick_normalise_spec, result_plot_dir)
 
             print (lick_id_array)
             print (lick_ew_array)
@@ -1105,19 +1054,30 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
         return lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag, age, met, alpha, err_age, err_met, err_alpha, lick_for_ssp, ssp_model, ssp_lick_indices_list, ssp_lick_indices_err_list, params
 
     except Exception as e:
-        print(f"Lick Index EW measurement failed: {str(e)}")
+        if event == "Process all":
+            print(f"EW measurement failed. Try adjusting the parameters: {e}")
+        else:
+            sg.popup(f"EW measurement failed. Try adjusting the parameters: {e}")
         return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
-
-
-
-
 
 
 
 def apply_cat_line_fitting(event, save_plot, params):
 
+    """
+    Fits the Calcium Triplet lines (CaT) in the NIR portion of the spectrum,
+    using the cat_fit function of the spectral_analysis modules. Calculates
+    also the equivalent width of the best fit using the ew_measurement task
+    of the linestrength module.
 
+    Returns:
+    - Central wavelength of the lines
+    - wavelength displacement between the central fitted lines and their real wavelength (in air)
+    - equivalent widths measured in the best fitting model
+    - broadening of the best fitted gaussians (in pixels and km/s). WARNING:
+      this is not the velocity dispersion of the spectrum!
 
+    """
 
     wavelength = params.wavelength
     flux = params.flux
@@ -1130,6 +1090,7 @@ def apply_cat_line_fitting(event, save_plot, params):
     index_ca2 = params.index_ca2
     index_ca3 = params.index_ca3
     prev_spec = params.prev_spec
+    prev_spec_nopath = params.prev_spec_nopath
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
     task_done2 = params.task_done2
@@ -1248,13 +1209,16 @@ def apply_cat_line_fitting(event, save_plot, params):
                 plt.show()
                 plt.close()
             else:
-                plt.savefig(result_plot_dir + '/'+ 'cat_fitting_' + prev_spec + '.png', format='png', dpi=300)
+                plt.savefig(result_plot_dir + '/'+ 'cat_fitting_' + prev_spec_nopath + '.png', format='png', dpi=300)
                 plt.close()
 
         return min_wave1, min_wave2, min_wave3, residual_wave1, residual_wave2, residual_wave3, ew_array_ca1, ew_array_ca2, ew_array_ca3, real_cat1, real_cat2, real_cat3, delta_rv1, delta_rv2, delta_rv3, sigma_cat1, sigma_cat2, sigma_cat3, sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel, params
 
     except Exception as e:
-        print(f"CaT fitting failed: {str(e)}")
+        if event == "Process all":
+            print(f"CaT fitting failed. Try adjusting the parameters: {str(e)}")
+        else:
+            sg.popup(f"CaT fitting failed. Try adjusting the parameters: {str(e)}")
         return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
 
 
@@ -1264,6 +1228,18 @@ def apply_cat_line_fitting(event, save_plot, params):
 
 def apply_line_fitting(event, save_plot, params):
 
+    """
+    Fits a single line (emission or absorption) with a gaussian function,
+    using the cat_fit function of the spectral_analysis modules.
+
+    Returns:
+    - Central wavelength of the lines
+    - wavelength displacement between the central fitted lines and their real wavelength (in air)
+    - equivalent widths measured in the best fitting model
+    - broadening of the best fitted gaussians (in pixels and km/s). WARNING:
+      this is not the velocity dispersion of the spectrum!
+
+    """
 
     wavelength = params.wavelength
     flux = params.flux
@@ -1271,6 +1247,7 @@ def apply_line_fitting(event, save_plot, params):
     guess_param = params.guess_param
     emission_line = params.emission_line
     prev_spec = params.prev_spec
+    prev_spec_nopath = params.prev_spec_nopath
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
     task_done2 = params.task_done2
@@ -1347,25 +1324,36 @@ def apply_line_fitting(event, save_plot, params):
                 plt.show()
                 plt.close()
             else:
-                plt.savefig(result_plot_dir + '/'+ 'line_fitting_' + prev_spec + '.png', format='png', dpi=300)
+                plt.savefig(result_plot_dir + '/'+ 'line_fitting_' + prev_spec_nopath + '.png', format='png', dpi=300)
                 plt.close()
 
 
-        return min_wave, sigma_line, sigma_line, params
+        return min_wave, sigma_line, sigma_line_vel, params
 
     except Exception as e:
-        print(f"Line fitting failed: {str(e)}")
+        if event == "Process all":
+            print(f"Line fitting failed. Try adjusting the parameters: {str(e)}")
+        else:
+            sg.popup(f"Line fitting failed. Try adjusting the parameters: {str(e)}")
         return None, None, None, params
-
-
-
-
 
 
 
 def apply_ppxf_kinematics(event, save_plot, params):
 
+    """
+    Fits the spectrum and retrieves the kinematics moments, using the pPXF algorithm via
+    the ppxf_kinematics function of the spectral analysis module.
 
+    Returns:
+    - Kinematics moments
+    - Kinematics moments formal errors
+    - Bestfit template model
+    - Number of kinematic components fitted
+    - S/N of the fitted spectrum
+    - Kinematics moments montecarlo errors (if calculated)
+
+    """
 
     wavelength = params.wavelength
     flux = params.flux
@@ -1435,7 +1423,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
         else:
             sg.popup("The window band is out of the spectrum range")
         return None, None, None, None, None, None, None, params
-
 
     try:
         if constant_resolution_lambda: #if I gave the resolution in FWHM
@@ -1535,7 +1522,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
                 err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
 
 
-
         #plotting only in the preview and save plots mode
         if event == "Preview result" or (event == 'Process all' and save_plot):
             plt.plot(bestfit_wavelength, bestfit_flux)
@@ -1565,8 +1551,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
                 else:
                     plt.savefig(result_plot_dir + '/'+ 'kin_ppxf_' + prev_spec_nopath + '.png', format='png', dpi=300)
 
-
-
         #saving best fit spec
         if event == 'Process selected' or event == 'Process all':
             file_fitted_kin = result_spec+'ppxf_kin_bestfit_' + prev_spec_nopath + '.fits'
@@ -1577,16 +1561,36 @@ def apply_ppxf_kinematics(event, save_plot, params):
         return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc, params
 
     except Exception as e:
-        print('Something went wrong. The parameters inserted are not correct, the resolution of your spectra is lower than the templates used, if you are using the Xshooter or custom library or the custom templates do not exist. ')
+        if event == "Process all":
+            print('Kinematics failed. Likely issues: the parameters inserted are not correct, the resolution of your spectra is lower than the templates used, if you are using the Xshooter, or custom library or the custom templates do not exist. ')
+        else:
+            sg.popup('Kinematics failed. Likely issues: the parameters inserted are not correct, the resolution of your spectra is lower than the templates used, if you are using the Xshooter, or custom library or the custom templates do not exist. ')
         return None, None, None, None, None, None, None, params
-
-
 
 
 
 
 def apply_ppxf_stellar_populations(event, save_plot, params):
 
+    """
+    Fits the spectrum and retrieves the stellar populations parameters
+    and non parametric SFH. Optionally, also the stellar parameters
+    via Lick/IDS index measurement can be calculated. Uses the pPXF
+    algorithm via the ppxf_pop function of the spectral analysis module
+    and the ew_measurement function of the linestrength module.
+
+    Returns:
+    - Kinematics moments
+    - Stellar popolation parameters (age, metallicity, alpha/Fe in available)
+    - Bestfit template model
+    - luminosity and mass weights collapsed to the metallicity dimension
+    - Mass to light (if available)
+    - S/N of the fitted spectrum
+    - Errors estimated via bootstrap simulations (if calculated)
+    - EW of the Lick/IDS indices used for stellar population studies (if calculated: Hbeta, Mgb, <Fe>, [MgFe]')
+    - Stellar population parameters estimated with Lick/IDS analysis (if calculated)
+
+    """
 
     wavelength = params.wavelength
     flux = params.flux
@@ -1597,7 +1601,6 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     sigma_guess_pop = params.sigma_guess_pop
     fit_components = params.fit_components
     with_errors = params.with_errors
-    prev_spec = params.prev_spec
     regul_err = params.regul_err
     additive_degree = params.additive_degree
     multiplicative_degree = params.multiplicative_degree
@@ -1676,7 +1679,6 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     # Show error calculation message if enabled
     if with_errors:
         print("\n********* Calculating the errors for age and metallicity. Please sit and wait... *****\n")
-
 
 
     #setting up the other parameters required:
@@ -1804,8 +1806,6 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
             print ('[Alpha/Fe]:', round(alpha_ssp, 2), '+/-', round(err_alpha_ssp,2))
             print('')
 
-
-
         #saving the file with the fit
         if event == 'Process selected' or event == 'Process all':
             try:
@@ -1873,5 +1873,8 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
         return kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err_lower, met_err_upper, mass_met_err_lower, mass_met_err_upper, snr_pop, ppxf_pop_lg_age, age_err_lower_abs, age_err_upper_abs, mass_age_err_lower_abs, mass_age_err_upper_abs, alpha_err_lower, alpha_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params
 
     except Exception:
-        print ('Something went wrong with the fit. Maybe too small age-metallicity range, bad templates or you masked out all the spectrum? Skipping...')
+        if event == "Process all":
+            print('Stellar populations and SFH failed. Maybe too small age-metallicity range, bad templates or you masked out all the spectrum? Skipping...')
+        else:
+            sg.popup('Stellar populations and SFH failed. Maybe too small age-metallicity range, bad templates or you masked out all the spectrum? Skipping...')
         return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
