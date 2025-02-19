@@ -102,20 +102,20 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
             break
 
         try:
-            new_wave1_bb = float(bb_values['left_wave_bb'])
-            new_wave2_bb = float(bb_values['right_wave_bb'])
-            new_t_guess = float(bb_values['t_guess_bb'])
+            wave1_bb = float(bb_values['left_wave_bb'])
+            wave2_bb = float(bb_values['right_wave_bb'])
+            t_guess = float(bb_values['t_guess_bb'])
 
-            if new_t_guess <= 0:
+            if t_guess <= 0:
                 sg.popup('No blackbody has a negative temperature!')
                 continue
-            if new_t_guess > 1e7:
+            if t_guess > 1e7:
                 sg.popup('No stellar blackbody has a temperature greater than 10 million degrees!')
                 continue
-            if new_wave1_bb >= new_wave2_bb:
+            if wave1_bb >= wave2_bb:
                 sg.popup('The first wavelength cannot be greater than the second!')
                 continue
-            if new_wave2_bb - new_wave1_bb <= 5.:
+            if wave2_bb - wave1_bb <= 5.:
                 sg.popup('The wavelength interval is too small to perform a good fit. Enlarge it!')
                 continue
 
@@ -130,7 +130,7 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     bb_window.close()
 
     # Update params only with modified values
-    return replace(params, wave1_bb=new_wave1_bb, wave2_bb=new_wave2_bb, t_guess=new_t_guess)
+    return replace(params, wave1_bb=wave1_bb, wave2_bb=wave2_bb, t_guess=t_guess)
 
 
 

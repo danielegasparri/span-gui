@@ -109,21 +109,22 @@ def apply_blackbody_fitting(event, save_plot, params):
             sg.popup("Wavelength interval for blackbody fitting exceeds the spectrum's range!")
         return None, None, params
 
-
-    if event == 'Preview result':
-        preview = True
-    else:
-        preview = False
-
     try:
-        temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview)
+        if event == "Process all" and save_plot:
+            preview = False
+            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
+        if event == "Preview result":
+            preview = True
+            save_plot = False
+            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
+        if event == "Process selected":
+            preview = False
+            save_plot = False
+            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
 
         print(f"Best Blackbody temperature: {int(temperature_bb)} K\n")
         print('')
-        # params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
         return temperature_bb, residual_bb, params
-
-
 
     except Exception:
         if event == "Process all":
