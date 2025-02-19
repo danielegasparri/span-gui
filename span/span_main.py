@@ -542,7 +542,10 @@ def main():
             #show resolution
             if show_resolution:
                 util_task = 1
-                utility_tasks.show_resolution(params.wavelength, params.flux, res_wave1, res_wave2)
+                try:
+                    utility_tasks.show_resolution(params.wavelength, params.flux, res_wave1, res_wave2)
+                except Exception as e:
+                    sg.popup(f'Failed! Maybe W1 and W2 are too close?{e}')
 
             # warning
             if util_task == 0:
@@ -607,7 +610,10 @@ def main():
             if event == 'Save All' and values['one_spec']:
                 sg.popup('"Save all" does not work anyway with just one spectrum!')
                 continue
-            utility_tasks.snr_analysis(event, params.prev_spec, params.spec_names, params.spec_names_nopath, params.spectra_number, show_snr, snr_wave, epsilon_wave_snr, params.lambda_units, values['one_spec'], params.result_snr_dir, params.spectra_list_name, timestamp)
+            try:
+                utility_tasks.snr_analysis(event, params.prev_spec, params.spec_names, params.spec_names_nopath, params.spectra_number, show_snr, snr_wave, epsilon_wave_snr, params.lambda_units, values['one_spec'], params.result_snr_dir, params.spectra_list_name, timestamp)
+            except Exception as e:
+                print(f'Failed! Maybe the wavelength window is too small?{e}')
 
         if not show_snr and (event == 'Show snr' or event == 'Save one' or event == 'Save all'):
             sg.popup('You need to activate the option if you expect something!')
