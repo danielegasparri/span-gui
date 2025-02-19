@@ -30,10 +30,12 @@ try: #try local import if executed as script
     #GUI import
     from FreeSimpleGUI_local import FreeSimpleGUI as sg
     from params import SpectraParams
+    from span_modules import misc
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
+    from . import misc
     from .params import SpectraParams
 
 #python imports
@@ -165,7 +167,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     spectra_number = params.spectra_number
     fatal_condition = params.fatal_condition
 
-
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
     spec_layout = [
 

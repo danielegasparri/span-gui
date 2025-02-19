@@ -73,6 +73,7 @@ def plot_data_window(BASE_DIR, layout):
     # Example file to plot
     file_to_plot = os.path.join(BASE_DIR, "example_files", "results", "NGC5320_populations.dat")
 
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
     markers = ['red', 'green', 'yellow', 'blue', 'purple', 'black', 'orange']
     plot_layout = [
@@ -172,6 +173,7 @@ def plot_data_window(BASE_DIR, layout):
 def text_editor_window(layout):
     print('***** Text editor open. The main panel will be inactive until you close the editor *****')
 
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
 
     if layout == layouts.layout_android:
@@ -333,6 +335,7 @@ def text_editor_window(layout):
 # 3) FITS HEADER EDITOR
 def fits_header_window():
 
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
     fitsheader_layout = [
         [sg.Text('Please, select what operation you want to perform on the header of the fits file(s)')],
@@ -601,9 +604,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
     result_data = params.result_data
     result_long_slit_extract = params.result_long_slit_extract
 
-
-
-
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
     x_axis = np.array([])
     # Define FreeSimpleGUI layout
@@ -1336,7 +1337,7 @@ def datacube_extraction(params):
 
                 # Generating the text file with all spaxel info:
                 txt_filename = f"mask_regions_{ifs_run_id}.txt"
-                mask_labels = misc.save_mask_regions_txt(labeled_mask, result_data + "/" + txt_filename)
+                mask_labels = save_mask_regions_txt(labeled_mask, result_data + "/" + txt_filename)
 
                 sg.Popup("Manual binned regions computed. Now click 'Extract!' to extract the binned spectra")
 
@@ -1654,17 +1655,31 @@ def datacube_extraction(params):
                     ifs_prepare_method = ifs_prepare_method
                      )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     return params
+
+
+# saving the spaxels for the Cube extract panel and manual bin info in a txt file and store in the array.
+def save_mask_regions_txt(labeled_mask, output_filename):
+    """
+    - If labeled_mask[y,x] == 0 → label = -1 (not selected)
+    - Otherwise label = labeled_mask[y,x]
+    """
+    rows, cols = labeled_mask.shape
+
+    # Prepare a list to store the values (y, x, label)
+    mask_labels_list = []
+
+    with open(output_filename, "w") as f:
+        f.write("# y\tx\tregion_label\n")
+        for y in range(rows):
+            for x in range(cols):
+                lbl = labeled_mask[y, x]
+                region_label = lbl if lbl != 0 else -1
+                # Saving the text file
+                f.write(f"{y}\t{x}\t{region_label}\n")
+                # Fill the list
+                mask_labels_list.append([y, x, region_label])
+
+    # Converting the list to numpy and return it
+    mask_labels = np.array(mask_labels_list, dtype=int)
+    return mask_labels

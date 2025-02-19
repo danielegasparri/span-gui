@@ -69,7 +69,7 @@ from dataclasses import replace
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
-
+fontsize = sg.set_options(font=("Helvetica", 11)) # defaul fontsize
 
 def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     """Handles blackbody fitting parameter input via GUI."""
@@ -80,6 +80,8 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     wave1_bb = params.wave1_bb
     wave2_bb = params.wave2_bb
     t_guess = params.t_guess
+
+    layout, scale_win, fontsize, default_size = misc.get_layout()
 
     # Define GUI layout
     bb_layout = [
@@ -154,6 +156,7 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
     low_z_corr = params.low_z_corr
     high_z_corr = params.high_z_corr
 
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
 
     xcorr_layout = [
@@ -314,7 +317,7 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
     band_sigma = params.band_sigma
     cont_sigma = params.cont_sigma
 
-
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
 
     sigma_layout = [
@@ -1025,6 +1028,7 @@ def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
     m = params.m
     c = params.c
 
+    layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
     linefit_layout = [
         [sg.Radio('Automatic fit of the CaT lines', "RADIOFILEFIT", key='cat_fit', default=cat_band_fit,

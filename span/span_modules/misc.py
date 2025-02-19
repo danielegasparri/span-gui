@@ -159,6 +159,7 @@ TEMP_ZIP_PATH = os.path.join(BASE_DIR, "spectralTemplates.zip")
 def download_with_progress(url, dest):
     """Download a file with a progress bar"""
 
+    fontsize = sg.set_options(font=("Helvetica", 14))
     # Get the file size
     response = urllib.request.urlopen(url)
     total_size = int(response.getheader('Content-Length', 0))
@@ -200,6 +201,7 @@ def download_with_progress(url, dest):
 def download_and_extract_files():
     """Download and extract the file"""
     try:
+        fontsize = sg.set_options(font=("Helvetica", 14))
         # starting the download
         success = download_with_progress(DOWNLOAD_URL, TEMP_ZIP_PATH)
         if not success:
@@ -223,9 +225,10 @@ def download_and_extract_files():
 def check_and_download_spectral_templates():
     """Checking if the spectralTemplates/ exists."""
     if not os.path.exists(SPECTRAL_TEMPLATES_DIR):
+        fontsize = sg.set_options(font=("Helvetica", 14))
         # If spectralTemplates does not exist, I should download it, if the user agrees
         choice = sg.popup_yes_no(
-            "SPAN must download an extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the folder here: https://www.danielegasparri.com/spectralTemplates.zip , unzip the folder and put in the root folder of span",
+            "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the folder here: https://www.danielegasparri.com/spectralTemplates.zip , unzip the folder and put in the root folder of span",
             title="SPAN Missing Files",
             keep_on_top=True
         )
@@ -239,28 +242,4 @@ def check_and_download_spectral_templates():
                 keep_on_top=True)
 
 
-# saving the spaxels for the Cube extract panel and manual bin info in a txt file and store in the array.
-def save_mask_regions_txt(labeled_mask, output_filename):
-    """
-    - If labeled_mask[y,x] == 0 → label = -1 (not selected)
-    - Otherwise label = labeled_mask[y,x]
-    """
-    rows, cols = labeled_mask.shape
 
-    # Prepare a list to store the values (y, x, label)
-    mask_labels_list = []
-
-    with open(output_filename, "w") as f:
-        f.write("# y\tx\tregion_label\n")
-        for y in range(rows):
-            for x in range(cols):
-                lbl = labeled_mask[y, x]
-                region_label = lbl if lbl != 0 else -1
-                # Saving the text file
-                f.write(f"{y}\t{x}\t{region_label}\n")
-                # Fill the list
-                mask_labels_list.append([y, x, region_label])
-
-    # Converting the list to numpy and return it
-    mask_labels = np.array(mask_labels_list, dtype=int)
-    return mask_labels
