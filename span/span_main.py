@@ -386,7 +386,6 @@ def main():
         #*****************************************************************************************
         #********************************** STAND ALONE SUB-APPLICATIONS *************************
 
-
         #********************* LONG-SLIT SPECTRA EXTRACTION ***********************
         if event == 'Long-slit extraction':
             params = sub_programs.long_slit_extraction(BASE_DIR, layout, params)
@@ -444,16 +443,22 @@ def main():
 
         # If I load a single spectrum, SPAN needs to check it before loading
         if values['one_spec']:
-            valid_spec = False
             spectra_number_check = 1 #for checking if after I loaded a spectra list I acrivated the "I browsed a single spectrum" and did not press "Load!"
             if event == 'Load!':
                 # Validate and load spectrum
-                params, valid_spec = check_spec.validate_and_load_spectrum(params, window, valid_spec)
-            if not valid_spec:
-                sg.popup ('The format of the spectrum is not correct or you did not load it')
+                params, valid_spec = check_spec.validate_and_load_spectrum(params, window)
+                if not valid_spec:
+                    sg.popup ('The format of the spectrum is not correct or you did not load it')
+                    continue
+            try:
+                if not valid_spec:
+                    sg.popup("Your spectrum is not valid. Can't do anything")
+                    continue
+            except Exception:
+                sg.popup('You should load you spectrum if you want to use it')
                 continue
 
-        # Concatenating events to prevent the GUI crashes when no (valid) spectrum is selected or loaded and you want to do something anyway.
+        # Concatenating events to prevent the GUI to crash when no (valid) spectrum is selected or loaded and you want to do something anyway.
         if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and (params.prev_spec == '' or (values['one_spec'] and spectra_number_check != params.spectra_number))):
             sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
             continue
@@ -794,7 +799,7 @@ def main():
                     if event == 'Process all':
                         print ('Something went wrong')
                     else:
-                        sg.popup('You still need to load a valid spectrum. I don''t change my mind')
+                        sg.popup("You still need to load a valid spectrum. I don't change my mind")
                         continue
 
                 ################################## SPECTRA MANIPULATION TASKS ##########################
@@ -809,12 +814,12 @@ def main():
 
                         # 1) CROPPING
                         if op_var == "cropping_spectrum":
-                            i == 0 and print('*** Cropping ***\n')
+                            i == 0 and print('\n*** Cropping ***\n')
                             params = apply_spec_tasks.apply_cropping(event, save_plot, save_intermediate_files, params)
 
                         # 2) DYNAMIC CLEANING
                         elif op_var == "sigma_clipping":
-                            i == 0 and print('*** Dynamic cleaning ***\n')
+                            i == 0 and print('\n*** Dynamic cleaning ***\n')
 
                             if not params.sigma_clip_have_file:
                                 params = apply_spec_tasks.apply_sigma_clipping(event, save_plot, save_intermediate_files, params)
@@ -823,17 +828,17 @@ def main():
 
                         # 3) WAVELET CLEANING
                         elif op_var == "wavelet_cleaning":
-                            i == 0 and print('*** Wavelet cleaning ***\n')
+                            i == 0 and print('\n*** Wavelet cleaning ***\n')
                             params = apply_spec_tasks.apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params)
 
                         # 4) DENOISE
                         elif op_var == "filter_denoise":
-                            i == 0 and print('*** Denoising ***\n')
+                            i == 0 and print('\n*** Denoising ***\n')
                             params = apply_spec_tasks.apply_denoising(event, save_plot, save_intermediate_files, params)
 
                         # 5) DOPPLER CORRECTION
                         elif op_var == "dop_cor":
-                            i == 0 and print('*** Dopcor/z correazion ***\n')
+                            i == 0 and print('\n*** Dopcor/z correazion ***\n')
                             if (params.dop_cor_single_shot):
                                 params = apply_spec_tasks.apply_doppler_correction(event, save_plot, save_intermediate_files, params)
 
@@ -842,7 +847,7 @@ def main():
 
                         #6) HELIOCENTRIC CORRECTION
                         elif op_var == "helio_corr":
-                            i == 0 and print('*** Heliocentric correction ***\n')
+                            i == 0 and print('\n*** Heliocentric correction ***\n')
                             if (params.helio_single_shot):
                                 params = apply_spec_tasks.apply_heliocentric_correction(event, save_plot, save_intermediate_files, params)
 
@@ -851,37 +856,37 @@ def main():
 
                         #7) REBIN
                         elif op_var == "rebining":
-                            i == 0 and print('*** Rebinning ***\n')
+                            i == 0 and print('\n*** Rebinning ***\n')
                             params = apply_spec_tasks.apply_rebinning(event, save_plot, save_intermediate_files, params)
 
                         # 8) DEGRADE RESOLUTION
                         elif op_var == "degrade":
-                            i == 0 and print('*** Degrade resolution ***\n')
+                            i == 0 and print('\n*** Degrade resolution ***\n')
                             params = apply_spec_tasks.apply_resolution_degradation(event, save_plot, save_intermediate_files, params)
 
                         # 9) NORMALISE SPECTRUM TO
                         elif op_var == "normalize_wave":
-                            i == 0 and print('*** Normalise ***\n')
+                            i == 0 and print('\n*** Normalise ***\n')
                             params = apply_spec_tasks.apply_normalisation(event, save_plot, save_intermediate_files, params)
 
                         # 10) SIGMA BROADENING
                         elif op_var == "sigma_broad":
-                            i == 0 and print('*** Velocity dispersion ***\n')
+                            i == 0 and print('\n*** Velocity dispersion ***\n')
                             params = apply_spec_tasks.apply_sigma_broadening(event, save_plot, save_intermediate_files, params)
 
                         # 11) ADD NOISE
                         elif op_var == "add_noise":
-                            i == 0 and print('*** Add noise ***\n')
+                            i == 0 and print('\n*** Add noise ***\n')
                             params = apply_spec_tasks.apply_noise_addition(event, save_plot, save_intermediate_files, params)
 
                         # 12) CONTINUUM MODELLING
                         elif op_var == "continuum_sub":
-                            i == 0 and print('*** Continuum modelling ***\n')
+                            i == 0 and print('\n*** Continuum modelling ***\n')
                             params = apply_spec_tasks.apply_continuum_subtraction(event, save_plot, save_intermediate_files, params)
 
                         # 13) SUBTRACT NORMALISED AVERAGE
                         elif op_var == "subtract_normalized_avg":
-                            i == 0 and print('*** Subtract normalised average ***\n')
+                            i == 0 and print('\n*** Subtract normalised average ***\n')
                             if not values['one_spec']:
                                 params = apply_spec_tasks.apply_subtract_normalised_average(event, save_plot, save_intermediate_files, params)
 
@@ -891,22 +896,22 @@ def main():
 
                         # 14) SUBTRACT NORMALISED SINGLE SPECTRUM
                         elif op_var == "subtract_normalized_spec":
-                            i == 0 and print('*** Subtract normalised spectrum ***\n')
+                            i == 0 and print('\n*** Subtract normalised spectrum ***\n')
                             params = apply_spec_tasks.apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files, params)
 
                         # 15) ADD CONSTANT (PEDESTAL)
                         elif op_var == "add_pedestal":
-                            i == 0 and print('*** Add constant ***\n')
+                            i == 0 and print('\n*** Add constant ***\n')
                             params = apply_spec_tasks.apply_add_pedestal(event, save_plot, save_intermediate_files, params)
 
                         # 16) MULTIPLY
                         elif op_var == "multiply":
-                            i == 0 and print('*** Multiply ***\n')
+                            i == 0 and print('\n*** Multiply ***\n')
                             params = apply_spec_tasks.apply_multiplication(event, save_plot, save_intermediate_files, params)
 
                         # 17) DERIVATIVES
                         elif op_var == "derivatives":
-                            i == 0 and print('*** Derivatives ***\n')
+                            i == 0 and print('\n*** Derivatives ***\n')
                             params = apply_spec_tasks.apply_derivatives(event, save_plot, save_intermediate_files, params)
 
 
@@ -955,7 +960,7 @@ def main():
                 if not event == 'Preview spec.':
                     #1) BLACKBODY FITTING
                     if (bb_fit):
-                        i == 0 and print('Running blackbody fitting task...\n')
+                        i == 0 and print('\nRunning blackbody fitting task...\n')
                         temperature_bb, residual_bb, params = apply_analysis_tasks.apply_blackbody_fitting(event, save_plot, params)
                         #Updating the file
                         if event == 'Process all':
@@ -970,7 +975,7 @@ def main():
 
                     # 2) CROSS-CORRELATION
                     if (cross_corr):
-                        i == 0 and print('Running cross-correlation task...\n')
+                        i == 0 and print('\nRunning cross-correlation task...\n')
                         value_at_max, params = apply_analysis_tasks.apply_cross_correlation(event, save_plot, params)
 
                         if event == "Process all":
@@ -980,7 +985,7 @@ def main():
 
                     # 3) VELOCITY DISPERSION
                     if (sigma_measurement):
-                        i == 0 and print('Running velocity dispersion task...\n')
+                        i == 0 and print('\nRunning velocity dispersion task...\n')
                         sigma, error, chisqr, params = apply_analysis_tasks.apply_velocity_dispersion(event, save_plot, params)
                         if event == 'Process all':
 
@@ -996,7 +1001,7 @@ def main():
 
                     #4a) EQUIVALENT WIDTH, CASE 1: f I want to measure just one index
                     if (ew_measurement and params.single_index):
-                        i == 0 and print('Running equivalent width task with a single index...\n')
+                        i == 0 and print('\nRunning equivalent width task with a single index...\n')
                         idx, ew, err, snr_ew, ew_mag, err_mag, params = apply_analysis_tasks.apply_ew_measurement_single(event, save_plot, params)
 
                         if event == 'Process all':
@@ -1007,7 +1012,7 @@ def main():
 
                     #4b) EQUIVALENT WIDTH, CASE 2: If I have an index list file
                     if (ew_measurement and params.have_index_file):
-                        i == 0 and print('Running equivalent width task with an index list...\n')
+                        i == 0 and print('\nRunning equivalent width task with an index list...\n')
                         id_array, ew_array, err_array, snr_ew_array, ew_array_mag, err_array_mag, params = apply_analysis_tasks.apply_ew_measurement_list(event, save_plot, params)
 
                         if event == 'Process all':
@@ -1020,7 +1025,7 @@ def main():
 
                     #4c) EQUIVALENT WIDTH, CASE 3: If I want to measure the Lick/IDS indices
                     if (ew_measurement and params.lick_ew):
-                        i == 0 and print('Running equivalent width task with Lick/IDS indices...\n')
+                        i == 0 and print('\nRunning equivalent width task with Lick/IDS indices...\n')
                         lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag, age, met, alpha, err_age, err_met, err_alpha, lick_for_ssp, ssp_model, ssp_lick_indices_list, ssp_lick_indices_err_list, params = apply_analysis_tasks.apply_lick_indices_ew_measurement(event, save_plot, i, params)
 
                         if i == 0:
@@ -1042,7 +1047,7 @@ def main():
                     #5) LINE(S) FITTING
                     #a) CaT fitting
                     if (line_fitting and params.cat_band_fit):
-                        i == 0 and print('Running CaT fitting task...\n')
+                        i == 0 and print('\nRunning CaT fitting task...\n')
                         min_wave1, min_wave2, min_wave3, residual_wave1, residual_wave2, residual_wave3, ew_array_ca1, ew_array_ca2, ew_array_ca3, real_cat1, real_cat2, real_cat3, delta_rv1, delta_rv2, delta_rv3, sigma_cat1, sigma_cat2, sigma_cat3, sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel, params = apply_analysis_tasks.apply_cat_line_fitting(event, save_plot, params)
 
                         if event == 'Process all':
@@ -1064,7 +1069,7 @@ def main():
 
                     # b) line fitting user line
                     if (line_fitting and not params.cat_band_fit):
-                        i == 0 and print('Running line fitting task...\n')
+                        i == 0 and print('\nRunning line fitting task...\n')
                         min_wave, sigma_line, sigma_line_vel, params = apply_analysis_tasks.apply_line_fitting(event, save_plot, params)
 
                         if event == 'Process all':
@@ -1079,7 +1084,7 @@ def main():
 
                     # 6) KINEMATICS WITH PPXF
                     if (perform_kinematics):
-                        i == 0 and print('Running stars and gas kinematics task...\n')
+                        i == 0 and print('\nRunning stars and gas kinematics task...\n')
                         kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
 
                         if event == 'Process all':
@@ -1089,7 +1094,7 @@ def main():
 
                     # 7) STELLAR POPULATIONS WITH PPXF
                     if (stellar_pop):
-                        i == 0 and print('Running stellar populations and SFH task...\n')
+                        i == 0 and print('\nRunning stellar populations and SFH task...\n')
                         kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err_lower, met_err_upper, mass_met_err_lower, mass_met_err_upper, snr_pop, ppxf_pop_lg_age, age_err_lower_abs, age_err_upper_abs, mass_age_err_lower_abs, mass_age_err_upper_abs, alpha_err_lower, alpha_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params = apply_analysis_tasks.apply_ppxf_stellar_populations(event, save_plot, params)
 
                         if kinematics is None:
@@ -1182,41 +1187,38 @@ def main():
                     sg.popup_error('Content not valid for JSON.')
 
         # listing all the parameters to be loaded
-        if event == 'Load parameters...' or event == 'Restore default parameters':
-            if event == 'Load parameters...':
-                try:
-                    filename = sg.popup_get_file('Select the file to load...', file_types=(("JSON Files", "*.json"),))
-                    keys, events, loaded_values, params = settings.load_settings(filename, params)
-                    values.update(loaded_values)
+        if event == 'Load parameters...':
+            try:
+                filename = sg.popup_get_file('Select the file to load...', file_types=(("JSON Files", "*.json"),))
+                keys, events, loaded_values, params = settings.load_settings(filename, params)
+                values.update(loaded_values)
 
-                    #Updating the GUI
-                    for key, value in loaded_values.items():
-                        if key in window.AllKeysDict:
-                            window[key].update(value)
-                    window.refresh()
+                #Updating the GUI
+                for key, value in loaded_values.items():
+                    if key in window.AllKeysDict:
+                        window[key].update(value)
+                window.refresh()
+                sg.Popup('Settings loaded')
+                print('Settings loaded')
+            except Exception:
+                sg.popup('ERROR: Problem loading the parameters')
+                print('Settings NOT loaded')
 
-                    sg.Popup('Settings loaded')
-                    print('Settings loaded')
-                except Exception:
-                    sg.popup('ERROR: Problem loading the parameters')
-                    print('Settings NOT loaded')
+        if event == 'Restore default parameters':
+            try:
+                keys, events, loaded_values, params = settings.load_settings(os.path.join(BASE_DIR, "system_files", "default_settings.json"), params)
+                values.update(loaded_values)
 
-            if event == 'Restore default parameters':
-                try:
-                    keys, events, loaded_values, params = settings.load_settings(os.path.join(BASE_DIR, "system_files", "default_settings.json"), params)
-                    values.update(loaded_values)
-
-                    #Updating the GUI
-                    for key, value in loaded_values.items():
-                        if key in window.AllKeysDict:
-                            window[key].update(value)
-                    window.refresh()
-
-                    sg.Popup('Default parameters restored')
-                    print('Default parameters restored')
-                except Exception:
-                    sg.Popup('ERROR restoring default parameters')
-                    print('ERROR restoring default parameters')
+                #Updating the GUI
+                for key, value in loaded_values.items():
+                    if key in window.AllKeysDict:
+                        window[key].update(value)
+                window.refresh()
+                sg.Popup('Default parameters restored')
+                print('Default parameters restored')
+            except Exception:
+                sg.Popup('ERROR restoring default parameters')
+                print('ERROR restoring default parameters')
 
     window.close()
 
