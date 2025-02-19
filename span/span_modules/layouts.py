@@ -23,7 +23,7 @@
 
 """
 
-# Layout definitions for the main GUI for different OS environments.
+# Layout definitions for the main GUI for different OS environments. Modify this code to change the aspect of the main GUI.
 
 try: #try local import if executed as script
     #GUI import
@@ -167,8 +167,6 @@ layout_windows = [
 #************************************************************************************
 #************************************************************************************
 #Layout optimized for Linux systems
-
-#Building the main panel#
 layout_linux = [
             [sg.Menu([
                 ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
@@ -393,8 +391,6 @@ layout_macos = [
 
 #************************************************************************************
 #Layout optimized for Android systems
-
-#Building the main panel#
 layout_android = [
 
             [sg.Frame('Prepare and load spectra', [

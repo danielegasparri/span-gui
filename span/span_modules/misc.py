@@ -48,6 +48,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
+
 def save_config_folder(data, config_file):
     """Save the result path to a JSON file."""
     with open(config_file, 'w') as f:

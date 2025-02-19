@@ -23,7 +23,8 @@
 
 """
 
-# Functions of the Spectra manipulation panel
+# Functions to applt the tasks of the Spectra manipulation panel
+
 
 try: #try local import if executed as script
     #GUI import
@@ -61,17 +62,20 @@ import matplotlib.pyplot as plt
 import matplotlib.backends.backend_tkagg
 from astropy.coordinates import SkyCoord, EarthLocation
 import datetime
+from dataclasses import replace
+
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
-from dataclasses import replace
-# from params import SpectraParams
+
 
 
 def apply_cropping(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies the cropping task to a spectrum, limiting its wavelength range.
+    Applies the cropping task to a spectrum, limiting its wavelength range
+
     """
 
     # Header
@@ -80,6 +84,9 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Cropping
     try:
@@ -116,12 +123,7 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
         # Update parameters and return
         return replace(params,
                     wavelength=new_wavelength,
-                    flux=new_flux,
-                    # wave_limits=np.array([new_wavelength[0], new_wavelength[-1]]),
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=new_flux)
 
     except Exception:
         print('Cropping failed')
@@ -129,10 +131,11 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
 
 
 
-
 def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies sigma clipping to clean the spectrum dynamically.
+    Applies sigma clipping to clean the spectrum dynamically
+
     """
 
     # Header
@@ -142,12 +145,15 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
     else:
         task_done, task_spec = 1, 1
 
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
+
     try:
         # Sigma Clipping
         clip_wavelength, clip_flux = spman.sigma_clip(params.wavelength, params.flux, params.clip_factor,
                                                     params.sigma_clip_resolution, params.sigma_clip_single_value)
 
-        if len(clip_wavelength) < 10:
+        if len(clip_wavelength) < 10: #arbitrary magic number
             print("WARNING: The cleaned spectrum has too few points. Skipping...")
             return params  # Return original params if clipping fails
 
@@ -171,12 +177,8 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
         # Update parameters and return
         return replace(params,
                     wavelength=clip_wavelength,
-                    flux=clip_flux,
-                    # wave_limits=np.array([clip_wavelength[0], clip_wavelength[-1]]),
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=clip_flux)
+
     except Exception:
         print("Sigma clip failed")
         return params
@@ -184,9 +186,21 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
 
 
 def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, params):
+
     """
-    Apply sigma clipping using values from an external file.
+    Apply sigma clipping using values from an external file
+
     """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Only in Process all mode
     if event != 'Process all':
@@ -215,16 +229,15 @@ def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, pa
     try:
         clip_wavelength, clip_flux = spman.sigma_clip(
             params.wavelength, params.flux, params.clip_factor,
-            sigma_clip_resolution[params.spectrum_index], sigma_clip_vel_value[params.spectrum_index]
-        )
+            sigma_clip_resolution[params.spectrum_index], sigma_clip_vel_value[params.spectrum_index])
 
-        # Salvataggio dello spettro processato
+        # Saving spectrum
         if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
             file_clipped = os.path.join(params.result_spec, f'clip_{params.spec_names_nopath[params.spectrum_index]}.fits')
             uti.save_fits(clip_wavelength, clip_flux, file_clipped)
             print(f'File saved: {file_clipped}')
 
-        # Salvataggio del plot
+        # Saving plots
         # if event == 'Process all' and save_plot:
         #     plt.title(f'Cleaned {params.spec_names_nopath[params.spectrum_index]}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
@@ -237,26 +250,36 @@ def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, pa
 
         return replace(params,
                     wavelength=clip_wavelength,
-                   flux=clip_flux,
-                   # wave_limits=np.array([clip_wavelength[0], clip_wavelength[-1]]),
-                   task_done2=1,
-                   task_spec2=1)
+                    flux=clip_flux)
 
     except ValueError:
         print('Sigma clip failed')
         return params
 
 
+
 def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies wavelet-based noise reduction to the spectrum.
+    Applies wavelet-based noise reduction to the spectrum
+
     """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Walelet
     try:
         denoised_flux = spman.wavelet_cleaning(params.wavelength, params.flux, params.sigma_wavelets, params.wavelets_layers)
 
-        # Salvataggio dello spettro processato
+        # Saving the spectrum
         if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
             file_wavelet = os.path.join(params.result_spec, f'wavelet_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, denoised_flux, file_wavelet)
@@ -273,11 +296,13 @@ def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
         #     plt.savefig(os.path.join(params.result_plot_dir, f'wavelet_cleaned_{params.prev_spec_nopath}.png'), dpi=300)
         #     plt.close()
 
-        # Restituiamo `params` aggiornato
+        # Updated params
         return replace(params,
                     flux=denoised_flux,
-                    task_done=1,
-                    task_spec=1)
+                    task_done=task_done,
+                    task_spec=task_spec,
+                    task_done2=task_done2,
+                    task_spec2=task_spec2)
     except Exception:
         print('Wavelet filtering failed')
         return params
@@ -285,18 +310,23 @@ def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
 
 
 def apply_denoising(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies various denoising techniques to the spectrum.
+    Applies various denoising techniques to the spectrum
+
     """
 
-    # Determina se l'operazione è stata eseguita
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
 
-    # Applicazione dei filtri di denoising
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
+
+    # Denoising
     try:
         new_flux = params.flux
         if params.moving_average and params.box_moving_avg:
@@ -308,7 +338,7 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
         if params.bandpass_filter:
             new_flux = spman.bandpass(params.wavelength, new_flux, params.bandpass_lower_cut_off, params.bandpass_upper_cut_off, params.bandpass_order)
 
-        # Salvataggio dello spettro processato
+        # Saving the spectrum
         if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
             file_denoised = os.path.join(params.result_spec, f'denoised_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, new_flux, file_denoised)
@@ -326,11 +356,7 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
         #     plt.close()
 
         return replace(params,
-                    flux=new_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=new_flux)
 
     except Exception:
         print("Denoise failed")
@@ -339,8 +365,10 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
 
 
 def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies Doppler correction to the spectrum.
+    Applies Doppler correction to the spectrum
+
     """
 
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
@@ -348,6 +376,9 @@ def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         # Dopcor function
@@ -373,21 +404,30 @@ def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
         # Restituiamo `params` aggiornato
         return replace(params,
                     wavelength=new_wavelength,
-                    flux=new_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=new_flux)
 
     except Exception:
         print("Doppler correction failed")
         return params
 
 
+
 def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files, params):
+
     """
-    Apply Doppler correction using values from an external file.
+    Apply Doppler correction using values from an external file
+
     """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # This function only works in 'Process all' mode
     if event != 'Process all':
@@ -414,8 +454,7 @@ def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files
     # Apply Doppler correction
     try:
         new_wavelength, new_flux = spman.dopcor(
-            params.wavelength, params.flux, dopcor_values[params.spectrum_index], params.dop_cor_have_vel
-        )
+            params.wavelength, params.flux, dopcor_values[params.spectrum_index], params.dop_cor_have_vel)
 
         # Print for debugging
         print(params.spec_names_nopath[params.spectrum_index], dopcor_values[params.spectrum_index])
@@ -441,10 +480,7 @@ def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files
         # Return updated params
         return replace(params,
                     wavelength=new_wavelength,
-                    flux=new_flux,
-                    # wave_limits=np.array([np.min(new_wavelength), np.max(new_wavelength)]),
-                    task_done2=1,
-                    task_spec2=1)
+                    flux=new_flux)
 
     except Exception:
         print("Doppler/z correction failed")
@@ -453,9 +489,21 @@ def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files
 
 
 def apply_heliocentric_correction(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies heliocentric velocity correction.
+    Applies heliocentric velocity correction
+
     """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Apply heliocentric correction
     try:
@@ -486,20 +534,30 @@ def apply_heliocentric_correction(event, save_plot, save_intermediate_files, par
         # Return updated params
         return replace(params,
                     wavelength=new_wavelength,
-                    flux=new_flux,
-                    # wave_limits=np.array([new_wavelength[0], new_wavelength[-1]]),
-                    task_done=1,
-                    task_spec=1)
+                    flux=new_flux)
 
     except Exception:
         print("Heliocentric correction failed")
         return params
 
 
+
 def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_files, params):
+
     """
-    Apply heliocentric correction using values from an external file.
+    Apply heliocentric correction using values from an external file
+
     """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # This function only works in 'Process all' mode
     if event != 'Process all':
@@ -544,8 +602,7 @@ def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_
     try:
         correction, new_wavelength, new_flux = spman.helio_corr(
             params.wavelength, params.flux, date[params.spectrum_index],
-            location[params.spectrum_index], ra[params.spectrum_index], dec[params.spectrum_index]
-        )
+            location[params.spectrum_index], ra[params.spectrum_index], dec[params.spectrum_index])
 
         # Output the correction information
         print(params.spec_names_nopath[params.spectrum_index], date[params.spectrum_index],
@@ -573,10 +630,7 @@ def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_
         # Return updated params
         return replace(params,
                     wavelength=new_wavelength,
-                    flux=new_flux,
-                    # wave_limits=np.array([np.min(new_wavelength), np.max(new_wavelength)]),
-                    task_done2=1,
-                    task_spec2=1)
+                    flux=new_flux)
 
     except Exception:
         print("Heliocentric correction failed")
@@ -586,16 +640,21 @@ def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_
 
 
 def apply_rebinning(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies rebinning to the spectrum (linear or logarithmic).
+    Applies rebinning to the spectrum (linear or logarithmic)
+
     """
 
-    # Determine task execution
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Apply rebinning
     try:
@@ -626,12 +685,8 @@ def apply_rebinning(event, save_plot, save_intermediate_files, params):
         # Return updated params
         return replace(params,
                     wavelength=rebinned_wave,
-                    flux=rebinned_flux,
-                    # wave_limits=np.array([rebinned_wave[0], rebinned_wave[-1]]),
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=rebinned_flux)
+
     except Exception:
         print("Rebinning failed")
         return params
@@ -639,15 +694,21 @@ def apply_rebinning(event, save_plot, save_intermediate_files, params):
 
 
 def apply_resolution_degradation(event, save_plot, save_intermediate_files, params):
+
     """
-    Applies resolution degradation to the spectrum.
+    Applies resolution degradation to the spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         degraded_wave, degraded_flux = params.wavelength, params.flux  # Default, if no degradation is applied
@@ -696,12 +757,7 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
         # Return updated params
         return replace(params,
                     wavelength=degraded_wave,
-                    flux=degraded_flux,
-                    # wave_limits=np.array([degraded_wave[0], degraded_wave[-1]]),
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=degraded_flux)
 
     except Exception:
         print("Degrade resolution failed")
@@ -710,15 +766,21 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
 
 
 def apply_normalisation(event, save_plot, save_intermediate_files, params):
+
     """
-    Normalises the spectrum at a given wavelength.
+    Normalises the spectrum at a given wavelength
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     if params.norm_wave < params.wave_limits[0] or params.norm_wave > params.wave_limits[1]:
         error_msg = 'ERROR: Normalisation wavelength exceeds the range of the spectrum!'
@@ -749,11 +811,8 @@ def apply_normalisation(event, save_plot, save_intermediate_files, params):
 
         # Return updated params
         return replace(params,
-                    flux=normalised_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=normalised_flux)
+
     except Exception:
         print("Normalisation failed")
         return params
@@ -761,15 +820,21 @@ def apply_normalisation(event, save_plot, save_intermediate_files, params):
 
 
 def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
+
     """
-    Broadens the spectrum by a given sigma value.
+    Broadens the spectrum by a given sigma value
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         broadened_flux = spman.sigma_broad(params.wavelength, params.flux, params.sigma_to_add)
@@ -793,11 +858,8 @@ def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
 
         # Return updated params
         return replace(params,
-                    flux=broadened_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=broadened_flux)
+
     except Exception:
         print("Velocity broadening failed")
         return params
@@ -805,15 +867,21 @@ def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
 
 
 def apply_noise_addition(event, save_plot, save_intermediate_files, params):
+
     """
-    Adds noise to the spectrum.
+    Adds noise to the spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         noisy_flux = spman.add_noise(params.wavelength, params.flux, params.noise_to_add)
@@ -837,11 +905,8 @@ def apply_noise_addition(event, save_plot, save_intermediate_files, params):
 
         # Return updated params
         return replace(params,
-                    flux=noisy_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=noisy_flux)
+
     except Exception:
         print("Add noise failed")
         return params
@@ -849,15 +914,21 @@ def apply_noise_addition(event, save_plot, save_intermediate_files, params):
 
 
 def apply_continuum_subtraction(event, save_plot, save_intermediate_files, params):
+
     """
-    Performs continuum modelling and subtraction.
+    Performs continuum modelling and subtraction
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     # Perform continuum subtraction based on selected method
     try:
@@ -867,8 +938,7 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
             preview = event == 'Preview spec.'
             corrected_flux, continuum_flux = spman.continuum(
                 params.wavelength, params.flux, params.cont_want_to_mask, params.cont_mask_ranges,
-                params.cont_poly_degree, params.cont_math_operation, preview
-            )
+                params.cont_poly_degree, params.cont_math_operation, preview)
 
         # Save the modified spectrum
         if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
@@ -893,11 +963,8 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
         # Return updated params
         return replace(params,
                     continuum_flux = continuum_flux,
-                    flux=corrected_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=corrected_flux)
+
     except Exception:
         print("Parameters not valid")
         return params
@@ -905,21 +972,27 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
 
 
 def apply_subtract_normalised_average(event, save_plot, save_intermediate_files, params):
+
     """
-    Subtracts the normalised average spectrum.
+    Subtracts the normalised average spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
 
-    # Perform subtraction of the normalised average spectrum
-    subtracted_flux = spmt.sub_norm_avg(params.wavelength, params.flux, params.lambda_units,
-                                        params.spectra_number, params.spec_names)
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
+        # Perform subtraction of the normalised average spectrum
+        subtracted_flux = spmt.sub_norm_avg(params.wavelength, params.flux, params.lambda_units,
+                                            params.spectra_number, params.spec_names)
+
         # Save the modified spectrum
         if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
             file_subtracted_avg = os.path.join(params.result_spec, f'subtracted_average_{params.prev_spec_nopath}.fits')
@@ -940,11 +1013,8 @@ def apply_subtract_normalised_average(event, save_plot, save_intermediate_files,
 
         # Return updated params
         return replace(params,
-                    flux=subtracted_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=subtracted_flux)
+
     except Exception:
         print("Failed")
         return params
@@ -952,10 +1022,13 @@ def apply_subtract_normalised_average(event, save_plot, save_intermediate_files,
 
 
 def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files, params):
+
     """
-    Subtracts a single normalised spectrum.
+    Subtracts a single normalised spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
@@ -965,6 +1038,9 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
     if not os.path.isfile(params.spectra_to_subtract):
         print('ERROR: The spectrum to subtract does not exist.')
         return params
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         updated_flux = spmt.sub_norm_single(params.wavelength, params.flux, params.spectra_to_subtract, params.lambda_units)
@@ -988,11 +1064,8 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
 
         # Return updated params
         return replace(params,
-                    flux=updated_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=updated_flux)
+
     except Exception:
         print("Subtract norm spec failed")
         return params
@@ -1000,15 +1073,21 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
 
 
 def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
+
     """
-    Adds a constant pedestal value to the spectrum.
+    Adds a constant pedestal value to the spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         updated_flux = params.flux + params.pedestal_to_add
@@ -1033,11 +1112,8 @@ def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
 
         # Return updated params
         return replace(params,
-                    flux=updated_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=updated_flux)
+
     except Exception:
         print("Add pedestal failed")
         return params
@@ -1045,15 +1121,21 @@ def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
 
 
 def apply_multiplication(event, save_plot, save_intermediate_files, params):
+
     """
-    Multiplies the spectrum by a constant factor.
+    Multiplies the spectrum by a constant factor
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         updated_flux = params.flux * params.multiply_factor
@@ -1078,11 +1160,8 @@ def apply_multiplication(event, save_plot, save_intermediate_files, params):
 
         # Return updated params
         return replace(params,
-                    flux=updated_flux,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+                    flux=updated_flux)
+
     except Exception:
         print("Multiply failed")
         return params
@@ -1090,16 +1169,22 @@ def apply_multiplication(event, save_plot, save_intermediate_files, params):
 
 
 def apply_derivatives(event, save_plot, save_intermediate_files, params):
+
     """
-    Computes the first and second derivatives of the spectrum.
+    Computes the first and second derivatives of the spectrum
+
     """
 
+    # Header
     task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
     if event == 'Process all':
         task_done2, task_spec2 = 1, 1
     else:
         task_done, task_spec = 1, 1
         print('WARNING: The derivatives are NOT used for spectral analysis tasks')
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         first_derivative = np.gradient(params.flux, params.wavelength)
@@ -1130,7 +1215,6 @@ def apply_derivatives(event, save_plot, save_intermediate_files, params):
                 plt.savefig(os.path.join(params.result_plot_dir, f'derivatives_{params.prev_spec_nopath}.png'), dpi=300)
                 plt.close()
 
-
         # Save derivative spectra if required
         if event in ('Process selected', 'Process all'):
             file_first_derivative = os.path.join(params.result_spec, f'first_deriv_{params.prev_spec_nopath}.fits')
@@ -1140,11 +1224,8 @@ def apply_derivatives(event, save_plot, save_intermediate_files, params):
             print(f'Derivative spectra saved: {file_first_derivative}, {file_second_derivative}')
 
         # Return updated params
-        return replace(params,
-                    task_done=task_done,
-                    task_spec=task_spec,
-                    task_done2=task_done2,
-                    task_spec2=task_spec2)
+        return params
+
     except Exception:
         print(f'Cannot compute the derivatives. Error: {e}')
         return params
@@ -1152,12 +1233,23 @@ def apply_derivatives(event, save_plot, save_intermediate_files, params):
 
 
 def combine_spectra(event, save_plot, save_intermediate_files, params):
+
     """
-    Combine multiple spectra using averaging, summation, and normalisation.
+    Combine multiple spectra using averaging, summation, and normalisation
+
     """
 
-    task_done, task_spec = 1, 1
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
     proc_wavelength, proc_flux = None, None
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
 
     try:
         # Average all spectra
@@ -1216,7 +1308,9 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             plt.close()
 
         # Return updated parameters
-        return replace(params, proc_wavelength=proc_wavelength, proc_flux=proc_flux, task_done=task_done, task_spec=task_spec)
+        return replace(params,
+                       proc_wavelength=proc_wavelength,
+                       proc_flux=proc_flux)
 
     except Exception:
         print('Spectra combination failed')

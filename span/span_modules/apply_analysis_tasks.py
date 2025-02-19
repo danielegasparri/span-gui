@@ -23,7 +23,8 @@
 
 """
 
-# Functions of the Spectral analysis frame
+# Functions to apply the tasks of the Spectral analysis frame
+
 
 try: #try local import if executed as script
     #GUI import
@@ -56,15 +57,12 @@ except ModuleNotFoundError: #local import if executed as package
 import numpy as np
 import os
 import glob
-
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_tkagg
 from scipy.signal import argrelextrema
-
 from dataclasses import replace
-# from params import SpectraParams
 
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -132,6 +130,7 @@ def apply_blackbody_fitting(event, save_plot, params):
         else:
             sg.popup("Black-body fitting failed")
         return None, None, params
+
 
 
 def apply_cross_correlation(event, save_plot, params):
@@ -582,9 +581,8 @@ def apply_ew_measurement_list(event, save_plot, params):
     else:
         task_done = 1
         task_analysis = 1
-        # print('*** Equivalent width measurement for a list of indices ***')
 
-        #updating the params that changed, that is just the check conditions
+    #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
 
     # Check if the index file exists
@@ -594,7 +592,6 @@ def apply_ew_measurement_list(event, save_plot, params):
         else:
             sg.popup("The index file does not exist. Skipping...")
         return None, None, None, None, None, None, params
-
 
     # Try reading the index file
     try:
@@ -646,7 +643,6 @@ def apply_ew_measurement_list(event, save_plot, params):
         with_uncertainties = True
         save_plot = False
         normalise_spec = True
-
 
     # Perform EW measurement
     try:
@@ -974,7 +970,6 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             if correct_ew_sigma and radio_lick_sigma_list and event == "Process all":
 
                 # reading the sigma value file
-                # if i == 0:
                 sigma_values = np.loadtxt(sigma_lick_file, usecols = [1]) #for now it's ok
 
                 #check if the length is the same of the spectra_number to correct
@@ -1104,7 +1099,6 @@ def apply_cat_line_fitting(event, save_plot, params):
     else:
         task_done = 1
         task_analysis = 1
-        # print('*** CaT fitting with combination of gaussians ***')
 
     #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
@@ -1224,9 +1218,6 @@ def apply_cat_line_fitting(event, save_plot, params):
 
 
 
-
-
-
 def apply_line_fitting(event, save_plot, params):
 
     """
@@ -1261,12 +1252,11 @@ def apply_line_fitting(event, save_plot, params):
     else:
         task_done = 1
         task_analysis = 1
-        # print('*** Line fitting with combination of gaussian and a line for the slope ***')
 
     #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
 
-# Check wavelength limits
+    # Check wavelength limits
     wave_limits = np.array([wavelength[0], wavelength[-1]])
 
     if min(wave_interval_fit) < wave_limits[0] or max(wave_interval_fit) > wave_limits[1]:
@@ -1404,8 +1394,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
     else:
         task_done = 1
         task_analysis = 1
-        # print('*** Kinematics with the ppxf algorithm ***')
-
 
     #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
@@ -1570,7 +1558,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
 
 
 
-
 def apply_ppxf_stellar_populations(event, save_plot, params):
 
     """
@@ -1648,7 +1635,6 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     else:
         task_done = 1
         task_analysis = 1
-        # print('*** Stellar populations with the ppxf algorithm ***')
 
     #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)

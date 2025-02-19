@@ -23,7 +23,9 @@
 
 """
 
-# Functions to define the parameter windows of the Spectral analysis frame
+# Functions to define the parameter windows of the Spectral analysis frame.
+# They return the updated params modified by the user
+
 
 try: #try local import if executed as script
     #GUI import
@@ -62,14 +64,15 @@ import matplotlib.backends.backend_tkagg
 import time
 import os
 import glob
-
 from dataclasses import replace
-# from params import SpectraParams
+
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 fontsize = sg.set_options(font=("Helvetica", 11)) # defaul fontsize
+
+
 
 def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     """Handles blackbody fitting parameter input via GUI."""

@@ -181,7 +181,7 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
 
 
 
-def validate_and_load_spectrum(params, window, valid_spec):
+def validate_and_load_spectrum(params, window):
 
     """
     Loads and validates the single spectrum, ensuring it exists and is readable
@@ -191,7 +191,7 @@ def validate_and_load_spectrum(params, window, valid_spec):
     # Check if the file exists
     cond00 = os.path.isfile(params.spectra_list)
     params = replace(params, spectra_number=1)
-
+    valid_spec = False
     print('Guessing the type of the spectrum. Is it correct?')
 
     if not cond00:

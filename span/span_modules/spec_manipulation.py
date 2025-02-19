@@ -23,7 +23,8 @@
 
 """
 
-# Function to build up the Spectral manipulation panel and the parameter windows. Returns all the parameters handled by the Spectral manipulation panel and modified by the user in the GUI.
+# Function to build up the Spectral manipulation panel and the relative parameter windows.
+# Returns all the parameters handled by the Spectral manipulation panel and modified by the user in the GUI.
 
 
 try: #try local import if executed as script

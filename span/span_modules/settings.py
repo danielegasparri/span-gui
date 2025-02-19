@@ -23,7 +23,8 @@
 
 """
 
-# Functions to save and restore the parameters and values of the GUI.
+# Functions to save and restore the parameters and values of the GUI, leveraging the SpectraParams dataclass
+
 
 try: #try local import if executed as script
     #GUI import
@@ -35,10 +36,11 @@ except ModuleNotFoundError: #local import if executed as package
 
 import json
 import numpy as np
-
-# from params import SpectraParams
 from dataclasses import replace
 
+
+
+# save all the settings in a JSON file
 def save_settings(filename, keys, events, values, params: SpectraParams):
     data = {
         'keys': keys,
@@ -381,7 +383,8 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
 
 
 
-#function to load the .json configuration file
+
+# function to load the JSON configuration file
 def load_settings(filename, params):
     try:
         with open(filename, 'r') as file:
