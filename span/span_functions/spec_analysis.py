@@ -91,7 +91,7 @@ def blackbody(wavelength, T):
 
 #*****************************************************************************************************
 # 2) blackbody fitting
-def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plots):
+def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plots, save_plot, result_plot_dir, spec_name):
 
     """
     This function fits the Planck function to a spectrum with the user defined wavelength
@@ -144,7 +144,7 @@ def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plot
     temperature = int(round(T[0]))
     residual_bb = flux-y
 
-    if with_plots:
+    if with_plots or save_plot:
         fig = plt.figure()
         ax = fig.add_subplot(211)
         plt.plot(wavelength, flux, label = "DATA")
@@ -162,7 +162,11 @@ def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plot
         plt.plot(wavelength, residual_bb, 'g.', label = "residuals")
         plt.tight_layout()
 
-        plt.show()
+        if with_plots:
+            plt.show()
+        else:
+            plt.savefig(result_plot_dir + '/'+ 'blackbody_'+ spec_name + '.png', format='png', dpi=300)
+        plt.close()
 
     return temperature, residual_bb
 
@@ -443,7 +447,7 @@ def sigma_measurement(wavelength, flux, spec_test_template, lambda_units_templat
         #************************************ select the bands/lines ******************************
     wave_range = banda1
     snr_range = banda1_cont
-    line_name = 'banda1'
+    line_name = 'band1'
     band_cont = banda1_cont
     wave_norm = np.mean(banda1_cont)
 
