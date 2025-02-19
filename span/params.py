@@ -198,7 +198,7 @@ class SpectraParams:
     high_wave_sigma: float = 890.0
     low_wave_cont: float = 856.0
     high_wave_cont: float = 864.0
-    band_sigma: np.ndarray = field(default_factory=lambda: np.array([840.0, 890.0])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
+    band_sigma: np.ndarray = field(default_factory=lambda: np.array([844.0, 872.0])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
     cont_sigma: np.ndarray = field(default_factory=lambda: np.array([856.0, 864.0]))
 
     template_sigma: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "emiles_template_extended_younger.dat"))
