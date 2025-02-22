@@ -23,7 +23,7 @@
 ############################################# A special thanks to Adrian Bittner ########################################################
 
 
-#Functions to bin and extract 1D spectra from datacubes, using the GIST pipeline standard and syntax.
+#Functions to bin and extract 1D spectra from datacubes, using the GIST pipeline logic.
 #The results are fully compatible with the GIST pipeline.
 
 import os
@@ -38,10 +38,10 @@ import matplotlib.pyplot as plt
 
 
 #function to create the dictionary (config) following the GIST standard to be passed to the following functions
-def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift, ifs_parallel,
-                       ifs_ncpu, ifs_lfs_data, ifs_template, ifs_ow_config, ifs_ow_output,
-                       ifs_routine_read, ifs_debug, ifs_origin, ifs_lmin_tot, ifs_lmax_tot,
-                       ifs_lmin_snr, ifs_lmax_snr, ifs_mask_method, ifs_min_snr_mask,
+def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift,
+                       ifs_lfs_data, ifs_ow_config, ifs_ow_output,
+                       ifs_routine_read, ifs_origin, ifs_lmin_tot, ifs_lmax_tot,
+                       ifs_lmin_snr, ifs_lmax_snr, ifs_min_snr_mask,
                        ifs_mask, ifs_bin_method, ifs_target_snr, ifs_covariance,
                        ifs_prepare_method):
 
@@ -51,353 +51,344 @@ def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift, ifs_para
     """
 
     configs = {
-        "GENERAL": {
-            "RUN_ID": ifs_run_id,
+        "INFO": {
+            "RUN_NAME": ifs_run_id,
             "INPUT": ifs_input,
             "OUTPUT": ifs_output,
             "REDSHIFT": ifs_redshift,
-            "PARALLEL": ifs_parallel,
-            "NCPU": ifs_ncpu,
             "LSF_DATA": ifs_lfs_data,
-            "LSF_TEMP": ifs_template,
             "OW_CONFIG": ifs_ow_config,
             "OW_OUTPUT": ifs_ow_output
         },
-        "READ_DATA": {
-            "METHOD": ifs_routine_read,
-            "DEBUG": ifs_debug,
+        "READ": {
+            "ROUTINE": ifs_routine_read,
             "ORIGIN": ifs_origin,
             "LMIN_TOT": ifs_lmin_tot,
             "LMAX_TOT": ifs_lmax_tot,
             "LMIN_SNR": ifs_lmin_snr,
             "LMAX_SNR": ifs_lmax_snr
         },
-        "SPATIAL_MASKING": {
-            "METHOD": ifs_mask_method,
-            "MIN_SNR": ifs_min_snr_mask,
+        "MASKING": {
+            "MASK_SNR": ifs_min_snr_mask,
             "MASK": ifs_mask
         },
-        "SPATIAL_BINNING": {
-            "METHOD": ifs_bin_method,
+        "BINNING": {
+            "VORONOI": ifs_bin_method,
             "TARGET_SNR": ifs_target_snr,
             "COVARIANCE": ifs_covariance
         },
-        "PREPARE_SPECTRA": {
-            "METHOD": ifs_prepare_method
+        "EXTRACTING": {
+            "MODE": ifs_prepare_method
         }
     }
 
     return configs
 
 
-#1) READ THE DATACUBE
 def reading_data(config):
 
     """
-    This function calls the readData routine specified by the user
+    Reads the datacube using the specified method from the configuration.
 
+    Parameters:
+        config (dict): Configuration dictionary containing method and input details.
+
+    Returns:
+        cube (object): The loaded datacube, or "SKIP" in case of failure.
     """
-    print("Step 1: Reading the tadacube")
 
-    # Import the chosen readData routine
+    print("Step 1: Reading the datacube")
+
+
+    method = config.get('READ', {}).get('ROUTINE', '')
+    method_nopath = os.path.splitext(os.path.basename(method))[0]
+
+    if not method:
+        print("No read-in method specified.")
+        return "SKIP"
     try:
-        routine_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "cube_extract_functions",
-            config['READ_DATA']['METHOD'] + '.py')
-        spec = importlib.util.spec_from_file_location("", routine_path)
-        print(f"Using the read-in routine for {config['READ_DATA']['METHOD']}")
+        spec = importlib.util.spec_from_file_location("", method)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+        print(f"Using the read-in routine for {method_nopath}")
+        return module.read_cube(config)
     except Exception as e:
-        print(f"Failed to import the read-in routine {config['READ_DATA']['METHOD']}.")
-
+        print(f"Failed to import or execute the read-in routine {method_nopath}: {e}")
         return "SKIP"
 
-    # Execute the chosen readData routine
-    try:
-        cube = module.read_cube(config)
-    except Exception as e:
-        print(f"Read-in routine {config['READ_DATA']['METHOD']} failed to read {config['GENERAL']['INPUT']}.")
-        return "SKIP"
 
-    return cube
-
-
-#2) PERFORM THE SPATIAL MASKING
-def masking(config, cube, preview):
+def masking(config, cube, preview, manual_bin):
 
     """
-    This function calls the spatialMasking routine specified by the user
+    Applies a spatial mask to the datacube if required.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (object): The loaded datacube.
+        preview (bool): If True, performs a preview without saving.
+
+    Returns:
+        None
     """
 
-    print("Step 2: Applying masking, if any")
-    # Check if outputs are already available
-    output_file = os.path.join(
-        config['GENERAL']['OUTPUT'],
-        config['GENERAL']['RUN_ID']
-    ) + "_mask.fits"
+    print("\nStep 2: Applying masking, if any")
 
-    if not preview and (os.path.isfile(output_file) and not config['GENERAL']['OW_OUTPUT']):
-        print("Results of the spatialMasking module are already in the output directory. Module is skipped.")
+    output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
+
+    if not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False) and manual_bin:
+        print("Masking results already exist. Skipping step.")
         return
 
-    # Execute the chosen spatialMasking routine
-    generateSpatialMask(config, cube)
+    generate_and_apply_mask(config, cube)
 
 
-#3) PERFORM THE VORONOI REBINNING
-def binning(config, cube, preview, voronoi):
+def binning(config, cube, preview, voronoi, manual_bin):
 
     """
-    This function calls the spatialBinning routine specified by the user
+    Applies spatial binning to the datacube.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (object): The loaded datacube.
+        preview (bool): If True, performs a preview without saving.
+        voronoi (bool): If True, uses Voronoi binning.
+
+    Returns:
+        None or "SKIP" in case of failure.
     """
 
-    print("Step 3: Applying binning")
+    print("\nStep 3: Applying binning")
 
-    # Check if outputs are already available
-    output_file = os.path.join(
-        config['GENERAL']['OUTPUT'],
-        config['GENERAL']['RUN_ID']
-    ) + "_table.fits"
+    output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_table.fits")
 
-    if not preview and (os.path.isfile(output_file) and not config['GENERAL']['OW_OUTPUT']):
+    if not preview and (os.path.isfile(output_file) and not config['INFO']['OW_OUTPUT'] and manual_bin):
         print("Results of the module are already in the output directory. Module is skipped.")
         return
 
-    # Execute the chosen spatialBinning routine
     try:
-        generateSpatialBins(config, cube, voronoi)
+        generate_bins(config, cube, voronoi)
     except Exception as e:
-        print(f"Spatial binning routine {config['SPATIAL_BINNING']['METHOD']} failed.")
-
+        print(f"Spatial binning routine {config.get('BINNING', {}).get('VORONOI', 'UNKNOWN')} failed: {e}")
         return "SKIP"
 
 
-#4) PREPARE AND SAVE THE SPECTRA
 def save_spectra(config, cube, preview):
 
     """
-    This function calls the prepareSpectra routine specified by the user
+    Extracts and saves 1D spectra from the datacube.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (object): The loaded datacube.
+        preview (bool): If True, performs a preview without saving.
+
+    Returns:
+        None or "SKIP" in case of failure.
     """
 
-    print("Step 4: saving the extracted 1D spectra")
+    print("\nStep 4: Saving the extracted 1D spectra")
 
-    # Check if outputs are already available
-    output_prefix = os.path.join(
-        config['GENERAL']['OUTPUT'],
-        config['GENERAL']['RUN_ID']
-    )
-    if not preview and (not config['GENERAL']['OW_OUTPUT'] and
-        os.path.isfile(output_prefix + "_BinSpectra_linear.fits")):
-        print("Results of the module are already in the output directory. Module is skipped.")
+    output_prefix = os.path.join(config['INFO']['OUTPUT'], config['INFO']['RUN_NAME'])
+    output_file = f"{output_prefix}_BinSpectra_linear.fits"
+
+    if not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False):
+        print("Spectra extraction results already exist. Skipping step.")
         return
 
-    # Execute the chosen routine
     try:
-        prepSpectra(config, cube, preview)
+        prepare_mask_bin(config, cube, preview)
     except Exception as e:
-        print(f"Routine {config['PREPARE_SPECTRA']['METHOD']} failed.")
-
+        print(f"Spectra preparation routine {config.get('EXTRACTING', {}).get('MODE', 'UNKNOWN')} failed: {e}")
         return "SKIP"
+
 
 
 ###############################################################################
 ################ FUNCTIONS TO PERFORM THE 4 STEPS ABOVE #############
 
-def generateSpatialMask(config, cube):
+def generate_and_apply_mask(config, cube):
 
     """
-    This function masks defunct spaxels, rejects spaxels with a SNR below
-    a given threshold, and masks spaxels according to a provided mask file.
-    Finally, all masks are combined and saved.
+    Creates a combined mask for the datacube, masking defunct spaxels,
+    spaxels below a SNR threshold, and spaxels from an external mask file.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (dict): Datacube containing spectral and SNR data.
+
+    Returns:
+        None (Saves the mask to a FITS file)
     """
 
-    # Mask defunct spaxels
-    masked_defunct = maskDefunctSpaxels(cube)
+    print("Generating spatial mask...")
 
-    # Mask spaxels with SNR below threshold
-    masked_snr = applySNRThreshold(
-        cube['snr'],
-        cube['signal'],
-        config['SPATIAL_MASKING']['MIN_SNR']
-    )
+    # Mask spaxels that contain NaN values or have a non-positive median flux
+    spec = cube['spec']
+    median_flux = np.nanmedian(spec, axis=0)
+    masked_defunct = np.logical_or(np.any(np.isnan(spec), axis=0), median_flux <= 0)
+    print(f"Masking defunct spaxels: {np.sum(masked_defunct)} spaxels are rejected.")
 
-    # Mask spaxels according to spatial mask file
-    masked_mask = applyMaskFile(config, cube)
+    # Mask spaxels based on signal-to-noise ratio (SNR) threshold
+    masked_snr = mask_snr(cube['snr'], cube['signal'], config['MASKING']['MASK_SNR'])
 
-    # Create combined mask
-    combined_mask_idx = np.where(
-        np.logical_or.reduce((masked_defunct, masked_snr, masked_mask))
-    )[0]
-    combined_mask = np.zeros(len(cube['snr']), dtype=bool)
-    combined_mask[combined_mask_idx] = True
+    # Mask spaxels based on an external mask file
+    mask_filename = config['MASKING'].get('MASK')
+    if mask_filename:
+        mask_path = os.path.join(os.path.dirname(config['INFO']['INPUT']), mask_filename)
 
-    # Save mask to file
-    saveMask(combined_mask, masked_defunct, masked_snr, masked_mask, config)
-
-
-def maskDefunctSpaxels(cube):
-
-    """
-    Mask defunct spaxels
-
-    """
-
-    idx_good = np.where(
-        np.logical_and(
-            np.all(~np.isnan(cube['spec']), axis=0),
-            np.nanmedian(cube['spec'], axis=0) > 0.0
-        )
-    )[0]
-    idx_bad = np.where(
-        np.logical_or(
-            np.any(np.isnan(cube['spec']), axis=0),
-            np.nanmedian(cube['spec'], axis=0) <= 0.0
-        )
-    )[0]
-
-    print(f"Masking defunct spaxels: {len(idx_bad)} spaxels are rejected.")
-
-    masked = np.zeros(len(cube['snr']), dtype=bool)
-    masked[idx_bad] = True
-    return masked
-
-
-def applySNRThreshold(snr, signal, min_snr):
-
-    """
-    Mask those spaxels that are above the isophote level with a mean
-    signal-to-noise ratio of min_snr (if activated bt the user in the GUI)
-
-    """
-
-    idx_snr = np.where(np.abs(snr - min_snr) < 2.)[0]
-    meanmin_signal = np.mean(signal[idx_snr])
-    idx_inside = np.where(signal >= meanmin_signal)[0]
-    idx_outside = np.where(signal < meanmin_signal)[0]
-
-    # Fallback in case there's no spaxel inside or outside
-    if len(idx_inside) == 0 and len(idx_outside) == 0:
-        idx_inside = np.arange(len(snr))
-        idx_outside = np.array([], dtype=np.int64)
-        print('No spaxels with the S/N trheshold to mask. Please, ignore the possible Python warning')
-
-    masked = np.zeros(len(snr), dtype=bool)
-    masked[idx_outside] = True
-    return masked
-
-
-def applyMaskFile(config, cube):
-
-    """
-    Select spaxels that are unmasked in the input masking file
-
-    """
-
-    if (config['SPATIAL_MASKING']['MASK'] in [False, None]):
-        print("No mask")
-        idx_good = np.arange(len(cube['snr']))
-        idx_bad = np.array([], dtype=np.int64)
-    else:
-        maskfile = os.path.join(
-            os.path.dirname(config['GENERAL']['INPUT']),
-            config['SPATIAL_MASKING']['MASK']
-        )
-
-        if os.path.isfile(maskfile):
-            mask_data = fits.open(maskfile)[1].data
-            s = np.shape(mask_data)
-            mask_data = np.reshape(mask_data, s[0] * s[1])
-
-            idx_good = np.where(mask_data == 0)[0]
-            idx_bad = np.where(mask_data == 1)[0]
-
-            print(f"Masking spaxels according to maskfile: {len(idx_bad)} spaxels are rejected.")
-
+        if os.path.isfile(mask_path):
+            mask_data = fits.getdata(mask_path, ext=1).flatten()
+            masked_mask = mask_data == 1
+            print(f"Masking spaxels according to mask file: {np.sum(masked_mask)} spaxels are rejected.")
         else:
-            print(f"No maskfile selected: {maskfile}")
-            idx_good = np.arange(len(cube['snr']))
-            idx_bad = np.array([], dtype=np.int64)
+            print(f"Mask file not found: {mask_path}")
+            masked_mask = np.zeros(len(cube['snr']), dtype=bool)
+    else:
+        print("No mask file provided.")
+        masked_mask = np.zeros(len(cube['snr']), dtype=bool)
 
-    masked = np.zeros(len(cube['snr']), dtype=bool)
-    masked[idx_bad] = True
+    # Combine all masks
+    combined_mask = np.logical_or.reduce((masked_defunct, masked_snr, masked_mask))
+
+    # Save final mask
+    save_mask(combined_mask, masked_defunct, masked_snr, masked_mask, config)
+
+
+def save_mask(combined_mask, masked_defunct, masked_snr, masked_mask, config):
+
+    """
+    Saves the final combined mask and its components to a FITS file.
+
+    Parameters:
+        combined_mask (np.ndarray): Boolean array of the final combined mask.
+        masked_defunct (np.ndarray): Boolean array for defunct spaxels.
+        masked_snr (np.ndarray): Boolean array for SNR-masked spaxels.
+        masked_mask (np.ndarray): Boolean array for external mask file spaxels.
+        config (dict): Configuration dictionary.
+
+    Returns:
+        None (Writes the mask to a FITS file)
+    """
+
+    output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    print(f"Writing mask file: {output_file}")
+
+    # reading and writing the fits
+    with fits.HDUList([
+        fits.PrimaryHDU(),
+        fits.BinTableHDU.from_columns([
+            fits.Column(name='MASK', format='I', array=combined_mask.astype(int)),
+            fits.Column(name='MASK_DEFUNCT', format='I', array=masked_defunct.astype(int)),
+            fits.Column(name='MASK_SNR', format='I', array=masked_snr.astype(int)),
+            fits.Column(name='MASK_FILE', format='I', array=masked_mask.astype(int))
+        ], name="MASKFILE")
+    ]) as hdul:
+        # Comments in the header
+        hdul[1].header['COMMENT'] = "Value 0 -> Unmasked"
+        hdul[1].header['COMMENT'] = "Value 1 -> Masked"
+
+        hdul.writeto(output_file, overwrite=True)
+
+    print(f"Mask file saved successfully: {output_file}")
+
+
+def mask_snr(snr, signal, min_snr):
+
+    """
+    Masks spaxels based on a minimum SNR threshold.
+
+    Parameters:
+        snr (np.ndarray): Array of signal-to-noise ratios for each spaxel.
+        signal (np.ndarray): Array of signal values for each spaxel.
+        min_snr (float): Minimum SNR threshold for masking.
+
+    Returns:
+        masked (np.ndarray): Boolean array indicating masked spaxels.
+    """
+
+    # Identify spaxels close to the SNR threshold
+    idx_snr = np.where(np.abs(snr - min_snr) < 2)[0]
+
+    if len(idx_snr) > 0:
+        meanmin_signal = np.mean(signal[idx_snr])
+    else:
+        meanmin_signal = np.min(signal)  # Fallback if no matching spaxels
+
+    # Mask spaxels below the calculated signal threshold
+    masked = signal < meanmin_signal
+
+    if np.all(masked):
+        print("No spaxels with S/N above the threshold. Ignoring potential warnings.")
+
     return masked
-
-
-def saveMask(combined_mask, masked_defunct, masked_snr, masked_mask, config):
-
-    """
-    Save the final combined mask to a FITS file
-
-    """
-
-    outfits = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    outfits = os.path.abspath(outfits) + "_mask.fits"
-    print("Writing: " + config['GENERAL']['RUN_ID'] + "_mask.fits")
-
-    os.makedirs(os.path.dirname(outfits), exist_ok=True)
-
-    # Primary HDU
-    pri_hdu = fits.PrimaryHDU()
-
-    # Table HDU with output data (0 → unmasked, 1 → masked)
-    file_columns = [
-        fits.Column(name='MASK', format='I', array=combined_mask.astype(int)),
-        fits.Column(name='MASK_DEFUNCT', format='I', array=masked_defunct.astype(int)),
-        fits.Column(name='MASK_SNR', format='I', array=masked_snr.astype(int)),
-        fits.Column(name='MASK_FILE', format='I', array=masked_mask.astype(int))
-    ]
-    tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs(file_columns))
-    tbhdu.name = "MASKFILE"
-    tbhdu.header['COMMENT'] = "Value 0  -->  unmasked"
-    tbhdu.header['COMMENT'] = "Value 1  -->  masked"
-
-    # Create HDU list and write to file
-    hdulist = fits.HDUList([pri_hdu, tbhdu])
-    hdulist.writeto(outfits, overwrite=True)
-
-    print(f"Wrote mask file: {outfits}")
 
 
 def sn_func(index, signal=None, noise=None, covar_vor=0.00):
 
     """
-    Function used by the Voronoi binning to estimate the noise in a bin
+    Computes the signal-to-noise ratio in a bin for Voronoi binning.
 
+    Parameters:
+        index (np.ndarray): Indices of spaxels in the bin.
+        signal (np.ndarray): Signal values for each spaxel.
+        noise (np.ndarray): Noise values for each spaxel.
+        covar_vor (float, optional): Correction factor for spatial correlations.
+
+    Returns:
+        sn (float): Estimated signal-to-noise ratio for the bin.
     """
 
-    # Sum the noise in the spaxels
-    sn = np.sum(signal[index]) / np.sqrt(np.sum(noise[index] ** 2))
+    total_signal = np.sum(signal[index])
+    total_noise = np.sqrt(np.sum(noise[index] ** 2))
 
-    # Account for spatial correlations in the noise
-    sn /= 1 + covar_vor * np.log10(index.size)
+    if total_noise == 0:
+        return 0  # Prevent division by zero
+
+    sn = total_signal / total_noise
+
+    # Apply correction for spatial correlations
+    if index.size > 1 and covar_vor > 0:
+        sn /= 1 + covar_vor * np.log10(index.size)
+
     return sn
 
 
-def generateSpatialBins(config, cube, voronoi):
+def generate_bins(config, cube, voronoi):
 
     """
-    This function applies the Voronoi-binning algorithm
+    Applies Voronoi-binning or treats each spaxel as an individual bin if Voronoi binning is disabled.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (dict): Datacube containing spatial and SNR data.
+        voronoi (bool): If True, applies Voronoi binning.
+
+    Returns:
+        None (Saves the binning results to a FITS file)
     """
-
-    # Pass a function for the SNR calculation to the Voronoi-binning algorithm
-    sn_func_covariances = functools.partial(
-        sn_func, covar_vor=config['SPATIAL_BINNING']['COVARIANCE'])
 
     print("Defining the Voronoi bins")
 
-    # Read maskfile
-    maskfile = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    maskfile = os.path.abspath(maskfile) + "_mask.fits"
-    mask = fits.open(maskfile)[1].data.MASK
+    # Load the mask file safely
+    mask_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
+
+    if not os.path.isfile(mask_file):
+        print(f"Mask file not found: {mask_file}")
+        return "SKIP"
+
+    # Open fits
+    with fits.open(mask_file, mode="readonly") as hdul:
+        mask_data = hdul[1].data  # reading
+
+    mask = mask_data['MASK']
     idx_unmasked = np.where(mask == 0)[0]
     idx_masked = np.where(mask == 1)[0]
+
+    # Partial function for SNR calculation
+    sn_func_covariances = functools.partial(
+        sn_func, covar_vor=config['BINNING'].get('COVARIANCE', 0.0))
 
     if voronoi:
         try:
@@ -407,121 +398,83 @@ def generateSpatialBins(config, cube, voronoi):
                 cube['y'][idx_unmasked],
                 cube['signal'][idx_unmasked],
                 cube['noise'][idx_unmasked],
-                config['SPATIAL_BINNING']['TARGET_SNR'],
+                config['BINNING']['TARGET_SNR'],
                 plot=False,
                 quiet=True,
                 pixelsize=cube['pixelsize'],
-                sn_func=sn_func_covariances)
-
+                sn_func=sn_func_covariances
+            )
             print(f"{np.max(bin_num) + 1} Voronoi bins generated!")
 
         except ValueError as e:
-            # If SNR is sufficient and no binning is needed
+            # Handle case where no binning is needed
             if str(e) == 'All pixels have enough S/N and binning is not needed':
                 print("Analysis will continue without Voronoi-binning!")
-
-                bin_num, x_node, y_node, sn, n_pixels = noBinning(
-                    cube['x'],
-                    cube['y'],
-                    cube['snr'],
-                    idx_unmasked)
+                bin_num = np.arange(len(idx_unmasked))
+                x_node, y_node = cube['x'][idx_unmasked], cube['y'][idx_unmasked]
+                sn = cube['snr'][idx_unmasked]
+                n_pixels = np.ones(len(idx_unmasked))
             else:
-                print(f"The Voronoi-binning routine returned the following error:\n{e}")
+                print(f"Voronoi-binning error: {e}")
                 return "SKIP"
-
-
-    else: #when NO voronoi binning is required, i.e. for manual binning
-        try:
-            print(f"NO Voronoi-binning! {len(idx_unmasked)} spaxels will be treated as Voronoi-bins.")
-            bin_num, x_node, y_node, sn, n_pixels = noBinning(
-                cube['x'],
-                cube['y'],
-                cube['snr'],
-                idx_unmasked
-            )
-        except Exception as e:
-            print("Error!")
+    if not voronoi:
+        print(f"No Voronoi-binning! {len(idx_unmasked)} spaxels will be treated as individual bins.")
+        bin_num = np.arange(len(idx_unmasked))
+        x_node, y_node = cube['x'][idx_unmasked], cube['y'][idx_unmasked]
+        sn = cube['snr'][idx_unmasked]
+        n_pixels = np.ones(len(idx_unmasked))
 
     # Assign nearest Voronoi bin for masked pixels
-    bin_num_outside = find_nearest_voronoibin(
-        cube['x'], cube['y'], idx_masked, x_node, y_node)
+    if len(idx_masked) > 0:
+        pix_coords = np.column_stack((cube['x'][idx_masked], cube['y'][idx_masked]))
+        bin_coords = np.column_stack((x_node, y_node))
+        dists = dist.cdist(pix_coords, bin_coords, 'euclidean')
+        bin_num_outside = np.argmin(dists, axis=1)
+    else:
+        bin_num_outside = np.array([])
 
-    # Generate extended bin list
-    ubins = np.unique(bin_num)
+    # Create extended bin list
     bin_num_long = np.full(len(cube['x']), np.nan)
     bin_num_long[idx_unmasked] = bin_num
-    # bin_num_long[idx_masked] = -1 * bin_num_outside
-    bin_num_long[idx_masked] = -1 #ASSIGNING A NEGATIVE VALUE FOR ALL THE SPAXELS MASKED! WORKS BETTER LIKE THIS!
+    bin_num_long[idx_masked] = -1  # Assign negative value to unselected spaxels
 
-    # Save table for ALL spaxels (inside and outside the Voronoi region)
-    save_table(
+    # Save binning results
+    save_bin_info(
         config,
-        cube['x'],
-        cube['y'],
-        cube['signal'],
-        cube['snr'],
-        bin_num_long,
-        ubins,
-        x_node,
-        y_node,
-        sn,
-        n_pixels,
-        cube['pixelsize'])
+        cube['x'], cube['y'], cube['signal'], cube['snr'],
+        bin_num_long, np.unique(bin_num), x_node, y_node, sn, n_pixels, cube['pixelsize'])
 
 
-def noBinning(x, y, snr, idx_inside):
+def save_bin_info(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn, n_pixels, pixelsize):
 
     """
-    Fonctions to NOT perform the Voronoi binning and treat
-    each spaxels as a single VOronoi bin
+    Saves Voronoi binning results to a GIST-like FITS file.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        x, y (np.ndarray): Spaxel coordinates.
+        signal, snr (np.ndarray): Signal and SNR values.
+        bin_num_new (np.ndarray): Assigned bin number for each spaxel.
+        ubins (np.ndarray): Unique bin numbers.
+        x_node, y_node (np.ndarray): Coordinates of bin centroids.
+        sn (np.ndarray): SNR per bin.
+        n_pixels (np.ndarray): Number of spaxels per bin.
+        pixelsize (float): Pixel size for FITS metadata.
+
+    Returns:
+        None (Writes the FITS file)
     """
 
-    bin_num = np.arange(len(idx_inside))
-    x_node = x[idx_inside]
-    y_node = y[idx_inside]
-    sn = snr[idx_inside]
-    n_pixels = np.ones(len(idx_inside))
+    output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_table.fits")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    return bin_num, x_node, y_node, sn, n_pixels
-
-
-def find_nearest_voronoibin(x, y, idx_outside, x_node, y_node):
-
-    """
-    Function to determine the nearest Voronoi bin for spaxels which do
-    not satisfy the minimum SNR threshold (masked spaxels)
-
-    """
-
-    x_out = x[idx_outside]
-    y_out = y[idx_outside]
-    pix_coords = np.column_stack((x_out, y_out))
-    bin_coords = np.column_stack((x_node, y_node))
-
-    dists = dist.cdist(pix_coords, bin_coords, 'euclidean')
-    closest = np.argmin(dists, axis=1)
-    return closest
-
-
-def save_table(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn, n_pixels, pixelsize):
-
-    """
-    Function to Save all relevant information about the Voronoi binning to a FITS, GIST-like file
-
-    """
-
-    #Building the output table with bin info
-    outfits_table = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    outfits_table = os.path.abspath(outfits_table) + "_table.fits"
-
-    print(f"Writing: {config['GENERAL']['RUN_ID']}_table.fits")
+    print(f"Writing: {config['INFO']['RUN_NAME']}_table.fits")
 
     # Expand data to spaxel level
-    x_node_new = np.zeros(len(x))
-    y_node_new = np.zeros(len(x))
-    sn_new = np.zeros(len(x))
-    n_pixels_new = np.zeros(len(x))
+    x_node_new = np.zeros_like(x)
+    y_node_new = np.zeros_like(y)
+    sn_new = np.zeros_like(x, dtype=float)
+    n_pixels_new = np.zeros_like(x, dtype=int)
 
     for i, ubin in enumerate(ubins):
         idx = np.where(ubin == np.abs(bin_num_new))[0]
@@ -530,11 +483,8 @@ def save_table(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn
         sn_new[idx] = sn[i]
         n_pixels_new[idx] = n_pixels[i]
 
-    # Primary HDU
-    pri_hdu = fits.PrimaryHDU()
-
-    # Table HDU with output data
-    file_columns = [
+    # Create FITS table
+    columns = [
         fits.Column(name='ID', format='J', array=np.arange(len(x))),
         fits.Column(name='BIN_ID', format='J', array=bin_num_new),
         fits.Column(name='X', format='D', array=x),
@@ -544,151 +494,98 @@ def save_table(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn
         fits.Column(name='XBIN', format='D', array=x_node_new),
         fits.Column(name='YBIN', format='D', array=y_node_new),
         fits.Column(name='SNRBIN', format='D', array=sn_new),
-        fits.Column(name='NSPAX', format='J', array=n_pixels_new),]
+        fits.Column(name='NSPAX', format='J', array=n_pixels_new),
+    ]
 
-    tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs(file_columns))
-    tbhdu.name = "TABLE"
+    # writing fits
+    with fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(columns, name="TABLE")]) as hdul:
+        hdul.writeto(output_file, overwrite=True)
 
-    hdulist = fits.HDUList([pri_hdu, tbhdu])
-    hdulist.writeto(outfits_table, overwrite=True)
+    fits.setval(output_file, "PIXSIZE", value=pixelsize)
 
-    hdulist.close()
-
-    fits.setval(outfits_table, "PIXSIZE", value=pixelsize)
-    print(f"Wrote Voronoi table: {outfits_table}")
+    print(f"Wrote Voronoi table: {output_file}")
 
 
-def prepSpectra(config, cube, preview):
+def prepare_mask_bin(config, cube, preview):
 
     """
-    Function that reads the spatial bins and mask file, then
-    apply spatial bins to spectra and finally save the binned spectra to disc
+    Reads spatial bins and mask file, applies binning to spectra, and saves or displays the binned spectra.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        cube (dict): Datacube containing spectral data.
+        preview (bool): If True, only displays the Voronoi map without saving.
+
+    Returns:
+        None
     """
 
-    maskfile = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    maskfile = os.path.abspath(maskfile) + "_mask.fits"
-    mask = fits.open(maskfile)[1].data.MASK
-    unmaskex_spax = np.where(mask == 0)[0]
+    mask_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
+    table_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_table.fits")
 
-    # Read binning pattern
-    tablefile = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    tablefile = os.path.abspath(tablefile) + "_table.fits"
-    bin_num = fits.open(tablefile)[1].data.BIN_ID[unmaskex_spax]
+    if not os.path.isfile(mask_file) or not os.path.isfile(table_file):
+        print("Error: Mask or binning table file not found.")
+        return
 
-    # Apply spatial bins to linear spectra
-    bin_data, bin_error, bin_flux = applySpatialBins(bin_num, cube['spec'][:, unmaskex_spax], cube['error'][:, unmaskex_spax], "lin")
+    # Load mask and binning table
+    mask = fits.getdata(mask_file, ext=1)['MASK']
+    unmasked_spaxels = np.where(mask == 0)[0]
+    with fits.open(table_file, mode="readonly") as hdul:
+        bin_num = hdul[1].data['BIN_ID'][unmasked_spaxels]
 
-    if not preview: #when performinf the exctraction
-        # Save binned spectra
-        saveBinSpectra(config, bin_data, bin_error, cube['wave'], "lin")
+    # Apply Voronoi binning directly (integrated from apply_bin)
+    print("Applying spatial bins to linear data...")
+    bin_data, bin_error, bin_flux = perform_voronoi(bin_num, cube['spec'][:, unmasked_spaxels], cube['error'][:, unmasked_spaxels])
+    print("Applied spatial bins.")
 
-    else: # in the preview mode
-
-        # Reading data from the table file generated
-        tablefile = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-        tablefile = os.path.abspath(tablefile) + "_table.fits"
-
+    if not preview:
+        save_bin_spec(config, bin_data, bin_error, cube['wave'], "lin")
+    else:
+        # Display Voronoi map
         try:
-            with fits.open(tablefile) as hdul:
+
+            with fits.open(table_file, mode="readonly") as hdul:
                 data = hdul[1].data
-                x = data['X']
-                y = data['Y']
-                bin_id = data['BIN_ID']
-                signal = data['SNRBIN']
 
-            #considering the masked spaxels (if any) that have bin_id<0 and set the signal to zero
+            x, y, bin_id, signal = data['X'], data['Y'], data['BIN_ID'], data['SNRBIN']
+
+            # Set masked spaxels (bin_id < 0) to zero signal
             signal[bin_id < 0] = 0
-            # creating the regular grid
-            x_bins = np.unique(x)
-            y_bins = np.unique(y)
 
-            # Create empty matrix for the map
+            # Create grid
+            x_bins, y_bins = np.unique(x), np.unique(y)
             grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
 
-            # Filling the matrix
             for i in range(len(x)):
-                x_idx = np.where(x_bins == x[i])[0][0]
-                y_idx = np.where(y_bins == y[i])[0][0]
+                x_idx = np.searchsorted(x_bins, x[i])
+                y_idx = np.searchsorted(y_bins, y[i])
                 grid_data[y_idx, x_idx] = signal[i]
 
-            # Creating the coordinates
-            X, Y = np.meshgrid(x_bins, y_bins)
-
-            # Plottting the color map
+            # Plot Voronoi map
             plt.figure(figsize=(8, 6))
-            binplot = plt.pcolormesh(X, Y, grid_data, cmap='inferno', shading='auto')
-
-            # Color bar on the side
-            plt.colorbar(binplot, label="S/N")
+            plt.pcolormesh(x_bins, y_bins, grid_data, cmap='inferno', shading='auto')
+            plt.colorbar(label="S/N")
             plt.xlabel("R [arcsec]")
             plt.ylabel("R [arcsec]")
-            plt.title("Voronoi map")
-            # plt.gca().invert_xaxis()
-            # plt.gca().invert_yaxis()# Inverting the x axis.
+            plt.title("Voronoi Map")
             plt.show()
 
         except Exception as e:
-            print("Error. Cannot display the voronoi map", e)
+            print(f"Error: Unable to display Voronoi map: {e}")
 
 
-def saveBinSpectra(config, log_spec, log_error, wavelength, flag):
-
-    """
-    Function to save binned spectra and error spectra to disc
+def perform_voronoi(bin_num, spec, error):
 
     """
+    Aggregates spaxels belonging to the same Voronoi bin.
 
-    outfile = os.path.join(config['GENERAL']['OUTPUT'], config['GENERAL']['RUN_ID'])
-    outfile = os.path.abspath(outfile)
+    Parameters:
+        bin_num (np.ndarray): Array of bin numbers for each spaxel.
+        spec (np.ndarray): Spectral data array.
+        error (np.ndarray): Error array for spectra.
 
-    outfits_spectra = outfile + '_BinSpectra_linear.fits'
-    print(f"Writing: {config['GENERAL']['RUN_ID']}_BinSpectra_linear.fits")
-
-    npix = len(log_spec)
-
-    # Create primary HDU
-    pri_hdu = fits.PrimaryHDU()
-
-    # Table HDU for spectra
-    file_columns = [fits.Column(name='SPEC', format=str(npix) + 'D', array=log_spec.T), fits.Column(name='ESPEC', format=str(npix) + 'D', array=log_error.T)]
-    data_hdu = fits.BinTableHDU.from_columns(fits.ColDefs(file_columns))
-    data_hdu.name = 'BIN_SPECTRA'
-
-    # Table HDU for wavelength
-    file_columns = [fits.Column(name='WAVE', format='D', array=wavelength)]
-    wavelength_hdu = fits.BinTableHDU.from_columns(fits.ColDefs(file_columns))
-    wavelength_hdu.name = 'WAVE'
-
-    # Create HDU list and save to file
-    hdulist = fits.HDUList([pri_hdu, data_hdu, wavelength_hdu])
-    hdulist.writeto(outfits_spectra, overwrite=True)
-
-    fits.setval(outfits_spectra, 'CRPIX1', value=1.0)
-    fits.setval(outfits_spectra, 'CRVAL1', value=wavelength[0])
-    fits.setval(outfits_spectra, 'CDELT1', value=wavelength[1] - wavelength[0])
-
-    print(f"Wrote: {outfits_spectra}")
-
-
-def applySpatialBins(bin_num, spec, espec, flag):
-
-    """
-    Apply the constructed Voronoi map to the spectra
-
-    """
-
-    print(f"Applying the spatial bins to {flag}-data")
-    bin_data, bin_error, bin_flux = spatialBinning(bin_num, spec, espec)
-    print(f"Applied spatial bins to {flag}-data")
-    return bin_data, bin_error, bin_flux
-
-
-def spatialBinning(bin_num, spec, error):
-
-    """
-    Function to sum up spaxels belonging to the same bin
-
+    Returns:
+        tuple: Binned spectra, errors, and flux.
     """
 
     ubins = np.unique(bin_num)
@@ -699,40 +596,96 @@ def spatialBinning(bin_num, spec, error):
     bin_error = np.zeros((npix, nbins))
     bin_flux = np.zeros(nbins)
 
-    for i in range(nbins):
-        k = np.where(bin_num == ubins[i])[0]
-        if len(k) == 1:
-            av_spec = spec[:, k]
-            av_err_spec = np.sqrt(error[:, k])
+    for i, ubin in enumerate(ubins):
+        k = np.where(bin_num == ubin)[0]
+
+        if k.size == 1:
+            av_spec = spec[:, k].ravel()
+            av_err_spec = np.sqrt(error[:, k]).ravel()
         else:
             av_spec = np.nansum(spec[:, k], axis=1)
-            av_err_spec = np.sqrt(np.sum(error[:, k], axis=1))
+            av_err_spec = np.sqrt(np.nansum(error[:, k] ** 2, axis=1))
 
-        bin_data[:, i] = av_spec.ravel()
-        bin_error[:, i] = av_err_spec.ravel()
-        bin_flux[i] = np.mean(av_spec, axis=0)
+        bin_data[:, i] = av_spec
+        bin_error[:, i] = av_err_spec
+        bin_flux[i] = np.mean(av_spec)
 
     return bin_data, bin_error, bin_flux
 
 
-def extract(config, preview, voronoi):
+def save_bin_spec(config, log_spec, log_error, wavelength, flag):
 
     """
-    Main function to run the extraction steps in sequence
+    Saves binned spectra and error spectra to a FITS file.
 
+    Parameters:
+        config (dict): Configuration dictionary.
+        log_spec (np.ndarray): Array of binned spectra.
+        log_error (np.ndarray): Array of error spectra.
+        wavelength (np.ndarray): Wavelength array.
+        flag (str): Data type flag (e.g., 'lin' for linear binning).
+
+    Returns:
+        None (Writes the FITS file)
     """
 
-    # 1) reading the cube
+    output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_BinSpectra_linear.fits")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    print(f"Writing: {output_file}")
+
+    # Opening fits and writing
+    with fits.HDUList([
+        fits.PrimaryHDU(),
+        fits.BinTableHDU.from_columns([
+            fits.Column(name='SPEC', format=f"{log_spec.shape[0]}D", array=log_spec.T),
+            fits.Column(name='ESPEC', format=f"{log_spec.shape[0]}D", array=log_error.T)
+        ], name='BIN_SPECTRA'),
+        fits.BinTableHDU.from_columns([
+            fits.Column(name='WAVE', format='D', array=wavelength)
+        ], name='WAVE')
+    ]) as hdul:
+        hdul.writeto(output_file, overwrite=True)
+
+    # adding info
+    fits.setval(output_file, 'CRPIX1', value=1.0)
+    fits.setval(output_file, 'CRVAL1', value=wavelength[0])
+    fits.setval(output_file, 'CDELT1', value=wavelength[1] - wavelength[0])
+
+    print(f"Wrote: {output_file}")
+
+
+def extract(config, preview, voronoi, manual_bin):
+
+    """
+    Main function to run the extraction steps in sequence.
+
+    Parameters:
+        config (dict): Configuration dictionary.
+        preview (bool): If True, runs in preview mode without saving.
+        voronoi (bool): If True, applies Voronoi binning.
+        manual_bin (bool): If True, namual bin has been selected.
+
+    Returns:
+        None
+    """
+
+    print("\n--- Starting Extraction Process ---\n")
+
+    # 1) Read the datacube
     cube = reading_data(config)
     if cube == "SKIP":
+        print("Extraction aborted: Failed to read the datacube.")
         return
 
-    # 2) apply mask
-    _ = masking(config, cube, preview)
+    # 2) Apply spatial mask
+    masking(config, cube, preview, manual_bin)
 
-    # 3) Voronoi binning
-    _ = binning(config, cube, preview, voronoi)
+    # 3) Apply Voronoi binning
+    binning(config, cube, preview, voronoi, manual_bin)
 
-    # 4) Save the spectra
-    _ = save_spectra(config, cube, preview)
+    # 4) Extract and save spectra
+    save_spectra(config, cube, preview)
+
+    print("\n--- Extraction Process Completed ---\n")
 

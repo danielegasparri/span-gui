@@ -21,13 +21,13 @@ def read_cube(config):
 
     Parameters:
         config (dict): Configuration dictionary containing the following keys:
-            - GENERAL['INPUT']: Path to the FITS file.
-            - GENERAL['REDSHIFT']: Redshift to correct the spectra.
-            - READ_DATA['ORIGIN']: Origin for spatial coordinates.
-            - READ_DATA['LMIN_TOT']: Minimum wavelength for spectra.
-            - READ_DATA['LMAX_TOT']: Maximum wavelength for spectra.
-            - READ_DATA['LMIN_SNR']: Minimum wavelength for SNR calculation.
-            - READ_DATA['LMAX_SNR']: Maximum wavelength for SNR calculation.
+            - INFO['INPUT']: Path to the FITS file.
+            - INFO['REDSHIFT']: Redshift to correct the spectra.
+            - READ['ORIGIN']: Origin for spatial coordinates.
+            - READ['LMIN_TOT']: Minimum wavelength for spectra.
+            - READ['LMAX_TOT']: Maximum wavelength for spectra.
+            - READ['LMIN_SNR']: Minimum wavelength for SNR calculation.
+            - READ['LMAX_SNR']: Maximum wavelength for SNR calculation.
 
     Returns:
         dict: A dictionary containing processed cube data including spatial coordinates,
@@ -35,10 +35,10 @@ def read_cube(config):
     """
 
     # Reading CALIFA datacubes
-    print(f"Reading the CALIFA V500 cube: {config['GENERAL']['INPUT']}")
+    print(f"Reading the CALIFA V500 cube: {config['INFO']['INPUT']}")
 
     # Opening the fits
-    hdu = fits.open(config['GENERAL']['INPUT'])
+    hdu = fits.open(config['INFO']['INPUT'])
     hdr = hdu[0].header
     data = hdu[0].data
     s = np.shape(data)
@@ -54,8 +54,8 @@ def read_cube(config):
 
     # Spatial coordinates
     origin = [
-        float(config['READ_DATA']['ORIGIN'].split(',')[0].strip()),
-        float(config['READ_DATA']['ORIGIN'].split(',')[1].strip())
+        float(config['READ']['ORIGIN'].split(',')[0].strip()),
+        float(config['READ']['ORIGIN'].split(',')[1].strip())
     ]
     xaxis = (np.arange(s[2]) - origin[0]) * hdr['CD2_2'] * 3600.0
     yaxis = (np.arange(s[1]) - origin[1]) * hdr['CD2_2'] * 3600.0
@@ -66,13 +66,13 @@ def read_cube(config):
 
 
     # De-redshift the spectra
-    redshift = config['GENERAL']['REDSHIFT']
+    redshift = config['INFO']['REDSHIFT']
     wave /= (1 + redshift)
     print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Cropping
-    lmin = config['READ_DATA']['LMIN_TOT']
-    lmax = config['READ_DATA']['LMAX_TOT']
+    lmin = config['READ']['LMIN_TOT']
+    lmax = config['READ']['LMAX_TOT']
     idx = np.where(np.logical_and(wave >= lmin, wave <= lmax))[0]
     spec = spec[idx, :]
     espec = espec[idx, :]
@@ -85,13 +85,13 @@ def read_cube(config):
     # S/N
     idx_snr = np.where(
         np.logical_and(
-            wave >= config['READ_DATA']['LMIN_SNR'], wave <= config['READ_DATA']['LMAX_SNR']
+            wave >= config['READ']['LMIN_SNR'], wave <= config['READ']['LMAX_SNR']
         )
     )[0]
     signal = np.nanmedian(spec[idx_snr, :], axis=0)
     noise = np.abs(np.nanmedian(np.sqrt(espec[idx_snr, :]), axis=0))
     snr = signal / noise
-    print(f"Computing the signal-to-noise ratio in the wavelength range from {config['READ_DATA']['LMIN_SNR']}A to {config['READ_DATA']['LMAX_SNR']}A.")
+    print(f"Computing the signal-to-noise ratio in the wavelength range from {config['READ']['LMIN_SNR']}A to {config['READ']['LMAX_SNR']}A.")
 
     # DIctionary with datacube info
     cube = {

@@ -21,13 +21,13 @@ def read_cube(config):
 
     Parameters:
         config (dict): Configuration dictionary containing the following keys:
-            - GENERAL['INPUT']: Path to the FITS file.
-            - GENERAL['REDSHIFT']: Redshift to correct the spectra.
-            - READ_DATA['ORIGIN']: Origin for spatial coordinates.
-            - READ_DATA['LMIN_TOT']: Minimum wavelength for spectra.
-            - READ_DATA['LMAX_TOT']: Maximum wavelength for spectra.
-            - READ_DATA['LMIN_SNR']: Minimum wavelength for SNR calculation.
-            - READ_DATA['LMAX_SNR']: Maximum wavelength for SNR calculation.
+            - INFO['INPUT']: Path to the FITS file.
+            - INFO['REDSHIFT']: Redshift to correct the spectra.
+            - READ['ORIGIN']: Origin for spatial coordinates.
+            - READ['LMIN_TOT']: Minimum wavelength for spectra.
+            - READ['LMAX_TOT']: Maximum wavelength for spectra.
+            - READ['LMIN_SNR']: Minimum wavelength for SNR calculation.
+            - READ['LMAX_SNR']: Maximum wavelength for SNR calculation.
 
     Returns:
         dict: A dictionary containing processed cube data including spatial coordinates,
@@ -35,10 +35,10 @@ def read_cube(config):
     """
 
     # Log the start of reading the cube
-    print(f"Reading the CALIFA V1200 cube: {config['GENERAL']['INPUT']}")
+    print(f"Reading the CALIFA V1200 cube: {config['INFO']['INPUT']}")
 
     # Open the FITS file
-    hdu = fits.open(config['GENERAL']['INPUT'])
+    hdu = fits.open(config['INFO']['INPUT'])
     hdr = hdu[0].header
     data = hdu[0].data
     s = data.shape
@@ -53,7 +53,7 @@ def read_cube(config):
     wave = hdr['CRVAL3'] + np.arange(s[0]) * hdr['CDELT3']
 
     # Extract spatial coordinates
-    origin = list(map(float, config['READ_DATA']['ORIGIN'].split(',')))
+    origin = list(map(float, config['READ']['ORIGIN'].split(',')))
     xaxis = (np.arange(s[2]) - origin[0]) * hdr['CD2_2'] * 3600.0
     yaxis = (np.arange(s[1]) - origin[1]) * hdr['CD2_2'] * 3600.0
     x, y = np.meshgrid(xaxis, yaxis)
@@ -62,12 +62,12 @@ def read_cube(config):
 
 
     # De-redshift the spectra
-    redshift = config['GENERAL']['REDSHIFT']
+    redshift = config['INFO']['REDSHIFT']
     wave /= (1 + redshift)
     print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Filter spectra to specified wavelength range
-    lmin, lmax = config['READ_DATA']['LMIN_TOT'], config['READ_DATA']['LMAX_TOT']
+    lmin, lmax = config['READ']['LMIN_TOT'], config['READ']['LMAX_TOT']
     idx = (wave >= lmin) & (wave <= lmax)
     wave, spec, espec = wave[idx], spec[idx, :], espec[idx, :]
     print(f"Shortening spectra to wavelength range: {lmin} - {lmax} Å.")
@@ -76,11 +76,11 @@ def read_cube(config):
     espec **= 2
 
     # Compute SNR per spaxel
-    idx_snr = (wave >= config['READ_DATA']['LMIN_SNR']) & (wave <= config['READ_DATA']['LMAX_SNR'])
+    idx_snr = (wave >= config['READ']['LMIN_SNR']) & (wave <= config['READ']['LMAX_SNR'])
     signal = np.nanmedian(spec[idx_snr, :], axis=0)
     noise = np.abs(np.nanmedian(np.sqrt(espec[idx_snr, :]), axis=0))
     snr = signal / noise
-    print(f"Computed SNR in wavelength range: {config['READ_DATA']['LMIN_SNR']} - {config['READ_DATA']['LMAX_SNR']} Å.")
+    print(f"Computed SNR in wavelength range: {config['READ']['LMIN_SNR']} - {config['READ']['LMAX_SNR']} Å.")
 
     # Package data into a dictionary
     cube = {

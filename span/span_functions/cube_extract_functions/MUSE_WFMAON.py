@@ -19,7 +19,7 @@ from span_functions import utilities as uti
 # ======================================
 def read_cube(config):
     """
-    Reads a MUSE-WFM datacube and extracts spatial, spectral, and SNR information.
+    Reads a MUSE-WFMAON datacube and extracts spatial, spectral, and SNR information.
 
     Parameters:
     config (dict): Configuration dictionary with parameters for reading the cube.
@@ -30,10 +30,10 @@ def read_cube(config):
     """
 
     # Log and print the start of the cube reading process
-    print(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
+    print(f"Reading the MUSE-WFMAON cube: {config['INFO']['INPUT']}")
 
     # Open the FITS file and extract data and header
-    hdu = fits.open(config['GENERAL']['INPUT'])
+    hdu = fits.open(config['INFO']['INPUT'])
     hdr = hdu[1].header
     data = hdu[1].data
     s = np.shape(data)
@@ -54,8 +54,8 @@ def read_cube(config):
 
     # Extract spatial coordinates and pixel size
     origin = [
-        float(config['READ_DATA']['ORIGIN'].split(',')[0].strip()),
-        float(config['READ_DATA']['ORIGIN'].split(',')[1].strip())
+        float(config['READ']['ORIGIN'].split(',')[0].strip()),
+        float(config['READ']['ORIGIN'].split(',')[1].strip())
     ]
     xaxis = (np.arange(s[2]) - origin[0]) * hdr['CD2_2'] * 3600.0
     yaxis = (np.arange(s[1]) - origin[1]) * hdr['CD2_2'] * 3600.0
@@ -66,13 +66,13 @@ def read_cube(config):
 
 
     # De-redshift the spectra
-    redshift = config['GENERAL']['REDSHIFT']
+    redshift = config['INFO']['REDSHIFT']
     wave /= (1 + redshift)
     print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Shorten spectra to the required wavelength range
-    lmin = config['READ_DATA']['LMIN_TOT']
-    lmax = config['READ_DATA']['LMAX_TOT']
+    lmin = config['READ']['LMIN_TOT']
+    lmax = config['READ']['LMAX_TOT']
     idx = np.where(np.logical_and(wave >= lmin, wave <= lmax))[0]
     spec = spec[idx, :]
     espec = espec[idx, :]
@@ -82,11 +82,11 @@ def read_cube(config):
     # Compute the SNR per spaxel, ignoring laser guide star (LGS) region
     idx_snr = np.where(
         np.logical_and.reduce([
-            wave >= config['READ_DATA']['LMIN_SNR'],
-            wave <= config['READ_DATA']['LMAX_SNR'],
+            wave >= config['READ']['LMIN_SNR'],
+            wave <= config['READ']['LMAX_SNR'],
             np.logical_or(
-                wave < 5820 / (1 + config['GENERAL']['REDSHIFT']),
-                wave > 5970 / (1 + config['GENERAL']['REDSHIFT'])
+                wave < 5820 / (1 + config['INFO']['REDSHIFT']),
+                wave > 5970 / (1 + config['INFO']['REDSHIFT'])
             )
         ])
     )[0]
@@ -101,8 +101,8 @@ def read_cube(config):
     # Replace NaNs in the LGS region with the median signal and noise
     idx_laser = np.where(
         np.logical_and(
-            wave > 5820 / (1 + config['GENERAL']['REDSHIFT']),
-            wave < 5970 / (1 + config['GENERAL']['REDSHIFT'])
+            wave > 5820 / (1 + config['INFO']['REDSHIFT']),
+            wave < 5970 / (1 + config['INFO']['REDSHIFT'])
         )
     )[0]
     spec[idx_laser, :] = signal

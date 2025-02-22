@@ -30,8 +30,8 @@ def read_cube(config):
     """
 
     # Read the MUSE datacube
-    print(f"Reading the MUSE-WFM cube: {config['GENERAL']['INPUT']}")
-    hdu = fits.open(config['GENERAL']['INPUT'])
+    print(f"Reading the MUSE-NFM cube: {config['INFO']['INPUT']}")
+    hdu = fits.open(config['INFO']['INPUT'])
     hdr = hdu[1].header
     data = hdu[1].data
 
@@ -52,7 +52,7 @@ def read_cube(config):
     wave = hdr['CRVAL3'] + np.arange(s[0]) * hdr['CD3_3']
 
     # Extract spatial coordinates
-    origin = list(map(float, config['READ_DATA']['ORIGIN'].split(',')))
+    origin = list(map(float, config['READ']['ORIGIN'].split(',')))
     xaxis = (np.arange(s[2]) - origin[0]) * hdr['CD2_2'] * 3600.0
     yaxis = (np.arange(s[1]) - origin[1]) * hdr['CD2_2'] * 3600.0
     x, y = np.meshgrid(xaxis, yaxis)
@@ -61,13 +61,13 @@ def read_cube(config):
     pixelsize = hdr['CD2_2'] * 3600.0
 
     # De-redshift the spectra
-    redshift = config['GENERAL']['REDSHIFT']
+    redshift = config['INFO']['REDSHIFT']
     wave /= (1 + redshift)
     print(f"Shifting spectra to rest-frame (redshift: {redshift}).")
 
     # Shorten spectra to the specified wavelength range
-    lmin = config['READ_DATA']['LMIN_TOT']
-    lmax = config['READ_DATA']['LMAX_TOT']
+    lmin = config['READ']['LMIN_TOT']
+    lmax = config['READ']['LMAX_TOT']
     idx = np.where((wave >= lmin) & (wave <= lmax))[0]
     wave = wave[idx]
     spec = spec[idx, :]
@@ -76,12 +76,12 @@ def read_cube(config):
     print(f"Shortening spectra to wavelength range: {lmin} - {lmax} Å.")
 
     # Compute SNR per spaxel
-    idx_snr = np.where((wave >= config['READ_DATA']['LMIN_SNR']) & (wave <= config['READ_DATA']['LMAX_SNR']))[0]
+    idx_snr = np.where((wave >= config['READ']['LMIN_SNR']) & (wave <= config['READ']['LMAX_SNR']))[0]
     signal = np.nanmedian(spec[idx_snr, :], axis=0)
     noise = np.nanmedian(np.sqrt(espec[idx_snr, :]), axis=0) if len(hdu) == 3 else espec[0, :]
     snr = signal / noise
 
-    print(f"Computed SNR in wavelength range: {config['READ_DATA']['LMIN_SNR']} - {config['READ_DATA']['LMAX_SNR']} Å.")
+    print(f"Computed SNR in wavelength range: {config['READ']['LMIN_SNR']} - {config['READ']['LMAX_SNR']} Å.")
 
     # Store data in a structured dictionary
     cube = {
