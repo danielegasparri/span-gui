@@ -763,10 +763,7 @@ def datacube_extraction(params):
     ifs_run_id = params.ifs_run_id
     ifs_input = params.ifs_input
     ifs_redshift = params.ifs_redshift
-    ifs_parallel = params.ifs_parallel
-    ifs_ncpu = params.ifs_ncpu
     ifs_lfs_data_default = params.ifs_lfs_data_default
-    ifs_template = params.ifs_template
     ifs_ow_config = params.ifs_ow_config
     ifs_ow_output = params.ifs_ow_output
     ifs_lmin_tot = params.ifs_lmin_tot
@@ -776,7 +773,6 @@ def datacube_extraction(params):
     ifs_target_snr = params.ifs_target_snr
     ifs_routine_read = params.ifs_routine_read
     ifs_routine_read_default = params.ifs_routine_read_default
-    ifs_debug = params.ifs_debug
     ifs_user_routine = params.ifs_user_routine
     ifs_user_routine_file = params.ifs_user_routine_file
     ifs_origin = params.ifs_origin
@@ -784,7 +780,6 @@ def datacube_extraction(params):
     ifs_output = params.ifs_output
     ifs_lmin_snr_default = params.ifs_lmin_snr_default
     ifs_lmax_snr_default = params.ifs_lmax_snr_default
-    ifs_mask_method = params.ifs_mask_method
     ifs_manual_bin = params.ifs_manual_bin
     ifs_voronoi = params.ifs_voronoi
     ifs_bin_method = params.ifs_bin_method
@@ -796,14 +791,14 @@ def datacube_extraction(params):
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
 
-    gist_ifs_layout = [
+    cube_ifs_layout = [
         [sg.Text('Select a fits cube:', font = ('', default_size, 'bold'), tooltip='Select a datacube WITHIN the inputData folder'), sg.InputText(ifs_input, size=(30, 1), key = 'ifs_input'), sg.FileBrowse(file_types=(('fits file', '*.fits'),)), sg.Button('View datacube', button_color=('black','light blue'), size = (18,1), tooltip='Take a look at the datacube, it may be useful')],
         [sg.Text('Name of the run:', tooltip='Just give a name for this session'), sg.InputText(ifs_run_id, size = (15,1), key = 'ifs_run_id'), sg.Text('z:', tooltip='Redshift estimation. Put zero to not correct for redshift'), sg.InputText(ifs_redshift, size = (8,1), key = 'ifs_redshift'), sg.Text('Wave to extract (nm):', tooltip='Wavelength range you want to extract. Look at the datacube if you do not know'), sg.InputText(ifs_lmin_tot, size = (6,1), key = 'ifs_lmin_tot'), sg.Text('-'), sg.InputText(ifs_lmax_tot, size = (6,1), key = 'ifs_lmax_tot')],
 
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Using a pre-loaded routine for extraction:', "RADIOCUBEROUTINE", default = ifs_preloaded_routine, key = 'ifs_preloaded_routine', font = ('', default_size, 'bold'), tooltip='These are pre-loaded routines for reading the most commin datacubes'), sg.InputCombo(ifs_routine_read,key='ifs_routine_read',default_value=ifs_routine_read_default, readonly=True, size = (18,1))],
-        [sg.Radio('Using a user defined routine for extraction:', "RADIOCUBEROUTINE", default = ifs_user_routine, key = 'ifs_user_routine', font = ('', default_size, 'bold'), tooltip='Create your .py routine, put in the span_functions/cube_extract_functions folder and type the name here without .py'), sg.InputText(ifs_user_routine_file, size=(15, 1), key = 'ifs_user_routine_file')],
+        [sg.Radio('Using a user defined routine for extraction:', "RADIOCUBEROUTINE", default = ifs_user_routine, key = 'ifs_user_routine', font = ('', default_size, 'bold'), tooltip='If you have your .py datacube read routine, load it here'), sg.InputText(ifs_user_routine_file, size=(15, 1), key = 'ifs_user_routine_file'), sg.FileBrowse(file_types=(('py file', '*.py'),))],
         [sg.Text('Origin (in pixel) of the coordinate systems:', tooltip='Pixel coordinates of the centre or the object you want to study. Look at the datacube to know it'), sg.InputText(ifs_origin, size = (9,1), key = 'ifs_origin')],
 
         [sg.HorizontalSeparator()],
@@ -816,41 +811,42 @@ def datacube_extraction(params):
         [sg.Button('Preview bins',button_color=('black','light green'), size = (18,1)), sg.Button('Extract!',button_color= ('white','black'), size = (18,1)), sg.Push(), sg.Button('I need help',button_color=('black','orange'), size = (12,1)), sg.Exit(size=(18, 1))],
     ]
 
-
     print ('*** Cube extraction routine open. The main panel will be inactive until you close the window ***')
-    gist_ifs_window = sg.Window('Cube extraction using GIST standard', gist_ifs_layout)
+    cube_ifs_window = sg.Window('Cube extraction using GIST standard', cube_ifs_layout)
 
     while True:
 
-        gist_ifs_event, gist_ifs_values = gist_ifs_window.read()
+        cube_ifs_event, cube_ifs_values = cube_ifs_window.read()
 
-        if gist_ifs_event == (sg.WIN_CLOSED):
+        if cube_ifs_event == (sg.WIN_CLOSED):
             print ('Cube extraction routine closed. This main panel is now active again')
             print ('')
             break
 
         #assigning user values
-        ifs_run_id = gist_ifs_values['ifs_run_id']
-        ifs_input = gist_ifs_values['ifs_input']
-        ifs_routine_read_default = gist_ifs_values['ifs_routine_read']
-        ifs_origin = gist_ifs_values['ifs_origin']
-        ifs_mask = gist_ifs_values['ifs_mask']
+        ifs_run_id = cube_ifs_values['ifs_run_id']
+        ifs_input = cube_ifs_values['ifs_input']
+        ifs_routine_read_default = cube_ifs_values['ifs_routine_read']
+        ifs_routine_selected  = os.path.join(BASE_DIR, "span_functions", "cube_extract_functions", f"{ifs_routine_read_default}.py")
+
+        ifs_origin = cube_ifs_values['ifs_origin']
+        ifs_mask = cube_ifs_values['ifs_mask']
         ifs_output_dir = ifs_output + ifs_run_id
 
 
-        ifs_preloaded_routine = gist_ifs_values['ifs_preloaded_routine']
-        ifs_user_routine = gist_ifs_values['ifs_user_routine']
-        ifs_user_routine_file = gist_ifs_values['ifs_user_routine_file']
+        ifs_preloaded_routine = cube_ifs_values['ifs_preloaded_routine']
+        ifs_user_routine = cube_ifs_values['ifs_user_routine']
+        ifs_user_routine_file = cube_ifs_values['ifs_user_routine_file']
 
-        ifs_manual_bin = gist_ifs_values['ifs_manual_bin']
-        ifs_voronoi = gist_ifs_values['ifs_voronoi']
+        ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
+        ifs_voronoi = cube_ifs_values['ifs_voronoi']
 
         try:
-            ifs_redshift = float(gist_ifs_values['ifs_redshift'])
-            ifs_lmin_tot = float(gist_ifs_values['ifs_lmin_tot'])
-            ifs_lmax_tot = float(gist_ifs_values['ifs_lmax_tot'])
-            ifs_min_snr_mask = float(gist_ifs_values['ifs_min_snr_mask'])
-            ifs_target_snr = float(gist_ifs_values['ifs_target_snr'])
+            ifs_redshift = float(cube_ifs_values['ifs_redshift'])
+            ifs_lmin_tot = float(cube_ifs_values['ifs_lmin_tot'])
+            ifs_lmax_tot = float(cube_ifs_values['ifs_lmax_tot'])
+            ifs_min_snr_mask = float(cube_ifs_values['ifs_min_snr_mask'])
+            ifs_target_snr = float(cube_ifs_values['ifs_target_snr'])
 
             #converting to A
             ifs_lmin_tot = ifs_lmin_tot*10
@@ -864,10 +860,10 @@ def datacube_extraction(params):
 
 
         if ifs_user_routine:
-            ifs_routine_read_default = ifs_user_routine_file
+            ifs_routine_selected = ifs_user_routine_file
 
 
-        if gist_ifs_event == ('Exit'):
+        if cube_ifs_event == ('Exit'):
             print ('Cube extraction routine closed. This main panel is now active again')
             print ('')
             #reverting to nm:
@@ -878,7 +874,7 @@ def datacube_extraction(params):
             break
 
         #routine to view the datacube
-        if gist_ifs_event == 'View datacube':
+        if cube_ifs_event == 'View datacube':
 
             try:
                 # Load the datacube
@@ -915,7 +911,7 @@ def datacube_extraction(params):
 
 
         #routine for generating a mask
-        if gist_ifs_event == 'Generate mask':
+        if cube_ifs_event == 'Generate mask':
 
             # Considering non mobile devices with a keyboard to perform the masking. Using ctrl+click to mask
             if layout != layouts.layout_android:
@@ -1019,7 +1015,7 @@ def datacube_extraction(params):
                     sg.popup("Mask saved as ", mask_name, "in ", result_data, " folder and loaded.")
 
                     #Updating the mask path in the GUI
-                    gist_ifs_window['ifs_mask'].update(mask_path)
+                    cube_ifs_window['ifs_mask'].update(mask_path)
 
                 except Exception as e:
                     sg.popup('Fits datacube not valid.')
@@ -1115,7 +1111,7 @@ def datacube_extraction(params):
                     sg.popup("Mask saved as ", mask_name, "in ", result_data, " folder and loaded.")
 
                     #Updating the mask path in the GUI
-                    gist_ifs_window['ifs_mask'].update(mask_path)
+                    cube_ifs_window['ifs_mask'].update(mask_path)
                 except Exception as e:
                     sg.popup ('Fits datacube not valid.')
                     continue
@@ -1124,18 +1120,20 @@ def datacube_extraction(params):
 
 
         # preview mode for voronoi binning
-        if gist_ifs_event == 'Preview bins' and not ifs_manual_bin:
+        if cube_ifs_event == 'Preview bins' and not ifs_manual_bin:
+            voronoi = True
+            preview = True
 
             # Creating the disctionary to be passed to the cube_extract module
             config = cubextr.buildConfigFromGUI(
-                ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift, ifs_parallel,
-                ifs_ncpu, ifs_lfs_data_default, ifs_template, ifs_ow_config,
-                ifs_ow_output, ifs_routine_read_default, ifs_debug, ifs_origin,
-                ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr, ifs_mask_method,
+                ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
+                ifs_lfs_data_default, ifs_ow_config,
+                ifs_ow_output, ifs_routine_selected, ifs_origin,
+                ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                 ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
                 ifs_covariance, ifs_prepare_method)
             try:
-                cubextr.extract(config, True, True)
+                cubextr.extract(config, preview, voronoi, ifs_manual_bin)
             except Exception as e:
                 sg.popup("Error showing the bins:", str(e))
                 continue
@@ -1144,10 +1142,11 @@ def datacube_extraction(params):
 
         # Performing manual binning by the user, by selecting one or multiple regions in a matplotlib iterative window
         # Using a modified version of the mask routine above to select the manual binning regions. Then inverting the mask to consider ONLY the selected spaxels.
-        if gist_ifs_event == 'Manual binning':
+        if cube_ifs_event == 'Manual binning':
 
             #activating the Manual bin option, if not activated
-            gist_ifs_window['ifs_manual_bin'].update(True)
+            cube_ifs_window['ifs_manual_bin'].update(True)
+            ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
 
             try:
 
@@ -1347,7 +1346,7 @@ def datacube_extraction(params):
 
 
         # preview mode for the manual binning: reading the datacube and showing the S/N of the spaxels contained in the selected regions
-        if gist_ifs_event == 'Preview bins' and ifs_manual_bin:
+        if cube_ifs_event == 'Preview bins' and ifs_manual_bin:
             ifs_min_snr_mask_bin = 0 #No S/N cut
             ifs_bin_method_manual = 'False' #No voronoi binning
             voronoi_bin = False #No voronoi binning
@@ -1359,14 +1358,14 @@ def datacube_extraction(params):
 
                 # Creating the dictionary to be passed to the cube_extract module
                 config_manual = cubextr.buildConfigFromGUI(
-                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift, ifs_parallel,
-                    ifs_ncpu, ifs_lfs_data_default, ifs_template, ifs_ow_config,
-                    ifs_ow_output, ifs_routine_read_default, ifs_debug, ifs_origin,
-                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr, ifs_mask_method,
+                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
+                    ifs_lfs_data_default, ifs_ow_config,
+                    ifs_ow_output, ifs_routine_selected, ifs_origin,
+                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
                     ifs_covariance_manual, ifs_prepare_method)
                 try:
-                    cubextr.extract(config_manual, True, voronoi_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin)
                 except Exception as e:
                     sg.popup("Sorry, Error.", str(e))
                     continue
@@ -1378,11 +1377,11 @@ def datacube_extraction(params):
 
         # NOW WE HAVE THE MAP WITH THE LABELED SPAXELS. Negative labels means spaxels not selected, therefore not considered. Positive labels identify the spaxels to consider for binning. Contiguous regions are marked with the same identifier (e.g. 1). This map has been stretched to 1D following the same order that the cubextr stores the spaxel infos in the _table.fit file. Now we need to generate the _table.fit file without any rebinning in order to have the BIN_ID of each spaxel, then we replace the BIN_ID array of the file with the bin info stored in the third component of the mask_labels array.
 
-        # now we apply yhe manual bin by running the cube_extract_module in two steps
-        if gist_ifs_event == 'Extract!': #and ifs_manual_bin:
+        # now we apply the manual bin by running the cube_extract_module in two steps
+        if cube_ifs_event == 'Extract!': #and ifs_manual_bin:
 
             if ifs_manual_bin:
-            # 1) RUNNING cubextract in preview mode without any rebinning to to extract the info of the spaxels stored in the _table.fits file.
+            # 1) RUNNING cubextract in preview mode without any rebinning to extract the info of the spaxels stored in the _table.fits file.
                 ifs_min_snr_mask_bin = 0 #No S/N cut
                 ifs_bin_method_manual = 'False'
                 voronoi_bin = False #No voronoi binning
@@ -1400,95 +1399,90 @@ def datacube_extraction(params):
 
                 # Creating the dictionary to be passed to the cube_extract module
                 config_manual = cubextr.buildConfigFromGUI(
-                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift, ifs_parallel,
-                    ifs_ncpu, ifs_lfs_data_default, ifs_template, ifs_ow_config,
-                    ifs_ow_output, ifs_routine_read_default, ifs_debug, ifs_origin,
-                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr, ifs_mask_method,
+                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
+                    ifs_lfs_data_default, ifs_ow_config,
+                    ifs_ow_output, ifs_routine_selected, ifs_origin,
+                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
                     ifs_covariance_manual, ifs_prepare_method)
                 try:
                     #running the cubextract module to produce the spaxel and BIN_ID map
-                    cubextr.extract(config_manual, True, voronoi_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin)
                 except Exception as e:
                     sg.popup("Error! Cannot show the bins", str(e))
                     continue
 
 
-                #3) REPLACE THE BIN_INFO IN THE _TABLE.FITS WITH THE LABELLED VALUES STORED IN region_labels
-                #Loading the _table.fits file with the BIN_ID info
-                fits_table_path = root_spectra_file = result_data+'/'+ifs_run_id+'/'+ifs_run_id+'_table.fits'
+                # #3) REPLACE THE BIN_INFO IN THE _TABLE.FITS WITH THE LABELLED VALUES STORED IN region_labels
+                fits_table_path = result_data + '/' + ifs_run_id + '/' + ifs_run_id + '_table.fits'
 
+                # Opening fits
                 with fits.open(fits_table_path, mode="update") as hdul:
                     data_table = hdul[1].data
 
-                    # For some reson if the length of the labelled length array does not match the number of spaxels in the _table.fits:
+                    # Checking
                     if len(data_table) != len(region_labels):
                         raise ValueError("Mismatch size between the labelled spaxels list and the actual spaxel list in the _table.fits file")
 
-                    # Replace the BIN_ID column of the _table.fits file
+                    # Updating
                     data_table['BIN_ID'] = region_labels
-
-                    # Save the fits
                     hdul.flush()
 
-
                 # 4) Now calculate the mean position and SNR of the spaxels to be binned
-                with fits.open(fits_table_path, mode='update') as hdul:
+                with fits.open(fits_table_path, mode="update") as hdul:
                     data_hdu = hdul[1]
-                    #Converting in astropy table for better handling
-                    tbl = Table(data_hdu.data)
+                    tbl = Table(data_hdu.data)  # Convert to Astropy Table for better handling
 
-                    # Only spaxels used to binning
+                    # Spaxels selected for binning
                     valid_mask = (tbl['BIN_ID'] >= 0)
                     unique_bins = np.unique(tbl['BIN_ID'][valid_mask])
 
-                    # Scanning the bins and calculating the new values
+                    # Calculating the positions
                     for b in unique_bins:
                         region_mask = (tbl['BIN_ID'] == b)
 
-                        #Mean (NOT weighted) position of the bins
+                        # Mean (NOT weighted) position of the bins
                         mean_x = np.mean(tbl['X'][region_mask])
                         mean_y = np.mean(tbl['Y'][region_mask])
 
                         # Spaxel number to be binned
                         n_spax = np.count_nonzero(region_mask)
 
-                        #Calculate the S/N of the bins
+                        # Calculate the S/N of the bins
                         flux_i = tbl['FLUX'][region_mask]
-                        sn_i   = tbl['SNR'][region_mask]
+                        sn_i = tbl['SNR'][region_mask]
                         S_total = np.sum(flux_i)
                         noise_i = flux_i / sn_i
                         noise_quad_sum = np.sum(noise_i**2)
                         SNR_bin = S_total / np.sqrt(noise_quad_sum)
 
-                        # Updating the value of the columns
-                        tbl['XBIN'][region_mask]    = mean_x
-                        tbl['YBIN'][region_mask]    = mean_y
-                        tbl['NSPAX'][region_mask]   = n_spax
-                        tbl['SNRBIN'][region_mask]  = SNR_bin
+                        # Updating the values
+                        tbl['XBIN'][region_mask] = mean_x
+                        tbl['YBIN'][region_mask] = mean_y
+                        tbl['NSPAX'][region_mask] = n_spax
+                        tbl['SNRBIN'][region_mask] = SNR_bin
 
-                    #Updating the _table.fits file
+                    # updating
                     hdul[1].data = tbl.as_array()
                     hdul.flush()
 
-
-                # 5) perform cubextr again, starting from the updated _table.fits file to perform the binning. Now cubextr will read the BIN_ID column in the fits file and bin all the spectra with the same BIN_ID. Storing the spectra also in 1D single spectra SPAN ready.
+                # 5) Run cubextract again with the new bin configuration
                 try:
-                    cubextr.extract(config_manual, False, True)
+                    mock_voronoi = True # Fake voronoi bin required
+                    cubextr.extract(config_manual, False, mock_voronoi, ifs_manual_bin)
                 except Exception as e:
-                    sg.Popup ('ERROR performing the extraction')
-                    continue
+                    sg.Popup("ERROR performing the extraction")
 
 
-            # With voronoi rebinning things are earier:
+            # With voronoi rebinning things are easier:
             if not ifs_manual_bin:
 
             # Creating the dictionary to be passed to the cube_extract module
                 config = cubextr.buildConfigFromGUI(
-                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift, ifs_parallel,
-                    ifs_ncpu, ifs_lfs_data_default, ifs_template, ifs_ow_config,
-                    ifs_ow_output, ifs_routine_read_default, ifs_debug, ifs_origin,
-                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr, ifs_mask_method,
+                    ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
+                    ifs_lfs_data_default, ifs_ow_config,
+                    ifs_ow_output, ifs_routine_selected, ifs_origin,
+                    ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
                     ifs_covariance, ifs_prepare_method
     )
@@ -1497,8 +1491,10 @@ def datacube_extraction(params):
                 print ('This might take a while. Please, relax...')
 
                 try:
+                    voronoi = True
+                    preview = False
                     #calling the cube_extraction routine
-                    cubextr.extract(config, False, True)
+                    cubextr.extract(config, preview, voronoi, ifs_manual_bin)
                 except Exception as e:
                     sg.Popup ('ERROR performing the extraction')
                     continue
@@ -1587,7 +1583,7 @@ def datacube_extraction(params):
                     filename = f"{single_bins_dir}/{ifs_run_id}_bin_id_{i:03}.fits"
                     hdulist.writeto(filename, overwrite=True)
             except Exception as e:
-                sg.Popup('Results already presenti in the folder. Please, change the run_id name and try again')
+                sg.Popup('Results already present in the folder. Please, change the run_id name and try again')
                 continue
 
             print('Single binned spectra saved in:', single_bins_dir, 'Wavelength units: A')
@@ -1605,7 +1601,7 @@ def datacube_extraction(params):
 
 
         #showing the help file
-        if gist_ifs_event == 'I need help':
+        if cube_ifs_event == 'I need help':
             f = open(os.path.join(BASE_DIR, "help_files", "help_3d_spec.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
@@ -1620,17 +1616,14 @@ def datacube_extraction(params):
         ifs_lmin_snr = ifs_lmin_snr_default/10
         ifs_lmax_snr = ifs_lmax_snr_default/10
 
-    gist_ifs_window.close()
+    cube_ifs_window.close()
 
     #updating the parameters
     params = replace(params,
                     ifs_run_id = ifs_run_id,
                     ifs_input = ifs_input,
                     ifs_redshift = ifs_redshift,
-                    ifs_parallel = ifs_parallel,
-                    ifs_ncpu = ifs_ncpu,
                     ifs_lfs_data_default = ifs_lfs_data_default,
-                    ifs_template = ifs_template,
                     ifs_ow_config = ifs_ow_config,
                     ifs_ow_output = ifs_ow_output,
                     ifs_lmin_tot = ifs_lmin_tot,
@@ -1640,14 +1633,12 @@ def datacube_extraction(params):
                     ifs_target_snr = ifs_target_snr,
                     ifs_routine_read = ifs_routine_read,
                     ifs_routine_read_default = ifs_routine_read_default,
-                    ifs_debug = ifs_debug,
                     ifs_user_routine = ifs_user_routine,
                     ifs_user_routine_file = ifs_user_routine_file,
                     ifs_origin = ifs_origin,
                     ifs_mask = ifs_mask,
                     ifs_lmin_snr_default = ifs_lmin_snr_default,
                     ifs_lmax_snr_default = ifs_lmax_snr_default,
-                    ifs_mask_method = ifs_mask_method,
                     ifs_manual_bin = ifs_manual_bin,
                     ifs_voronoi = ifs_voronoi,
                     ifs_bin_method = ifs_bin_method,
