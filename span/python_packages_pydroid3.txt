@@ -18,5 +18,7 @@ Pandas==2.1.0
 Scipy==1.11.2
 scikit-learn==1.3.0
 scikit-image==0.20.0
+dataclasses
+replace
 ppxf
 vorbin
