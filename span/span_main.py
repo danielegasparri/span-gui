@@ -19,25 +19,10 @@
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    How to run: just compile the code with Python 3.X and use the pre-loaded example files
-    to play with the GUI.
-    Check the Python packages needed in the "readme_span.txt" to run this source code.
-
 """
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))) #adding the folder to python path
-
-#SPAN modules import
-try:
-    from span_imports import *
-    from params import SpectraParams
-except ModuleNotFoundError:
-    from .span_imports import *
-    from .params import SpectraParams
-
-#python imports
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -47,6 +32,11 @@ import matplotlib.backends.backend_tkagg
 import time
 import json
 from dataclasses import replace
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))) #adding the folder to python path
+
+#SPAN import
+from span_imports import *
+from params import SpectraParams
 
 #Define the base dir of SPAN in your device
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -55,19 +45,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ################ LET'S START #######################################################
 def main():
 
-    # Loading the SpectraParams dataclass
-    params = SpectraParams()
-
-    # Loading the correct layout with 'DarkBlue3' theme (you can change it!)
+    # Loading the GUI theme and the layout for the operating system in use
     sg.theme('DarkBlue3')
     layout, scale_win, fontsize, default_size = misc.get_layout()
 
     #Creating the main GUI
     window1 = sg.Window('SPAN - SPectral ANalysis - 6.4 --- Daniele Gasparri ---', layout,finalize=True, scaling = scale_win)
 
+    # Loading the SpectraParams dataclass to handle parameters
+    params = SpectraParams()
+
+    # Force centrering the window on the screen
+    window1.move(sg.Window.get_screen_size()[0]//2 - window1.size[0]//2, sg.Window.get_screen_size()[1]//2 - window1.size[1]//2)
+
     keys, events, values = [], [], {}
 
-    # calling the function to check the existence of auxiliary files
+    # calling the function to check the existence of the SpectralTemplates folder
     misc.check_and_download_spectral_templates()
 
     #Checking the existence of the default_settings.json file. If not, create it when the GUI opens
@@ -75,13 +68,12 @@ def main():
     if not os.path.exists(DEFAULT_PARAMS_FILE):
         window1.write_event_value('-INIT-', None)
 
-    #**************************************************************
-    #INITIALISING THE MAIN GUI PANEL
+    # Prints in the output
     print ('***********************************************')
     print ('********* Welcome to SPAN version 6.4 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
-    print ('SPAN is a Python GUI software for performing operations and analyses on 1D reduced astronomical spectra.\n')
+    print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
     print ('This is the output where the infos are showed.')
     print ('If you prefer the external output, just comment the proper lines in the layouts.py module\n')
     print ('If you just click the Load! button, the example files are loaded and you can make some practise.\n')
@@ -89,14 +81,13 @@ def main():
     print ('***********************************************')
     print (f'SPAN will save the results in: {params.result_data}\n')
 
-
-    # starting the dynamic GUI window
+    # starting the dynamic main GUI window
     while True:
 
         #taking the actual time to store in the output files
         timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-        #starting all the GUI windows with their values
+        #starting all the GUI windows with their values from the SpectraParams dataclass
         window, event, values = sg.read_all_windows()
 
         #Automatic event to save the default_settings.json file if does not exist.
@@ -121,23 +112,9 @@ def main():
             config_file = os.path.join(BASE_DIR, "system_files", "config.json")
             config_folder = misc.load_config(config_file)
             misc.change_result_path(config_folder, config_file)
-
             # Updating the new result_path param
             params = replace(params, result_path = config_folder["result_path"])
             print ('\nSPAN will now save the results in ', params.result_data)
-
-        # handle_clipboard(event, window):
-        if event in ('Copy', 'Paste'):
-            widget = window.find_element_with_focus()
-            try:
-                if event == 'Copy':
-                    text = widget.get()
-                    sg.clipboard_set(text)
-                elif event == 'Paste':
-                    text = sg.clipboard_get()
-                    widget.update(text)
-            except Exception as e:
-                continue
 
         # to clean the Output, only if integrated in the GUI
         if event == 'Clean output' and '-OUTPUT-' in window.key_dict:
@@ -145,39 +122,13 @@ def main():
         if event == 'Clean output' and not '-OUTPUT-' in window.key_dict:
             print("You have external output, cannot clean it!")
 
-
-    #****************** Initialising and checking the variables of the spectra frame ******************
+        # assign the spectra list value to dataclass parameters
         params = replace(params, spectra_list = values['spec_list'])
         params = replace(params, spectra_list_name = os.path.splitext(os.path.basename(params.spectra_list))[0])
 
         #create a spectra list file
         if event == 'listfile':
-            list_layout = [
-            [sg.Text("Select the folder with the spectra:")],
-            [sg.InputText(key='-FOLDER-'), sg.FolderBrowse()],
-            [sg.Button('Save')],
-            ]
-
-            list_window = sg.Window('Generate spectra list containing 1D spectra', list_layout)
-
-            while True:
-                list_event, list_values = list_window.read()
-
-                if list_event == sg.WINDOW_CLOSED:
-                    break
-                elif list_event == 'Save':
-                    folder_path = list_values['-FOLDER-']
-                    if folder_path:
-                        file_list = stm.get_files_in_folder(folder_path)
-                        output_file = os.path.basename(os.path.normpath(folder_path)) +'_spectra_list.txt'
-                        stm.save_to_text_file(file_list, output_file)
-                        sg.Popup('Spectra file list saved in the current working directory', output_file, 'You can now load this list file')
-
-                        #updating the spectra list
-                        window1['spec_list'].update(output_file)
-                        params = replace(params, spectra_list = output_file)
-                        params = replace(params, spectra_list_name = os.path.splitext(os.path.basename(params.spectra_list))[0])
-            list_window.close()
+            params = settings.generate_spectra_list(window, params)
 
         #assigning lambda units of the spectra
         if (values['wave_units_nm']):
@@ -195,63 +146,10 @@ def main():
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         if event == 'Clear all tasks':
-            print ('All tasks cleared')
-            window ['show_hdr']. Update (value = False)
-            window ['show_step']. Update (value = False)
-            window ['show_res']. Update (value = False)
-            window ['convert_spec']. Update (value = False)
-            window ['compare_spec']. Update (value = False)
-            window ['convert_flux']. Update (value = False)
-            window ['show_snr']. Update (value = False)
-
-            #updating the parameters
-            params = replace(params,
-            cropping_spectrum = False,
-            sigma_clipping = False,
-            wavelet_cleaning = False,
-            filter_denoise = False,
-            dop_cor = False,
-            helio_corr = False,
-            # Spectra processing frame default parameters
-            rebinning = False,
-            rebinning_log = False,
-            rebinning_linear = True,
-            degrade = False,
-            normalize_wave = False,
-            sigma_broad = False,
-            add_noise = False,
-            continuum_sub = False,
-            # Math frame default parameters
-            average_all = False,
-            norm_and_average = False,
-            do_nothing = True,
-            sum_all = False,
-            normalize_and_sum_all = False,
-            use_for_spec_an = False,
-            subtract_normalized_avg = False,
-            subtract_normalized_spec = False,
-            spectra_to_subtract = 'Spectrum to subtract',
-            add_pedestal = False,
-            multiply = False,
-            derivatives = False,
-            reorder_op = False,
-            active_operations = [],
-            reordered_operations = [],
-            current_order = None)
-
-            window ['bb_fitting']. Update (value = False)
-            window ['xcorr']. Update (value = False)
-            window ['sigma_measurement']. Update (value = False)
-            window ['ew_measurement']. Update (value = False)
-            window ['line_fitting']. Update (value = False)
-            window ['ppxf_kin']. Update (value = False)
-            window ['ppxf_pop']. Update (value = False)
-            window ['save_plots']. Update (value = False)
+            params = settings.clear_all_tasks(window, params)
 
 
-    #**************************************************************************************************
-    #******************* Initializing and checking the variables of the utility frame *****************
-
+    #******************* INITIALISING AND CHECKING THE VARIABLES OF THE UTILITIES FRAME *****************
         #1) show the header
         show_hdr = values['show_hdr']
 
@@ -304,45 +202,24 @@ def main():
                 continue
 
 
-    #**************************************************************
-    #********** Initializing and checking the Spectra manipulation panel **********
-
+    #********** INITIALISING AND CHECKING THE SPECTRA MANIPULATION PANEL **********
         if event == 'Spectra manipulation':
-            # Setting up the Spetral manipulation panel
             params = spec_manipulation.spectra_manipulation(params)
 
-        # detecting if at least one task has been activated in the Spectra Manipulation panel and if True change the color of the button in the main GUI so that the user can remember that there are active tasks in there.
-        any_active = any([
-                    params.cropping_spectrum,
-                    params.sigma_clipping,
-                    params.wavelet_cleaning,
-                    params.filter_denoise,
-                    params.dop_cor,
-                    params.helio_corr,
-                    params.rebinning,
-                    params.degrade,
-                    params.normalize_wave,
-                    params.sigma_broad,
-                    params.add_noise,
-                    params.continuum_sub,
-                    params.average_all,
-                    params.norm_and_average,
-                    params.sum_all,
-                    params.normalize_and_sum_all,
-                    params.subtract_normalized_avg,
-                    params.subtract_normalized_spec,
-                    params.add_pedestal,
-                    params.multiply,
-                    params.derivatives,])
+        # detecting if at least one task has been activated in the Spectra Manipulation panel and if True change the color of the button
+        any_active = any([params.cropping_spectrum, params.sigma_clipping, params.wavelet_cleaning,
+                        params.filter_denoise, params.dop_cor, params.helio_corr, params.rebinning,
+                        params.degrade, params.normalize_wave, params.sigma_broad, params.add_noise,
+                        params.continuum_sub, params.average_all, params.norm_and_average, params.sum_all,
+                        params.normalize_and_sum_all, params.subtract_normalized_avg, params.subtract_normalized_spec,
+                        params.add_pedestal, params.multiply, params.derivatives,])
         if any_active:
             window['Spectra manipulation'].update(button_color=('white', 'red'))
         else:
             window['Spectra manipulation'].update(button_color= ('black','light blue'))
 
 
-    #*********************************************************************************************************************
     #****************** SUB WINDOWS DEFINITION AND PARAMETERS OF THE SPECTRAL ANALYSIS FRAME *****************************
-
         #1) BLACKBODY PARAMETERS
         bb_fit = values['bb_fitting']
         if (event == 'Blackbody parameters'):
@@ -378,72 +255,57 @@ def main():
         if (event == 'Population parameters'):
             params = param_windows.population_parameters(params)
 
-        #********************************** last options **********************************
         save_intermediate_files = values['save_intermediate_files']
         save_plot = values['save_plots']
 
 
-        #*****************************************************************************************
-        #********************************** STAND ALONE SUB-APPLICATIONS *************************
-
-        #********************* LONG-SLIT SPECTRA EXTRACTION ***********************
+    #********************************** STAND ALONE SUB-PROGRAMS *************************
+        # LONG-SLIT SPECTRA EXTRACTION
         if event == 'Long-slit extraction':
             params = sub_programs.long_slit_extraction(BASE_DIR, layout, params)
 
-        #********************* CUBE EXTRACTION ***********************
+        # CUBE EXTRACTION
         if event == 'DataCube extraction':
             params = sub_programs.datacube_extraction(params)
 
-        #****************** TEXT EDITOR **********************
+        # TEXT EDITOR
         if event == 'Text editor':
             sub_programs.text_editor_window(layout)
 
-        #*********************** FITS HEADER EDITOR *******************************************
+        # FITS HEADER EDITOR
         if event == 'FITS header editor':
             sub_programs.fits_header_window()
 
-        #************************ DATA PLOTTING ***********************************************
+        # DATA PLOTTING
         if event == 'Plot data':
             sub_programs.plot_data_window(BASE_DIR, layout)
 
 
-    # ************************* parameter definitions done ****************************
-    #################################################################################################
-
-    ########## Now we prepare the spectra files to be read, checked and loaded to the GUI ###########
-
+    #********************************** LOADING AND CHECKING THE SPECTRA *************************
         if not values['one_spec']: #I have a list, reading the list.
-
             #if I press the Load! button, then I print some info and update the list of spectra.
             if event == "Load!":
-                params = replace(params, **dict(zip(
-                    ["spectra_number", "spec_names", "spec_names_nopath", "fatal_condition"],
+                params = replace(params, **dict(zip(["spectra_number", "spec_names", "spec_names_nopath", "fatal_condition"],
                     check_spec.load_and_validate_spectra(params.spectra_list, params.lambda_units, window))))
                 if params.fatal_condition:
-                    continue  # Skip further execution if a critical error occurred
-
+                    continue
             if len(params.spec_names) != params.spectra_number and params.spectra_number > 0:
                 sg.popup ('The format of the spectra list file is not correct. Try to adjust the spectra file list')
                 continue
-
             if params.fatal_condition:
                 sg.popup ('You did not load any valid spectra. I can do nothing but show you this message until you will load a valid spectra list')
                 continue
-
             #showing a message if no spectra are loaded and button are pressed
             if (params.spec_names[0] == 0 and (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Process all' or event == 'Plot' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr' or event == 'See plot' or event == 'Save one' or event == 'Save all')):
                 sg.popup('Please, load some spectra!')
                 continue
-
-            #Definying the names to show in the GUI, without the path. Only for visualisation purposes!
+            #Define the names to show in the GUI, without the path. Only for visualisation purposes!
             params = replace(params, prev_spec=params.prev_spec.join(values['-LIST-']))
             params = replace(params, prev_spec= next((s for s in params.spec_names if isinstance(s, str) and os.path.basename(s) == str(params.prev_spec)), ""))
             params = replace(params, prev_spec_nopath = os.path.splitext(os.path.basename(params.prev_spec))[0]) #no path for showing and saving things
 
-
         # If I load a single spectrum, SPAN needs to check it before loading
         if values['one_spec']:
-            spectra_number_check = 1 #for checking if after I loaded a spectra list I acrivated the "I browsed a single spectrum" and did not press "Load!"
             if event == 'Load!':
                 # Validate and load spectrum
                 params, valid_spec = check_spec.validate_and_load_spectrum(params, window)
@@ -459,11 +321,11 @@ def main():
                 continue
 
         # Concatenating events to prevent the GUI to crash when no (valid) spectrum is selected or loaded and you want to do something anyway.
-        if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and (params.prev_spec == '' or (values['one_spec'] and spectra_number_check != params.spectra_number))):
+        if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and params.prev_spec == ''):
             sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
             continue
 
-        #every time I select a loaded spectrum and press plot, I read the spectrum and plot it!
+     #********************************** PLOT EVENT *************************
         if event == 'Plot':
             wavelength, flux, step, name = stm.read_spec(params.prev_spec, params.lambda_units)
             plt.plot(wavelength, flux)
@@ -473,7 +335,7 @@ def main():
             plt.show()
             plt.close()
 
-        # Loading the help files
+     #********************************** LOADING AND CHECKING THE SPECTRAHELO FILES *************************
         if event == 'Read me':
             f = open(os.path.join(BASE_DIR, "help_files", "readme_span.txt"), 'r')
             file_contents = f.read()
@@ -491,6 +353,7 @@ def main():
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
         if event == 'Help me':
+            sg.theme('DarkBlue3')
             f = open(os.path.join(BASE_DIR, "help_files", "help_me_spec_analysis.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
@@ -522,17 +385,10 @@ def main():
             print ('')
 
 
-###################################################################################
-    #*********************** Utility frame  **************
-###################################################################################
-
-        #******* Spectra utilities activated with 'Show info' ******************
+    #*********************************** UTILITIES TASKS  *******************************************
         if (event == 'Show info'):
-            #reading the spectrum selected
-
-            params = replace(params, **dict(zip(
-                ["wavelength", "flux"],
-                stm.read_spec(params.prev_spec, params.lambda_units)[:2])))
+            util_task = 0
+            params = replace(params, **dict(zip(["wavelength", "flux"], stm.read_spec(params.prev_spec, params.lambda_units)[:2]))) #read spectrum
 
             #show header
             if show_hdr:
@@ -557,15 +413,11 @@ def main():
                 sg.popup('You need to select an option before click Show info')
                 continue
 
-        #******************** Stand alone utilities ****************************
-
-    ############################ Convert to ASCII or FITS ##############################
+        ############################ Convert to ASCII or FITS ##############################
         convert_task = 0
         if (convert and event == 'One'):
             #reading the spectrum selected
-            params = replace(params, **dict(zip(
-                ["wavelength", "flux"],
-                stm.read_spec(params.prev_spec, params.lambda_units)[:2])))
+            params = replace(params, **dict(zip(["wavelength", "flux"], stm.read_spec(params.prev_spec, params.lambda_units)[:2])))
             convert_task = 1
             utility_tasks.convert_spectrum(params.wavelength, params.flux, params.prev_spec, convert_ascii, params.lambda_units)
 
@@ -624,36 +476,30 @@ def main():
             sg.popup('You need to activate the option if you expect something!')
             continue
 
-    #################################################################################################    #################################################################################################
 
-
-        # FILE DEFINITIONS FOR SPECTRAL ANALYSIS TASKS IN PROCESS ALL MODE
+    #************** PREPARING THE ASCII FILES FOR SPECTRAL ANALYSIS RESULTS IN PROCESS ALL MODE *************
         if (event == 'Process all' and not values['one_spec']):
 
-            #Setting up the ASCII files with the results of the spectral analysis, only if I selected the task! This is useful because if an error occurs during the computation, you still will have the results written until the error! At this point they are just empty.
+            #Setting up the ASCII files with the results of the spectral analysis, only if I selected the task!
             #1) Blackbody
             if (bb_fit):
                 bb_file = files_setup.create_blackbody_file(params.result_bb_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                # Read the file into a DataFrame
                 df_bb = pd.read_csv(bb_file, sep=' ', index_col=0)
 
             #2) Cross correlation
             if (cross_corr):
                 rv_file = files_setup.create_cross_correlation_file(params.result_xcorr_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                # Read the file into a DataFrame
                 df_rv = pd.read_csv(rv_file, sep=' ', index_col=0)
 
             #3) Velocity dispersion measurement
             if (sigma_measurement):
                 sigma_file = files_setup.create_velocity_dispersion_file(params.result_vel_disp_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                #writing to a file
                 df_sigma = pd.read_csv(sigma_file, sep=' ', index_col=0)
 
             #4) EW measurement
             if (ew_measurement and params.single_index):
                 ew_file, ew_file_mag, snr_ew_file = files_setup.create_ew_measurement_files(
                 params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                #writing to a file EW
                 df_ew = pd.read_csv(ew_file, sep=' ', index_col=0)
                 df_ew_mag = pd.read_csv(ew_file_mag, sep=' ', index_col=0)
                 df_snr_ew = pd.read_csv(snr_ew_file, sep=' ', index_col=0)
@@ -662,8 +508,6 @@ def main():
                 try:
                     ew_file, ew_file_mag, snr_ew_file, num_indices, ew_id, spectra_id, ew_id_mag, snr_ew_id = files_setup.create_ew_measurement_files_from_index(
                     params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath, params.index_file)
-
-                    #writing to a file EW
                     df_ew = pd.read_csv(ew_file, sep=' ', index_col=0)
                     df_ew_mag = pd.read_csv(ew_file_mag, sep=' ', index_col=0)
                     df_snr_ew = pd.read_csv(snr_ew_file, sep=' ', index_col=0)
@@ -675,17 +519,12 @@ def main():
                 try:
                     ew_lick_file, ew_lick_file_mag, snr_lick_ew_file, num_lick_indices, ew_lick_id, spectra_lick_id, ew_lick_id_mag, snr_lick_ew_id = files_setup.create_lick_ew_measurement_files(
                         params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath, params.lick_index_file)
-
-                    #writing to a file EW
                     df_ew_lick = pd.read_csv(ew_lick_file, sep=' ', index_col=0)
                     df_ew_lick_mag = pd.read_csv(ew_lick_file_mag, sep=' ', index_col=0)
                     df_snr_lick_ew = pd.read_csv(snr_lick_ew_file, sep=' ', index_col=0)
 
-                    # Lick/ ids indices for SSP
                     ssp_lick_param_file = files_setup.create_ssp_lick_param_file(params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
                     df_lick_param = pd.read_csv(ssp_lick_param_file, sep=' ', index_col=0)
-                    #writing to a file
-
                 except Exception:
                     print('The Lick index file in /system_files does not exist. Skipping...')
                     continue
@@ -693,21 +532,18 @@ def main():
             if (ew_measurement and params.lick_ew and params.stellar_parameters_lick):
                 ssp_param_file = files_setup.create_lick_ssp_parameters_file(
                     params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                # Read the file into a DataFrame
                 df_ssp_param = pd.read_csv(ssp_param_file, sep=' ', index_col=0)
 
             #5) Line(s) fitting
             if (line_fitting and params.cat_band_fit):
                 fit_file = files_setup.create_line_fitting_file(
                 params.result_line_fitting_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                # Read the file into a DataFrame
                 df_fit = pd.read_csv(fit_file, sep=' ', index_col=0)
 
             #5-bis) Line fitting 2
             if (line_fitting and not params.cat_band_fit):
                 fit_file = files_setup.create_line_fitting_file_simple(
                 params.result_line_fitting_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                # Read the file into a DataFrame
                 df_fit = pd.read_csv(fit_file, sep=' ', index_col=0)
 
             #6) kinematics with ppxf
@@ -715,14 +551,10 @@ def main():
                 kinematics_files = files_setup.create_kinematics_files(
                     params.result_ppxf_kin_data_dir, params.spectra_list_name, timestamp,
                     params.spectra_number, params.spec_names_nopath, params.with_errors_kin, params.gas_kin)
-                # Extract file paths from the dictionary
                 kin_file = kinematics_files.get("stellar")  # Stellar kinematics file
                 kin_file_mc = kinematics_files.get("stellar_mc")  # MC errors file (if exists)
                 kin_file_gas = kinematics_files.get("gas")  # Gas kinematics file (if exists)
-
-                #kin_file exists for sure, so I write it
                 df_kin = pd.read_csv(kin_file, sep=' ', index_col=0)
-
                 df_kin_mc = None
                 df_kin_gas = None
                 #kin_mc and kin_gas are not guaranteed to exist, so I must check
@@ -736,11 +568,8 @@ def main():
                 pop_files = files_setup.create_stellar_population_files(
                     params.result_ppxf_pop_data_dir, params.spectra_list_name, timestamp, params.spectra_number,
                     params.spec_names_nopath, params.ppxf_pop_lg_age, params.stellar_parameters_lick_ppxf)
-                # Extract individual file paths
                 pop_file = pop_files.get("stellar_population")  # Main stellar population file
                 ssp_param_file_ppxf = pop_files.get("ssp_lick_parameters")
-
-                #Stellar pop file exists for sure, so I write it
                 df_pop = pd.read_csv(pop_file, sep=' ', index_col=0)
 
                 #Lick/IDS stellar pop file is not guaranteed to exist, so I must check
@@ -748,21 +577,15 @@ def main():
                 if ssp_param_file_ppxf:
                     df_ssp_param_ppxf = pd.read_csv(ssp_param_file_ppxf, sep=' ', index_col=0)
 
-    #********************* FILE DEFINITION ENDS ****************************************************
-    #***********************************************************************************************
 
-####################################################################################################
-    #  ************************* MEGA EVENT: APPLY TASKS *******************************************
-
+    #***************************** MEGA EVENT: APPLY TASKS *******************************************
         if (event == 'Preview spec.' or event == 'Preview result' or event == 'Process selected' or event == 'Process all'):
             #resetting the task(s) counter
             params = replace(params, task_done=0, task_done2=0, task_analysis=0, task_spec = 0, task_spec2 =0)
 
             #If I want to process only the selected spectrum 'prev_spec', I change its name:
             if event == 'Preview spec.' or event == 'Process selected' or event == 'Preview result' or values['one_spec']:
-                params = replace(params, spectra_number_to_process = 1)
-                params = replace(params, spec_names_to_process = [params.prev_spec])
-                params = replace(params, spec_names_nopath_to_process = [params.prev_spec_nopath])
+                params = replace(params, spectra_number_to_process=1, spec_names_to_process=[params.prev_spec], spec_names_nopath_to_process=[params.prev_spec_nopath])
 
             # If I want to process all spectra:
             if event == 'Process all':
@@ -771,8 +594,7 @@ def main():
                     sg.popup('With one spectrum loaded, you need to use ''Process selected''')
                     continue
                 else: # renaming the spectra to not overwrite the original list loaded
-                    params = replace(params, spec_names_to_process = params.spec_names)
-                    params = replace(params, spec_names_nopath_to_process = params.spec_names_nopath)
+                    params = replace(params, spec_names_to_process=params.spec_names, spec_names_nopath_to_process=params.spec_names_nopath)
                     #Removing the extension of the file for aesthetic purposes
                     params = replace(params, spec_names_nopath_to_process = [os.path.splitext(name)[0] for name in params.spec_names_nopath_to_process])
                     params = replace(params, spectra_number_to_process = params.spectra_number)
@@ -785,12 +607,9 @@ def main():
                     params = replace(params, prev_spec = params.spec_names[i])
                     params = replace(params, prev_spec_nopath = os.path.splitext(params.spec_names_nopath[i])[0])
 
-                # 1) READ THE SPECTRA
-                params = replace(params, **dict(zip(
-                    ["wavelength", "flux"],
-                    stm.read_spec(params.spec_names_to_process[i], params.lambda_units)[:2])))
-                params = replace(params, original_wavelength = params.wavelength)
-                params = replace(params, original_wavelength = params.flux)
+                # READ THE SPECTRA
+                params = replace(params, **dict(zip(["wavelength", "flux"], stm.read_spec(params.spec_names_to_process[i], params.lambda_units)[:2])))
+                params = replace(params, original_wavelength=params.wavelength, original_flux=params.flux)
 
                 try:
                     params.original_wavelength = params.wavelength
@@ -803,8 +622,7 @@ def main():
                         continue
 
                 ################################## SPECTRA MANIPULATION TASKS ##########################
-                # Here I decide: if the reorder has NOT been activated, I execute the tasks in their original order in the Spectra manipulation panel
-                if not params.reorder_op:
+                if not params.reorder_op: #without reordering, I execute tasks following the GUI order
                     params = replace( params, reordered_operations = params.active_operations.copy()) #Activates Spectra manipulation tasks in original order
 
                 #performing the spectra manipulation tasks only if I do not perform sum or average of the spectra
@@ -820,7 +638,6 @@ def main():
                         # 2) DYNAMIC CLEANING
                         elif op_var == "sigma_clipping":
                             i == 0 and print('\n*** Dynamic cleaning ***\n')
-
                             if not params.sigma_clip_have_file:
                                 params = apply_spec_tasks.apply_sigma_clipping(event, save_plot, save_intermediate_files, params)
                             else: #using an external file with R and sigma
@@ -841,7 +658,6 @@ def main():
                             i == 0 and print('\n*** Dopcor/z correazion ***\n')
                             if (params.dop_cor_single_shot):
                                 params = apply_spec_tasks.apply_doppler_correction(event, save_plot, save_intermediate_files, params)
-
                             else: #if I have an external file with dopcor/z values
                                 params = apply_spec_tasks.apply_doppler_correction_from_file(event, save_plot, save_intermediate_files, params)
 
@@ -850,7 +666,6 @@ def main():
                             i == 0 and print('\n*** Heliocentric correction ***\n')
                             if (params.helio_single_shot):
                                 params = apply_spec_tasks.apply_heliocentric_correction(event, save_plot, save_intermediate_files, params)
-
                             else: #If I have an external file with heliocentric corrections to apply
                                 params = apply_spec_tasks.apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_files, params)
 
@@ -889,7 +704,6 @@ def main():
                             i == 0 and print('\n*** Subtract normalised average ***\n')
                             if not values['one_spec']:
                                 params = apply_spec_tasks.apply_subtract_normalised_average(event, save_plot, save_intermediate_files, params)
-
                             if values['one_spec']:
                                 sg.popup('There is no average to subtract!')
                                 continue
@@ -914,7 +728,6 @@ def main():
                             i == 0 and print('\n*** Derivatives ***\n')
                             params = apply_spec_tasks.apply_derivatives(event, save_plot, save_intermediate_files, params)
 
-
                     #plotting the results
                     if (event == 'Preview spec.'):
                         try:
@@ -930,34 +743,26 @@ def main():
                             print ('Something went wrong, cannot complete the task. Check the spectrum. Tip: it is really a spectrum?')
                             continue
 
-########################################### COMBINE TASKS ##############################
-                #math operations within all the spectra. Stand-alone tasks and not available for 'Process all'
+                ################### COMBINE SPECTRA TASKS, not available for 'Process all' #########################
                 if (not params.do_nothing or params.use_for_spec_an) and event == 'Process all':
                     i == 0 and sg.popup('Mean and sum of all the spectra require click on process selected')
                     break
-
                 if not params.do_nothing and values['one_spec']:
                     sg.popup ('You just have one spectrum. Cannot do what you want!')
                     continue
 
                 # Apply math combination tasks and discarding the other previous tasks
-                if (not params.do_nothing and not values['one_spec']): #and not event =="Process all":
+                if (not params.do_nothing and not values['one_spec']):
                     print ('WARNING: I will discard all the activated tasks to perform this task')
-
-                    # WARNING, CHECK IF I AM USING PROC WAVELENGTH OR NOT
                     params = apply_spec_tasks.combine_spectra(event, save_plot, save_intermediate_files, params)
-
                     if params.use_for_spec_an: #If I want use the combined spectrum for spectral analysis
                         print ('Using sum or average to spectral analysis')
-                        params = replace(params, wavelength = params.proc_wavelength)
-                        params = replace(params, flux = params.proc_flux)
-
-        ######################### end spectra manipulation tasks ##########################
+                        params = replace(params, wavelength=params.proc_wavelength, flux=params.proc_flux)
 
 
-        #******************************* SPECTRA ANALYSIS *********************************
-                # The Spectra Analysis tasks are not activated if "Preview spec." is pressed
-                if not event == 'Preview spec.':
+                #******************************* SPECTRA ANALYSIS TASKS *********************************
+                if not event == 'Preview spec.': # Not activated if 'Preview spec.' is pressed
+
                     #1) BLACKBODY FITTING
                     if (bb_fit):
                         i == 0 and print('\nRunning blackbody fitting task...\n')
@@ -972,23 +777,19 @@ def main():
                             except Exception:
                                 print ('Cannot write the file')
 
-
                     # 2) CROSS-CORRELATION
                     if (cross_corr):
                         i == 0 and print('\nRunning cross-correlation task...\n')
                         value_at_max, params = apply_analysis_tasks.apply_cross_correlation(event, save_plot, params)
-
                         if event == "Process all":
                             # Updating and writing the file
                             file_writer.save_velocity_or_redshift_to_file(i, params, value_at_max, df_rv, rv_file)
-
 
                     # 3) VELOCITY DISPERSION
                     if (sigma_measurement):
                         i == 0 and print('\nRunning velocity dispersion task...\n')
                         sigma, error, chisqr, params = apply_analysis_tasks.apply_velocity_dispersion(event, save_plot, params)
                         if event == 'Process all':
-
                             try:
                                 ##Updating and writing the file. No need for an external function
                                 df_sigma.at[i, 'Sigma(km/s)']= round(sigma,1)
@@ -998,23 +799,19 @@ def main():
                             except Exception:
                                 print ('Error writing the file')
 
-
                     #4a) EQUIVALENT WIDTH, CASE 1: f I want to measure just one index
                     if (ew_measurement and params.single_index):
                         i == 0 and print('\nRunning equivalent width task with a single index...\n')
                         idx, ew, err, snr_ew, ew_mag, err_mag, params = apply_analysis_tasks.apply_ew_measurement_single(event, save_plot, params)
-
                         if event == 'Process all':
                             # Updating and writing the file
                             file_writer.save_ew_to_file(i, params, ew, err, ew_mag, err_mag, df_ew, ew_file,
                                 df_ew_mag, ew_file_mag, df_snr_ew, snr_ew_file, snr_ew)
 
-
                     #4b) EQUIVALENT WIDTH, CASE 2: If I have an index list file
                     if (ew_measurement and params.have_index_file):
                         i == 0 and print('\nRunning equivalent width task with an index list...\n')
                         id_array, ew_array, err_array, snr_ew_array, ew_array_mag, err_array_mag, params = apply_analysis_tasks.apply_ew_measurement_list(event, save_plot, params)
-
                         if event == 'Process all':
                             # Updating and writing the file
                             file_writer.save_ew_indices_to_file(
@@ -1022,17 +819,14 @@ def main():
                                 snr_ew_array, df_ew, ew_file, df_ew_mag, ew_file_mag,
                                 df_snr_ew, snr_ew_file, ew_id, ew_id_mag, snr_ew_id, spectra_id)
 
-
                     #4c) EQUIVALENT WIDTH, CASE 3: If I want to measure the Lick/IDS indices
                     if (ew_measurement and params.lick_ew):
                         i == 0 and print('\nRunning equivalent width task with Lick/IDS indices...\n')
                         lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag, age, met, alpha, err_age, err_met, err_alpha, lick_for_ssp, ssp_model, ssp_lick_indices_list, ssp_lick_indices_err_list, params = apply_analysis_tasks.apply_lick_indices_ew_measurement(event, save_plot, i, params)
-
                         if i == 0:
                             #reading the index file once to retrieve the number of Lick indices in order to fill the file
                             lick_idx_names, lick_indices = ls.read_idx(params.lick_index_file)
                             num_lick_indices = len(lick_idx_names) #19
-
                         if event == 'Process all':
                             # Updating and writing the file
                             file_writer.save_lick_indices_to_file(
@@ -1043,13 +837,10 @@ def main():
                                 df_ssp_param, ssp_param_file, age, err_age, met, err_met, alpha, err_alpha, save_plot,
                                 ssp_lick_indices_list, ssp_lick_indices_err_list, params.spectra_list_name, params.result_plot_dir, ssp_model)
 
-
-                    #5) LINE(S) FITTING
-                    #a) CaT fitting
+                    #5) LINE(S) FITTING: CaT
                     if (line_fitting and params.cat_band_fit):
                         i == 0 and print('\nRunning CaT fitting task...\n')
                         min_wave1, min_wave2, min_wave3, residual_wave1, residual_wave2, residual_wave3, ew_array_ca1, ew_array_ca2, ew_array_ca3, real_cat1, real_cat2, real_cat3, delta_rv1, delta_rv2, delta_rv3, sigma_cat1, sigma_cat2, sigma_cat3, sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel, params = apply_analysis_tasks.apply_cat_line_fitting(event, save_plot, params)
-
                         if event == 'Process all':
                         #Updating and writing the file. No need for an external function
                             try:
@@ -1067,11 +858,10 @@ def main():
                             except Exception:
                                 print ('Cannot write the file')
 
-                    # b) line fitting user line
+                    # b) LINE(S) FITTING: USER LINE
                     if (line_fitting and not params.cat_band_fit):
                         i == 0 and print('\nRunning line fitting task...\n')
                         min_wave, sigma_line, sigma_line_vel, params = apply_analysis_tasks.apply_line_fitting(event, save_plot, params)
-
                         if event == 'Process all':
                             #Updating and writing the file
                             try:
@@ -1081,25 +871,20 @@ def main():
                             except Exception:
                                 print ('Cannot write the file')
 
-
                     # 6) KINEMATICS WITH PPXF
                     if (perform_kinematics):
                         i == 0 and print('\nRunning stars and gas kinematics task...\n')
                         kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
-
                         if event == 'Process all':
                             #Updating and writing the file(s)
                             file_writer.save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, kin_component, snr_kin, df_kin, kin_file, df_kin_mc, kin_file_mc, df_kin_gas, kin_file_gas)
-
 
                     # 7) STELLAR POPULATIONS WITH PPXF
                     if (stellar_pop):
                         i == 0 and print('\nRunning stellar populations and SFH task...\n')
                         kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err_lower, met_err_upper, mass_met_err_lower, mass_met_err_upper, snr_pop, ppxf_pop_lg_age, age_err_lower_abs, age_err_upper_abs, mass_age_err_lower_abs, mass_age_err_upper_abs, alpha_err_lower, alpha_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params = apply_analysis_tasks.apply_ppxf_stellar_populations(event, save_plot, params)
-
                         if kinematics is None:
                             print('Kinematics moments are zero, the fit has failed\n')
-
                         if event == 'Process all':
                             #Updating and writing the file(s)
                             file_writer.save_population_analysis_to_file(
@@ -1110,10 +895,8 @@ def main():
                                 ssp_lick_indices_err_ppxf, ppxf_lick_params, df_pop, pop_file,
                                 df_ssp_param_ppxf, ssp_param_file_ppxf)
 
-    #************************************ END TASKS ***************************************************************
-    #**************************************************************************************************************
 
-              #progress meter and error messages in Process all mode
+                #progress meter and error messages in Process all mode
                 if event == "Process all":
                     if not sg.OneLineProgressMeter('Task progress', i+1, params.spectra_number_to_process, 'Processing spectra:', orientation='h',button_color=('white','red')):
                         print ('***CANCELLED***\n')
@@ -1122,7 +905,6 @@ def main():
                     if (not save_intermediate_files and params.task_spec2 == 1):
                         file_final = params.result_spec+'proc_' + params.prev_spec_nopath + '.fits'
                         uti.save_fits(params.wavelength, params.flux, file_final)
-
                         #considering also the cont sub task which saves the continuum!
                         if (params.continuum_sub):
                             file_cont = params.result_spec+'cont_' + params.prev_spec_nopath + '.fits'
@@ -1148,8 +930,7 @@ def main():
                         sg.popup ('No spectral analysis task selected. Nothing to preview!')
                         continue
 
-                    #Setting up the text files to be saved
-                    #Test to save only the final results, without the intermediate files
+                    # Save only the final results, without the intermediate files
                     if (save_intermediate_files and event == 'Process selected' and params.task_done == 0):
                         sg.popup ('Nothing to process!')
                     if (not save_intermediate_files and event == 'Process selected' and params.task_spec == 1):
@@ -1161,23 +942,15 @@ def main():
                             file_cont = params.result_spec+'cont_' + params.prev_spec_nopath + '.fits'
                             uti.save_fits(params.wavelength, params.continuum_flux, file_cont)
                             print ('File saved: ', file_cont)
-
                         print(f'File saved: {file_final}\n')
                     elif (not save_intermediate_files and event == 'Process selected' and params.task_done == 0):
                         sg.popup ('Nothing to process!')
 
-                    if (event == 'Preview result' and params.task_done == 0):
-                        sg.popup ('Nothing to preview. Please, select a Spectral analysis task!')
-
-    #*********************************** END TASKS ****************************************************************
 
     #************************************** SAVE AND LOAD PARAMETER VALUES *********************************************
-
         if event == 'Save parameters...':
             # Open a window to select the path to save the file
             filename = sg.popup_get_file('Save file as...', save_as=True, default_extension=".json", file_types=(("JSON Files", "*.json"),))
-
-            #saving the file
             if filename:
                 try:
                     settings.save_settings(filename, keys, events, values, params)
@@ -1192,7 +965,6 @@ def main():
                 filename = sg.popup_get_file('Select the file to load...', file_types=(("JSON Files", "*.json"),))
                 keys, events, loaded_values, params = settings.load_settings(filename, params)
                 values.update(loaded_values)
-
                 #Updating the GUI
                 for key, value in loaded_values.items():
                     if key in window.AllKeysDict:
@@ -1208,7 +980,6 @@ def main():
             try:
                 keys, events, loaded_values, params = settings.load_settings(os.path.join(BASE_DIR, "system_files", "default_settings.json"), params)
                 values.update(loaded_values)
-
                 #Updating the GUI
                 for key, value in loaded_values.items():
                     if key in window.AllKeysDict:
@@ -1222,4 +993,4 @@ def main():
 
     window.close()
 
-    ########################### AT LAST: END OF THE PROGRAM! ####################################
+    ########################### END OF PROGRAM! ####################################
