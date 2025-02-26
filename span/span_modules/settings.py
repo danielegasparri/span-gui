@@ -17,27 +17,146 @@
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    How to run: just compile the code with Python 3.X and use the pre-loaded example files
-    to play with the GUI.
-    Check the Python packages needed in the "readme_span.txt" to run this source code.
-
 """
 
-# Functions to save and restore the parameters and values of the GUI, leveraging the SpectraParams dataclass
-
+# Functions to save and restore the parameters, for cleaning the tasks and generating a spectra list
 
 try: #try local import if executed as script
     #GUI import
     from params import SpectraParams
+    from FreeSimpleGUI_local import FreeSimpleGUI as sg
+    from span_functions import system_span as stm
+    from span_modules import misc
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from .params import SpectraParams
+    from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
+    from span.span_functions import system_span as stm
+    from . import misc
 
 import json
 import numpy as np
 from dataclasses import replace
+import os
 
+
+def generate_spectra_list(window, params):
+
+    """
+    Opens a dialog to select a folder containing spectra and generates a list file.
+
+    Parameters:
+    - window: PySimpleGUI window object
+    - params: NamedTuple containing the program's operational parameters
+
+    Returns:
+    - Updated params with the new spectra list file
+
+    """
+    layout, scale_win, fontsize, default_size = misc.get_layout()
+    sg.theme('LightBlue')
+    list_layout = [
+        [sg.Text("Select the folder with the spectra:")],
+        [sg.InputText(key='-FOLDER-'), sg.FolderBrowse()],
+        [sg.Button('Save')]
+    ]
+
+    list_window = sg.Window('Generate spectra list containing 1D spectra', list_layout)
+
+    while True:
+        list_event, list_values = list_window.read()
+
+        if list_event == sg.WINDOW_CLOSED:
+            break
+        elif list_event == 'Save':
+            folder_path = list_values['-FOLDER-']
+            if folder_path:
+                file_list = stm.get_files_in_folder(folder_path)
+                output_file = os.path.basename(os.path.normpath(folder_path)) + '_spectra_list.txt'
+                stm.save_to_text_file(file_list, output_file)
+
+                sg.Popup('Spectra file list saved in the current working directory',
+                         output_file, 'You can now load this list file')
+
+                # Updating the spectra list
+                window['spec_list'].update(output_file)
+                params = replace(params, spectra_list=output_file)
+                params = replace(params, spectra_list_name=os.path.splitext(os.path.basename(params.spectra_list))[0])
+
+    list_window.close()
+
+    return params
+
+
+def clear_all_tasks(window, params):
+
+    """
+    Clears all selected tasks in the GUI and resets the parameters.
+
+    Parameters:
+    - window: FreeSimpleGUI window object
+    - params: NamedTuple containing the program's operational parameters
+
+    Returns:
+    - Updated params with default values
+
+    """
+
+    # Reset checkboxes in the GUI
+    window['show_hdr'].Update(value=False)
+    window['show_step'].Update(value=False)
+    window['show_res'].Update(value=False)
+    window['convert_spec'].Update(value=False)
+    window['compare_spec'].Update(value=False)
+    window['convert_flux'].Update(value=False)
+    window['show_snr'].Update(value=False)
+
+    # Reset Spectra Manipulation Panel
+    params = replace(params,
+                     cropping_spectrum=False,
+                     sigma_clipping=False,
+                     wavelet_cleaning=False,
+                     filter_denoise=False,
+                     dop_cor=False,
+                     helio_corr=False,
+                     rebinning=False,
+                     rebinning_log=False,
+                     rebinning_linear=True,
+                     degrade=False,
+                     normalize_wave=False,
+                     sigma_broad=False,
+                     add_noise=False,
+                     continuum_sub=False,
+                     average_all=False,
+                     norm_and_average=False,
+                     do_nothing=True,
+                     sum_all=False,
+                     normalize_and_sum_all=False,
+                     use_for_spec_an=False,
+                     subtract_normalized_avg=False,
+                     subtract_normalized_spec=False,
+                     add_pedestal=False,
+                     multiply=False,
+                     derivatives=False,
+                     reorder_op=False,
+                     active_operations=[],
+                     reordered_operations=[],
+                     current_order=None)
+
+    # Reset Spectral Analysis Frame
+    window['bb_fitting'].Update(value=False)
+    window['xcorr'].Update(value=False)
+    window['sigma_measurement'].Update(value=False)
+    window['ew_measurement'].Update(value=False)
+    window['line_fitting'].Update(value=False)
+    window['ppxf_kin'].Update(value=False)
+    window['ppxf_pop'].Update(value=False)
+    window['save_plots'].Update(value=False)
+
+    print('All tasks cleared')
+
+    return params
 
 
 # save all the settings in a JSON file

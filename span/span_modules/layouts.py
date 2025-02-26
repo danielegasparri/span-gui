@@ -17,10 +17,6 @@
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    How to run: just compile the code with Python 3.X and use the pre-loaded example files
-    to play with the GUI.
-    Check the Python packages needed in the "readme_span.txt" to run this source code.
-
 """
 
 # Layout definitions for the main GUI for different OS environments. Modify this code to change the aspect of the main GUI.
@@ -52,7 +48,7 @@ sg.SetOptions(tooltip_time=1000) #tooltip time after mouse over
 layout_windows = [
             [sg.Menu([
                 ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
-                ['&Edit', ['&Copy', '&Paste', 'Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...']],
+                ['&Edit', ['Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Plot data', 'Spectra manipulation']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
                 ['&Analysis', ['Preview res&ult', 'Proc&ess selected', 'Process a&ll']],
@@ -169,7 +165,7 @@ layout_windows = [
 layout_linux = [
             [sg.Menu([
                 ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
-                ['&Edit', ['&Copy', '&Paste', 'Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...']],
+                ['&Edit', ['Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Plot data', 'Spectra manipulation']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
                 ['&Analysis', ['Preview res&ult', 'Proc&ess selected', 'Process a&ll']],
@@ -288,7 +284,7 @@ layout_linux = [
 layout_macos = [
             [sg.Menu([
                 ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
-                ['&Edit', ['&Copy', '&Paste', 'Clear all tas&ks', 'Show result folder', 'Change result folder...']],
+                ['&Edit', ['Clear all tas&ks', 'Show result folder', 'Change result folder...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Plot data', 'Spectra manipulation']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
                 ['&Analysis', ['Preview res&ult', 'Proc&ess selected', 'Process a&ll']],

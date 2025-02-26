@@ -17,14 +17,9 @@
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    How to run: just compile the code with Python 3.X and use the pre-loaded example files
-    to play with the GUI.
-    Check the Python packages needed in the "readme_span.txt" to run this source code.
-
 """
 
 #Miscellaneous collection of routines used by the GUI
-
 
 try: #try local import if executed as script
     #GUI import
@@ -65,7 +60,7 @@ def load_config(config_file):
 
 def ask_user_for_result_path():
     """Ask user to select a folder to store the results of SPAN."""
-    fontsize = sg.set_options(font=("Helvetica", 14))
+    layout, scale_win, fontsize, default_size = get_layout()
     sg.theme('LightBlue')
     layout = [
         [sg.Text("Select the path to store the SPAN_results folder:")],
@@ -115,14 +110,29 @@ def get_layout():
     """Function to select the layout based on the OS"""
     current_os = os.name  # 'posix' for Linux/Mac, 'nt' for Windows
     if current_os == "nt":
-        #for discarding the scaling factor of Windows
+        # Adapting to scaling factors on windows, both for the GUI and Matplotlib
         import ctypes
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        import matplotlib
 
-        scale_win = 1.5
+        # DPI awareness for windows
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        ctypes.windll.user32.SetProcessDPIAware()
+
+        # Set the scaling for windows
+        dpi_scale = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100.0
+
+        #with scaling <1.5, do not scale automatically
+        if dpi_scale < 1.5:
+            scale_win = 1.5
+            matplotlib.rcParams['figure.dpi'] = 100
+        else:
+            scale_win = dpi_scale
+            matplotlib.rcParams['figure.dpi'] = 100 * dpi_scale
         fontsize = sg.set_options(font=("Helvetica", 11))
         default_size = 11
+
         return layouts.layout_windows, scale_win, fontsize, default_size
+
     elif current_os == "posix":
         # Further check between Linux e macOS
         if "ANDROID_BOOTLOGO" in os.environ:  # Check for Android
@@ -131,7 +141,7 @@ def get_layout():
             default_size = 10
             return layouts.layout_android, scale_win, fontsize, default_size
         elif os.uname().sysname == "Darwin":  # Check for macOS
-            scale_win = 1
+            scale_win = 1 #for macos the scaling does not work, so I set to 1
             fontsize = sg.set_options(font=("Helvetica", 14))
             default_size = 14
             return layouts.layout_macos, scale_win, fontsize, default_size
@@ -141,11 +151,10 @@ def get_layout():
             default_size = 10
             return layouts.layout_linux, scale_win, fontsize, default_size
     else:
-        print ("Operating system not recognized. Using Linux layout") # In case the system is not recognized, using the Linux layout
+        print ("Operating system not recognised. Using Linux layout") # In case the system is not recognized, using the Linux layout
         scale_win = 1.5
         fontsize = sg.set_options(font=("Helvetica", 10))
         return layouts.layout_linux, scale_win, fontsize, default_size
-        #exit()
 
 
 #Function to check if the spectralTemplates folder is available
@@ -160,7 +169,6 @@ TEMP_ZIP_PATH = os.path.join(BASE_DIR, "spectralTemplates.zip")
 def download_with_progress(url, dest):
     """Download a file with a progress bar"""
 
-    fontsize = sg.set_options(font=("Helvetica", 14))
     # Get the file size
     response = urllib.request.urlopen(url)
     total_size = int(response.getheader('Content-Length', 0))
@@ -202,7 +210,6 @@ def download_with_progress(url, dest):
 def download_and_extract_files():
     """Download and extract the file"""
     try:
-        fontsize = sg.set_options(font=("Helvetica", 14))
         # starting the download
         success = download_with_progress(DOWNLOAD_URL, TEMP_ZIP_PATH)
         if not success:
@@ -224,9 +231,10 @@ def download_and_extract_files():
 
 # function to check if the folder 'spectralTemplates' exists in the root folder of SPAN
 def check_and_download_spectral_templates():
+    sg.theme('LightBlue')
+    layout, scale_win, fontsize, default_size = get_layout()
     """Checking if the spectralTemplates/ exists."""
     if not os.path.exists(SPECTRAL_TEMPLATES_DIR):
-        fontsize = sg.set_options(font=("Helvetica", 14))
         # If spectralTemplates does not exist, I should download it, if the user agrees
         choice = sg.popup_yes_no(
             "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the folder here: https://www.danielegasparri.com/spectralTemplates.zip , unzip the folder and put in the root folder of span",
@@ -241,6 +249,3 @@ def check_and_download_spectral_templates():
                 "Without the required files, SPAN functionalities are limited, but you can still perform some tasks.",
                 title="SPAN Warning",
                 keep_on_top=True)
-
-
-
