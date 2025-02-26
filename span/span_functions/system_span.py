@@ -1,6 +1,7 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
-
+#SPectral ANalysis software (SPAN).
+#Written by Daniele Gasparri#
 
 """
     Copyright (C) 2020-2025, Daniele Gasparri
