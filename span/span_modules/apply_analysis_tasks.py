@@ -1409,13 +1409,8 @@ def apply_ppxf_kinematics(event, save_plot, params):
         return None, None, None, None, None, None, None, params
 
     try:
-        if constant_resolution_lambda: #if I gave the resolution in FWHM
-            #fitting with ppxf
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_mc_sim)
-
-        if not constant_resolution_lambda: #if I gave the resolution in R
-            #fitting with ppxf
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin,error_kinematics_mc = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_mc_sim)
+        #fitting with ppxf
+        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_mc_sim)
 
 
     #Saving the single stellar component fit results
@@ -1546,9 +1541,9 @@ def apply_ppxf_kinematics(event, save_plot, params):
 
     except Exception as e:
         if event == "Process all":
-            print('Kinematics failed. Likely issues: the parameters inserted are not correct, the resolution of your spectra is lower than the templates used, if you are using the Xshooter, or custom library or the custom templates do not exist. ')
+            print('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
         else:
-            sg.popup('Kinematics failed. Likely issues: the parameters inserted are not correct, the resolution of your spectra is lower than the templates used, if you are using the Xshooter, or custom library or the custom templates do not exist. ')
+            sg.popup('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
         return None, None, None, None, None, None, None, params
 
 
@@ -1856,7 +1851,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
 
     except Exception:
         if event == "Process all":
-            print('Stellar populations and SFH failed. Maybe too small age-metallicity range, bad templates or you masked out all the spectrum? Skipping...')
+            print('Stellar populations and SFH failed. Common cause: The templates do not cover the wavelength range you want to fit.\nOther possible expalations:\n- Check the age-metallicity range\n- If you used custom templates, check if they are on a regular age and metallicity grid.\n Skipping...')
         else:
-            sg.popup('Stellar populations and SFH failed. Maybe too small age-metallicity range, bad templates or you masked out all the spectrum? Skipping...')
+            sg.popup('Stellar populations and SFH failed. Common cause: The templates do not cover the wavelength range you want to fit.\nOther possible expalations:\n- Check the age-metallicity range\n- If you used custom templates, check if they are on a regular age and metallicity grid.\n Skipping...')
         return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
