@@ -323,6 +323,7 @@ class miles:
                 FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
                 sigma = FWHM_dif / 2.355 / header['CDELT1']  # Sigma in pixels
             else:
+                print('WARNING: resolution of the templates is lower than the galaxy. Skipping convolution')
                 sigma = 0.0
 
         # Sort and process templates by age and metallicity
@@ -502,15 +503,16 @@ class smiles:
         alpha_grid = np.empty((n_ages, n_metal, n_alpha))
         flux = np.empty((n_ages, n_metal, n_alpha))
 
-        # Convolution setup if needed
+        # Compute sigma for convolution if needed
         if FWHM_gal is not None:
+            # Avoid sqrt of negative if FWHM_gal < FWHM_tem
             if FWHM_gal**2 > FWHM_tem**2:
                 FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif / 2.355 / header['CDELT1']
+                sigma = FWHM_dif / 2.355 / header['CDELT1']  # Sigma in pixels
             else:
+                print('WARNING: resolution of the templates is lower than the galaxy. Skipping convolution')
                 sigma = 0.0
-        else:
-            sigma = 0.0
+
 
         # Process each template
         for j, age in enumerate(ages):
@@ -676,26 +678,27 @@ class xshooter:
 
         lam = header['CRVAL1'] + np.arange(header['NAXIS1']) * header['CDELT1']
 
+        # Define normalization band
+        if norm_range is not None:
+            band = (norm_range[0] <= lam) & (lam <= norm_range[1])
+
         # If wave_range is provided, apply mask to lam and ssp
         if wave_range is not None:
             mask = (lam >= wave_range[0]) & (lam <= wave_range[1])
         else:
             mask = np.ones_like(lam, dtype=bool)
 
+        # Cutting the templates to the galaxy spectra range
         lam = lam[mask]
         ssp = ssp[mask]
 
-        # Recompute FWHM_tem if needed (some XSHOOTER libs define variable resolution)
-        # Currently, we keep it as a user input or a fixed value
+        # Recompute FWHM_tem
         lam_range_temp = lam[[0, -1]]
 
         # Log-rebin
         ssp_new, ln_lam_temp = util.log_rebin(lam_range_temp, ssp, velscale=velscale)[:2]
         lam_temp = np.exp(ln_lam_temp)
 
-        # Define normalization band
-        if norm_range is not None:
-            band = (norm_range[0] <= lam_temp) & (lam_temp <= norm_range[1])
 
         # Initialize arrays
         templates = np.empty((ssp_new.size, n_ages, n_metal))
@@ -703,16 +706,18 @@ class xshooter:
         metal_grid = np.empty((n_ages, n_metal))
         flux = np.empty((n_ages, n_metal))
 
-        # Decide if FWHM_gal is a scalar or array
+        # Setting up the parameters for convolution
         if FWHM_gal is not None:
-            # If R is given, compute FWHM_gal = lam / R, else keep FWHM_gal as scalar
             if isinstance(FWHM_gal, (int, float)):
-                # If user gives a single FWHM_gal but also R, we override with lam/R
-                if R:
-                    FWHM_gal = lam / R
-            # Prepare sigma array
-            # For each pixel, sigma = sqrt(FWHM_gal^2 - FWHM_tem^2) / (2.355 * CDELT1)
-            pass  # We handle a simplified approach below
+                FWHM_tem = lam/10000.
+                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                sigma_pix = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+            else:
+                FWHM_gal = lam/R #FWHM_gal[mask]
+                FWHM_tem = lam/10000.
+                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                sigma_pix = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+
 
         # Process each template
         for j, age in enumerate(ages):
@@ -725,34 +730,24 @@ class xshooter:
                     ssp_data_full = hdu[0].data
                     hdr = hdu[0].header
 
-                # Apply the same wavelength masking
-                lam_local = hdr['CRVAL1'] + np.arange(hdr['NAXIS1']) * hdr['CDELT1']
-                if wave_range is not None:
-                    mask_local = (lam_local >= wave_range[0]) & (lam_local <= wave_range[1])
-                else:
-                    mask_local = np.ones_like(lam_local, dtype=bool)
+                # Apply the same wavelength masking for each template
+                ssp_data = ssp_data_full[mask]
 
-                ssp_data = ssp_data_full[mask_local]
-
-                # Convolution logic (example, approximate)
                 if FWHM_gal is not None:
-                    # Example: If FWHM_gal is a single number
-                    if isinstance(FWHM_gal, (int, float)):
-                        # Avoid sqrt of negative
-                        if FWHM_gal**2 > FWHM_tem**2:
-                            FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                            sigma_pix = FWHM_dif / 2.355 / hdr['CDELT1']
-                            if sigma_pix > 0.1:
-                                ssp_data = ndimage.gaussian_filter1d(ssp_data, sigma_pix)
-                    # If FWHM_gal is array-like, do a variable convolution
-                    # else: implement util.varsmooth if needed
+                    if np.isscalar(FWHM_gal):
+                        if np.any(sigma_pix) > 0.01:   # Skip convolution for nearly zero sigma
+                            x = np.arange(len(ssp_data))
+                            ssp_data = util.varsmooth(x, ssp_data, sigma_pix)
+                    else:
+                        x = np.arange(len(ssp))
+                        ssp_data = util.varsmooth(x, ssp_data, sigma_pix) # convolution with variable sigma
 
                 # Log rebin the masked data
                 ssp_new = util.log_rebin(lam_range_temp, ssp_data, velscale=velscale)[0]
 
-                # Normalize if requested
+                # Normalize
                 if norm_range is not None:
-                    flux_val = np.mean(ssp_new[band])
+                    flux_val = np.mean(ssp_data_full[band]) #Using the NON cutted SSP templates for flux normalization in the V band
                     flux[j, k] = flux_val
                     ssp_new /= flux_val
                 else:

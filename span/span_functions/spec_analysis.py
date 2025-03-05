@@ -841,6 +841,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
              kinematics moments (zero if not estimated).
     """
 
+    ppxf_default_lib = ["emiles", "fsps", "galaxev"]
     wavelength = wavelength*10
     wave1 = wave1*10
     wave2 = wave2*10
@@ -881,14 +882,15 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
     # Read SPS models file
     if not custom_lib:
-        #requesting the pPXF preloaded templates
 
-        ppxf_dir = Path(util.__file__).parent
-        basename = f"spectra_{sps_name}_9.0.npz"
-        filename = ppxf_dir / 'sps_models' / basename
-        if not filename.is_file():
-            url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
-            request.urlretrieve(url, filename)
+        #requesting the pPXF preloaded templates, if needed
+        if stellar_library in ppxf_default_lib:
+            ppxf_dir = Path(util.__file__).parent
+            basename = f"spectra_{sps_name}_9.0.npz"
+            filename = ppxf_dir / 'sps_models' / basename
+            if not filename.is_file():
+                url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
+                request.urlretrieve(url, filename)
 
         #loading the templates and convolve them with the FWHM of the galaxy spectrum
         if is_resolution_gal_constant:
@@ -1637,7 +1639,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
              light weights calculated by ppxf, array of the mass weights calculated by ppxf
     """
 
-
+    ppxf_default_lib = ["emiles", "fsps", "galaxev"]
     #converting wavelength to angstrom
     wave = wave*10
     galaxy = flux
@@ -1683,15 +1685,16 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
     #loading the ppxf templates...
     if not custom_emiles and not custom_npz: #Using the incorporated templates with SPAN
 
-        #requesting the pPXF preloaded templates
-        ppxf_dir = Path(util.__file__).parent
-        basename = f"spectra_{sps_name}_9.0.npz"
-        filename = ppxf_dir / 'sps_models' / basename
-        if not filename.is_file():
-            url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
-            request.urlretrieve(url, filename)
+        #requesting the pPXF preloaded templates, only if needed
+        if stellar_library in ppxf_default_lib:
+            ppxf_dir = Path(util.__file__).parent
+            basename = f"spectra_{sps_name}_9.0.npz"
+            filename = ppxf_dir / 'sps_models' / basename
+            if not filename.is_file():
+                url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
+                request.urlretrieve(url, filename)
 
-        if stellar_library == 'xshooter': #Shooter templates require the custom xshooter_ppxf module
+        if stellar_library == 'xshooter': #Xshooter templates require the custom xshooter_ppxf module
             print(stellar_library)
             pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
             if convolve_temp:
@@ -1701,7 +1704,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
         elif stellar_library == 'sMILES':
             print(stellar_library)
-            pathname_smiles = os.path.join(BASE_DIR, "spectralTemplates", "sMILES_afeh", "M*.fits" ) #using only yhe M identified, so I do not give constraint on the IMF.
+            pathname_smiles = os.path.join(BASE_DIR, "spectralTemplates", "sMILES_afeh", "M*.fits" ) #using only the M identified, so I do not give constrain on the IMF.
             if convolve_temp:
                 sps = template.smiles(pathname_smiles, velscale, FWHM_gal, norm_range=[5070, 5950], wave_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range]) #normalization range
             else:
@@ -1719,6 +1722,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
     #Loading the custom emiles templates selected by the user
     if custom_emiles and not custom_npz:
+        print('Custom EMILES')
         pathname = custom_emiles_folder + '/' + custom_temp_suffix
         if convolve_temp:
             sps = template.miles(pathname, velscale, FWHM_gal, norm_range=[5070, 5950],wave_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range]) #normalization range
