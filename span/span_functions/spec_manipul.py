@@ -162,8 +162,8 @@ def degrade(wavelength, flux, original_resolution, final_resolution, verbose):
     # Verbose mode logging
     if verbose:
         print('Resampling to log...')
-        print(f'New step at lambda initial {log_wave[0]} : {log_wave[1] - log_wave[0]} nm')
-        print(f'New step at lambda final {log_wave[-1]} : {log_wave[-1] - log_wave[-2]} nm')
+        print(f'New step at lambda initial {log_wave[0]} : {log_wave[1] - log_wave[0]} A')
+        print(f'New step at lambda final {log_wave[-1]} : {log_wave[-1] - log_wave[-2]} A')
 
     # Interpolate the flux on the new log wavelength scale
     interpfunc = interpolate.interp1d(wavelength, flux, kind='linear', fill_value='extrapolate')
@@ -222,22 +222,18 @@ def degrade_lambda(wavelength, flux, original_resolution_lambda, final_resolutio
     wave_components = len(wavelength)
     step = wavelength[1]-wavelength[0] # STEP SUPPOSED LINEAR!
 
-    original_resolution_lambda_nm = original_resolution_lambda/10. #converting to nm!
-    final_resolution_lambda_nm = final_resolution_lambda/10. #converting to nm!
-
-
     print ('Original resolution: ', original_resolution_lambda, 'A')
     print ('Final resolution in sigma vel: ', final_resolution_lambda , 'A')
 
 
     #2) Degrading the resolution only if the resolution selected is smaller than the initial
-    if ((final_resolution_lambda_nm - original_resolution_lambda_nm)> 0):
-        real_value_to_broad = mt.sqrt(final_resolution_lambda_nm**2-original_resolution_lambda_nm**2)
+    if ((final_resolution_lambda - original_resolution_lambda)> 0):
+        real_value_to_broad = mt.sqrt(final_resolution_lambda**2-original_resolution_lambda**2)
 
         gauss_fwhm_pix = real_value_to_broad/step
         gauss_stdev_pix = gauss_fwhm_pix/fwhm_to_sigma
 
-        print ('Sigma to broad the spectra: ', real_value_to_broad*10, 'A')
+        print ('Sigma to broad the spectra: ', real_value_to_broad, 'A')
         print ('Gaussian kernel sigma to apply (in pixels): ', gauss_stdev_pix)
 
         kernel = Gaussian1DKernel(gauss_stdev_pix)
@@ -266,19 +262,16 @@ def degradeRtoFWHM(wavelength, flux, R_resolution, FWHM_resolution):
 
     fwhm_to_sigma = 2.3548
 
-    # Convert FWHM resolution to nanometers
-    FWHM_resolution_nm = FWHM_resolution / 10.0
-
-    # Calculate FWHM of original resolution in nm
-    R_resolution_FWHM_nm = wavelength / R_resolution
+    # Calculate FWHM of original resolution in A
+    R_resolution_FWHM = wavelength / R_resolution
 
     # Set the target FWHM for the final resolution as a constant array
-    final_resolution_FWHM_nm = np.full_like(R_resolution_FWHM_nm, FWHM_resolution_nm, dtype=float)
+    final_resolution_FWHM = np.full_like(R_resolution_FWHM, FWHM_resolution, dtype=float)
 
     # Compute the required broadening values
     try:
         # Calculate broadening in FWHM
-        real_value_to_broad = np.sqrt(final_resolution_FWHM_nm**2 - R_resolution_FWHM_nm**2)
+        real_value_to_broad = np.sqrt(final_resolution_FWHM**2 - R_resolution_FWHM**2)
         gauss_sigma = real_value_to_broad / fwhm_to_sigma
 
         # Perform variable sigma convolution using ppxf.util varsmooth
@@ -290,7 +283,59 @@ def degradeRtoFWHM(wavelength, flux, R_resolution, FWHM_resolution):
 
 
 #*************************************************************************************************
-# 6) TRIS: DEGRADATION OF THE SPECTRA FOR LICK INDICES MEASUREMENT
+# 6) degrade MUSE spectra
+def degrade_muse(wavelength, flux, FWHM_target):
+    """
+    Degrades a MUSE spectrum from its intrinsic, wavelength-dependent resolution
+    to a constant target resolution (FWHM) defined by the user.
+
+    Parameters:
+        wavelength : array_like
+            Wavelength array in Angstrom.
+        flux : array_like
+            Flux array corresponding to the wavelength grid.
+        FWHM_target : float
+            Desired final resolution in Angstrom (FWHM).
+
+    Returns:
+        wavelength : array_like
+            The same input wavelength array.
+        degraded_flux : array_like
+            The flux degraded to the target resolution where applicable.
+    """
+
+    fwhm_to_sigma = 2.3548  # Conversion factor from FWHM to Gaussian sigma
+    wavelength_to_compare = wavelength
+    # Compute the intrinsic MUSE resolution at each wavelength (in Angstrom)
+    FWHM_muse = 5.866e-8 * wavelength_to_compare**2 - 9.187e-4 * wavelength_to_compare + 6.040
+    # Compute the difference in quadrature between the target and the MUSE resolution
+    diff_squared = FWHM_target**2 - FWHM_muse**2
+
+    # First check: if all values are negative, the target resolution is too high everywhere
+    if np.all(diff_squared <= 0):
+        print("WARNING: The inserted resolution is higher than the MUSE resolution at all wavelengths.")
+        print("No convolution applied. Returning original flux.")
+        return wavelength, flux
+
+    # Second check: if only some values are negative, apply convolution selectively
+    if np.any(diff_squared < 0):
+        print("WARNING: The inserted resolution is higher than the MUSE resolution at some wavelengths. These will be left unchanged.")
+
+    # Ensure that negative values do not cause issues when taking the square root
+    broaden_fwhm = np.sqrt(np.clip(diff_squared, a_min=0, a_max=None))
+
+    # Convert FWHM to sigma for the Gaussian convolution
+    broaden_sigma = broaden_fwhm / fwhm_to_sigma
+
+    # Perform variable-width Gaussian convolution using pPXF's utility function
+    degraded_flux = util.varsmooth(wavelength, flux, broaden_sigma)
+
+    return wavelength, degraded_flux
+
+
+
+#*************************************************************************************************
+# 7) TRIS: DEGRADATION OF THE SPECTRA FOR LICK INDICES MEASUREMENT
 def degrade_to_lick(wavelength, flux, original_resolution, res_delta_lambda):
 
     """
@@ -311,21 +356,20 @@ def degrade_to_lick(wavelength, flux, original_resolution, res_delta_lambda):
 
     #IF THE RESOLUTION GIVEN IS IN FWHM!
     if res_delta_lambda:
-        original_resolution_lambda_nm = original_resolution/10. #converting to nm!
-        final_resolution_lambda_nm_lick = 8.4/10. #converting to nm!
+        final_resolution_lambda_lick = 8.4
 
 
         print ('Original resolution: ', original_resolution, 'A')
 
         #2) Degrading the resolution only if the resolution selected is smaller than the initial
-        if ((final_resolution_lambda_nm_lick - original_resolution_lambda_nm)> 0):
+        if ((final_resolution_lambda_lick - original_resolution)> 0):
 
-            real_value_to_broad = mt.sqrt(final_resolution_lambda_nm_lick**2-original_resolution_lambda_nm**2)
+            real_value_to_broad = mt.sqrt(final_resolution_lambda_lick**2-original_resolution**2)
 
             gauss_fwhm_pix = real_value_to_broad/step
             gauss_stdev_pix = gauss_fwhm_pix/fwhm_to_sigma
 
-            print ('Sigma to broad the spectra: ', real_value_to_broad*10, 'A')
+            print ('Sigma to broad the spectra: ', real_value_to_broad, 'A')
             print ('Gaussian kernel sigma to apply (in pixels): ', gauss_stdev_pix)
 
             kernel = Gaussian1DKernel(gauss_stdev_pix)
@@ -340,16 +384,16 @@ def degrade_to_lick(wavelength, flux, original_resolution, res_delta_lambda):
 
     #IF THE RESOLUTION GIVEN IS IN R!
     if not res_delta_lambda:
-        final_resolution_lambda_nm_lick = 8.4/10. #converting to nm!
+        final_resolution_lambda_lick = 8.4
 
-        original_resolution_lambda_nm = wavelength/original_resolution #array contenente le risoluzioni in FWHM
-        final_resolution_lambda_nm = np.full_like(original_resolution_lambda_nm, final_resolution_lambda_nm_lick, dtype=float)#Array with the same size containing the Lick/IDS rresolution, in FEHM (8.4 A)
+        original_resolution = wavelength/original_resolution #array contenente le risoluzioni in FWHM
+        final_resolution_lambda = np.full_like(original_resolution, final_resolution_lambda_lick, dtype=float)#Array with the same size containing the Lick/IDS rresolution, in FEHM (8.4 A)
         real_value_to_broad = np.zeros_like(wavelength)
         degraded_flux = np.zeros_like(flux)
 
         for i in range (len(wavelength)):
 
-            real_value_to_broad[i] = mt.sqrt(final_resolution_lambda_nm[i]**2-original_resolution_lambda_nm[i]**2)
+            real_value_to_broad[i] = mt.sqrt(final_resolution_lambda[i]**2-original_resolution[i]**2)
 
         gauss_sigma = real_value_to_broad/fwhm_to_sigma
 
@@ -359,7 +403,7 @@ def degrade_to_lick(wavelength, flux, original_resolution, res_delta_lambda):
 
 
 #*****************************************************************************************************
-# 7) Rough continuum subtraction
+# 8) Rough continuum subtraction
 def sub_cont(wavelength, flux, operation):
 
     """
@@ -382,7 +426,7 @@ def sub_cont(wavelength, flux, operation):
 
 
 #*************************************************************************************************
-# 8) Continuum fitting with polynomials and using the mask function
+# 9) Continuum fitting with polynomials and using the mask function
 def continuum(wavelength, flux, want_to_maks, mask_ranges, poly_degree, math_operation, with_plots):
 
     """
@@ -433,7 +477,7 @@ def continuum(wavelength, flux, want_to_maks, mask_ranges, poly_degree, math_ope
                 ax.axvspan(mask_range[0], mask_range[1], color='gray', alpha=0.5)
 
         ax.legend()
-        ax.set_xlabel('Wavelength')
+        ax.set_xlabel('Wavelength ($\AA$)')
         ax.set_ylabel('Flux')
         plt.title('Continuum fitting')
         plt.show()
@@ -442,7 +486,7 @@ def continuum(wavelength, flux, want_to_maks, mask_ranges, poly_degree, math_ope
 
 
 #*************************************************************************************************
-# 9) Mask the spectrum
+# 10) Mask the spectrum
 def mask_spectrum(wavelength, mask_ranges):
 
     """
@@ -462,7 +506,7 @@ def mask_spectrum(wavelength, mask_ranges):
 
 
 #*************************************************************************************************
-# 10) Sigma clipping
+# 11) Sigma clipping
 def sigma_clip(wavelength, flux, clipping, resolution, sigma_vel):
 
     """
@@ -599,7 +643,7 @@ def sigma_clip(wavelength, flux, clipping, resolution, sigma_vel):
 
 
 #*************************************************************************************************
-# 11) Log rebin
+# 12) Log rebin
 def log_rebin(wavelength, flux, velscale):
 
     """
@@ -613,7 +657,7 @@ def log_rebin(wavelength, flux, velscale):
     space, will perform the task and then will reconvert to the linear pixel space.
     Input: wavelength array, flux array, velocity scale to rebin (in km/s).
     Output: wavelength array of the log-spaced spectrum, flux array of the log-spaced spectrum.
-           IMPORTANT: the output wavelength scale will be expressed in nm,
+           IMPORTANT: the output wavelength scale will be expressed in A,
                       only the step will be log-spaced.
 
     """
@@ -649,7 +693,7 @@ def log_rebin(wavelength, flux, velscale):
 
 
 #*************************************************************************************************
-# 12) Doppler correction
+# 13) Doppler correction
 def dopcor(wavelength, flux, value, is_velocity):
 
     """
@@ -674,7 +718,7 @@ def dopcor(wavelength, flux, value, is_velocity):
 
 
 #*************************************************************************************************
-# 13) Sigma broadening: broad the spectra to a user defined sigma value (km/s)
+# 14) Sigma broadening: broad the spectra to a user defined sigma value (km/s)
 def sigma_broad(wavelength, flux, sigma_to_broad):
 
     """
@@ -712,7 +756,7 @@ def sigma_broad(wavelength, flux, sigma_to_broad):
 
 
 #*************************************************************************************************
-# 14) Add noise
+# 15) Add noise
 def add_noise(wavelength, flux, snr):
 
     """
@@ -744,7 +788,7 @@ def add_noise(wavelength, flux, snr):
 
 
 #*************************************************************************************************
-# 15) Simple box window moving average
+# 16) Simple box window moving average
 def mov_avg(flux, window_size):
 
     """
@@ -761,7 +805,7 @@ def mov_avg(flux, window_size):
 
 
 #*************************************************************************************************
-# 16) Gaussian box moving average
+# 17) Gaussian box moving average
 def mov_avg_gauss(wavelength, flux, sigma):
 
     """
@@ -782,7 +826,7 @@ def mov_avg_gauss(wavelength, flux, sigma):
 
 
 #*************************************************************************************************
-# 17) Heliocentric calculation and correction on the spectrum
+# 18) Heliocentric calculation and correction on the spectrum
 def helio_corr(wavelength, flux, epoch, where, ra_obj, dec_obj):
 
     """
@@ -824,7 +868,7 @@ def helio_corr(wavelength, flux, epoch, where, ra_obj, dec_obj):
 
 
 #*************************************************************************************************
-# 18) simple cropping function
+# 19) simple cropping function
 def crop_spec(wavelength, flux, wave_interval):
 
     """
@@ -847,7 +891,7 @@ def crop_spec(wavelength, flux, wave_interval):
 
 
 #*************************************************************************************************
-# 19) wavelets denoising
+# 20) wavelets denoising
 def wavelet_cleaning(wavelength, flux, sigma, wavelets_layers):
 
     """
@@ -868,7 +912,7 @@ def wavelet_cleaning(wavelength, flux, sigma, wavelets_layers):
 
 
 #*************************************************************************************************
-# 20) lowpass filter
+# 21) lowpass filter
 def lowpass(wavelength, flux, cut_off, order):
 
     """
@@ -892,7 +936,7 @@ def lowpass(wavelength, flux, cut_off, order):
 
 
 #*************************************************************************************************
-# 21) Bandpass filter
+# 22) Bandpass filter
 def bandpass(wavelength, flux, lower_cut_off, upper_cut_off, order):
 
     """

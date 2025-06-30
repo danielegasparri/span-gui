@@ -66,6 +66,9 @@ import scipy.stats
 from scipy.interpolate import griddata
 from scipy.interpolate import CubicSpline
 from scipy.signal import savgol_filter
+from scipy.signal import medfilt, correlate, find_peaks
+
+from astropy.cosmology import Planck18 as cosmo
 
 from time import perf_counter as clock
 from os import path
@@ -79,344 +82,243 @@ from sklearn.model_selection import GridSearchCV
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
-# 1) BLACK BODY FITTING FUNCTION. Adapted from: https://github.com/Professor-G/BlackbodyFit
-def blackbody(wavelength, T):
+
+
+# 1) BLACK-BODY FITTING FUNCTION.
+def blackbody_angstrom(wavelength_A, T):
+    """
+    Planck's law in wavelength units of Ångström (Å).
+    Input: wavelength in Ångström, temperature in K
+    Output: blackbody flux (arbitrary units)
+    """
+    wavelength_m = wavelength_A * 1e-10  # Convert Å to meters
+    exponent = (h * c) / (wavelength_m * k * T)
+    bb = (2.0 * h * c**2) / (wavelength_m**5 * (np.exp(exponent) - 1.0))
+    return bb
+
+def scaled_blackbody_angstrom(wavelength_A, T, scale):
+    return scale * blackbody_angstrom(wavelength_A, T)
+
+def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plots=False, save_plot=False, result_plot_dir='', spec_name=''):
 
     """
-    Planck's law, which describes the black body radiation
-    of a source in thermal equilibrium at a given temperature T.
+    Fit a blackbody curve (in Ångström) to an input stellar spectrum.
+
+    Parameters
+    ----------
+    wavelength : array_like
+        Wavelength in Ångström.
+    flux : array_like
+        Flux (arbitrary units).
+    initial_wave : float
+        Lower fitting limit in Ångström.
+    final_wave : float
+        Upper fitting limit in Ångström.
+    t_guess : float
+        Initial temperature guess in K.
+    with_plots : bool
+        Whether to show the fit plot.
+    save_plot : bool
+        Whether to save the plot to file.
+    result_plot_dir : str
+        Directory path where to save the plot.
+    spec_name : str
+        Spectrum name for saving the figure.
+
+    Returns
+    -------
+    temperature : int
+        Fitted temperature in Kelvin.
+    residuals : ndarray
+        Flux residuals between data and model.
+    T_err : float
+        1-sigma uncertainty on the fitted temperature.
+    chi2_red : float
+        Reduced chi-squared of the fit.
     """
 
-    return 2*h*c**2 / (wavelength**5 * (np.e**(h*c / (wavelength*k*T)) - 1))
+    # Select fitting range
+    mask = (wavelength >= initial_wave) & (wavelength <= final_wave)
+    wave_fit = wavelength[mask]
+    flux_fit = flux[mask]
 
+    if len(wave_fit) == 0:
+        print("ERROR: No data in the selected wavelength range.")
+        return None, None, None, None
 
-#*****************************************************************************************************
-# 2) blackbody fitting
-def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plots, save_plot, result_plot_dir, spec_name):
+    # Optional normalisation step (replace with your method)
+    try:
+        norm_flux = spman.norm_spec(wave_fit, flux_fit, np.median(wave_fit), 5., flux_fit)
+    except Exception:
+        norm_flux = flux_fit  # fallback: use original flux if norm fails
 
-    """
-    This function fits the Planck function to a spectrum with the user defined wavelength
-    range and initial temperature guess
-    Input: wavelength and flux arrays of the spectrum, float initial and final
-    wavelength range to fit, int temperature initial guess, bool show or not
-    the plot of the fit
-    Output: effective temperature of the fitted model, array of the flux residuals
-            of the fitted wavelength range.
+    try:
+        # Fit blackbody (T, scale)
+        p0 = [t_guess, 1.0]
+        popt, pcov = curve_fit(scaled_blackbody_angstrom, wave_fit, norm_flux, p0=p0, maxfev=10000)
+        T_fit, scale_fit = popt
+        T_err = np.sqrt(np.diag(pcov))[0]
+        bb_fit = scaled_blackbody_angstrom(wave_fit, T_fit, scale_fit)
+        residuals = norm_flux - bb_fit
+        temperature = int(round(T_fit))
 
-    """
+        # chi² reduced
+        dof = len(wave_fit) - 2
+        chi2_red = np.sum(residuals**2) / dof if dof > 0 else np.nan
 
-    #extracting the wavelength and the flux within the selected band
-    wave_bb = wavelength[(wavelength >= initial_wave) & (wavelength <= final_wave)]
-    flux_bb = flux[(wavelength >= initial_wave) & (wavelength <= final_wave)]
+    except Exception as e:
+        print(f"Blackbody fit failed: {str(e)}")
+        return None, None, None, None
 
-    wavelength = wave_bb
-    flux = flux_bb
-
-    #normalising the flux to the median wavelength
-    median_wave = np.median(wavelength)
-    epsilon_wave = 5.
-
-    norm_flux = spman.norm_spec(wavelength, flux, median_wave, epsilon_wave, flux)
-    flux = norm_flux
-
-    wavelength = wavelength*1e-9 #convert to meters for SI consistency
-
-    def blackbody_flux(wave, flux, T):
-        blackbody_flux = blackbody(wave, T)
-
-        flux_integral = np.abs(np.trapz(flux, wave))
-        planck_integral = np.abs(quad(blackbody, np.min(wave), np.max(wave), args = T ))[0]
-        scale_factor = flux_integral / planck_integral
-
-        return scale_factor*blackbody_flux
-
-    def residuals(T, y, lam):
-        return y - blackbody_flux(wavelength, flux, T)
-
-    t0 = np.array([t_guess]) #the initial temperature guess for the optimization
-    T = leastsq(residuals, t0, args = (flux, wavelength))[0].astype('float32')
-    bbody_fit = blackbody(wavelength, T)
-
-    instrumental_integral = np.abs(np.trapz(flux, wavelength))
-    planck_integral = np.abs(quad(blackbody, np.min(wavelength), np.max(wavelength), args = T))[0]
-    scale_factor = instrumental_integral / planck_integral
-    y = scale_factor*bbody_fit
-    wavelength = wavelength*1e9
-    temperature = int(round(T[0]))
-    residual_bb = flux-y
-
+    # Plotting
     if with_plots or save_plot:
-        fig = plt.figure()
-        ax = fig.add_subplot(211)
-        plt.plot(wavelength, flux, label = "DATA")
-        plt.plot(wavelength, y, 'r-',  label = "FIT")
-        plt.title("Blackbody fitting, T = " + str(temperature) +' K' )
-        plt.xlabel(r"$\lambda$ (nm)")
-        plt.ylabel("Relative flux")
-        plt.legend(loc = 1)
-        plt.tight_layout()
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 6))
+        ax1.plot(wave_fit, norm_flux, label="Data")
+        ax1.plot(wave_fit, bb_fit, 'r-', label=f"Fit (T = {temperature} ± {int(round(T_err))} K)")
+        ax1.set_ylabel("Relative flux")
+        ax1.set_xlabel("Wavelength (Å)")
+        ax1.legend()
+        ax1.set_title(f"Blackbody Fit – χ²_red = {chi2_red:.3f}")
 
-        ax2 = fig.add_subplot(212)
-        plt.title("Residuals" )
-        plt.ylabel("Relative flux")
-        plt.xlabel(r"$\lambda$ (nm)")
-        plt.plot(wavelength, residual_bb, 'g.', label = "residuals")
+        ax2.plot(wave_fit, residuals, 'g.', label="Residuals")
+        ax2.set_xlabel("Wavelength (Å)")
+        ax2.set_ylabel("Residual flux")
+
         plt.tight_layout()
 
         if with_plots:
             plt.show()
-        else:
-            plt.savefig(result_plot_dir + '/'+ 'blackbody_'+ spec_name + '.png', format='png', dpi=300)
+        if save_plot and result_plot_dir:
+            filename = f"{result_plot_dir}/blackbody_{spec_name}.png"
+            plt.savefig(filename, dpi=300)
         plt.close()
 
-    return temperature, residual_bb
-
-
-#*****************************************************************************************************
-# 3) Cross-correlation, adapted from  pyasl, but working
-def crosscorrRV(w, f, tw, tf, rvmin, rvmax, drv, skipedge=0, edgeTapering=None):
-
-    """
-    This function calculates the cross-correlation function between the input spectrum
-    and the provided template spectrum, within an interval of velocity dispersion, with a
-    delta v step of velocity dispersion.
-    Input: wavelength and flux arrays of the spectrum,wavelength and flux arrays of the
-           template, float minimum and maximum radial velocity interval to compute the
-           cross-correlation, float step of velocity dispersion.
-    Output: array of the velocities, array containing the cross-correlation function
-
-    """
-
-  # Copy and cut wavelength and flux arrays
-    w, f = w.copy(), f.copy()
-    if skipedge > 0:
-        w, f = w[skipedge:-skipedge], f[skipedge:-skipedge]
-
-    if edgeTapering is not None:
-        # Smooth the edges using a sine
-        if isinstance(edgeTapering, float):
-            edgeTapering = [edgeTapering, edgeTapering]
-
-        indi = np.where(w < w[0]+edgeTapering[0])[0]
-        f[indi] *= np.sin((w[indi] - w[0])/edgeTapering[0]*np.pi/2.0)
-        # Carry out edge tapering (right edge)
-        indi = np.where(w > (w[-1]-edgeTapering[1]))[0]
-        f[indi] *= np.sin((w[indi] - w[indi[0]])/edgeTapering[1]*np.pi/2.0 + np.pi/2.0)
-
-    # Speed of light in km/s
-    c = 299792.458
-
-    # Calculate the cross correlation
-    drvs = np.arange(rvmin, rvmax, drv)
-    cc = np.zeros(len(drvs))
-    for i, rv in enumerate(drvs):
-
-        # Apply the Doppler shift
-        fi = interpolate.interp1d(tw*(1.0 + rv/c), tf)
-        # Shifted template evaluated at location of spectrum
-        cc[i] = np.sum(f * fi(w))
-
-    return drvs, cc
+    return temperature, residuals, T_err, chi2_red
 
 
 
-
-# 3B) Considering the cosmologica redshift instead
-def crosscorrZ(w, f, tw, tf, zmin, zmax, dz, skipedge=0, edgeTapering=None):
-
-    """
-    Calculate the cross-correlation function between the input spectrum
-    and the provided template over a range of cosmological redshifts, with a step dz.
-    Input:
-        - w, f: wavelength and flux arrays of the spectrum.
-        - tw, tf: wavelength and flux arrays of the template.
-        - zmin, zmax: minimum and maximum redshift interval to compute the cross-correlation.
-        - dz: redshift step.
-    Output:
-        - array of redshifts, array containing the cross-correlation function.
-    """
-
-    # Copy and cut wavelength and flux arrays
-    w, f = w.copy(), f.copy()
-    if skipedge > 0:
-        w, f = w[skipedge:-skipedge], f[skipedge:-skipedge]
-
-    # Edge tapering to smooth boundaries
-    if edgeTapering is not None:
-        if isinstance(edgeTapering, float):
-            edgeTapering = [edgeTapering, edgeTapering]
-
-        indi = np.where(w < w[0]+edgeTapering[0])[0]
-        f[indi] *= np.sin((w[indi] - w[0])/edgeTapering[0]*np.pi/2.0)
-        indi = np.where(w > (w[-1]-edgeTapering[1]))[0]
-        f[indi] *= np.sin((w[indi] - w[indi[0]])/edgeTapering[1]*np.pi/2.0 + np.pi/2.0)
-
-    # Calculate the cross correlation
-    redshifts = np.arange(zmin, zmax, dz)
-    cc = np.zeros(len(redshifts))
-    for i, z in enumerate(redshifts):
-        # Apply the cosmological redshift
-        shifted_template_wavelengths = tw * (1 + z)
-        # Use cubic spline interpolation
-        fi = CubicSpline(shifted_template_wavelengths, tf, extrapolate=False)
-        # fi = interpolate.interp1d(shifted_template_wavelengths, tf)
-        # Evaluate cross-correlation
-        cc[i] = np.sum(f * fi(w))
-
-    return redshifts, cc
+################## CROSS-CORRELATION FUNCTIONS ##################################
+def preprocess_spectrum(wavelength, flux, kernel_size=51):
+    continuum = medfilt(flux, kernel_size=kernel_size)
+    continuum[continuum < 1e-6] = 1e-6
+    norm_flux = flux / continuum
+    return wavelength, norm_flux
 
 
+def estimate_shift_crosscorr(wave_obs, flux_obs, wave_temp, flux_temp, grid, mode='z'):
+    c = 299792.458  # speed of light in km/s
+    interp_obs = interp1d(wave_obs, flux_obs, kind='linear', bounds_error=False, fill_value=0)
+    cc_values = []
 
+    for shift in grid:
+        if mode == 'z':
+            wave_shifted = wave_temp * (1 + shift)
+        else:  # velocity in km/s
+            wave_shifted = wave_temp * (1 + shift / c)
 
-#*****************************************************************************************************
-# 4) Apply Cross-correlation to span standard, use with cautions for galaxies. Works well for stellar spectra
-def crosscorr (wavelength_spec, flux_spec, template, lambda_units_template, wave_interval, smooth_vel, vel_z_interval, is_vel):
+        flux_obs_interp = interp_obs(wave_shifted)
+        cc = correlate(flux_obs_interp - np.mean(flux_obs_interp),
+                       flux_temp - np.mean(flux_temp), mode='valid')
+        cc_values.append(np.max(cc))
 
-    """
-    This function applies the cross-correlation function to the selected spectrum
-    with the selected template.
-    Input: wavelength and flux arrays of the spectrum, path and name of the template
-           string wavelength units of the templae (physical: 'nm', 'A', 'mu')
-           Array of the wavelength interval to cross-correlate ([min_wave, max_wave]
-           bool smoothing the template by adding a velocity dispersion broadening, int velocity
-           dispersion value (sigma) to add to the template.
-    Output: arrays or computed radial velocities and cross-correlation function, float
-            radial velocity value corresponding at the maximum of the cross-correlation
-            function, float maximum of the cross-correlation function, wavelength and flux arrays
-            of the spectrum within the selected wavelength range, wavelength and flux arrays of the
-            template within the selected wavelength range.
+    cc_values = np.array(cc_values)
 
-    """
+    # Normalise the cross-correlation curve between 0 and 1
+    if np.max(cc_values) != np.min(cc_values):
+        cc_values = (cc_values - np.min(cc_values)) / (np.max(cc_values) - np.min(cc_values))
 
-    #reading the template
-    wavelength_template_orig, flux_template_orig, step, name = stm.read_spec(template, lambda_units_template)
+    # peaks, _ = find_peaks(cc_values, prominence=np.std(cc_values))
+    peaks, properties = find_peaks(cc_values, prominence=np.std(cc_values))
+    if len(peaks) > 0:
+        prominences = properties['prominences']
+        best_peak_index = peaks[np.argmax(prominences)]
 
-    #Sampling to the common, smallest, delta lambda
-    step_spec = wavelength_spec[1]-wavelength_spec[0]
-    step_template = step
-
-    if step_spec > step_template:
-        wavelength, flux, npoint_resampled = spman.resample(wavelength_spec, flux_spec, step_template)
-
-        #resampling to linear also the template
-        wavelength_template, flux_template, npoint_template = spman.resample(wavelength_template_orig, flux_template_orig, step_template)
-
-    elif step_spec <= step_template:
-        wavelength_template, flux_template, npoint_template = spman.resample(wavelength_template_orig, flux_template_orig, step_spec)
-        #resampling to linear also the spec
-        wavelength, flux, npoint_resampled = spman.resample(wavelength_spec, flux_spec, step_spec)
-
-
-    if is_vel:
-    #Extracting the arrays values, considering that they can be inverted, so I look for max and min values)
-        low_lim_vel =  np.min(vel_z_interval)
-        high_lim_vel = np.max(vel_z_interval)
-        low_wave_interval = np.min(wave_interval)
-        high_wave_interval = np.max(wave_interval)
-        step_vel = 2.
-
-    if not is_vel:
-        low_lim_z =  np.min(vel_z_interval)
-        high_lim_z = np.max(vel_z_interval)
-        low_wave_interval = np.min(wave_interval)
-        high_wave_interval = np.max(wave_interval)
-
-        #putting some constraints on the z step as a function of the redshift interval to consider
-        if high_lim_z - low_lim_z < 1:
-            step_z = 0.0001
-        if high_lim_z - low_lim_z >= 1 and high_lim_z - low_lim_z < 2:
-            step_z = 0.001
-        if high_lim_z - low_lim_z >= 2:
-            step_z = 0.01
-
-
-    #smoothing the template
-    if(smooth_vel > 0):
-        flux_gauss_template = spman.sigma_broad(wavelength_template, flux_template, smooth_vel)
-        flux_template = flux_gauss_template
-
-
-    #if the interval is zero:
-    if low_wave_interval == 0:
-
-        # Normalise the spectrum and the templates
-        flux = flux / np.median(flux)
-        flux_template = flux_template / np.median(flux_template)
-
-        #continuum subtraction
-        poly_degree = 3
-        math_operation = 'divide'
-        flux, continuum_model = spman.continuum(wavelength, flux, False, None, poly_degree, math_operation, False)
-        flux_template, continuum_model = spman.continuum(wavelength_template, flux_template, False, None, poly_degree, math_operation, False)
-
-        if is_vel:
-
-            rv, cc = crosscorrRV(wavelength, flux, wavelength_template, flux_template, low_lim_vel, high_lim_vel, step_vel)
-
-            #estrapolating the most probable rv value
-            max_corr_fcn = np.argmax(cc)
-            rv_at_max = rv[max_corr_fcn]
-            cc_at_max = cc[max_corr_fcn]
-
-            return rv, cc, rv_at_max, cc_at_max, wavelength, flux, wavelength_template, flux_template
-        if not is_vel:
-            z, cc = crosscorrZ(wavelength, flux, wavelength_template, flux_template, low_lim_z, high_lim_z, step_z)
-
-            #estrapolating the most probable rv value
-            max_corr_fcn = np.argmax(cc)
-            z_at_max = z[max_corr_fcn]
-            cc_at_max = cc[max_corr_fcn]
-            return z, cc, z_at_max, cc_at_max, wavelength, flux, wavelength_template, flux_template
-
-
-    #otherwise I need to extract lambda and flux both for the spectrum and the template.
+        # best_peak_index = peaks[np.argmax(cc_values[peaks])]
+        best_shift = grid[best_peak_index]
     else:
-        corr_wave = []
-        corr_flux = []
+        best_shift = grid[np.argmax(cc_values)]
 
-        npoints_wave = len(wavelength)
-        for i in range(npoints_wave):
-            if wavelength[i]>= low_wave_interval and wavelength[i]<= high_wave_interval:
-                corr_wave.append(wavelength[i])
-                corr_flux.append(flux[i])
-
-        #converting to numpy
-        corr_wave_np = np.asarray(corr_wave, dtype = float)
-        corr_flux_np = np.asarray(corr_flux, dtype = float)
-        wavelength = corr_wave_np
-        flux = corr_flux
+    if len(peaks) > 0:
+        peak_vals = grid[peaks]
+        peak_cc = cc_values[peaks]
+        top_indices = np.argsort(peak_cc)[-3:][::-1]
+        print("Top candidates:")
+        for idx in top_indices:
+            unit = 'z' if mode == 'z' else 'km/s'
+            print(f"  {unit} = {peak_vals[idx]:.5f}, correlation = {peak_cc[idx]:.5e}")
 
 
-        # Normalise the spectrum and the templates
-        flux = flux / np.median(flux)
-        flux_template = flux_template / np.median(flux_template)
+    # Estimate uncertainty based on FWHM around the main peak
+    try:
+        peak_idx = np.argmin(np.abs(grid - best_shift))
+        peak_val = cc_values[peak_idx]
+        half_max = peak_val / 2.0
 
-        #continuum subtraction
-        poly_degree = 3
-        math_operation = 'divide'
-        flux, continuum_model = spman.continuum(wavelength, flux, False, None, poly_degree, math_operation, False)
-        flux_template, continuum_model = spman.continuum(wavelength_template, flux_template, False, None, poly_degree, math_operation, False)
+        # Find left and right indices where the cc_value drops below half max
+        left_idx = peak_idx
+        while left_idx > 0 and cc_values[left_idx] > half_max:
+            left_idx -= 1
+
+        right_idx = peak_idx
+        while right_idx < len(cc_values) - 1 and cc_values[right_idx] > half_max:
+            right_idx += 1
+
+        fwhm = grid[right_idx] - grid[left_idx]
+        sigma = fwhm / 2.355 if fwhm > 0 else np.nan
+    except:
+        sigma = np.nan
+
+    return best_shift, cc_values, grid, sigma
 
 
-        if is_vel:
-            rv, cc = crosscorrRV(wavelength, flux, wavelength_template, flux_template, low_lim_vel, high_lim_vel, step_vel)
+def estimate_from_template(wave_obs, flux_obs, wave_temp, flux_temp, grid, mode='z'):
+    wave_obs, flux_obs = preprocess_spectrum(wave_obs, flux_obs)
+    wave_temp, flux_temp = preprocess_spectrum(wave_temp, flux_temp)
+    shift, cc, grid_out, sigma = estimate_shift_crosscorr(wave_obs, flux_obs, wave_temp, flux_temp, grid, mode=mode)
+    return shift, cc, grid_out, sigma
 
-            #estrapolating the most probable rv value
-            max_corr_fcn = np.argmax(cc)
-            rv_at_max = rv[max_corr_fcn]
-            cc_at_max = cc[max_corr_fcn]
 
-            return rv, cc, rv_at_max, cc_at_max, wavelength, flux, wavelength_template, flux_template
+def plot_cross_correlation(grid, cc_values, best_val, wave_obs, flux_obs, wave_temp, flux_temp, shift, save_plot, spec_name, result_plot_dir, mode='z'):
+   # Normalize template over the wavelength range of the observed spectrum if necessary
+    min_obs, max_obs = wave_obs.min(), wave_obs.max()
+    mask_temp_in_obs = (wave_temp >= min_obs) & (wave_temp <= max_obs)
+    if np.sum(mask_temp_in_obs) > 10:  # Require enough points to avoid artefacts
+        flux_temp = flux_temp / np.nanmax(np.abs(flux_temp[mask_temp_in_obs]))
+    else:
+        flux_temp = flux_temp / np.nanmax(np.abs(flux_temp))
+    if mode == 'z':
+        wave_temp_shifted = wave_temp * (1 + shift)
+    else:
+        wave_temp_shifted = wave_temp * (1 + shift / c)
 
-        else:
-            z, cc = crosscorrZ(wavelength, flux, wavelength_template, flux_template, low_lim_z, high_lim_z, step_z)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=False, gridspec_kw={'height_ratios': [1, 1]})
 
-            #estrapolating the most probable rv value
-            max_corr_fcn = np.argmax(cc)
-            z_at_max = z[max_corr_fcn]
-            cc_at_max = cc[max_corr_fcn]
+    # Upper panel: cross-correlation function
+    ax1.plot(grid, cc_values, label='Cross-correlation')
+    ax1.axvline(best_val, color='red', linestyle='--', label=f"Best {mode} = {best_val:.5f}")
+    ax1.set_xlabel('Redshift z' if mode == 'z' else 'Radial Velocity (km/s)')
+    ax1.set_ylabel('Correlation strength')
+    ax1.set_title('Cross-Correlation and Spectrum Comparison')
+    ax1.legend()
+    ax1.grid(True)
 
-            return z, cc, z_at_max, cc_at_max, wavelength, flux, wavelength_template, flux_template
+    # Lower panel: observed vs shifted template
+    ax2.plot(wave_obs, flux_obs / np.median(flux_obs), label='Observed', alpha=0.7, color='blue')
+    ax2.plot(wave_temp_shifted, flux_temp, label='Template (shifted)', alpha=0.7, color='orange')
+    ax2.set_xlabel('Wavelength ($\AA$)')
+    ax2.set_ylabel('Normalized Flux')
+    ax2.set_xlim(left=np.min(wave_obs))
+    ax2.set_xlim(right=np.max(wave_obs))
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout()
+    if save_plot:
+        plt.savefig(result_plot_dir + '/'+ 'Xcorr_' + spec_name + '_' + '.png', format='png', dpi=300)
+        plt.close()
+    else:
+        plt.show()
+        plt.close()
 
 
 
@@ -504,8 +406,8 @@ def sigma_measurement(wavelength, flux, spec_test_template, lambda_units_templat
 
     #resolution for the EMILES models: if lambda < 895, the resolution is constant with wavelength, which means that the resolution in sigma diminishes with the increasing wavelength.
     if resolution_template == 0:
-        if np.mean(line_wave) < 895.:
-            resolution_lambda_fwhm_temp = 0.251 #fwhm
+        if np.mean(line_wave) < 8950.:
+            resolution_lambda_fwhm_temp = 2.51 #fwhm
             #converting to sigma
             resolution_temp = resolution_lambda_fwhm_temp/np.mean(line_wave)*c/2.3548 # in sigma velocity. it's an approximation, since the resolution in sigma changes with the wavelength, but if the band is small, the approximation is good.
             print (resolution_temp)
@@ -717,8 +619,8 @@ def sigma_measurement(wavelength, flux, spec_test_template, lambda_units_templat
     else:
         sigma_real = mt.sqrt(sigma_real_broadened**2 - sigma_instrumental**2)
 
-    print ('Resolution template in A (FWHM): ', resolution_lambda_fwhm_temp*10)
-    print ('Resolution spectrum in A (FWHM): ', resolution_lambda_fwhm_spec*10)
+    print ('Resolution template in A (FWHM): ', resolution_lambda_fwhm_temp)
+    print ('Resolution spectrum in A (FWHM): ', resolution_lambda_fwhm_spec)
     print ('Resolution sigma template (km/s): ', resolution_temp)
     print ('Resolution sigma spectrum: (km/s)', sigma_instrumental)
     print ('Best sigma gaussian broadening: ', sigma_vel)
@@ -819,7 +721,7 @@ def cat_fitting (wavelength, flux):
 
 #*****************************************************************************************************
 # 8) kinematics with ppxf and EMILES SSP models
-def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, z, sigma_guess, stellar_library, additive_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, mc_sim):
+def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None):
 
     """
      This function uses the pPXF algorith to retrieve the n kinematics moments
@@ -842,10 +744,18 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     """
 
     ppxf_default_lib = ["emiles", "fsps", "galaxev"]
-    wavelength = wavelength*10
-    wave1 = wave1*10
-    wave2 = wave2*10
+    wave1 = wave1
+    wave2 = wave2
     galaxy = flux
+
+    # Definitions in case everything goes bad, to prevent the crash
+    gas_flux = 0
+    gas_flux_err = 0
+    bestfit_gas_flux = 0
+    emission_corrected_flux = 0
+    gas_without_continuum = 0
+    gas_names = None
+    gas_component = 0
 
     line_wave = wavelength[(wavelength >= wave1) & (wavelength <= wave2)]
     line_flux_spec = galaxy[(wavelength >= wave1) & (wavelength <= wave2)]
@@ -853,9 +763,6 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     #updating the variables
     galaxy = line_flux_spec
     wave = line_wave
-
-    #normalise to unity
-    galaxy = galaxy/np.median(galaxy)
 
     # In case I have High or low redshift
     redshift = z
@@ -872,71 +779,157 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     print('Rebinning to log')
     galaxy, ln_lam1, velscale = util.log_rebin(lam_range_gal, galaxy)
 
+    #normalise to unity
+    galaxy = galaxy/np.median(galaxy)
+
     wave = np.exp(ln_lam1) #converting the ln wavelength to wavelength, but keeping the ln sampling
     noise = np.full_like(galaxy, kin_noise) #noise per pixel
 
     c = 299792.458
 
     lam_range_temp = [lam_range_gal[0]/1.02, lam_range_gal[1]*1.02]
-    sps_name = stellar_library
 
-    # Read SPS models file
-    if not custom_lib:
+    use_cached_templates = False
+    if stars_templates is not None and velscale_cached is not None and not two_stellar_components:
+        if np.isclose(velscale, velscale_cached, rtol=1e-5): #using the same precision of pPXF to compare the different velscales (1e-5)
+            use_cached_templates = True
 
-        #requesting the pPXF preloaded templates, if needed
-        if stellar_library in ppxf_default_lib:
-            ppxf_dir = Path(util.__file__).parent
-            basename = f"spectra_{sps_name}_9.0.npz"
-            filename = ppxf_dir / 'sps_models' / basename
-            if not filename.is_file():
-                url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
-                request.urlretrieve(url, filename)
-
-        #loading the templates and convolve them with the FWHM of the galaxy spectrum
-        if is_resolution_gal_constant:
-            if stellar_library == 'xshooter':
-                pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
-                sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp)
-            else:
-                sps = lib.sps_lib(filename, velscale, FWHM_gal, lam_range=lam_range_temp)
-
-        if not is_resolution_gal_constant:
-            FWHM_gal = wave/R
-            if stellar_library == 'xshooter':
-                pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
-                sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp, R = R)
-            else:
-                FWHM_gal = {"lam": wave, "fwhm": FWHM_gal}
-                sps = lib.sps_lib(filename, velscale, FWHM_gal, lam_range=lam_range_temp)
-                #extracting the FWHM gal in numpy array, needed for the gas template building
-                FWHM_gal = FWHM_gal["fwhm"]
-
-
-        stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
-
-
-    if custom_lib:
-        pathname = custom_lib_folder + '/' + custom_lib_suffix
-
-        if is_resolution_gal_constant:
-            sps = template.miles(pathname, velscale, FWHM_gal, wave_range=lam_range_temp)
-
+            print("Using cached stellar templates")
+            lam_temp = np.array(lam_temp)
+            FWHM_gal = FWHM_gal_cached
+            pass
         else:
-            print('')
-            print('Sorry, currently the custom template selection works only with constant FWHM spectral resolution')
-            print('')
+            print("Cached templates invalid (velscale mismatch), will reload.")
+            use_cached_templates = False
 
-        #reshaping the templates
-        stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
+    if not use_cached_templates:
+        print("Loading stellar templates...")
+
+        sps_name = stellar_library
+
+        # Read SPS models file
+        if not custom_lib and not generic_lib:
+
+            #requesting the pPXF preloaded templates, if needed
+            if stellar_library in ppxf_default_lib:
+                ppxf_dir = Path(util.__file__).parent
+                basename = f"spectra_{sps_name}_9.0.npz"
+                filename = ppxf_dir / 'sps_models' / basename
+                if not filename.is_file():
+                    url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
+                    request.urlretrieve(url, filename)
+
+            #loading the templates and convolve them with the FWHM of the galaxy spectrum
+            if is_resolution_gal_constant:
+                print('Convolving to fixed FWHM resolution')
+                if stellar_library == 'xshooter':
+                    pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
+                    sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp)
+                else:
+                    sps = lib.sps_lib(filename, velscale, FWHM_gal, lam_range=lam_range_temp)
+
+            elif not is_resolution_gal_constant and not muse_resolution:
+                print('Convolving to fixed R resolving power')
+                FWHM_gal = wave/R
+                if stellar_library == 'xshooter':
+                    pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
+                    sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp, R = R)
+                else:
+                    FWHM_gal = {"lam": wave, "fwhm": FWHM_gal}
+                    sps = lib.sps_lib(filename, velscale, FWHM_gal, lam_range=lam_range_temp)
+                    #extracting the FWHM gal in numpy array, needed for the gas template building
+                    FWHM_gal = FWHM_gal["fwhm"]
 
 
-    #loading or not the mask emission, if activated an only for stars fitting
+            elif muse_resolution:
+                print('Convolving to MUSE resolution')
+                # Muse LSF polynomial equation 8 from Bacon et al., 2017
+                # FWHM_gal = np.zeros_like(wave)
+                FWHM_gal = 5.866e-8*wave**2-9.187e-4*wave+6.040
+                if stellar_library == 'xshooter':
+                    pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
+                    sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp)
+                else:
+                    # FWHM_gal = 5.866e-8*wave**2-9.187e-4*wave+6.040
+                    FWHM_gal = {"lam": wave, "fwhm": FWHM_gal}
+                    sps = lib.sps_lib(filename, velscale, FWHM_gal, lam_range=lam_range_temp)
+                    #extracting the FWHM gal in numpy array, needed for the gas template building
+                    FWHM_gal = FWHM_gal["fwhm"]
+
+
+            stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
+
+
+        if custom_lib:
+            print ('Using custom (E)MILES templates')
+            pathname = custom_lib_folder + '/' + custom_lib_suffix
+
+            if is_resolution_gal_constant:
+                print('Convolving to fixed FWHM resolution')
+                sps = template.miles(pathname, velscale, FWHM_gal, wave_range=lam_range_temp)
+
+            elif not is_resolution_gal_constant and not muse_resolution:
+                print('Convolving to fixed R resolving power')
+                FWHM_gal = wave/R
+                sps = template.miles(pathname, velscale, FWHM_gal, wave_range=lam_range_temp, R = R)
+            elif muse_resolution:
+                print('Convolving to MUSE resolution')
+                FWHM_gal = 5.866e-8*wave**2-9.187e-4*wave+6.040
+                sps = template.miles(pathname, velscale, FWHM_gal, wave_range=lam_range_temp)
+
+
+            #reshaping the templates
+            stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
+
+        if generic_lib:
+            print ('Using generic templates')
+            pathname = generic_lib_folder + '/*.fits'
+
+            if is_resolution_gal_constant:
+                print('Convolving to fixed FWHM resolution')
+                sps = template.KinematicTemplates(pathname, velscale, FWHM_gal, wave_range=lam_range_temp, FWHM_tem = FWHM_tem_generic)
+
+            elif not is_resolution_gal_constant and not muse_resolution:
+                print('Convolving to fixed R resolving power')
+                FWHM_gal = wave/R
+                sps = template.KinematicTemplates(pathname, velscale, FWHM_gal, wave_range=lam_range_temp, R = R, FWHM_tem = FWHM_tem_generic)
+            elif muse_resolution:
+                print('Convolving to MUSE resolution')
+                FWHM_gal = 5.866e-8*wave**2-9.187e-4*wave+6.040
+                sps = template.KinematicTemplates(pathname, velscale, FWHM_gal, wave_range=lam_range_temp, FWHM_tem = FWHM_tem_generic)
+
+
+            #reshaping the templates
+            stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
+
+        lam_temp=sps.lam_temp
+        FWHM_gal_cached = FWHM_gal
+
+    #loading or not the mask emission, if activated and only for stars fitting
     if kin_fit_stars and mask_lines:
         # Compute a mask for gas emission lines
         goodpix = util.determine_goodpixels(ln_lam1, lam_range_temp, z)
     else:
         goodpix = None
 
+
+    #now it is time to define the user mask, if masking is activated, and transform to Angstrom.
+    if have_user_mask:
+        if mask_lines:
+            print('Goodpix and mask cannot be used together. Continuing with user mask and neglecting goodpix...')
+            goodpix = None
+
+        if z > high_z:
+            corrected_mask_ranges = [(start / (1 + z), end  /(1 + z)) for start, end in mask_ranges]
+            mask_ranges = corrected_mask_ranges
+            user_mask = spman.mask_spectrum(wave, mask_ranges)
+        else:
+            corrected_mask_ranges = [(start , end ) for start, end in mask_ranges]
+            mask_ranges = corrected_mask_ranges
+            user_mask = spman.mask_spectrum(wave, mask_ranges)
+        mask = user_mask
+    else:
+        mask = None
 
     error_kinematics_mc = 0
 
@@ -986,7 +979,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 global_search = False # No need for single component
                 t = clock()
             else:
-
+                if dust_correction_stars:
+                    print('WARNING: skypping star dust correction!')
+                    dust_correction_stars = False
                 templates = stars_templates
                 vel = c*np.log(1 + z)
                 vel1 = vel + vel_guess1
@@ -1023,7 +1018,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, degree= additive_degree,
-                    lam=wave, lam_temp=sps.lam_temp, quiet = True, bias =0, dust = dust, component = component, global_search = global_search) #no penalty for estimation of the noise
+                    lam=wave, lam_temp=lam_temp, quiet = True, bias =0, dust = dust, component = component, global_search = global_search, mask = mask) #no penalty for estimation of the noise
 
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
@@ -1037,10 +1032,10 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             #do the fit!
             pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                 moments=moments, plot = True, degree= additive_degree,
-                lam=wave, lam_temp=sps.lam_temp, dust = dust, component = component, global_search = global_search)
+                lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search, mask = mask)
 
 
-            if np.sum(component) == 0:
+            if not two_stellar_components:
                 errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
             else:
                 errors = [array * np.sqrt(pp.chi2) for array in pp.error]
@@ -1051,7 +1046,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             print("Formal errors in stellar component:")
             print("     dV    dsigma   dh3      dh4")
-            if np.sum(component) == 0:
+            if not two_stellar_components:
                 print("".join("%8.2g" % f for f in errors))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
                 prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
@@ -1061,9 +1056,14 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 stellar_uncertainties = errors[0]
                 print("".join("%8.2g" % f for f in stellar_uncertainties))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
-                prec = int(1 - np.floor(np.log10(redshift_err[0])))  # two digits of uncertainty
-                print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
+                if redshift_err[0] == 0 or not np.isfinite(redshift_err[0]):
+                    prec = 7
+                    print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
                     f"+/- {redshift_err[0]:#.{prec}f}")
+                else:
+                    prec = int(1 - np.floor(np.log10(redshift_err[0])))  # two digits of uncertainty
+                    print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
+                        f"+/- {redshift_err[0]:#.{prec}f}")
 
 
             #output kinematics parameters
@@ -1079,10 +1079,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if kin_moments < all_moments:
                 missing_moments = all_moments - kin_moments
                 moments_to_add = np.zeros(missing_moments)
-                # kinematics = np.hstack((kinematics, moments_to_add))
-                # error_kinematics = np.hstack((error_kinematics, moments_to_add))
 
-                if np.sum(component) == 0:
+                if not two_stellar_components:
                     kinematics = np.hstack((kinematics, moments_to_add))
                     error_kinematics = np.hstack((error_kinematics, moments_to_add))
                 else:
@@ -1105,7 +1103,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 n_sim = mc_sim #how many simulated templates I want to create. Watch out for the computation time!
 
                 #if fitting only one stellar component
-                if np.sum(component)==0:
+                if not two_stellar_components:
                     #initialising the arrays containing the n_sim simulated kinematics
                     vel_dist = []
                     sigma_dist = []
@@ -1120,8 +1118,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         #no regularization!
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                         moments=kin_moments, degree=additive_degree,
-                        lam=bestfit_wavelength, lam_temp=sps.lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search)
+                        lam=bestfit_wavelength, lam_temp=lam_temp,
+                        quiet = True, dust = dust, component = component, global_search = global_search, mask = mask)
 
                         kinematics_mc = pp.sol
 
@@ -1199,8 +1197,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         #fitting the noisy templates
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                         moments=kin_moments, degree=additive_degree,
-                        lam=bestfit_wavelength, lam_temp=sps.lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search)
+                        lam=bestfit_wavelength, lam_temp=lam_temp,
+                        quiet = True, dust = dust, component = component, global_search = global_search, mask = mask)
 
                         kinematics_mc = pp.sol
 
@@ -1281,15 +1279,14 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                     print(error_kinematics_mc)
 
             components = component[0] #only to return the number of gas components, that is zero!
-            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, components, snr, error_kinematics_mc
+            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, components, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached
 
         except Exception:
             print ('ERROR')
-            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = component =  snr =  error_kinematics_mc = 0
+            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = velscale = FWHM_gal_cached = 0
 
 
 #################### WITH GAS AND STARS #########################
-
 
     if kin_fit_gas:
 
@@ -1301,7 +1298,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             #retrieving the emission lines in the wavelength range
             gas_templates, gas_names, line_wave = emission_lines(
-            sps.ln_lam_temp, lam_range_gal, FWHM_gal,
+            np.log(lam_temp), lam_range_gal, FWHM_gal,
             tie_balmer=tie_balmer, limit_doublets=limit_doublets, wave_galaxy = wave)
 
             if tie_balmer:
@@ -1323,10 +1320,10 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             n_others = np.sum(["-" in a for a in gas_names])
 
-
             #looking for the existence of at least one line of each group in the selected spectral window
             if n_forbidden !=0 and n_balmer !=0 and n_others !=0:
                 ##### THREE GAS COMPONETS
+                gas = True
                 print('Balmer, forbidden and other lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden +[3]*n_others
                 gas_component = np.array(component) > 0
@@ -1335,6 +1332,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden !=0 and n_balmer !=0 and n_others == 0:
                 #####
+                gas = True
                 print ('Forbidden and Balmer lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden
                 gas_component = np.array(component) > 0
@@ -1343,6 +1341,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden !=0 and n_balmer == 0 and n_others !=0:
                 #####
+                gas = True
                 print ('Forbidden and other lines')
                 component = [0]*n_temps + [1]*n_others + [2]*n_forbidden
                 gas_component = np.array(component) > 0
@@ -1351,6 +1350,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden !=0 and n_balmer == 0 and n_others ==0:
                 #######
+                gas = True
                 print ('Only forbidden lines')
                 component = [0]*n_temps + [1]*n_forbidden
                 gas_component = np.array(component) > 0
@@ -1359,6 +1359,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden ==0 and n_balmer != 0 and n_others ==0:
                 ######
+                gas = True
                 print('Only balmer lines')
                 component = [0]*n_temps + [1]*n_balmer
                 gas_component = np.array(component) > 0
@@ -1367,6 +1368,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden ==0 and n_balmer != 0 and n_others !=0:
                 #######
+                gas = True
                 print ('Balmer and other lines')
                 component = [0]*n_temps + [1]*n_balmer [2]*n_forbidden
                 gas_component = np.array(component) > 0
@@ -1375,6 +1377,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden ==0 and n_balmer == 0 and n_others !=0:
                 ########
+                gas = True
                 print ('Only other lines')
                 component = [0]*n_temps + [1]*n_others
                 gas_component = np.array(component) > 0
@@ -1383,8 +1386,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             if n_forbidden ==0 and n_balmer == 0 and n_others ==0:
                 ########### NO GAS COMPONENT
+                gas = False
                 print ('No gas lines found. Fitting only the stellar component')
-                component = [0]*n_temps
+                component = 0
                 gas_component = np.array(component) > 0
                 moments = kin_moments
                 start = start
@@ -1414,9 +1418,14 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('')
                 print ('Running ppxf in silent mode to find the best noise level...')
 
-                pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                    moments=moments, degree= additive_degree,
-                    lam=wave, lam_temp=sps.lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust)
+                if gas:
+                    pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
+                        moments=moments, degree= additive_degree,
+                        lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, mask = mask)
+                else:
+                    pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
+                        moments=moments, degree= additive_degree,
+                        lam=wave, lam_temp=lam_temp,component=component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, mask = mask)
 
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
@@ -1427,23 +1436,21 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('')
 
             #finally fitting
-            if component != 0: #with gas
+            if gas: #with gas np.sum(component)==0
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree,
-                    lam=wave, lam_temp=sps.lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust)
+                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust, mask = mask)
+
+                errors = [array * np.sqrt(pp.chi2) for array in pp.error]
+                gas_flux = pp.gas_flux
+                gas_flux_err = pp.gas_flux_error
 
             else: #without gas
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree,
-                    lam=wave, lam_temp=sps.lam_temp,component=component, dust = dust)
+                    lam=wave, lam_temp=lam_temp,component=component, dust = dust, mask = mask)
 
-            # The updated best-fitting redshift is given by the following
-            # lines (using equations 5 of Cappellari 2022, arXiv, C22)
-            #Calculating the formal errors:
-            if component == 0:
                 errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
-            else:
-                errors = [array * np.sqrt(pp.chi2) for array in pp.error]
 
 
             redshift_fit = (1 + redshift_0)*np.exp(pp.sol[0]/c) - 1  # eq. (5c) C22
@@ -1451,7 +1458,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             print("Formal errors in stellar component:")
             print("     dV    dsigma   dh3      dh4")
-            if component == 0:
+            if not gas:
                 print("".join("%8.2g" % f for f in errors))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
                 prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
@@ -1470,16 +1477,30 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             kinematics = pp.sol
             error_kinematics = errors
 
-            #output fit_model
             bestfit_flux = pp.bestfit
             bestfit_wavelength = wave
+            residual = galaxy - bestfit_flux
+            snr = 1/np.std(residual)
+            print ('S/N of the spectrum:', round(snr))
+
+
+            try:
+                bestfit_gas_flux = pp.gas_bestfit
+                bestfit_stellar = bestfit_flux - bestfit_gas_flux
+                emission_corrected_flux = galaxy - bestfit_gas_flux
+                gas_without_continuum = galaxy - bestfit_stellar
+            except TypeError:
+                emission_corrected_flux = galaxy
+                bestfit_gas_flux = 0
+                gas_without_continuum = galaxy
+
 
             #adding the mock h3, h4, h5, and h6 column to the kinematic array in order to not change the main code
             all_moments = 6
             if kin_moments < all_moments:
                 missing_moments = all_moments - kin_moments
                 moments_to_add = np.zeros(missing_moments)
-                if component == 0:
+                if not gas:
                     kinematics = np.hstack((kinematics, moments_to_add))
                     error_kinematics = np.hstack((error_kinematics, moments_to_add))
                 else:
@@ -1488,12 +1509,6 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                         kinematics[k] = np.hstack((kinematics[k], moments_to_add))
                         error_kinematics[k] = np.hstack((error_kinematics[k], moments_to_add))
-
-            #extracting the output parameters
-            bestfit_flux = pp.bestfit
-            residual = galaxy - bestfit_flux
-            snr = 1/np.std(residual)
-            print ('S/N of the spectrum:', round(snr))
 
 
         # Uncertainties estimation on the stellar kinematics with MonteCarlo simulations
@@ -1518,8 +1533,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                     #fitting!
                     pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                     moments=kin_moments, degree=additive_degree,
-                    lam=bestfit_wavelength, lam_temp=sps.lam_temp,
-                    component=0, quiet = True, dust = dust)
+                    lam=bestfit_wavelength, lam_temp=lam_temp,
+                    component=0, quiet = True, dust = dust, mask = mask)
 
                     kinematics_mc = pp.sol
 
@@ -1573,19 +1588,17 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('Uncertainties with MonteCarlo simulations:')
                 print(error_kinematics_mc)
 
-            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, component, snr, error_kinematics_mc
+            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, component, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached
 
         except AssertionError:
             print ('The selected template does not cover the wavelength range you want to fit')
-            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = component =  snr =  error_kinematics_mc = 0
-
-
+            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = FWHM_gal_cached = 0
 
 
 
 #*****************************************************************************************************
 # 9) stellar populations with ppxf
-def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, result_plot_dir):
+def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, lg_met, result_plot_dir):
 
     """
      This function uses the pPXF algorith to retrieve the properties of the
@@ -1622,17 +1635,13 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
              kinematics moments, array containing the flux of the best fit template found, array containing the
              wavelength grid of the best fit template found, array containing the flux of the best
              fit gas template found, float chi2 value of the fit, float lum age lower 1sigma uncertainties
-             (if with_errors = True), float lum age upper 1sigma uncertainties
-             (if with_errors = True), float lum met lower 1sigma uncertainties
-             (if with_errors = True), float lum met upper 1sigma uncertainties
-             (if with_errors = True), float lum alpha/Fe lower 1sigma uncertainties
-             (if with_errors = True), float lum alpha/Fe upper 1sigma uncertainties
-             (if with_errors = True), float mass age lower 1sigma uncertainties
-             (if with_errors = True), float mass age upper 1sigma uncertainties
-             (if with_errors = True), float mass met lower 1sigma uncertainties
-             (if with_errors = True), float mass met upper 1sigma uncertainties
-             (if with_errors = True), float mass alpha/Fe lower 1sigma uncertainties
-             (if with_errors = True), float mass alpha/Fe upper 1sigma uncertainties
+             (if with_errors = True), float lum age  1sigma uncertainties
+             (if with_errors = True), float lum met 1sigma uncertainties
+             (if with_errors = True), float lum alpha/Fe 1sigma uncertainties
+             (if with_errors = True), float mass age 1sigma uncertainties
+             (if with_errors = True), float mass met 1sigma uncertainties
+             (if with_errors = True), float mass alpha/Fe 1sigma uncertainties
+             (if with_errors = True), arrays fractional mass and cumulative mass 1sigma uncertainties
              (if with_errors = True), array of the emission corrected flux of the spectrum,
              array of the age bins of the templates, array of the mass fraction per age bin, array of the
              cumulative mass per age bin, floar S/N measured from the residuals, array of the
@@ -1641,13 +1650,13 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
     ppxf_default_lib = ["emiles", "fsps", "galaxev"]
     #converting wavelength to angstrom
-    wave = wave*10
+    wave = wave
     galaxy = flux
 
 
     #selecting the input range
-    wave1 = wave1*10
-    wave2 = wave2*10
+    wave1 = wave1
+    wave2 = wave2
     line_wave = wave[(wave >= wave1) & (wave <= wave2)]
     line_flux_spec = galaxy[(wave >= wave1) & (wave <= wave2)]
 
@@ -1659,6 +1668,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
     galaxy = galaxy/np.median(galaxy)
 
     # Setting the new lambda ranges to the rest-frame
+    redshift = z #placeholder to not loose the real redshift
     high_z = 0.01
     lam_range_gal = np.array([np.min(wave), np.max(wave)])/(1 + z)
     if z > high_z:
@@ -1736,12 +1746,12 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
     # Loading the custom .npz templates
     if custom_npz:
         print ('Custon templates in .npz format')
-        pathname_npz = filename_npz
+        filename = filename_npz
 
         if convolve_temp:
-            sps = lib.sps_lib(filename_npz, velscale, FWHM_gal, norm_range=[5070, 5950], lam_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range])
+            sps = lib.sps_lib(filename, velscale, FWHM_gal, norm_range=[5070, 5950], lam_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range])
         else:
-            sps = lib.sps_lib(filename_npz, velscale, norm_range=[5070, 5950], lam_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range])
+            sps = lib.sps_lib(filename, velscale, norm_range=[5070, 5950], lam_range=lam_range_temp, age_range = [min_age_range, max_age_range], metal_range = [min_met_range, max_met_range])
 
         reg_dim = sps.templates.shape[1:]
         stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
@@ -1761,11 +1771,11 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             goodpix = None
 
         if z > high_z:
-            corrected_mask_ranges = [(start / (1 + z)*10, end  /(1 + z)*10) for start, end in mask_ranges]
+            corrected_mask_ranges = [(start / (1 + z), end  /(1 + z)) for start, end in mask_ranges]
             mask_ranges = corrected_mask_ranges
             user_mask = spman.mask_spectrum(wave, mask_ranges)
         else:
-            corrected_mask_ranges = [(start *10, end *10) for start, end in mask_ranges]
+            corrected_mask_ranges = [(start , end ) for start, end in mask_ranges]
             mask_ranges = corrected_mask_ranges
             user_mask = spman.mask_spectrum(wave, mask_ranges)
         mask = user_mask
@@ -1779,18 +1789,16 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
         regularization = 0
         print ('Non-regularized fit')
 
-    age_err_lower = 0
-    age_err_upper = 0
-    met_err_lower = 0
-    met_err_upper = 0
-    alpha_err_lower = 0
-    alpha_err_upper = 0
-    mass_age_err_lower = 0
-    mass_age_err_upper = 0
-    mass_met_err_lower = 0
-    mass_met_err_upper = 0
-    mass_alpha_err_lower = 0
-    mass_alpha_err_upper = 0
+    age_err = 0
+    met_err = 0
+    alpha_err = 0
+    mass_age_err = 0
+    mass_met_err = 0
+    mass_alpha_err = 0
+    mass_weights_age_std = 0
+    light_weights_age_std = 0
+    cumulative_mass_std = 0
+    cumulative_light_std = 0
 
 
   ###################### Now without gas ##################
@@ -1848,7 +1856,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=wave, lam_temp=sps.lam_temp,
                     regul=try_regularization, reg_dim=reg_dim,
-                    component=component, dust = dust, quiet = True)
+                    component=component, dust = dust, mask = mask, quiet = True)
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
                 noise = best_noise
@@ -1902,7 +1910,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                         moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=1/regul_err, reg_dim=reg_dim,
-                        component=component, dust = dust, quiet = True)
+                        component=component, dust = dust, mask = mask, quiet = True)
                     current_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                     print(f"Current Delta Chi^2: {(pp.chi2 - 1)*galaxy.size:#.4g}")
                     print(f"Desired Delta Chi^2: {np.sqrt(2*galaxy.size):#.4g}")
@@ -1967,9 +1975,9 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             # For the embedded pPXF libraries I need to extract the data from auxiliary functions, since I cannot modify the sps.util function.
             if custom_emiles or stellar_library in ['sMILES', 'xshooter']:
                 print('\nLuminosity weighted stellar populations:')
-                info_pop = sps.mean_age_metal(light_weights, lg_age)
+                info_pop = sps.mean_age_metal(light_weights, lg_age, lg_met)
                 print('\nMass weighted stellar populations:')
-                info_pop_mass = sps.mean_age_metal(mass_weights, lg_age)
+                info_pop_mass = sps.mean_age_metal(mass_weights, lg_age, lg_met)
                 mass_light = 0  # No photometry info available
             else:
                 sps_data_ppxf = template.SPSLibWrapper(
@@ -1978,9 +1986,9 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     norm_range=[5070, 5950], norm_type='mean'
                 )
                 print('\nLuminosity weighted stellar populations:')
-                info_pop = sps_data_ppxf.mean_age_metal(light_weights, lg_age)
+                info_pop = sps_data_ppxf.mean_age_metal(light_weights, lg_age, lg_met)
                 print('\nMass weighted stellar populations:')
-                info_pop_mass = sps_data_ppxf.mean_age_metal(mass_weights, lg_age)
+                info_pop_mass = sps_data_ppxf.mean_age_metal(mass_weights, lg_age, lg_met)
                 mass_light = sps.mass_to_light(mass_weights, band="v")
 
             # Printing output infos
@@ -2006,9 +2014,11 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             if stellar_library == 'sMILES' and not custom_emiles:
                 reduced_mass_weights = np.sum(mass_weights, axis=2)
                 mass_weights_age_bin = np.sum(reduced_mass_weights, axis=1)[::-1]
+                mass_weights_met_bin = np.sum(reduced_mass_weights, axis=0)[::-1]
 
                 reduced_light_weights = np.sum(light_weights, axis=2)
                 light_weights_age_bin = np.sum(reduced_light_weights, axis=1)[::-1]
+                light_weights_met_bin = np.sum(reduced_light_weights, axis=0)[::-1]
 
                 #retrieving age and metallicity grids
                 age_grid = sps.get_full_age_grid()
@@ -2018,6 +2028,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 age_bins = np.mean(age_bins, axis=1)[::-1] #inverting
                 met_bins = met_grid[0,:] #extracting
                 met_bins = np.mean(met_bins, axis=1)[::-1] #inverting
+
                 alpha_bins = alpha_grid[0, 0, :] #extracting
                 alpha_bins = alpha_bins[::-1] #inverting
 
@@ -2037,267 +2048,32 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 mass_weights_age_bin = np.sum(mass_weights, axis=1)[::-1]
                 light_weights_age_bin = np.sum(light_weights, axis=1)[::-1]
 
+                mass_weights_met_bin= np.sum(mass_weights, axis=0)[::-1]
+                light_weights_met_bin= np.sum(light_weights, axis=0)[::-1]
+
+
             if lg_age:
                 age_bins = np.log10(age_bins) + 9
 
             cumulative_mass = np.cumsum(mass_weights_age_bin)
+            cumulative_light = np.cumsum(light_weights_age_bin)
 
+            t50_age, t80_age, t50_cosmic, t80_cosmic = calculate_t50_t80_cosmic(age_bins, cumulative_mass, redshift, lg_age)
 
-            #Doing plots
-            if with_plots or save_plot:
-
-                # Creating figure and grid
-                fig = plt.figure(figsize=(13, 7))
-                gs = gridspec.GridSpec(3, 2, height_ratios=[1.5, 1.7, 2])
-
-
-                #*********** 1) First plot: fit of the spectrum across all the columns ***********
-                ax1 = fig.add_subplot(gs[0, :])
-                plt.sca(ax1)
-                pp.plot()
-                plt.tight_layout()
-
-
-                #*********** 2) Second plot: light weights map ***********
-                ax2 = fig.add_subplot(gs[1, 0])
-                mean_lum_age = info_pop[0]
-                mean_lum_met = info_pop[1]
-                plt.sca(ax2)
-
-                #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
-                if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
-                    sps_data_ppxf.plot(light_weights, lg_age, cmap='BuPu')
-                else:
-                    template.plot_weights(light_weights, age_grid, met_grid, lg_age, cmap='BuPu')
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.title(f"Luminosity fraction   lg<Age> = {mean_lum_age:.3g} dex, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
-                else:
-                    plt.title(f"Luminosity fraction   <Age> = {mean_lum_age:.3g} Gyr, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
-                plt.plot(mean_lum_age, mean_lum_met, 'ro')
-
-
-                #*********** 3) Third plot: mass weights map ***********
-                ax3 = fig.add_subplot(gs[1, 1])
-                mean_mass_age = info_pop_mass[0]
-                mean_mass_met = info_pop_mass[1]
-                plt.sca(ax3)
-
-                #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
-                if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
-                    sps_data_ppxf.plot(mass_weights, lg_age, cmap='BuPu')
-                else:
-                    template.plot_weights(mass_weights, age_grid, met_grid, lg_age, cmap='BuPu')
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.title(f"Mass fraction   lg<Age> = {mean_mass_age:.3g} dex, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
-                else:
-                    plt.title(f"Mass fraction   <Age> = {mean_mass_age:.3g} Gyr, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
-
-                plt.tight_layout()
-
-
-                #*********** 4) Fourth plot: light weigthed SFH ***********
-                ax4 = fig.add_subplot(gs[2, 0])
-                plt.sca(ax4)
-                plt.plot(age_bins, light_weights_age_bin, lw=2, color='black')
-                ax4.set_ylim(bottom=0)
-                ax4.set_xlim(left=np.min(age_bins))
-                ax4.set_xlim(right=np.max(age_bins))
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.xlabel("lg Age (dex)", fontsize=11)
-                else:
-                    plt.xlabel("Age (Gyr)", fontsize=11)
-                plt.ylabel("Fractional luminosity", fontsize=11)
-                plt.title('Luminosity weighted SFH', fontsize=10)
-                plt.tight_layout()
-
-
-                #*********** 5) Fifth plot: mass weigthed SFH ***********
-                ax5 = fig.add_subplot(gs[2, 1])
-                plt.sca(ax5)
-                plt.plot(age_bins, mass_weights_age_bin, lw=2, color='black')
-                ax5.set_ylim(bottom=0)
-                ax5.set_xlim(left=np.min(age_bins))
-                ax5.set_xlim(right=np.max(age_bins))
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.xlabel("lg Age (dex)", fontsize=11)
-                else:
-                    plt.xlabel("Age (Gyr)", fontsize=11)
-
-                plt.ylabel("Fractional mass", fontsize=11)
-                plt.title('Mass weighted SFH', fontsize=10)
-                plt.tight_layout()
-
-                #In case I want to save the plots
-                if save_plot:
-                    # result_plot_dir = 'results/plots'
-                    # os.makedirs(result_plot_dir, exist_ok=True)
-                    plt.savefig(result_plot_dir + '/'+ 'SFH_plots_'+ spec_name + '.png', format='png', dpi=300)
-                    plt.close()
-                else:
-                    plt.show()
-                    plt.close()
-
-
-                #In case of sMILES SSPs, I show also the [alpha/Fe]-[M/H] plot in another window
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    plt.figure(figsize=(12, 4))
-                    plt.subplot(121)
-                    # sps.plot_alpha(light_weights,cmap='BuPu', title = 'Luminosity fraction')
-                    template.plot_alpha_weights(light_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Luminosity fraction')
-                    plt.plot(info_pop[1], info_pop[2], 'ro')
-
-                    plt.subplot(122)
-                    # sps.plot_alpha(mass_weights,cmap='BuPu', title = 'Mass fraction' )
-                    template.plot_alpha_weights(mass_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Mass fraction')
-                    if save_plot:
-                        plt.savefig(result_plot_dir + '/'+ 'pop_pop_alpha_weights_'+ spec_name + '.png', format='png', dpi=300)
-                        plt.close()
-                    else:
-                        plt.show()
-                        plt.close()
-
-
-            #UNCERTAINTIES WITH BOOTSTRAP!
-            if with_errors:
-                print('Estimating the uncertainties with bootstrapping')
-                print('')
-                bestfit0 = pp.bestfit.copy()
-                resid = galaxy - bestfit0
-                start = pp.sol.copy()
-
-                np.random.seed(123)
-
-                weights_array = np.empty((nrand, pp.weights.size))
-                age_dist = []
-                met_dist = []
-                mass_age_dist = []
-                mass_met_dist = []
-
-                for j in range(nrand):
-                    galaxy1 = bootstrap_residuals(bestfit0, resid)
-
-
-                    t = clock()
-                    pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
-                        moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
-                        lam=wave, lam_temp=sps.lam_temp,
-                        reg_dim=reg_dim,
-                        mask = mask, dust = dust, quiet =1)
-
-                    print(f"{j + 1}/{nrand}: Elapsed time in pPXF: {clock() - t:.2f} s")
-
-                    weights_array[j] = pp.weights
-
-                    #setting up the result parameters
-                    light_weights_err = pp.weights[~gas_component]
-                    light_weights_err = light_weights_err.reshape(reg_dim)
-                    light_weights_err /= light_weights_err.sum()
-                    info_pop_err = sps.mean_age_metal(light_weights_err, lg_age)
-                    mass_weights_err = light_weights_err/sps.flux
-                    mass_weights_err /= mass_weights_err.sum()              # Normalize to mass fractions
-
-                    if custom_emiles or stellar_library == 'xshooter' or stellar_library =='sMILES':
-                        mass_light_err = 0
-                    else:
-                        mass_light_err = sps.mass_to_light(mass_weights_err, band="v")
-
-                    info_pop_mass_err = sps.mean_age_metal(mass_weights_err, lg_age)
-
-
-                    age_dist.append(info_pop_err[0])
-                    met_dist.append(info_pop_err[1])
-
-                    if stellar_library == 'sMILES' and not custom_emiles:
-                        alpha_dist.append(info_pop_err[2])
-                        mass_alpha_dist.append(info_pop_mass_err[2])
-
-                    age_dist.append(info_pop_err[0])
-                    met_dist.append(info_pop_err[1])
-                    mass_age_dist.append(info_pop_mass_err[0])
-                    mass_met_dist.append(info_pop_mass_err[1])
-
-                #sorting the values
-                age_dist_sorted = np.sort(age_dist)
-                met_dist_sorted = np.sort(met_dist)
-                mass_age_dist_sorted = np.sort(mass_age_dist)
-                mass_met_dist_sorted = np.sort(mass_met_dist)
-
-                #calculating the 68% percentiles
-                age_lower = np.percentile(age_dist_sorted, 16)
-                age_median = np.percentile(age_dist_sorted, 50)
-                age_upper = np.percentile(age_dist_sorted, 84)
-
-                met_lower = np.percentile(met_dist_sorted, 16)
-                met_median = np.percentile(met_dist_sorted, 50)
-                met_upper = np.percentile(met_dist_sorted, 84)
-
-                mass_age_lower = np.percentile(mass_age_dist_sorted, 16)
-                mass_age_median = np.percentile(mass_age_dist_sorted, 50)
-                mass_age_upper = np.percentile(mass_age_dist_sorted, 84)
-
-                mass_met_lower = np.percentile(mass_met_dist_sorted, 16)
-                mass_met_median = np.percentile(mass_met_dist_sorted, 50)
-                mass_met_upper = np.percentile(mass_met_dist_sorted, 84)
-
-                #calculating the lower and upper uncertainties
-                age_err_lower = age_median - age_lower
-                age_err_upper = age_upper - age_median
-                met_err_lower = met_median - met_lower
-                met_err_upper = met_upper - met_median
-
-                #for mass weigthed values
-                mass_age_err_lower = mass_age_median - mass_age_lower
-                mass_age_err_upper = mass_age_upper - mass_age_median
-                mass_met_err_lower = mass_met_median - mass_met_lower
-                mass_met_err_upper = mass_met_upper - mass_met_median
-
-                # for the sMILES models I also have the alpha/Fe to consider
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    alpha_dist_sorted = np.sort(alpha_dist)
-                    mass_alpha_dist_sorted = np.sort(mass_alpha_dist)
-                    alpha_lower = np.percentile(alpha_dist_sorted, 16)
-                    alpha_median = np.percentile(alpha_dist_sorted, 50)
-                    alpha_upper = np.percentile(alpha_dist_sorted, 84)
-                    alpha_err_lower = alpha_median - alpha_lower
-                    alpha_err_upper = alpha_upper - alpha_median
-
-                    mass_alpha_lower = np.percentile(mass_alpha_dist_sorted, 16)
-                    mass_alpha_median = np.percentile(mass_alpha_dist_sorted, 50)
-                    mass_alpha_upper = np.percentile(mass_alpha_dist_sorted, 84)
-                    mass_alpha_err_lower = mass_alpha_median - mass_alpha_lower
-                    mass_alpha_err_upper = mass_alpha_upper - mass_alpha_median
-                else:
-                    alpha_err_lower = 0
-                    alpha_err_upper = 0
-                    mass_alpha_err_lower = 0
-                    mass_alpha_err_upper = 0
-
-                print('')
-                print(f"Error luminosity age: ({age_err_lower:.4g}, {age_err_upper:.4g})")
-                print(f"Error luminosity met (dex)): ({met_err_lower:.4g}, {met_err_upper:.4g})")
-                print(f"Error mass age: ({mass_age_err_lower:.4g}, {mass_age_err_upper:.4g})")
-                print(f"Error mass met (dex)): ({mass_met_err_lower:.4g}, {mass_met_err_upper:.4g})")
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    print(f"Error luminosity alpha/Fe (dex): ({alpha_err_lower:.4g}, {alpha_err_upper:.4g})")
-                    print(f"Error mass alpha/Fe (dex): ({mass_alpha_err_lower:.4g}, {mass_alpha_err_upper:.4g})")
-
-
-            return kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_gas_flux, residual, chi_square, age_err_lower, age_err_upper, met_err_lower, met_err_upper, alpha_err_lower, alpha_err_upper, mass_age_err_lower, mass_age_err_upper, mass_met_err_lower, mass_met_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr, light_weights, mass_weights
+            print ('')
+            print(f"--- Stellar population times ---")
+            print(f"t50 (stellar age):  {t50_age:.2f} Gyr ago")
+            print(f"t80 (stellar age):  {t80_age:.2f} Gyr ago")
+            print(f"--- Cosmic times since Big Bang ---")
+            print(f"t50 (cosmic time):  {t50_cosmic:.2f} Gyr")
+            print(f"t80 (cosmic time):  {t80_cosmic:.2f} Gyr")
+            print('')
 
         except AssertionError:
             print ('The selected template does not cover the wavelength range you want to fit')
-            kinematics=info_pop=info_pop_mass= mass_light= errors= galaxy= bestfit_flux= bestfit_wave= bestfit_gas_flux=residual= chi_square=age_err_lower=age_err_upper=met_err_lower=met_err_upper=alpha_err_lower=alpha_err_upper=mass_age_err_lower=mass_age_err_upper=mass_met_err_lower=mass_met_err_upper=mass_alpha_err_lower=mass_alpha_err_upper=emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr, light_weights, mass_weights = 0
+            kinematics=info_pop=info_pop_mass= mass_light= errors= bestfit_flux= bestfit_wave= bestfit_gas_flux=residual= chi_square=age_err=met_err=alpha_err=mass_age_err=mass_met_err=mass_alpha_err=emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic = 0
 
 #################### WITH GAS #########################
-
 
     if fit_components == 'with_gas':
 
@@ -2314,8 +2090,6 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             if tie_balmer:
                 dust_correction_gas = True
                 print ('With tied Balmer lines, I activate the gas dust correction for you')
-
-
 
             templates = np.column_stack([stars_templates, gas_templates])
             vel = c*np.log(1 + z)
@@ -2338,7 +2112,6 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 ##### THREE GAS COMPONETS
                 gas = True
                 print('Balmer, forbidden and other lines')
-
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden +[3]*n_others
                 gas_component = np.array(component) > 0
                 moments = [4, 2, 2, 2]
@@ -2444,20 +2217,20 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Running ppxf in silent mode to find the best noise level...')
                 try_regularization = 0
 
-                if component != 0:
+                if gas:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                         moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=try_regularization, reg_dim=reg_dim,
                         component=component, gas_component=gas_component,
-                        gas_names=gas_names, dust=dust, quiet = True)
+                        gas_names=gas_names, dust=dust, mask = mask, quiet = True)
 
                 else:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                         moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=regularization, reg_dim=reg_dim,
-                        component=component, dust = dust, quiet = True)
+                        component=component, dust = dust, mask = mask, quiet = True)
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
                 noise = best_noise
@@ -2597,9 +2370,9 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             # For the embedded pPXF libraries I need to extract the data from auxiliary functions, since I cannot modify the sps.util function.
             if custom_emiles or stellar_library in ['sMILES', 'xshooter']:
                 print('\nLuminosity weighted stellar populations:')
-                info_pop = sps.mean_age_metal(light_weights, lg_age)
+                info_pop = sps.mean_age_metal(light_weights, lg_age, lg_met)
                 print('\nMass weighted stellar populations:')
-                info_pop_mass = sps.mean_age_metal(mass_weights, lg_age)
+                info_pop_mass = sps.mean_age_metal(mass_weights, lg_age, lg_met)
                 mass_light = 0  # No photometry info available
             else:
                 sps_data_ppxf = template.SPSLibWrapper(
@@ -2608,10 +2381,11 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     norm_range=[5070, 5950], norm_type='mean'
                 )
                 print('\nLuminosity weighted stellar populations:')
-                info_pop = sps_data_ppxf.mean_age_metal(light_weights, lg_age)
+                info_pop = sps_data_ppxf.mean_age_metal(light_weights, lg_age, lg_met)
                 print('\nMass weighted stellar populations:')
-                info_pop_mass = sps_data_ppxf.mean_age_metal(mass_weights, lg_age)
+                info_pop_mass = sps_data_ppxf.mean_age_metal(mass_weights, lg_age, lg_met)
                 mass_light = sps.mass_to_light(mass_weights, band="v")
+
 
             # Printing output infos
             print(f"\nCurrent Delta Chi^2: {(pp.chi2 - 1) * galaxy.size:#.4g}")
@@ -2639,9 +2413,11 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             if stellar_library == 'sMILES' and not custom_emiles:
                 reduced_mass_weights = np.sum(mass_weights, axis=2)
                 mass_weights_age_bin = np.sum(reduced_mass_weights, axis=1)[::-1]
+                mass_weights_met_bin = np.sum(reduced_mass_weights, axis=0)[::-1]
 
                 reduced_light_weights = np.sum(light_weights, axis=2)
                 light_weights_age_bin = np.sum(reduced_light_weights, axis=1)[::-1]
+                light_weights_met_bin = np.sum(reduced_light_weights, axis=0)[::-1]
 
                 #retrieving age and metallicity grids
                 age_grid = sps.get_full_age_grid()
@@ -2651,9 +2427,9 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 age_bins = np.mean(age_bins, axis=1)[::-1] #inverting
                 met_bins = met_grid[0,:] #extracting
                 met_bins = np.mean(met_bins, axis=1)[::-1] #inverting
+
                 alpha_bins = alpha_grid[0, 0, :] #extracting
                 alpha_bins = alpha_bins[::-1] #inverting
-
 
             else:
                 if custom_emiles or stellar_library == 'xshooter':
@@ -2671,282 +2447,430 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 mass_weights_age_bin = np.sum(mass_weights, axis=1)[::-1]
                 light_weights_age_bin = np.sum(light_weights, axis=1)[::-1]
 
+                mass_weights_met_bin= np.sum(mass_weights, axis=0)[::-1]
+                light_weights_met_bin= np.sum(light_weights, axis=0)[::-1]
+
 
             if lg_age:
                 age_bins = np.log10(age_bins) + 9
 
             cumulative_mass = np.cumsum(mass_weights_age_bin)
+            cumulative_light = np.cumsum(light_weights_age_bin)
 
+            # Calculating t50 and t80
+            t50_age, t80_age, t50_cosmic, t80_cosmic = calculate_t50_t80_cosmic(age_bins, cumulative_mass, redshift, lg_age)
 
-            #Doing plots
-            if with_plots or save_plot:
+            print ('')
+            print(f"--- Stellar population times ---")
+            print(f"t50 (stellar age):  {t50_age:.2f} Gyr ago")
+            print(f"t80 (stellar age):  {t80_age:.2f} Gyr ago")
 
-                # Creating figure and grid
-                fig = plt.figure(figsize=(13, 7))
-                gs = gridspec.GridSpec(3, 2, height_ratios=[1.5, 1.7, 2])
-
-
-                #*********** 1) First plot: fit of the spectrum across all the columns ***********
-                ax1 = fig.add_subplot(gs[0, :])
-                plt.sca(ax1)
-                pp.plot()
-                plt.tight_layout()
-
-
-                #*********** 2) Second plot: light weights map ***********
-                ax2 = fig.add_subplot(gs[1, 0])
-                mean_lum_age = info_pop[0]
-                mean_lum_met = info_pop[1]
-                plt.sca(ax2)
-
-                #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
-                if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
-                    sps_data_ppxf.plot(light_weights, lg_age, cmap='BuPu')
-                else:
-                    template.plot_weights(light_weights, age_grid, met_grid, lg_age, cmap='BuPu')
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.title(f"Luminosity fraction   lg<Age> = {mean_lum_age:.3g} dex, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
-                else:
-                    plt.title(f"Luminosity fraction   <Age> = {mean_lum_age:.3g} Gyr, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
-                plt.plot(mean_lum_age, mean_lum_met, 'ro')
-
-
-                #*********** 3) Third plot: mass weights map ***********
-                ax3 = fig.add_subplot(gs[1, 1])
-                mean_mass_age = info_pop_mass[0]
-                mean_mass_met = info_pop_mass[1]
-                plt.sca(ax3)
-
-                #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
-                if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
-                    sps_data_ppxf.plot(mass_weights, lg_age, cmap='BuPu')
-                else:
-                    template.plot_weights(mass_weights, age_grid, met_grid, lg_age, cmap='BuPu')
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.title(f"Mass fraction   lg<Age> = {mean_mass_age:.3g} dex, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
-                else:
-                    plt.title(f"Mass fraction   <Age> = {mean_mass_age:.3g} Gyr, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
-
-                plt.tight_layout()
-
-
-                #*********** 4) Fourth plot: light weigthed SFH ***********
-                ax4 = fig.add_subplot(gs[2, 0])
-                plt.sca(ax4)
-                plt.plot(age_bins, light_weights_age_bin, lw=2, color='black')
-                ax4.set_ylim(bottom=0)
-                ax4.set_xlim(left=np.min(age_bins))
-                ax4.set_xlim(right=np.max(age_bins))
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.xlabel("lg Age (dex)", fontsize=11)
-                else:
-                    plt.xlabel("Age (Gyr)", fontsize=11)
-                plt.ylabel("Fractional luminosity", fontsize=11)
-                plt.title('Luminosity weighted SFH', fontsize=10)
-                plt.tight_layout()
-
-
-                #*********** 5) Fifth plot: mass weigthed SFH ***********
-                ax5 = fig.add_subplot(gs[2, 1])
-                plt.sca(ax5)
-                plt.plot(age_bins, mass_weights_age_bin, lw=2, color='black')
-                ax5.set_ylim(bottom=0)
-                ax5.set_xlim(left=np.min(age_bins))
-                ax5.set_xlim(right=np.max(age_bins))
-
-                #Considering log or linear age grid
-                if lg_age:
-                    plt.xlabel("lg Age (dex)", fontsize=11)
-                else:
-                    plt.xlabel("Age (Gyr)", fontsize=11)
-
-                plt.ylabel("Fractional mass", fontsize=11)
-                plt.title('Mass weighted SFH', fontsize=10)
-                plt.tight_layout()
-
-                #In case I want to save the plots
-                if save_plot:
-                    plt.savefig(result_plot_dir + '/'+ 'SFH_plots_'+ spec_name + '.png', format='png', dpi=300)
-                    plt.close()
-                else:
-                    plt.show()
-                    plt.close()
-
-
-                #In case of sMILES SSPs, I show also the [alpha/Fe]-[M/H] plot in another window
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    plt.figure(figsize=(12, 4))
-                    plt.subplot(121)
-                    template.plot_alpha_weights(light_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Luminosity fraction')
-                    plt.plot(info_pop[1], info_pop[2], 'ro')
-
-                    plt.subplot(122)
-                    template.plot_alpha_weights(mass_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Mass fraction')
-
-                    if save_plot:
-                        plt.savefig(result_plot_dir + '/'+ 'pop_pop_alpha_weights_'+ spec_name + '.png', format='png', dpi=300)
-                        plt.close()
-                    else:
-                        plt.show()
-                        plt.close()
-
-
-            #UNCERTAINTIES WITH BOOTSTRAP!
-            if with_errors:
-                print('Estimating the uncertainties with bootstrapping')
-                print('')
-                bestfit0 = pp.bestfit.copy()
-                resid = galaxy - bestfit0
-                start = pp.sol.copy()
-                np.random.seed(123)
-
-                weights_array = np.empty((nrand, pp.weights.size))
-                age_dist = []
-                met_dist = []
-                alpha_dist = []
-                mass_age_dist = []
-                mass_met_dist = []
-                mass_alpha_dist = []
-
-                for j in range(nrand):
-                    galaxy1 = bootstrap_residuals(bestfit0, resid)
-
-                    t = clock() #starting the clock
-
-                    #finally fitting
-                    if gas:
-                        pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
-                            moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
-                            lam=wave, lam_temp=sps.lam_temp,
-                            reg_dim=reg_dim,
-                            component=component, gas_component=gas_component,
-                            gas_names=gas_names, dust=dust, mask = mask, quiet =1)
-                    else:
-                        pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
-                            moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
-                            lam=wave, lam_temp=sps.lam_temp,
-                            reg_dim=reg_dim,
-                            component=component, mask = mask, dust = dust, quiet =1)
-
-
-                    print(f"{j + 1}/{nrand}: Elapsed time in pPXF: {clock() - t:.2f} s")
-
-                    weights_array[j] = pp.weights
-
-
-                    #setting up the result parameters
-                    light_weights_err = pp.weights[~gas_component]
-                    light_weights_err = light_weights_err.reshape(reg_dim)
-                    light_weights_err /= light_weights_err.sum()
-                    info_pop_err = sps.mean_age_metal(light_weights_err, lg_age)
-                    mass_weights_err = light_weights_err/sps.flux
-                    mass_weights_err /= mass_weights_err.sum()              # Normalize to mass fractions
-
-
-                    if custom_emiles or stellar_library == 'xshooter' or stellar_library =='sMILES':
-                        mass_light_err = 0
-                    else:
-                        mass_light_err = sps.mass_to_light(mass_weights_err, band="v")
-
-                    info_pop_mass_err = sps.mean_age_metal(mass_weights_err, lg_age)
-
-
-                    age_dist.append(info_pop_err[0])
-                    met_dist.append(info_pop_err[1])
-
-                    if stellar_library == 'sMILES' and not custom_emiles:
-                        alpha_dist.append(info_pop_err[2])
-                        mass_alpha_dist.append(info_pop_mass_err[2])
-
-                    age_dist.append(info_pop_err[0])
-                    met_dist.append(info_pop_err[1])
-                    mass_age_dist.append(info_pop_mass_err[0])
-                    mass_met_dist.append(info_pop_mass_err[1])
-
-                #sorting the values
-                age_dist_sorted = np.sort(age_dist)
-                met_dist_sorted = np.sort(met_dist)
-                mass_age_dist_sorted = np.sort(mass_age_dist)
-                mass_met_dist_sorted = np.sort(mass_met_dist)
-
-                #calculating the 68% percentiles
-                age_lower = np.percentile(age_dist_sorted, 16)
-                age_median = np.percentile(age_dist_sorted, 50)
-                age_upper = np.percentile(age_dist_sorted, 84)
-
-                met_lower = np.percentile(met_dist_sorted, 16)
-                met_median = np.percentile(met_dist_sorted, 50)
-                met_upper = np.percentile(met_dist_sorted, 84)
-
-                mass_age_lower = np.percentile(mass_age_dist_sorted, 16)
-                mass_age_median = np.percentile(mass_age_dist_sorted, 50)
-                mass_age_upper = np.percentile(mass_age_dist_sorted, 84)
-
-                mass_met_lower = np.percentile(mass_met_dist_sorted, 16)
-                mass_met_median = np.percentile(mass_met_dist_sorted, 50)
-                mass_met_upper = np.percentile(mass_met_dist_sorted, 84)
-
-                #calculating the lower and upper uncertainties
-                age_err_lower = age_median - age_lower
-                age_err_upper = age_upper - age_median
-                met_err_lower = met_median - met_lower
-                met_err_upper = met_upper - met_median
-
-                #for mass weigthed values
-                mass_age_err_lower = mass_age_median - mass_age_lower
-                mass_age_err_upper = mass_age_upper - mass_age_median
-                mass_met_err_lower = mass_met_median - mass_met_lower
-                mass_met_err_upper = mass_met_upper - mass_met_median
-
-                # for the sMILES models I also have the alpha/Fe to consider
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    alpha_dist_sorted = np.sort(alpha_dist)
-                    mass_alpha_dist_sorted = np.sort(mass_alpha_dist)
-                    alpha_lower = np.percentile(alpha_dist_sorted, 16)
-                    alpha_median = np.percentile(alpha_dist_sorted, 50)
-                    alpha_upper = np.percentile(alpha_dist_sorted, 84)
-                    alpha_err_lower = alpha_median - alpha_lower
-                    alpha_err_upper = alpha_upper - alpha_median
-
-                    mass_alpha_lower = np.percentile(mass_alpha_dist_sorted, 16)
-                    mass_alpha_median = np.percentile(mass_alpha_dist_sorted, 50)
-                    mass_alpha_upper = np.percentile(mass_alpha_dist_sorted, 84)
-                    mass_alpha_err_lower = mass_alpha_median - mass_alpha_lower
-                    mass_alpha_err_upper = mass_alpha_upper - mass_alpha_median
-                else:
-                    alpha_err_lower = 0
-                    alpha_err_upper = 0
-                    mass_alpha_err_lower = 0
-                    mass_alpha_err_upper = 0
-
-                print('')
-                print(f"Error luminosity age: ({age_err_lower:.4g}, {age_err_upper:.4g})")
-                print(f"Error luminosity met (dex)): ({met_err_lower:.4g}, {met_err_upper:.4g})")
-                print(f"Error mass age: ({mass_age_err_lower:.4g}, {mass_age_err_upper:.4g})")
-                print(f"Error mass met (dex)): ({mass_met_err_lower:.4g}, {mass_met_err_upper:.4g})")
-                if stellar_library == 'sMILES' and not custom_emiles:
-                    print(f"Error luminosity alpha/Fe (dex): ({alpha_err_lower:.4g}, {alpha_err_upper:.4g})")
-                    print(f"Error mass alpha/Fe (dex): ({mass_alpha_err_lower:.4g}, {mass_alpha_err_upper:.4g})")
-
-
-
-            plt.close()
-
-            return kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_gas_flux, residual, chi_square, age_err_lower, age_err_upper, met_err_lower, met_err_upper, alpha_err_lower, alpha_err_upper, mass_age_err_lower, mass_age_err_upper, mass_met_err_lower, mass_met_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr, light_weights, mass_weights
+            print(f"--- Cosmic times since Big Bang ---")
+            print(f"t50 (cosmic time):  {t50_cosmic:.2f} Gyr")
+            print(f"t80 (cosmic time):  {t80_cosmic:.2f} Gyr")
+            print('')
 
         except AssertionError:
             print ('The selected template does not cover the wavelength range you want to fit')
-            kinematics=info_pop=info_pop_mass= mass_light= errors= bestfit_flux= bestfit_wave= bestfit_gas_flux=residual= chi_square=age_err_lower=age_err_upper=met_err_lower=met_err_upper=alpha_err_lower=alpha_err_upper=mass_age_err_lower=mass_age_err_upper=mass_met_err_lower=mass_met_err_upper=mass_alpha_err_lower=mass_alpha_err_upper=emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr, light_weights, mass_weights = 0
+            kinematics=info_pop=info_pop_mass= mass_light= errors= bestfit_flux= bestfit_wave= bestfit_gas_flux=residual= chi_square=age_err=met_err=alpha_err=mass_age_err=mass_met_err=mass_alpha_err=emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic = 0
+
+
+    #Doing plots and errors for both cases (gas and no gas)
+    if with_plots or save_plot:
+
+        # Creating figure and grid
+        fig = plt.figure(figsize=(13, 7))
+        gs = gridspec.GridSpec(2, 2, height_ratios=[1.5, 1.7])
+
+
+        #*********** 1) First plot: fit of the spectrum across all the columns ***********
+        ax1 = fig.add_subplot(gs[0, :])
+        plt.sca(ax1)
+        pp.plot()
+        plt.tight_layout()
+
+
+        #*********** 2) Second plot: light weights map ***********
+        ax2 = fig.add_subplot(gs[1, 0])
+        mean_lum_age = info_pop[0]
+        mean_lum_met = info_pop[1]
+        plt.sca(ax2)
+
+        #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
+        if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
+            sps_data_ppxf.plot(light_weights, lg_age, cmap='BuPu')
+        else:
+            template.plot_weights(light_weights, age_grid, met_grid, lg_age, cmap='BuPu')
+
+        #Considering log or linear age grid
+        if lg_age:
+            plt.title(f"Luminosity fraction   lg<Age> = {mean_lum_age:.3g} dex, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
+        else:
+            plt.title(f"Luminosity fraction   <Age> = {mean_lum_age:.3g} Gyr, <[M/H]> = {mean_lum_met:.2g} dex", fontsize=11)
+        plt.plot(mean_lum_age, mean_lum_met, 'ro')
+
+
+        #*********** 3) Third plot: mass weights map ***********
+        ax3 = fig.add_subplot(gs[1, 1])
+        mean_mass_age = info_pop_mass[0]
+        mean_mass_met = info_pop_mass[1]
+        plt.sca(ax3)
+
+        #For the embedded pPXF SSP, I need to call my external function, since I cannot modify any of the pPXF files
+        if not custom_emiles and stellar_library != 'sMILES' and stellar_library != 'xshooter':
+            sps_data_ppxf.plot(mass_weights, lg_age, cmap='BuPu')
+        else:
+            template.plot_weights(mass_weights, age_grid, met_grid, lg_age, cmap='BuPu')
+
+        #Considering log or linear age grid
+        if lg_age:
+            plt.title(f"Mass fraction   lg<Age> = {mean_mass_age:.3g} dex, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
+        else:
+            plt.title(f"Mass fraction   <Age> = {mean_mass_age:.3g} Gyr, <[M/H]> = {mean_mass_met:.2g} dex", fontsize=11)
+
+        plt.tight_layout()
+
+
+        # Creating new figure with SFH data
+        fig2 = plt.figure(figsize=(13, 7))
+        gs2 = gridspec.GridSpec(3, 2, height_ratios=[1.5, 1.5, 1.5])
+
+        # light SFH
+        ax4 = fig2.add_subplot(gs2[0, 0])
+        plt.sca(ax4)
+        plt.plot(age_bins, light_weights_age_bin, lw=2, color='black')
+        ax4.set_ylim(bottom=0)
+        ax4.set_xlim(left=np.min(age_bins))
+        ax4.set_xlim(right=np.max(age_bins))
+
+        if lg_age:
+            plt.xlabel("lg Age (dex)", fontsize=11)
+        else:
+            plt.xlabel("Age (Gyr)", fontsize=11)
+        plt.ylabel("Fractional luminosity", fontsize=11)
+        plt.title('Luminosity weighted', fontsize=10)
+
+        # mass SFH
+        ax5 = fig2.add_subplot(gs2[0, 1])
+        plt.sca(ax5)
+        plt.plot(age_bins, mass_weights_age_bin, lw=2, color='black')
+        ax5.set_ylim(bottom=0)
+        ax5.set_xlim(left=np.min(age_bins))
+        ax5.set_xlim(right=np.max(age_bins))
+
+        if lg_age:
+            plt.xlabel("lg Age (dex)", fontsize=11)
+        else:
+            plt.xlabel("Age (Gyr)", fontsize=11)
+        plt.ylabel("Fractional mass", fontsize=11)
+        plt.title('Mass weighted', fontsize=10)
+
+        # cumulative luminosity
+        ax6 = fig2.add_subplot(gs2[1, 0])
+        plt.sca(ax6)
+        plt.plot(age_bins, cumulative_light, lw=2, color='black')
+        ax6.set_ylim(bottom=0)
+        ax6.set_xlim(left=np.min(age_bins))
+        ax6.set_xlim(right=np.max(age_bins))
+
+        if lg_age:
+            plt.xlabel("lg Age (dex)", fontsize=11)
+        else:
+            plt.xlabel("Age (Gyr)", fontsize=11)
+        plt.ylabel("Cumulative luminosity", fontsize=11)
+
+        # cumulative mass SFH
+        ax7 = fig2.add_subplot(gs2[1, 1])
+        plt.sca(ax7)
+        plt.plot(age_bins, cumulative_mass, lw=2, color='black')
+        ax7.set_ylim(bottom=0)
+        ax7.set_xlim(left=np.min(age_bins))
+        ax7.set_xlim(right=np.max(age_bins))
+
+        if lg_age:
+            plt.xlabel("lg Age (dex)", fontsize=11)
+        else:
+            plt.xlabel("Age (Gyr)", fontsize=11)
+        plt.ylabel("Cumulative mass", fontsize=11)
+
+        # light met
+        ax8 = fig2.add_subplot(gs2[2, 0])
+        plt.sca(ax8)
+        plt.plot(met_bins, light_weights_met_bin, lw=2, color='black')
+        ax8.set_ylim(bottom=0)
+        ax8.set_xlim(left=np.min(met_bins))
+        ax8.set_xlim(right=np.max(met_bins))
+        plt.xlabel("[M/H] (dex)", fontsize=11)
+        plt.ylabel("Fractional luminosity", fontsize=11)
+
+        # light met
+        ax9 = fig2.add_subplot(gs2[2, 1])
+        plt.sca(ax9)
+        plt.plot(met_bins, mass_weights_met_bin, lw=2, color='black')
+        ax9.set_ylim(bottom=0)
+        ax9.set_xlim(left=np.min(met_bins))
+        ax9.set_xlim(right=np.max(met_bins))
+        plt.xlabel("[M/H] (dex)", fontsize=11)
+        plt.ylabel("Fractional mass", fontsize=11)
+
+
+        plt.tight_layout()
+
+
+        if save_plot:
+            fig.savefig(result_plot_dir + '/SFH_weights_' + spec_name + '.png', format='png', dpi=300)
+            fig2.savefig(result_plot_dir + '/SFH_history_' + spec_name + '.png', format='png', dpi=300)
+            plt.close(fig)
+            plt.close(fig2)
+        else:
+            plt.show()
+            plt.close('all')
+
+
+        #In case of sMILES SSPs, I show also the [alpha/Fe]-[M/H] plot in another window
+        if stellar_library == 'sMILES' and not custom_emiles:
+            plt.figure(figsize=(12, 4))
+            plt.subplot(121)
+            template.plot_alpha_weights(light_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Luminosity fraction')
+            plt.plot(info_pop[1], info_pop[2], 'ro')
+
+            plt.subplot(122)
+            template.plot_alpha_weights(mass_weights, alpha_grid, met_grid, cmap='BuPu', title = 'Mass fraction')
+
+            if save_plot:
+                plt.savefig(result_plot_dir + '/'+ 'pop_pop_alpha_weights_'+ spec_name + '.png', format='png', dpi=300)
+                plt.close()
+            else:
+                plt.show()
+                plt.close()
+
+
+    #UNCERTAINTIES WITH BOOTSTRAP!
+    if with_errors:
+        print('Estimating the uncertainties with bootstrapping')
+        print('')
+        bestfit0 = pp.bestfit.copy()
+        resid = galaxy - bestfit0
+        start = pp.sol.copy()
+        np.random.seed(123)
+
+        weights_array = np.empty((nrand, pp.weights.size))
+        age_dist = []
+        met_dist = []
+        alpha_dist = []
+        mass_age_dist = []
+        mass_met_dist = []
+        mass_alpha_dist = []
+
+        mass_weights_age_bin_dist = []
+        light_weights_age_bin_dist = []
+        cumulative_mass_dist = []
+        cumulative_light_dist = []
+
+        for j in range(nrand):
+            galaxy1 = bootstrap_residuals(bestfit0, resid)
+
+            t = clock() #starting the clock
+
+            #finally fitting
+            if gas:
+                pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
+                    moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
+                    lam=wave, lam_temp=sps.lam_temp, regul =5,
+                    reg_dim=reg_dim,
+                    component=component, gas_component=gas_component,
+                    gas_names=gas_names, dust=dust, mask = mask, quiet =1)
+
+            else:
+                pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
+                    moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
+                    lam=wave, lam_temp=sps.lam_temp, regul =5,
+                    reg_dim=reg_dim,
+                    component=component, mask = mask, dust = dust, quiet =1)
+
+
+            print(f"{j + 1}/{nrand}: Elapsed time in pPXF: {clock() - t:.2f} s")
+
+            #setting up the result parameters
+            light_weights_err = pp.weights[~gas_component]
+            light_weights_err = light_weights_err.reshape(reg_dim)
+            light_weights_err /= light_weights_err.sum()
+
+            mass_weights_err = light_weights_err/sps.flux
+            mass_weights_err /= mass_weights_err.sum()              # Normalize to mass fractions
+
+            if custom_emiles or stellar_library in ['sMILES', 'xshooter']:
+                info_pop_err = sps.mean_age_metal(light_weights_err, lg_age, lg_met)
+                info_pop_mass_err = sps.mean_age_metal(mass_weights_err, lg_age, lg_met)
+                mass_light_err = 0
+            else:
+                info_pop_err = sps_data_ppxf.mean_age_metal(light_weights_err, lg_age, lg_met)
+                info_pop_mass_err = sps_data_ppxf.mean_age_metal(mass_weights_err, lg_age, lg_met)
+                mass_light_err = sps.mass_to_light(mass_weights_err, band="v")
+
+
+            if stellar_library == 'sMILES' and not custom_emiles:
+                alpha_dist.append(info_pop_err[2])
+                mass_alpha_dist.append(info_pop_mass_err[2])
+
+                reduced_mass_weights_err = np.sum(mass_weights_err, axis=2)
+                mass_weights_age_bin_err = np.sum(reduced_mass_weights_err, axis=1)[::-1]
+                # mass_weights_met_bin_err = np.sum(reduced_mass_weights, axis=0)[::-1]
+
+                reduced_light_weights_err = np.sum(light_weights_err, axis=2)
+                light_weights_age_bin_err = np.sum(reduced_light_weights_err, axis=1)[::-1]
+                # light_weights_met_bin_err = np.sum(reduced_light_weights, axis=0)[::-1]
+
+                mass_weights_age_bin_dist.append(mass_weights_age_bin_err)
+                light_weights_age_bin_dist.append(light_weights_age_bin_err)
+
+
+
+            else:
+                mass_weights_age_bin_err = np.sum(mass_weights_err, axis=1)[::-1]
+                light_weights_age_bin_err = np.sum(light_weights_err, axis=1)[::-1]
+
+                mass_weights_age_bin_dist.append(mass_weights_age_bin_err)
+                light_weights_age_bin_dist.append(light_weights_age_bin_err)
+
+            cumulative_mass_err = np.cumsum(mass_weights_age_bin_err)
+            cumulative_light_err = np.cumsum(light_weights_age_bin_err)
+
+            cumulative_mass_dist.append(cumulative_mass_err)
+            cumulative_light_dist.append(cumulative_light_err)
+
+            age_dist.append(info_pop_err[0])
+            met_dist.append(info_pop_err[1])
+            mass_age_dist.append(info_pop_mass_err[0])
+            mass_met_dist.append(info_pop_mass_err[1])
+
+
+
+
+        # ---------- CONVERT BOOTSTRAP RESULTS TO ARRAYS ----------
+        age_dist = np.array(age_dist)  # shape (nrand, N_age)
+        met_dist = np.array(met_dist)
+        mass_age_dist = np.array(mass_age_dist)
+        mass_met_dist = np.array(mass_met_dist)
+
+        # calculating the standard deviation
+        age_err = np.std(age_dist)
+        met_err = np.std(met_dist)
+        mass_age_err = np.std(mass_age_dist)
+        mass_met_err = np.std(mass_met_dist)
+
+
+        # for the sMILES models I also have the alpha/Fe to consider
+        if stellar_library == 'sMILES' and not custom_emiles:
+
+            alpha_dist = np.array(alpha_dist)
+            mass_alpha_dist = np.array(mass_alpha_dist)
+            alpha_err = np.std(alpha_dist)
+            mass_alpha_err = np.std(mass_alpha_dist)
+
+        else:
+            alpha_err = 0
+            mass_alpha_err = 0
+
+
+        # ---------- CONVERT BOOTSTRAP RESULTS TO ARRAYS ----------
+        mass_weights_age_bin_dist = np.array(mass_weights_age_bin_dist)  # shape (nrand, N_age)
+        light_weights_age_bin_dist = np.array(light_weights_age_bin_dist)
+        cumulative_mass_dist = np.array(cumulative_mass_dist)
+        cumulative_light_dist = np.array(cumulative_light_dist)
+
+        # ---------- CALCOLO MEDIA E DEVIAZIONE STANDARD ----------
+        # mass_weights_age_mean = np.mean(mass_weights_age_bin_dist, axis=0)
+        mass_weights_age_std = np.std(mass_weights_age_bin_dist, axis=0)
+
+        # light_weights_age_mean = np.mean(light_weights_age_bin_dist, axis=0)
+        light_weights_age_std = np.std(light_weights_age_bin_dist, axis=0)
+
+        # cumulative_mass_mean = np.mean(cumulative_mass_dist, axis=0)
+        cumulative_mass_std = np.std(cumulative_mass_dist, axis=0)
+
+        # cumulative_light_mean = np.mean(cumulative_light_dist, axis=0)
+        cumulative_light_std = np.std(cumulative_light_dist, axis=0)
+
+        print('')
+        print(f"Error luminosity age: ({age_err:.4g})")
+        print(f"Error luminosity met (dex)): ({met_err:.4g})")
+        print(f"Error mass age: ({mass_age_err:.4g})")
+        print(f"Error mass met (dex)): ({mass_met_err:.4g})")
+        if stellar_library == 'sMILES' and not custom_emiles:
+            print(f"Error luminosity alpha/Fe (dex): ({alpha_err:.4g})")
+            print(f"Error mass alpha/Fe (dex): ({mass_alpha_err:.4g})")
+
+
+
+    plt.close()
+
+    return kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_gas_flux, residual, chi_square, age_err, met_err, alpha_err, mass_age_err, mass_met_err, mass_alpha_err, emission_corrected_flux, age_bins, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic
+
+
 
 
 #*****************************************************************************************************
-# 10) Modified emission line list from the ppxf_util.py of the ppxf package.
+# 10) Function to calculate t50 and t80 formation times from the SFH calculated by pPXF.
+def calculate_t50_t80_cosmic(age_array, mass_cumulative_array, redshift, lg_age):
+    """
+    Calculate t50 and t80 (age-based and cosmic-time) from cumulative mass SFH.
+
+    Parameters
+    ----------
+    age_array : array-like
+        Stellar population ages in Gyr (increasing or decreasing).
+    mass_cumulative_array : array-like
+        Cumulative mass fraction (should go from 0 to 1).
+    redshift : float
+        Redshift of the galaxy.
+
+    Returns
+    -------
+    t50_age : float
+        Age of the stellar population when 50% of the mass formed [Gyr ago].
+    t80_age : float
+        Age of the stellar population when 80% of the mass formed [Gyr ago].
+    t50_cosmic : float
+        Time since Big Bang when 50% of the mass formed [Gyr].
+    t80_cosmic : float
+        Time since Big Bang when 80% of the mass formed [Gyr].
+    """
+
+    if lg_age:
+        age_array = 10**np.array(age_array)/1e9
+
+    # Ensure inputs are increasing in time (from youngest to oldest)
+    if age_array[0] > age_array[-1]:
+        age_array = age_array[::-1]
+        mass_cumulative_array = mass_cumulative_array[::-1]
+
+    # Interpolation function: cumulative mass -> age
+    interp_func = interp1d(mass_cumulative_array, age_array, bounds_error=False, fill_value="extrapolate")
+
+    # Get ages corresponding to 50% and 80% of mass formed
+    t50_age = float(interp_func(0.5))  # Gyr ago
+    t80_age = float(interp_func(0.8))
+
+    # Age of the universe at given redshift
+    t_universe_at_z = cosmo.age(redshift).value  # Gyr
+
+    # Convert to cosmic time
+    t50_cosmic = t_universe_at_z - t50_age
+    t80_cosmic = t_universe_at_z - t80_age
+
+    # Warning in case the spectra loaded are already been restframe corrected. In this case, the t50 and t80 cosmig times ages are not reliable, unless you are analysing very close (e.g. Andromeda) galaxies.
+    if redshift == 0:
+        print ('WARNING: Your spectra are likely restframe corrected. t50_cosmic and t80_cosmic values are NOT accurate')
+
+    return t50_age, t80_age, t50_cosmic, t80_cosmic
+
+
+
+
+
+#*****************************************************************************************************
+# 11) Modified emission line list from the ppxf_util.py of the ppxf package.
 def emission_lines(ln_lam_temp, lam_range_gal, FWHM_gal, pixel=True,
                    tie_balmer=False, limit_doublets=False, vacuum=False, wave_galaxy = None):
     """
@@ -3202,8 +3126,10 @@ def emission_lines(ln_lam_temp, lam_range_gal, FWHM_gal, pixel=True,
     return emission_lines, line_names, line_wave
 
 
+
+
 #*****************************************************************************************************
-# 11) stellar populations with LICK and ssp models
+# 12) stellar populations with LICK and ssp models
 
 def lick_pop(ssp_lick_indices, ssp_lick_indices_err, ssp_model_name, interp_model):
 

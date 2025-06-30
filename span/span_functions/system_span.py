@@ -1,7 +1,6 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
-#SPectral ANalysis software (SPAN).
-#Written by Daniele Gasparri#
+
 
 """
     Copyright (C) 2020-2025, Daniele Gasparri
@@ -59,6 +58,7 @@ import time
 from time import perf_counter as clock
 from os import path
 import os
+import re
 
 import subprocess
 
@@ -188,11 +188,11 @@ def read_spec(spec_name, lambda_units):
 
 
     spec_components = len(flux)
-    #convert all to nm
+    #convert all to A
     if(lambda_units == 'mu'):
-        wavelength = wavelength *1000.
-    elif(lambda_units == 'A' or lambda_units == 'a'):
-        wavelength = wavelength/10.
+        wavelength = wavelength *10000.
+    elif(lambda_units == 'nm'):
+        wavelength = wavelength*10.
 
     #calculating the step
     original_step = wavelength[1]-wavelength[0]
@@ -232,7 +232,7 @@ def is_valid_spectrum(fits_file):
                 # Check if it is a 2D fits table
                 if isinstance(hdu, fits.BinTableHDU) or isinstance(hdu, fits.TableHDU):
                     columns = hdu.columns.names
-                    if 'wavelength' in columns or 'WAVE' in columns or 'loglam' in columns and 'FLUX' in columns:
+                    if 'wavelength' in columns or 'WAVE' in columns or 'WAVELENGTH' in columns or 'loglam' in columns or 'LOGLAM' in columns and ('FLUX' in columns or 'flux' in columns):
                         return True, "Spectrum found in a table HDU."
 
                 # Check if it is a 1D fits table
@@ -255,62 +255,63 @@ def is_valid_spectrum(fits_file):
 
 #********************************************
 
-
 # 2) Read datacubes
-
-    """
-    This function reads a FITS file datacube, and tries to identify which
-    kind of datacube is by considering where the information is stored in
-    the FITS header. Currently it is compatible with MUSE and CALIFA
-    conventions for datacube.
-    Input: the path (relative or absolute) of the datacube.
-    Output: data array and wavelength array.
-
-    """
-
 def read_datacube(file_path):
-    #Opening the datacube FITS
-    hdu = fits.open(file_path)
-    data, wave = None, None
-
-    #Trying different combinations
+    """
+    Read a 3D datacube from various sources and return data and wavelength array.
+    Supports MUSE, CALIFA, and generic cubes.
+    """
     try:
-        #MUSE
-        hdr = hdu[1].header
-        data = hdu[1].data
-        s = np.shape(data)
-        spec = np.reshape(data, [s[0], s[1] * s[2]])
-        wave = hdr['CRVAL3'] + (np.arange(s[0])) * hdr['CD3_3']
-        print("You have a MUSE datacube, right?")
-    except Exception as e:
-        try:
-            #CALIFA
-            hdr = hdu[0].header
-            data = hdu[0].data
-            s = np.shape(data)
-            spec = np.reshape(data, [s[0], s[1] * s[2]])
-            wave = hdr['CRVAL3'] + (np.arange(s[0])) * hdr['CDELT3']
-            print("You have a CALIFA datacube, right?")
-        except Exception as e:
-            try:
-                data = hdu[1].data  # Extracting the datacube
-                header = hdu[1].header
+        with fits.open(file_path) as hdu:
+            # Try known formats
+            # -----------------------------------
+            # MUSE datacube: data in HDU[1], CD3_3
+            if 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) < 4:
+                data = hdu[1].data
+                hdr = hdu[1].header
+                nwave = data.shape[0]
+                wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CD3_3']
+                print("Datacube format detected: MUSE")
+                return data, wave
+
+            # CALIFA datacube: data in HDU[0], CDELT3
+            elif 'CDELT3' in hdu[0].header and 'CRVAL3' in hdu[0].header:
+                data = hdu[0].data
+                hdr = hdu[0].header
+                nwave = data.shape[0]
+                wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CDELT3']
+                print("Datacube format detected: CALIFA")
+                return data, wave
+
+            # --- WEAVE ---, as MUSE but with more extensions
+            if 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) > 4:
+                data = hdu[1].data
+                hdr = hdu[1].header
+                nwave = data.shape[0]
+                wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CD3_3']
+                print("Datacube format detected: WEAVE")
+                return data, wave
+
+            # Generic: fallback if 3D and no keywords
+            elif len(hdu) > 1 and len(hdu[1].data.shape) == 3:
+                data = hdu[1].data
                 wave = np.arange(data.shape[0])
-                print ('Generic datacube, showing only what I think is the flux')
-            except Exception as e:
+                print("Datacube format: generic fallback (HDU[1], no wavelength calibration)")
+                return data, wave
 
-                print("Cannot read the datacube.")
+            elif len(hdu[0].data.shape) == 3:
+                data = hdu[0].data
+                wave = np.arange(data.shape[0])
+                print("Datacube format: generic fallback (HDU[0], no wavelength calibration)")
+                return data, wave
 
-    # close the fits
-    hdu.close()
+            else:
+                print("Unsupported or malformed datacube format.")
+                return None, None
 
-    #checking the result
-    if data is not None and wave is not None:
-        return data, wave
-    else:
-        data = 0
-        wave = 0
-        return data, wave
+    except Exception as e:
+        print(f"Error reading datacube: {e}")
+        return None, None
 
 #********************************************
 
@@ -1125,7 +1126,7 @@ def create_output_window():
     return sg.Window("GIST Output", output_layout, finalize=True, modal=True)
 
 
-#24) Function to save the mask file generated by SPAN in the "DataCube extraction" sub-program
+#29) Function to save the mask file generated by SPAN in the "DataCube extraction" sub-program
 def save_mask_as_fits(mask, output_filename):
     primary_hdu = fits.PrimaryHDU(np.zeros((1, 1), dtype=np.int32))
     mask_hdu = fits.ImageHDU(mask.astype(np.int32))
@@ -1133,6 +1134,157 @@ def save_mask_as_fits(mask, output_filename):
     hdul = fits.HDUList([primary_hdu, mask_hdu])
     hdul.writeto(output_filename, overwrite=True)
     print(f"Mask saved as {output_filename}")
+
+#***********************************************
+
+# FUNCTIONS FOR THE 2D PLOT
+
+"""
+The functions below are needed for the 'Plot maps'
+subprogram in order to visualise 2D maps from datacube analysis.
+
+"""
+
+def sanitize_filename(name):
+    return re.sub(r'[\\/:"*?<>|]', '_', name)
+
+def load_fits_data(fits_file):
+    """Load spaxel coordinates and BIN_ID from FITS table"""
+    with fits.open(fits_file) as hdul:
+        table = hdul[1].data
+        x = table['X']
+        y = table['Y']
+        bin_id = table['BIN_ID'].astype(int)
+    return x, y, bin_id
+
+def load_analysis_results(txt_file):
+    """Load analysis results and extract column names"""
+    df = pd.read_csv(txt_file, sep='\s+')
+    return df
+
+def plot_voronoi_map(x, y, bin_id, result_df, quantity, save_path=None, cmap="inferno"):
+    """Create 2D Voronoi-style map and optionally save as PNG"""
+    value_map = {}
+    for _, row in result_df.iterrows():
+        try:
+            filename = row.iloc[0]
+            bin_str = filename.split('_')[-1].split('.')[0]
+            bin_num = int(bin_str)
+            value_map[bin_num] = row[quantity]
+        except Exception:
+            continue
+
+    signal = np.full_like(bin_id, np.nan, dtype=float)
+    for i in range(len(bin_id)):
+        b = bin_id[i]
+        if b >= 0 and b in value_map:
+            signal[i] = value_map[b]
+        else:
+            signal[i] = np.nan
+
+    x_bins, y_bins = np.unique(x), np.unique(y)
+    grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
+
+    for i in range(len(x)):
+        x_idx = np.searchsorted(x_bins, x[i])
+        y_idx = np.searchsorted(y_bins, y[i])
+        grid_data[y_idx, x_idx] = signal[i]
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    c = ax.pcolormesh(x_bins, y_bins, grid_data, cmap=cmap, shading='auto')
+    fig.colorbar(c, ax=ax, label=quantity)
+    ax.set_xlabel("R [arcsec]")
+    ax.set_ylabel("R [arcsec]")
+    ax.set_title(f"Voronoi Map: {quantity}")
+    plt.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=300)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"):
+    """Interactive 2D Voronoi map with bin ID and value popup on click."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Build value map: bin_id -> quantity
+    value_map = {}
+    for _, row in result_df.iterrows():
+        try:
+            bin_str = row.iloc[0].split('_')[-1].split('.')[0]
+            bin_num = int(bin_str)
+            value_map[bin_num] = row[quantity]
+        except Exception:
+            continue
+
+    # Create signal array per spaxel
+    signal = np.full_like(bin_id, np.nan, dtype=float)
+    for i in range(len(bin_id)):
+        b = bin_id[i]
+        if b >= 0 and b in value_map:
+            signal[i] = value_map[b]
+
+    # Create image grid
+    x_bins, y_bins = np.unique(x), np.unique(y)
+    grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
+    for i in range(len(x)):
+        x_idx = np.searchsorted(x_bins, x[i])
+        y_idx = np.searchsorted(y_bins, y[i])
+        grid_data[y_idx, x_idx] = signal[i]
+
+    # Setup plot
+    fig, ax = plt.subplots(figsize=(8, 6))
+    mesh = ax.pcolormesh(x_bins, y_bins, grid_data, cmap=cmap, shading='auto')
+    fig.colorbar(mesh, ax=ax, label=quantity)
+    ax.set_xlabel("R [arcsec]")
+    ax.set_ylabel("R [arcsec]")
+    ax.set_title(f"Voronoi Map: {quantity}")
+    plt.tight_layout()
+
+    # Internal variables to track annotation and marker
+    annotation = None
+    highlight = None
+
+    # On-click callback
+    def onclick(event):
+        nonlocal annotation, highlight
+        if event.inaxes != ax:
+            return
+        x_click, y_click = event.xdata, event.ydata
+        dist = np.sqrt((x - x_click)**2 + (y - y_click)**2)
+        idx_min = np.argmin(dist)
+        selected_bin = bin_id[idx_min]
+        value = value_map.get(selected_bin, np.nan)
+
+        # Clean previous
+        if annotation:
+            annotation.remove()
+        if highlight:
+            highlight.remove()
+
+        # Add new
+        annotation = ax.annotate(
+            f"BIN {selected_bin} | {quantity} = {value:.3f}",
+            (x[idx_min], y[idx_min]),
+            xytext=(5, 5), textcoords='offset points',
+            fontsize=10, color='white', weight='bold',
+            bbox=dict(boxstyle='round,pad=0.2', fc='black', alpha=0.5)
+        )
+
+        highlight = ax.plot(
+            x[idx_min], y[idx_min],
+            marker='o', color='red', markersize=8, markeredgecolor='white'
+        )[0]
+
+        fig.canvas.draw()
+        print(f"Clicked BIN {selected_bin}: {quantity} = {value:.3f} at (x={x[idx_min]:.1f}, y={y[idx_min]:.1f})")
+
+    fig.canvas.mpl_connect('button_press_event', onclick)
+    plt.show()
+
 
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************

@@ -72,7 +72,7 @@ def extract_index(wavelength, flux, index):
     right_band = index[3]
     left_index = index[4]
     right_index = index[5]
-    epsilon = 5. #arbitrary values in nm to add to the index window
+    epsilon = 50 #arbitrary values in A to add to the index window
     index_flux = []
     index_wave = []
     wave_components = len(wavelength)
@@ -427,7 +427,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
             elif not normalize_spec:
                 norm_flux = flux
 
-            # 2) Extract the spectral region around the index (+/- 5 nm) to speed up the process
+            # 2) Extract the spectral region around the index (+/- 50 A) to speed up the process
             index_wave, index_flux = extract_index(wavelength, norm_flux, index[:,t])
 
             #3) Extract the pseudo continuum
@@ -446,8 +446,8 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
                 err = 0.
 
             #trasform in A
-            ew = ew*10
-            err = err*10
+            ew = ew
+            err = err
 
             #calculating the errors in magnitudes
             err_mag= 0.434*abs(err/ew)
@@ -462,7 +462,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
             # Calculate the snr
             if calculate_error:
                 snr_per_pix = (avg_left_flux + avg_right_flux)/(2*sigma_cont)
-                pix_per_a = 1/(new_step*10) #new_step*10 because the step is given in nm
+                pix_per_a = 1/(new_step)
                 snr_per_a = snr_per_pix*mt.sqrt(pix_per_a)
 
                 #fill the array
@@ -534,7 +534,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
                     axes[t].plot(good_index_wave[t], good_index_flux[t], linewidth=0.5, color = 'green')
                     axes[t].set_xlim(good_index[0, t]-5., good_index[5, t]+5.)
                     axes[t].set_ylim (ylim_low, ylim_high)
-                    axes[t].set_xlabel('Wavelength nm', fontsize = 9)
+                    axes[t].set_xlabel('Wavelength A', fontsize = 9)
                     axes[t].set_ylabel('Flux', fontsize = 9)
                     axes[t].tick_params(axis = 'both', labelsize = 9)
 
@@ -543,7 +543,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
                     axes[t].plot(good_index_wave[t], good_index_flux[t], linewidth=0.5, color = 'green')
                     axes[t].set_xlim(good_index[0, t]-5., good_index[3, t]+5.)
                     axes[t].set_ylim(ylim_low, ylim_high)
-                    axes[t].set_xlabel('Wavelength nm', fontsize = 9)
+                    axes[t].set_xlabel('Wavelength A', fontsize = 9)
                     axes[t].set_ylabel('Flux', fontsize = 9)
                     axes[t].tick_params(axis = 'both', labelsize = 9)
 
@@ -599,7 +599,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
             norm_flux = flux
 
 
-        # 2) Extract the spectral region around the index (+/- 5 nm) to speed up the process
+        # 2) Extract the spectral region around the index (+/- 50 A) to speed up the process
         index_wave, index_flux = extract_index(wavelength, norm_flux, index)
 
         #3) Extract the pseudo continuum
@@ -619,14 +619,14 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
             err = 0.
 
         #fill the vectors
-        ew = ew*10
-        err = err*10
+        ew = ew
+        err = err
         err_mag= 0.434*abs(err/ew)
 
         # Calculate the snr
         if calculate_error:
             snr_per_pix = (avg_left_flux + avg_right_flux)/(2*sigma_cont)
-            pix_per_a = 1/(new_step*10) #new_step*10 because the step is given in nm
+            pix_per_a = 1/(new_step)
             snr_per_a = snr_per_pix*mt.sqrt(pix_per_a)
         else:
             snr_per_pix = 0
@@ -655,7 +655,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
                 plt.plot(index_wave, index_flux, linewidth=0.5, color = 'green')
                 plt.xlim(index[0]-5., index[5]+5.)
                 plt.ylim(ylim_low, ylim_high)
-                plt.xlabel('Wavelength nm', fontsize = 9)
+                plt.xlabel('Wavelength A', fontsize = 9)
                 plt.ylabel('Flux', fontsize = 9)
                 plt.tick_params(axis = 'both', labelsize = 9)
 
@@ -664,7 +664,7 @@ def ew_measurement(wavelength, flux, index_file, is_usr_idx, want_plot, verbose,
                 plt.plot(index_wave, index_flux, linewidth=0.5, color = 'green')
                 plt.xlim(index[0]-5., index[3]+5.)
                 plt.ylim(ylim_low, ylim_high)
-                plt.xlabel('Wavelength nm', fontsize = 9)
+                plt.xlabel('Wavelength A', fontsize = 9)
                 plt.ylabel('Flux', fontsize = 9)
                 plt.tick_params(axis = 'both', labelsize = 9)
 
@@ -850,9 +850,15 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
             ew_mean[h] = np.mean(ew_sigma[h,:])
             ew_std[h] = np.std(ew_sigma[h,:])
 
+        ew_coeff = np.polyfit(sigma_array, ew_mean, 3)
+        err_coeff = np.polyfit(sigma_array, ew_std, 3)
+
         #plotting
         if want_plot:
+            sigma_for_fit = np.linspace(np.min(sigma_array), np.max(sigma_array), 500)
+            ew_fit = np.polyval(ew_coeff, sigma_for_fit)
             ax1.errorbar(sigma_array, ew_mean, yerr = ew_std, color = 'red', ls='none', marker='o',markersize=5., label = 'Mean values')
+            ax1.plot(sigma_for_fit, ew_fit, '-', color = 'red', label = 'Fit')
             ax1.set_xlabel('Broadening (km/s)')
             ax1.set_ylabel('Relative variation')
             ax1.legend(fontsize = 10)
@@ -861,10 +867,14 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
             ax2.set_xlabel('Broadening (km/s)')
             ax2.set_ylabel('Error (1 sigma)')
             plt.show()
+            plt.close()
 
         #plotting
         if save_plot:
+            sigma_for_fit = np.linspace(np.min(sigma_array), np.max(sigma_array), 500)
+            ew_fit = np.polyval(ew_coeff, sigma_for_fit)
             ax1.errorbar(sigma_array, ew_mean, yerr = ew_std, color = 'red', ls='none', marker='o',markersize=5., label = 'Mean values')
+            ax1.plot(sigma_for_fit, ew_fit, '-', color = 'red', label = 'Fit')
             ax1.set_xlabel('Broadening (km/s)')
             ax1.set_ylabel('Relative variation')
             ax1.legend(fontsize = 10)
@@ -875,10 +885,6 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
 
             plt.savefig(result_plot_dir + '/'+ 'sigma_coeff_' + idx_array +'.png', format='png', dpi=300)
             plt.close() # remember to always close the plots!
-
-
-        ew_coeff = np.polyfit(sigma_array, ew_mean, 3)
-        err_coeff = np.polyfit(sigma_array, ew_std, 3)
 
         return idx_array, ew_coeff, err_coeff, ew_mean, ew_std, stop_condition
 
@@ -975,9 +981,18 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
                 ew_mean[h,k] = np.mean(ew_sigma[h,:])
                 ew_std[h,k] = np.std(ew_sigma[h,:])
 
+            ew_coeff = np.polyfit(sigma_array, ew_mean[:,k], 3)
+            err_coeff = np.polyfit(sigma_array, ew_std[:,k], 3)
+
+            ew_coeff_array[:,k] = ew_coeff
+            err_coeff_array[:,k] = err_coeff
+
             #plotting
             if want_plot:
+                sigma_for_fit = np.linspace(np.min(sigma_array), np.max(sigma_array), 500)
+                ew_fit = np.polyval(ew_coeff, sigma_for_fit)
                 ax1.errorbar(sigma_array,ew_mean[:,k], yerr = ew_std[:,k], color = 'red', ls='none', marker='o',markersize=5., label = 'Mean values')
+                ax1.plot(sigma_for_fit, ew_fit, '-', color = 'red', label = 'Fit')
                 ax1.set_xlabel('Broadening (km/s)')
                 ax1.set_ylabel('Relative variation')
                 ax1.legend(fontsize = 10)
@@ -986,10 +1001,14 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
                 ax2.set_xlabel('Broadening (km/s)')
                 ax2.set_ylabel('Relative error')
                 plt.show()
+                plt.close()
 
             #plotting
             if save_plot:
+                sigma_for_fit = np.linspace(np.min(sigma_array), np.max(sigma_array), 500)
+                ew_fit = np.polyval(ew_coeff, sigma_for_fit)
                 ax1.errorbar(sigma_array,ew_mean[:,k], yerr = ew_std[:,k], color = 'red', ls='none', marker='o',markersize=5., label = 'Mean values')
+                ax1.plot(sigma_for_fit, ew_fit, '-', color = 'red', label = 'Fit')
                 ax1.set_xlabel('Broadening (km/s)')
                 ax1.set_ylabel('Relative variation')
                 ax1.legend(fontsize = 10)
@@ -998,19 +1017,10 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
                 ax2.set_xlabel('Broadening (km/s)')
                 ax2.set_ylabel('Relative error')
 
-                # result_plot_dir = 'results/plots'
-                # os.makedirs(result_plot_dir, exist_ok=True)
-
                 plt.savefig(result_plot_dir + '/'+ 'sigma_coeff_' + idx_array[k] +'.png', format='png', dpi=300)
                 plt.close() #Remember to always close the plots!
 
-
-            ew_coeff = np.polyfit(sigma_array, ew_mean[:,k], 3)
-            err_coeff = np.polyfit(sigma_array, ew_std[:,k], 3)
-
-            ew_coeff_array[:,k] = ew_coeff
-            err_coeff_array[:,k] = err_coeff
-
+            plt.close()
         return idx_array, ew_coeff_array, err_coeff_array, ew_mean, ew_std, stop_condition
 
 
@@ -1019,7 +1029,7 @@ def sigma_coeff (spectra_file, index_file, lambda_units, is_usr_idx, want_plot, 
 def corr_ew(ew_file, corr_file, sigma_file):
 
     """
-    This function correct the raw EW values for
+    This function corrects the raw EW values for
     a series of spectra for the zero velocity dispersion frame, using the
     correction coefficients estimated with the corr_ew function.
     Input: array containing the raw EWs and their uncertainties (in Angstrom) measured by

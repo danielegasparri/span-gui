@@ -52,7 +52,7 @@ def show_sampling(wavelength):
     """
     This function shows the sampling of the selected 1D spectrum.
     Input: wavelength array of the spectrum
-    Output: float step value (in nm), bool linear (True) or log (False) sampling
+    Output: float step value (in A), bool linear (True) or log (False) sampling
     """
 
     step1 = wavelength[1] - wavelength[0]
@@ -82,7 +82,7 @@ def show_snr(wavelength, flux, wave_snr, epsilon_wave_snr):
     flux_snr = flux[mask]
     mean_flux = np.mean(flux_snr)
     snr_pix = mean_flux / np.std(flux_snr)
-    snr_ang = snr_pix * np.sqrt(1 / (step * 10))  # Supposing all the units in nm!
+    snr_ang = snr_pix * np.sqrt(1 / (step))  # Supposing all the units in A!
 
     return snr_pix, snr_ang
 
@@ -116,10 +116,10 @@ def convert_spec(wavelength, flux, spec_name, type_spec_to_convert, lambda_units
     Output: fits or ASCII (.dat) file of the spectrum containing the wavelength and the flux
     """
 
-    if lambda_units == 'a':
+    if lambda_units == 'nm':
         wavelength = wavelength*10
     if lambda_units == 'mu':
-        wavelength = wavelength/1000
+        wavelength = wavelength/10000
 
     if type_spec_to_convert == 'ASCII':
         new_spec_name = os.path.splitext(spec_name)[0]
@@ -248,40 +248,74 @@ def multiple_gauss(x, *params):
 
 
 #*************************************************************************************************
-#10) Measure the resolution from an emission (sky) line
+# #10) Measure the resolution from an emission (sky) line
+# Gaussian function: offset + amplitude * exp[-(x - mu)^2 / (2 * sigma^2)]
+def Gauss_res(x, offset, mu, amp, sigma):
+    return offset + amp * np.exp(-((x - mu) ** 2) / (2 * sigma ** 2))
+
+
 def resolution(wavelength, flux, wave1, wave2):
-
     """
-    This function fits a gaussian to a sky emission line of the
-    1D spectrum and gives the resolution, in R and delta lambda (FWHM)
-    Input: wavelength array, flux array, min (wave1) and max (wave2) wavelength that
-    identify the range to fit
-    Output: int resolution R, arrays of wavelength and flux of the selected wavelength
-            range, moments of the fitted gaussian
-    """
+    Fit a Gaussian to an emission line and estimate spectral resolution R and FWHM, with uncertainty.
 
-    step = wavelength[1] - wavelength[0]
+    Parameters:
+        wavelength : array-like
+            Wavelength array of the 1D spectrum.
+        flux : array-like
+            Flux array of the 1D spectrum.
+        wave1 : float
+            Minimum wavelength of the region containing the sky line.
+        wave2 : float
+            Maximum wavelength of the region containing the sky line.
+
+    Returns:
+        resolution_R : int
+            Spectral resolution R = lambda / delta_lambda.
+        fwhm : float
+            Full width at half maximum of the line (in Angstrom).
+        fwhm_err : float
+            Uncertainty on FWHM.
+        line_wave : array
+            Wavelength array of the selected region.
+        line_flux_spec_norm : array
+            Normalised flux of the selected region.
+        fitted_gauss : array
+            Gaussian model evaluated over line_wave.
+    """
     mask = (wavelength >= wave1) & (wavelength <= wave2)
     line_wave = wavelength[mask]
     line_flux_spec = flux[mask]
 
-    wave_norm = line_wave[10]  # guessing for now. fix it later
-    epsilon_norm = step * 10
-    line_flux_spec_norm = spman.norm_spec(line_wave, line_flux_spec, wave_norm, epsilon_norm, line_flux_spec)
+    # Normalise the flux to median
+    line_flux_spec_norm = line_flux_spec / np.median(line_flux_spec)
 
-    max_flux_spec = np.argmax(line_flux_spec_norm)
-    mean_spec = line_wave[max_flux_spec]
-    sigma_spec = 0.1
-    offset = 1.
+    # Initial guess for Gaussian parameters
+    offset_guess = 1.0
+    amp_guess = np.max(line_flux_spec_norm) - offset_guess
+    mu_guess = line_wave[np.argmax(line_flux_spec_norm)]
+    sigma_guess = (wave2 - wave1) / 6
 
-    popt_spec, _ = curve_fit(Gauss, line_wave, line_flux_spec_norm, p0=[offset, mean_spec, max_flux_spec, sigma_spec])
-    sigma_fit_spec = popt_spec[3]
+    try:
+        popt, pcov = curve_fit(
+            Gauss_res, line_wave, line_flux_spec_norm,
+            p0=[offset_guess, mu_guess, amp_guess, sigma_guess],
+            bounds=([0, wave1, 0, 0], [np.inf, wave2, np.inf, np.inf])
+        )
+        offset_fit, mu_fit, amp_fit, sigma_fit = popt
+        sigma_err = np.sqrt(np.diag(pcov))[3]  # error on sigma
 
-    resolution_fwhm = sigma_fit_spec * 2.35
-    resolution_R = int(line_wave[0] / resolution_fwhm)
+        fwhm = 2.355 * sigma_fit
+        fwhm_err = 2.355 * sigma_err
+        resolution_R = int(mu_fit / fwhm)
 
-    print('Resolution in A (FWHM): ', round(resolution_fwhm * 10, 2))
-    return resolution_R, line_wave, line_flux_spec_norm, Gauss(line_wave, *popt_spec)
+        print(f"Resolution in A (FWHM): {fwhm:.2f} ± {fwhm_err:.2f}")
+        # print(f"Resolution R: {resolution_R}")
+
+        return resolution_R, fwhm, fwhm_err, line_wave, line_flux_spec_norm, Gauss_res(line_wave, *popt)
+
+    except RuntimeError:
+        print("Fit did not converge.")
+        return None, None, None, line_wave, line_flux_spec_norm, np.zeros_like(line_wave)
 
 
 #*************************************************************************************************

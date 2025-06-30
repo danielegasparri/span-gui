@@ -65,7 +65,7 @@ class SPSLibWrapper:
         self.metal_grid = self.sps_instance.metal_grid
         return self.metal_grid
 
-    def mean_age_metal(self, weights, lg_age=True, quiet=False):
+    def mean_age_metal(self, weights, lg_age=True, lg_met = True, quiet=False):
         """
         Computes the weighted mean age and metallicity from pPXF weights.
         :param weights: pPXF weight array
@@ -85,7 +85,15 @@ class SPSLibWrapper:
             mean_lin_age = np.sum(weights * lin_age_grid) / np.sum(weights)
             mean_age = mean_lin_age
 
-        mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+        if lg_met:
+            mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+        else:
+            lin_met_grid = 10**self.metal_grid
+            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_metal)
+
+
+
 
         if not quiet:
             if lg_age:
@@ -268,7 +276,7 @@ def plot_alpha_weights(weights, alpha_grid, metal_grid, lg_age=True, nodots=Fals
 ###############################################################################
 class miles:
     def __init__(self, pathname, velscale, FWHM_gal=None, FWHM_tem=2.51,
-                 age_range=None, metal_range=None, norm_range=None, wave_range=None):
+                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R = None):
         """
         Class handling (E)MILES SSP templates without alpha dimension.
         """
@@ -300,6 +308,19 @@ class miles:
             ssp = hdu[0].data
             header = hdu[0].header
         lam = header['CRVAL1'] + np.arange(header['NAXIS1']) * header['CDELT1']
+
+        # Cutting the templates to +- 0.02% of the wave_range inserted
+        wave_min, wave_max = wave_range
+        delta = 0.02 * (wave_max - wave_min)
+        cut_min = wave_min - delta
+        cut_max = wave_max + delta
+        mask = (lam >= cut_min) & (lam <= cut_max)
+        lam_cut = lam[mask]
+        ssp_cut = ssp[..., mask]
+
+        lam = lam_cut
+        ssp = ssp_cut
+
         lam_range_temp = lam[[0, -1]]
 
         # Log-rebin to the chosen velocity scale
@@ -316,17 +337,23 @@ class miles:
         metal_grid = np.empty((n_ages, n_metal))
         flux = np.empty((n_ages, n_metal))
 
-        # Compute sigma for convolution if needed
+
+        # Considering three possibilities: Resolution in FWHM, in R and in MUSE LSF
         if FWHM_gal is not None:
-            # Avoid sqrt of negative if FWHM_gal < FWHM_tem
-            if FWHM_gal**2 > FWHM_tem**2:
+            if isinstance(FWHM_gal, (int, float)):
                 FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif / 2.355 / header['CDELT1']  # Sigma in pixels
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+            elif R is not None:
+                FWHM_gal = lam/R #FWHM_gal[mask]
+                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
             else:
-                print('WARNING: resolution of the templates is lower than the galaxy. Skipping convolution')
-                sigma = 0.0
+                FWHM_gal = 5.866e-8*lam**2-9.187e-4*lam+6.040
+                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
 
         # Sort and process templates by age and metallicity
+        warn_conv_failed = False
         for j, age in enumerate(ages):
             for k, met in enumerate(metals):
                 # Retrieve the correct file via our dictionary
@@ -336,9 +363,27 @@ class miles:
                 with fits.open(fname) as hdu:
                     ssp_data = hdu[0].data
 
-                # Convolve if needed
-                if FWHM_gal is not None and sigma > 0.01:
-                    ssp_data = ndimage.gaussian_filter1d(ssp_data, sigma)
+                #cutting the templates
+                ssp_data = ssp_data[..., mask]
+
+                # Convolving
+                if FWHM_gal is not None:
+                    if np.isscalar(FWHM_gal):
+                        if sigma > 0.01:   # Skip convolution for nearly zero sigma
+                            x = np.arange(len(ssp_data))
+                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
+                        else:
+                            if not warn_conv_failed:
+                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                warn_conv_failed = True
+                    else:
+                        x = np.arange(len(ssp_data))
+                        try:
+                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
+                        except ValueError:
+                            if not warn_conv_failed:
+                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                warn_conv_failed = True
 
                 # Log-rebin the template
                 ssp_new = util.log_rebin(lam_range_temp, ssp_data, velscale=velscale)[0]
@@ -403,7 +448,7 @@ class miles:
 
 
     ###############################################################################
-    def mean_age_metal(self, weights, lg_age=True, quiet=False):
+    def mean_age_metal(self, weights, lg_age=True, lg_met = True, quiet=False):
         """
         Calculate mean age and metallicity from pPXF weights.
         :param weights: pPXF output with dimensions [n_ages, n_metal]
@@ -422,8 +467,13 @@ class miles:
             mean_lin_age = np.sum(weights * lin_age_grid) / np.sum(weights)
             mean_age = mean_lin_age
 
-        metal_grid = self.metal_grid
-        mean_metal = np.sum(weights * metal_grid) / np.sum(weights)
+        if lg_met:
+            mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+        else:
+            lin_met_grid = 10**self.metal_grid
+            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_metal)
+
 
         if not quiet:
             if lg_age:
@@ -526,7 +576,7 @@ class smiles:
                         ssp_data = hdu[0].data
 
                     # Convolve if needed
-                    if sigma > 0.01:
+                    if FWHM_gal is not None and sigma > 0.01:
                         ssp_data = ndimage.gaussian_filter1d(ssp_data, sigma)
 
                     # Log rebin
@@ -601,7 +651,7 @@ class smiles:
         self.flux = flux
 
     ###############################################################################
-    def mean_age_metal(self, weights, lg_age=True, quiet=False):
+    def mean_age_metal(self, weights, lg_age=True, lg_met = True, quiet=False):
         """
         Compute mean age, mean metallicity, and mean alpha from pPXF weights.
         :param weights: pPXF weights array with dimensions [n_ages, n_metal, n_alpha]
@@ -618,8 +668,18 @@ class smiles:
             mean_lin_age = np.sum(weights * lin_age_grid) / np.sum(weights)
             mean_age = mean_lin_age
 
-        mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
-        mean_afe = np.sum(weights * self.alpha_grid) / np.sum(weights)
+        if lg_met:
+            mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+            mean_afe = np.sum(weights * self.alpha_grid) / np.sum(weights)
+        else:
+            lin_met_grid = 10**self.metal_grid
+            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_metal)
+
+            lin_alpha_grid = 10**self.alpha_grid
+            mean_afe = np.sum(weights * lin_alpha_grid) / np.sum(weights)
+            mean_afe = np.log10(mean_afe)
+
 
         if not quiet:
             if lg_age:
@@ -652,7 +712,7 @@ class xshooter:
     Class to handle SSP templates from the XSHOOTER spectral library (XSL).
     """
     def __init__(self, pathname, velscale, FWHM_gal=None, FWHM_tem=0.5,
-                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R=None):
+                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R = None):
         files = glob.glob(pathname)
         if not files:
             raise FileNotFoundError(f"No files found matching pattern: {pathname}")
@@ -706,20 +766,28 @@ class xshooter:
         metal_grid = np.empty((n_ages, n_metal))
         flux = np.empty((n_ages, n_metal))
 
-        # Setting up the parameters for convolution
+
+        # Considering three possibilities: Resolution in FWHM, in R and in MUSE LSF
         if FWHM_gal is not None:
-            if isinstance(FWHM_gal, (int, float)):
+            if isinstance(FWHM_gal, (int, float)): # FWHM resolution
+                # print('FWHM resolution')
                 FWHM_tem = lam/10000.
                 FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma_pix = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
-            else:
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+            elif R is not None:
+                # print('R resolution')
                 FWHM_gal = lam/R #FWHM_gal[mask]
                 FWHM_tem = lam/10000.
                 FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma_pix = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
-
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+            else:
+                # print('MUSE resolution')
+                FWHM_gal = 5.866e-8*lam**2-9.187e-4*lam+6.040
+                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
 
         # Process each template
+        warn_conv_failed = False
         for j, age in enumerate(ages):
             for k, met in enumerate(metals):
                 fname = file_map.get((age, met), None)
@@ -733,14 +801,30 @@ class xshooter:
                 # Apply the same wavelength masking for each template
                 ssp_data = ssp_data_full[mask]
 
+                # Convolving
                 if FWHM_gal is not None:
                     if np.isscalar(FWHM_gal):
-                        if np.any(sigma_pix) > 0.01:   # Skip convolution for nearly zero sigma
-                            x = np.arange(len(ssp_data))
-                            ssp_data = util.varsmooth(x, ssp_data, sigma_pix)
+                        if np.any(sigma) > 0.01:   # Skip convolution for nearly zero sigma
+                            try:
+                                x = np.arange(len(ssp_data))
+                                ssp_data = util.varsmooth(x, ssp_data, sigma)
+                            except ValueError:
+                                if not warn_conv_failed:
+                                    print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                    warn_conv_failed = True
+                        else:
+                            if not warn_conv_failed:
+                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                warn_conv_failed = True
                     else:
-                        x = np.arange(len(ssp))
-                        ssp_data = util.varsmooth(x, ssp_data, sigma_pix) # convolution with variable sigma
+                        x = np.arange(len(ssp_data))
+                        try:
+                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
+                        except ValueError:
+                            if not warn_conv_failed:
+                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                warn_conv_failed = True
+
 
                 # Log rebin the masked data
                 ssp_new = util.log_rebin(lam_range_temp, ssp_data, velscale=velscale)[0]
@@ -793,7 +877,7 @@ class xshooter:
         self.flux = flux
 
     ###############################################################################
-    def mean_age_metal(self, weights, lg_age=True, quiet=False):
+    def mean_age_metal(self, weights, lg_age=True, lg_met = True, quiet=False):
         """
         Compute mean age and metallicity from pPXF weights.
         :param weights: pPXF weights array with dimensions [n_ages, n_metal]
@@ -810,7 +894,12 @@ class xshooter:
             mean_lin_age = np.sum(weights * lin_age_grid) / np.sum(weights)
             mean_age = mean_lin_age
 
-        mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+        if lg_met:
+            mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
+        else:
+            lin_met_grid = 10**self.metal_grid
+            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_metal)
 
         if not quiet:
             if lg_age:
@@ -836,4 +925,108 @@ class xshooter:
         return self.metal_grid
 
 
+class KinematicTemplates:
+    def __init__(self, pathname, velscale, FWHM_gal=None, FWHM_tem=2.51,
+                 norm_range=None, wave_range=None, R=None):
+        """
+        Universal class for loading generic 1D spectral templates for kinematic analysis using pPXF.
+        Templates must be 1D FITS spectra covering the same wavelength range as the observed spectrum.
+        """
 
+        # Find all FITS files in the given path
+        files = sorted(glob.glob(pathname))
+        if not files:
+            print(f"No template found in: {pathname}")
+            return
+
+        # Read the first file to obtain the wavelength axis
+        with fits.open(files[0]) as hdu:
+            ssp = hdu[0].data
+            hdr = hdu[0].header
+        lam = hdr['CRVAL1'] + np.arange(hdr['NAXIS1']) * hdr['CDELT1']
+
+        # Apply wavelength trimming (with ±2% margin)
+        if wave_range is not None:
+            wave_min, wave_max = wave_range
+            delta = 0.02 * (wave_max - wave_min)
+            cut_min, cut_max = wave_min - delta, wave_max + delta
+            mask = (lam >= cut_min) & (lam <= cut_max)
+            lam = lam[mask]
+        else:
+            mask = slice(None)
+
+        # Define the wavelength range of the template
+        lam_range_temp = lam[[0, -1]]
+
+        templates = []
+        names = []
+
+        warn_conv_failed = False
+        for f in files:
+            with fits.open(f) as hdu:
+                ssp = hdu[0].data[mask]
+
+            # Apply convolution if required
+            if FWHM_gal is not None:
+                if isinstance(FWHM_gal, (int, float)):
+                    FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                    sigma = FWHM_dif / 2.355 / hdr['CDELT1']
+                    if sigma > 0.01:
+                        try:
+                            x = np.arange(len(ssp))
+                            ssp = util.varsmooth(x, ssp, sigma)
+                        except ValueError:
+                            if not warn_conv_failed:
+                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                                warn_conv_failed = True
+                    else:
+                        if not warn_conv_failed:
+                            print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                            warn_conv_failed = True
+
+                elif R is not None:
+                    lam_local = lam
+                    FWHM_gal = lam_local / R
+                    FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                    sigma = FWHM_dif / 2.355 / hdr['CDELT1']
+                    try:
+                        x = np.arange(len(ssp))
+                        ssp = util.varsmooth(x, ssp, sigma)
+                    except ValueError:
+                        if not warn_conv_failed:
+                            print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                            warn_conv_failed = True
+                else:
+                    # Example: parametric MUSE LSF
+                    lam_local = lam
+                    FWHM_gal = 5.866e-8 * lam_local**2 - 9.187e-4 * lam_local + 6.040
+                    FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
+                    sigma = FWHM_dif / 2.355 / hdr['CDELT1']
+                    try:
+                        x = np.arange(len(ssp))
+                        ssp = util.varsmooth(x, ssp, sigma)
+                    except ValueError:
+                        if not warn_conv_failed:
+                            print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
+                            warn_conv_failed = True
+
+            # Log-rebin the template
+            ssp_rebinned, ln_lam_temp = util.log_rebin(lam_range_temp, ssp, velscale=velscale)[:2]
+
+            # Normalise if a normalisation range is provided
+            if norm_range is not None:
+                lam_temp = np.exp(ln_lam_temp)
+                norm_mask = (lam_temp >= norm_range[0]) & (lam_temp <= norm_range[1])
+                mean_flux = np.mean(ssp_rebinned[norm_mask])
+                if mean_flux > 0:
+                    ssp_rebinned /= mean_flux
+
+            templates.append(ssp_rebinned)
+            names.append(f)
+
+        self.templates = np.column_stack(templates)
+        self.ln_lam_temp = ln_lam_temp
+        self.lam_temp = np.exp(ln_lam_temp)
+        self.names = names
+        print(f"{len(files)} templates successfully loaded from: {pathname}")
+        print('')

@@ -1,7 +1,6 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
-#SPectral ANalysis software (SPAN).
-#Written by Daniele Gasparri#
+
 
 """
     Copyright (C) 2020-2025, Daniele Gasparri
@@ -28,6 +27,7 @@
 #The results are fully compatible with the GIST pipeline.
 
 import os
+import shutil
 import numpy as np
 from astropy.io import fits
 import sys
@@ -36,6 +36,8 @@ import functools
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
 import scipy.spatial.distance as dist
 import matplotlib.pyplot as plt
+
+
 
 
 #function to create the dictionary (config) following the GIST standard to be passed to the following functions
@@ -118,7 +120,7 @@ def reading_data(config):
         return "SKIP"
 
 
-def masking(config, cube, preview, manual_bin):
+def masking(config, cube, preview, manual_bin, existing_bin):
 
     """
     Applies a spatial mask to the datacube if required.
@@ -136,14 +138,14 @@ def masking(config, cube, preview, manual_bin):
 
     output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
 
-    if not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False) and manual_bin:
+    if (not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False) and manual_bin) or existing_bin:
         print("Masking results already exist. Skipping step.")
         return
 
     generate_and_apply_mask(config, cube)
 
 
-def binning(config, cube, preview, voronoi, manual_bin):
+def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
 
     """
     Applies spatial binning to the datacube.
@@ -162,9 +164,13 @@ def binning(config, cube, preview, voronoi, manual_bin):
 
     output_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_table.fits")
 
-    if not preview and (os.path.isfile(output_file) and not config['INFO']['OW_OUTPUT'] and manual_bin):
-        print("Results of the module are already in the output directory. Module is skipped.")
-        return
+    if (not preview and (os.path.isfile(output_file) and not config['INFO']['OW_OUTPUT'] and manual_bin)) or existing_bin:
+        if not existing_bin:
+            print("Results of the module are already in the output directory. Module is skipped.")
+            return
+        if existing_bin:
+            print('Using user mask and bin info')
+            return
 
     try:
         generate_bins(config, cube, voronoi)
@@ -173,7 +179,7 @@ def binning(config, cube, preview, voronoi, manual_bin):
         return "SKIP"
 
 
-def save_spectra(config, cube, preview):
+def save_spectra(config, cube, preview, existing_bin):
 
     """
     Extracts and saves 1D spectra from the datacube.
@@ -192,7 +198,7 @@ def save_spectra(config, cube, preview):
     output_prefix = os.path.join(config['INFO']['OUTPUT'], config['INFO']['RUN_NAME'])
     output_file = f"{output_prefix}_BinSpectra_linear.fits"
 
-    if not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False):
+    if (not preview and os.path.isfile(output_file) and not config['INFO'].get('OW_OUTPUT', False)) and not existing_bin:
         print("Spectra extraction results already exist. Skipping step.")
         return
 
@@ -437,13 +443,17 @@ def generate_bins(config, cube, voronoi):
     # Create extended bin list
     bin_num_long = np.full(len(cube['x']), np.nan)
     bin_num_long[idx_unmasked] = bin_num
+    # bin_num_long[idx_masked] = -1 * bin_num_outside this was used in GIST. I changed as followings:
     bin_num_long[idx_masked] = -1  # Assign negative value to unselected spaxels
 
     # Save binning results
+    # if not existing_bin:
     save_bin_info(
         config,
         cube['x'], cube['y'], cube['signal'], cube['snr'],
         bin_num_long, np.unique(bin_num), x_node, y_node, sn, n_pixels, cube['pixelsize'])
+    # else:
+    #     print('Using the user provided bin and mask info')
 
 
 def save_bin_info(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn, n_pixels, pixelsize):
@@ -656,7 +666,7 @@ def save_bin_spec(config, log_spec, log_error, wavelength, flag):
     print(f"Wrote: {output_file}")
 
 
-def extract(config, preview, voronoi, manual_bin):
+def extract(config, preview, voronoi, manual_bin, existing_bin):
 
     """
     Main function to run the extraction steps in sequence.
@@ -680,13 +690,88 @@ def extract(config, preview, voronoi, manual_bin):
         return
 
     # 2) Apply spatial mask
-    masking(config, cube, preview, manual_bin)
+    masking(config, cube, preview, manual_bin, existing_bin)
 
     # 3) Apply Voronoi binning
-    binning(config, cube, preview, voronoi, manual_bin)
+    binning(config, cube, preview, voronoi, manual_bin, existing_bin)
 
     # 4) Extract and save spectra
-    save_spectra(config, cube, preview)
+    save_spectra(config, cube, preview, existing_bin)
 
     print("\n--- Extraction Process Completed ---\n")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def handle_existing_bin_files(input_folder, output_dir, ifs_run_id):
+    """
+    Copy and rename existing bin info files from input_folder to output_dir.
+
+    Parameters
+    ----------
+    input_folder : str
+        Directory where the *_table.fits and *_mask.fits files are located.
+    output_dir : str
+        Destination directory where the renamed files will be copied.
+    ifs_run_id : str
+        Identifier to replace the original RUN_NAME in the filenames.
+    """
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Search for *_table.fits and *_mask.fits files
+    table_file = None
+    mask_file = None
+    try:
+        for fname in os.listdir(input_folder):
+            if fname.endswith('_table.fits'):
+                table_file = fname
+            elif fname.endswith('_mask.fits'):
+                mask_file = fname
+    except Exception as e:
+        print('The folder does not exist!')
+
+    if not table_file or not mask_file:
+        print("Missing required files",
+                       "Could not find both *_table.fits and *_mask.fits in the selected folder.")
+        return
+
+    # Define full paths
+    table_path = os.path.join(input_folder, table_file)
+    mask_path = os.path.join(input_folder, mask_file)
+
+    # Define new names
+    new_table_name = f"{ifs_run_id}_table.fits"
+    new_mask_name = f"{ifs_run_id}_mask.fits"
+
+    # Define new full paths
+    new_table_path = os.path.join(output_dir, new_table_name)
+    new_mask_path = os.path.join(output_dir, new_mask_name)
+
+    # Copy and rename files
+    shutil.copyfile(table_path, new_table_path)
+    shutil.copyfile(mask_path, new_mask_path)
+
+    print(f"Files copied and renamed to:\n{new_table_name}\n{new_mask_name}")
