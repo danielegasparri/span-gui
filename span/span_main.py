@@ -50,7 +50,7 @@ def main():
     layout, scale_win, fontsize, default_size = misc.get_layout()
 
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 6.4 --- Daniele Gasparri ---', layout,finalize=True, scaling = scale_win)
+    window1 = sg.Window('SPAN - SPectral ANalysis - 6.6 --- Daniele Gasparri ---', layout,finalize=True, scaling = scale_win)
 
     # Loading the SpectraParams dataclass to handle parameters
     params = SpectraParams()
@@ -70,14 +70,14 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 6.4 *********')
+    print ('********* Welcome to SPAN version 6.6 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
     print ('This is the output where the infos are showed.')
     print ('If you prefer the external output, just comment the proper lines in the layouts.py module\n')
     print ('If you just click the Load! button, the example files are loaded and you can make some practise.\n')
-    print ('NOTE: all the SPAN wavelength units are expressed in nm, except where clearly stated (yes, I know you prefer Angstrom)')
+    print ('NOTE: all the SPAN wavelength units are expressed in Angstrom')
     print ('***********************************************')
     print (f'SPAN will save the results in: {params.result_data}\n')
 
@@ -142,7 +142,7 @@ def main():
         if event == 'About SPAN':
             sg.popup ('SPAN is a Python 3.X 1D spectra analysis tool. It can modify the spectra and perform measurements, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         if event == 'Version':
-            sg.popup ('This is version 6.4 with improved and semplified layout')
+            sg.popup ('This is version 6.6 with improved and semplified layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         if event == 'Clear all tasks':
@@ -255,7 +255,6 @@ def main():
         if (event == 'Population parameters'):
             params = param_windows.population_parameters(params)
 
-        save_intermediate_files = values['save_intermediate_files']
         save_plot = values['save_plots']
 
 
@@ -279,6 +278,10 @@ def main():
         # DATA PLOTTING
         if event == 'Plot data':
             sub_programs.plot_data_window(BASE_DIR, layout)
+
+        # 2D MAPS PLOTTING
+        if event == 'Plot maps':
+            sub_programs.plot_maps_window(BASE_DIR, layout)
 
 
     #********************************** LOADING AND CHECKING THE SPECTRA *************************
@@ -329,7 +332,7 @@ def main():
         if event == 'Plot':
             wavelength, flux, step, name = stm.read_spec(params.prev_spec, params.lambda_units)
             plt.plot(wavelength, flux)
-            plt.xlabel('Wavelength nm', fontsize = 9)
+            plt.xlabel('Wavelength ($\AA$)', fontsize = 9)
             plt.title(params.prev_spec_nopath)
             plt.ylabel('Flux')
             plt.show()
@@ -557,11 +560,9 @@ def main():
                 df_kin = pd.read_csv(kin_file, sep=' ', index_col=0)
                 df_kin_mc = None
                 df_kin_gas = None
-                #kin_mc and kin_gas are not guaranteed to exist, so I must check
+                #kin_mc is not guaranteed to exist, so I must check
                 if kin_file_mc:
                     df_kin_mc = pd.read_csv(kin_file_mc, sep=' ', index_col=0)
-                if kin_file_gas:
-                    df_kin_gas = pd.read_csv(kin_file_gas, sep=' ', index_col=0)
 
             #7) Stellar populations with ppxf
             if (stellar_pop):
@@ -633,77 +634,77 @@ def main():
                         # 1) CROPPING
                         if op_var == "cropping_spectrum":
                             i == 0 and print('\n*** Cropping ***\n')
-                            params = apply_spec_tasks.apply_cropping(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_cropping(event, save_plot, params)
 
                         # 2) DYNAMIC CLEANING
                         elif op_var == "sigma_clipping":
                             i == 0 and print('\n*** Dynamic cleaning ***\n')
                             if not params.sigma_clip_have_file:
-                                params = apply_spec_tasks.apply_sigma_clipping(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_sigma_clipping(event, save_plot, params)
                             else: #using an external file with R and sigma
-                                params = apply_spec_tasks.apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_sigma_clipping_from_file(event, save_plot, params, i)
 
                         # 3) WAVELET CLEANING
                         elif op_var == "wavelet_cleaning":
                             i == 0 and print('\n*** Wavelet cleaning ***\n')
-                            params = apply_spec_tasks.apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_wavelet_cleaning(event, save_plot, params)
 
                         # 4) DENOISE
                         elif op_var == "filter_denoise":
                             i == 0 and print('\n*** Denoising ***\n')
-                            params = apply_spec_tasks.apply_denoising(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_denoising(event, save_plot, params)
 
                         # 5) DOPPLER CORRECTION
                         elif op_var == "dop_cor":
                             i == 0 and print('\n*** Dopcor/z correazion ***\n')
                             if (params.dop_cor_single_shot):
-                                params = apply_spec_tasks.apply_doppler_correction(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_doppler_correction(event, save_plot, params)
                             else: #if I have an external file with dopcor/z values
-                                params = apply_spec_tasks.apply_doppler_correction_from_file(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_doppler_correction_from_file(event, save_plot, params, i)
 
                         #6) HELIOCENTRIC CORRECTION
                         elif op_var == "helio_corr":
                             i == 0 and print('\n*** Heliocentric correction ***\n')
                             if (params.helio_single_shot):
-                                params = apply_spec_tasks.apply_heliocentric_correction(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_heliocentric_correction(event, save_plot, params)
                             else: #If I have an external file with heliocentric corrections to apply
-                                params = apply_spec_tasks.apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_heliocentric_correction_from_file(event, save_plot, params, i)
 
                         #7) REBIN
                         elif op_var == "rebining":
                             i == 0 and print('\n*** Rebinning ***\n')
-                            params = apply_spec_tasks.apply_rebinning(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_rebinning(event, save_plot, params)
 
                         # 8) DEGRADE RESOLUTION
                         elif op_var == "degrade":
                             i == 0 and print('\n*** Degrade resolution ***\n')
-                            params = apply_spec_tasks.apply_resolution_degradation(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_resolution_degradation(event, save_plot, params)
 
                         # 9) NORMALISE SPECTRUM TO
                         elif op_var == "normalize_wave":
                             i == 0 and print('\n*** Normalise ***\n')
-                            params = apply_spec_tasks.apply_normalisation(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_normalisation(event, save_plot, params)
 
                         # 10) SIGMA BROADENING
                         elif op_var == "sigma_broad":
                             i == 0 and print('\n*** Velocity dispersion ***\n')
-                            params = apply_spec_tasks.apply_sigma_broadening(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_sigma_broadening(event, save_plot, params)
 
                         # 11) ADD NOISE
                         elif op_var == "add_noise":
                             i == 0 and print('\n*** Add noise ***\n')
-                            params = apply_spec_tasks.apply_noise_addition(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_noise_addition(event, save_plot, params)
 
                         # 12) CONTINUUM MODELLING
                         elif op_var == "continuum_sub":
                             i == 0 and print('\n*** Continuum modelling ***\n')
-                            params = apply_spec_tasks.apply_continuum_subtraction(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_continuum_subtraction(event, save_plot, params)
 
                         # 13) SUBTRACT NORMALISED AVERAGE
                         elif op_var == "subtract_normalized_avg":
                             i == 0 and print('\n*** Subtract normalised average ***\n')
                             if not values['one_spec']:
-                                params = apply_spec_tasks.apply_subtract_normalised_average(event, save_plot, save_intermediate_files, params)
+                                params = apply_spec_tasks.apply_subtract_normalised_average(event, save_plot, params)
                             if values['one_spec']:
                                 sg.popup('There is no average to subtract!')
                                 continue
@@ -711,29 +712,29 @@ def main():
                         # 14) SUBTRACT NORMALISED SINGLE SPECTRUM
                         elif op_var == "subtract_normalized_spec":
                             i == 0 and print('\n*** Subtract normalised spectrum ***\n')
-                            params = apply_spec_tasks.apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_subtract_normalised_spectrum(event, save_plot, params)
 
                         # 15) ADD CONSTANT (PEDESTAL)
                         elif op_var == "add_pedestal":
                             i == 0 and print('\n*** Add constant ***\n')
-                            params = apply_spec_tasks.apply_add_pedestal(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_add_pedestal(event, save_plot, params)
 
                         # 16) MULTIPLY
                         elif op_var == "multiply":
                             i == 0 and print('\n*** Multiply ***\n')
-                            params = apply_spec_tasks.apply_multiplication(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_multiplication(event, save_plot, params)
 
                         # 17) DERIVATIVES
                         elif op_var == "derivatives":
                             i == 0 and print('\n*** Derivatives ***\n')
-                            params = apply_spec_tasks.apply_derivatives(event, save_plot, save_intermediate_files, params)
+                            params = apply_spec_tasks.apply_derivatives(event, save_plot, params)
 
                     #plotting the results
                     if (event == 'Preview spec.'):
                         try:
                             plt.plot(params.original_wavelength, params.original_flux, label = 'Original spec.')
                             plt.plot(params.wavelength, params.flux, label = 'Processed')
-                            plt.xlabel('Wavelength nm', fontsize = 9)
+                            plt.xlabel('Wavelength ($\AA$)', fontsize = 9)
                             plt.title(params.prev_spec_nopath)
                             plt.ylabel('Flux')
                             plt.legend(fontsize = 10)
@@ -754,7 +755,7 @@ def main():
                 # Apply math combination tasks and discarding the other previous tasks
                 if (not params.do_nothing and not values['one_spec']):
                     print ('WARNING: I will discard all the activated tasks to perform this task')
-                    params = apply_spec_tasks.combine_spectra(event, save_plot, save_intermediate_files, params)
+                    params = apply_spec_tasks.combine_spectra(event, save_plot, params)
                     if params.use_for_spec_an: #If I want use the combined spectrum for spectral analysis
                         print ('Using sum or average to spectral analysis')
                         params = replace(params, wavelength=params.proc_wavelength, flux=params.proc_flux)
@@ -766,12 +767,14 @@ def main():
                     #1) BLACKBODY FITTING
                     if (bb_fit):
                         i == 0 and print('\nRunning blackbody fitting task...\n')
-                        temperature_bb, residual_bb, params = apply_analysis_tasks.apply_blackbody_fitting(event, save_plot, params)
+                        temperature_bb, residual_bb, T_err, chi2, params = apply_analysis_tasks.apply_blackbody_fitting(event, save_plot, params)
                         #Updating the file
                         if event == 'Process all':
                             try:
                                 if temperature_bb is not None:
                                     df_bb.at[i, 'T(K)']= temperature_bb
+                                    df_bb.at[i, 'err']= T_err
+                                    df_bb.at[i, 'chi2']= chi2
                                     df_bb.to_csv(bb_file, index= False, sep=' ')
                                     i == (params.spectra_number_to_process - 1) and print(f'File saved: {bb_file}\n')
                             except Exception:
@@ -780,10 +783,10 @@ def main():
                     # 2) CROSS-CORRELATION
                     if (cross_corr):
                         i == 0 and print('\nRunning cross-correlation task...\n')
-                        value_at_max, params = apply_analysis_tasks.apply_cross_correlation(event, save_plot, params)
+                        value_at_max, error, params = apply_analysis_tasks.apply_cross_correlation(event, save_plot, params)
                         if event == "Process all":
                             # Updating and writing the file
-                            file_writer.save_velocity_or_redshift_to_file(i, params, value_at_max, df_rv, rv_file)
+                            file_writer.save_velocity_or_redshift_to_file(i, params, value_at_max, error, df_rv, rv_file)
 
                     # 3) VELOCITY DISPERSION
                     if (sigma_measurement):
@@ -829,13 +832,18 @@ def main():
                             num_lick_indices = len(lick_idx_names) #19
                         if event == 'Process all':
                             # Updating and writing the file
+                            if i == 0:
+                                lick_to_plot = [] # define the lists to accomodate the lick indices to be plotted at the end on the index-index grids
+                                lick_err_to_plot = []
+
                             file_writer.save_lick_indices_to_file(
                                 i, params, num_lick_indices, lick_ew_array, lick_err_array, lick_ew_array_mag,
                                 lick_err_array_mag, lick_snr_ew_array, df_ew_lick, ew_lick_file, df_ew_lick_mag,
                                 ew_lick_file_mag, df_snr_lick_ew, snr_lick_ew_file, ew_lick_id, ew_lick_id_mag,
                                 snr_lick_ew_id, spectra_lick_id, df_lick_param, ssp_lick_param_file, lick_for_ssp,
                                 df_ssp_param, ssp_param_file, age, err_age, met, err_met, alpha, err_alpha, save_plot,
-                                ssp_lick_indices_list, ssp_lick_indices_err_list, params.spectra_list_name, params.result_plot_dir, ssp_model)
+                                ssp_lick_indices_list, ssp_lick_indices_err_list, params.spectra_list_name, params.result_plot_dir,
+                                ssp_model, lick_to_plot, lick_err_to_plot)
 
                     #5) LINE(S) FITTING: CaT
                     if (line_fitting and params.cat_band_fit):
@@ -874,27 +882,25 @@ def main():
                     # 6) KINEMATICS WITH PPXF
                     if (perform_kinematics):
                         i == 0 and print('\nRunning stars and gas kinematics task...\n')
-                        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
+                        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, kin_gas_component, snr_kin, error_kinematics_mc, kin_gas_names, kin_gas_flux, kin_gas_flux_err, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
                         if event == 'Process all':
                             #Updating and writing the file(s)
-                            file_writer.save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, kin_component, snr_kin, df_kin, kin_file, df_kin_mc, kin_file_mc, df_kin_gas, kin_file_gas)
+                            df_kin_gas = file_writer.save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, kin_gas_component, kin_gas_names, kin_gas_flux, kin_gas_flux_err, kin_component, snr_kin, df_kin, kin_file, df_kin_mc, kin_file_mc, df_kin_gas, kin_file_gas)
 
                     # 7) STELLAR POPULATIONS WITH PPXF
                     if (stellar_pop):
                         i == 0 and print('\nRunning stellar populations and SFH task...\n')
-                        kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err_lower, met_err_upper, mass_met_err_lower, mass_met_err_upper, snr_pop, ppxf_pop_lg_age, age_err_lower_abs, age_err_upper_abs, mass_age_err_lower_abs, mass_age_err_upper_abs, alpha_err_lower, alpha_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params = apply_analysis_tasks.apply_ppxf_stellar_populations(event, save_plot, params)
+                        kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err, mass_met_err, snr_pop, ppxf_pop_lg_age, ppxf_pop_lg_met, age_err_abs, mass_age_err_abs, alpha_err, mass_alpha_err, t50_age, t80_age, t50_cosmic, t80_cosmic, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params = apply_analysis_tasks.apply_ppxf_stellar_populations(event, save_plot, params)
                         if kinematics is None:
                             print('Kinematics moments are zero, the fit has failed\n')
                         if event == 'Process all':
                             #Updating and writing the file(s)
                             file_writer.save_population_analysis_to_file(
                                 i, params, kinematics, info_pop, info_pop_mass, mass_light,
-                                chi_square, met_err_lower, met_err_upper, mass_met_err_lower,
-                                mass_met_err_upper, snr_pop, age_err_lower_abs, age_err_upper_abs,
-                                mass_age_err_lower_abs, mass_age_err_upper_abs, ssp_lick_indices_ppxf,
+                                chi_square, met_err, mass_met_err, snr_pop, age_err_abs,
+                                mass_age_err_abs, alpha_err, mass_alpha_err, t50_age, t80_age, t50_cosmic, t80_cosmic, ssp_lick_indices_ppxf,
                                 ssp_lick_indices_err_ppxf, ppxf_lick_params, df_pop, pop_file,
                                 df_ssp_param_ppxf, ssp_param_file_ppxf)
-
 
                 #progress meter and error messages in Process all mode
                 if event == "Process all":
@@ -902,7 +908,7 @@ def main():
                         print ('***CANCELLED***\n')
                         break
 
-                    if (not save_intermediate_files and params.task_spec2 == 1):
+                    if (params.save_final_spectra and params.task_spec2 == 1):
                         file_final = params.result_spec+'proc_' + params.prev_spec_nopath + '.fits'
                         uti.save_fits(params.wavelength, params.flux, file_final)
                         #considering also the cont sub task which saves the continuum!
@@ -912,13 +918,7 @@ def main():
                             print ('File saved: ', file_cont)
                         print(f'File saved: {file_final}\n')
 
-                    elif (not save_intermediate_files and params.task_done2 == 0 ):
-                        if i == 0:
-                            sg.popup('Nothing to process!')
-                        if not sg.OneLineProgressMeter('Task progress', i+1, params.spectra_number,  'single', 'Processing spectra:', orientation='h',button_color=('white','red')):
-                            break
-
-                    elif (save_intermediate_files and params.task_done2 == 0 ):
+                    elif (params.task_done2 == 0 ):
                         if i == 0:
                             sg.popup('Nothing to process!')
                         if not sg.OneLineProgressMeter('Task progress', i+1, params.spectra_number,  'single', 'Processing spectra:', orientation='h',button_color=('white','red')):
@@ -931,9 +931,10 @@ def main():
                         continue
 
                     # Save only the final results, without the intermediate files
-                    if (save_intermediate_files and event == 'Process selected' and params.task_done == 0):
+                    if (event == 'Process selected' and params.task_done == 0 and params.task_analysis == 0 ):
                         sg.popup ('Nothing to process!')
-                    if (not save_intermediate_files and event == 'Process selected' and params.task_spec == 1):
+                        continue
+                    if (params.save_final_spectra and event == 'Process selected' and params.task_spec == 1):
                         file_final = params.result_spec+'proc_' + params.prev_spec_nopath + '.fits'
                         uti.save_fits(params.wavelength, params.flux, file_final)
 
@@ -943,10 +944,7 @@ def main():
                             uti.save_fits(params.wavelength, params.continuum_flux, file_cont)
                             print ('File saved: ', file_cont)
                         print(f'File saved: {file_final}\n')
-                    elif (not save_intermediate_files and event == 'Process selected' and params.task_done == 0):
-                        sg.popup ('Nothing to process!')
-
-
+            params = replace(params, kin_stars_templates=None, kin_lam_temp=None, kin_velscale_templates=None)
     #************************************** SAVE AND LOAD PARAMETER VALUES *********************************************
         if event == 'Save parameters...':
             # Open a window to select the path to save the file

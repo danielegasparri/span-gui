@@ -23,7 +23,7 @@
 from dataclasses import dataclass, field
 import os
 import numpy as np
-
+from typing import Union
 
 try: #try local import if executed as script
     #GUI import
@@ -93,11 +93,16 @@ class SpectraParams:
     task_spec2: int = 0
     task_analysis: int = 0
 
-   # Task-related parameters
+   # Task-related parameters of the spectra manipulation panel
     current_order: list = None
     reorder_op: bool = False
     reordered_operations: list = None
     active_operations: list = None
+
+
+    save_intermediate_spectra: bool = True
+    save_final_spectra: bool = False
+    not_save_spectra: bool = False
 
     # Dynamic Cleaning Parameters
     clip_factor: float = 2.5
@@ -148,28 +153,30 @@ class SpectraParams:
     is_initial_res_fwhm: bool = False
     initial_res_fwhm: float = 2.51
     final_res_fwhm: float = 8.4
+    res_degrade_muse: bool = False
+    res_degrade_muse_value: float = 2.51
 
     # Continuum Subtraction Parameters
     markers_cont_operations: list = field(default_factory=lambda: ["subtract", "divide"])
-    cont_math_operation: str = ''  # Initialized in __post_init__
+    cont_math_operation: str = "subtract"  # Initialized in __post_init__
     cont_model_filtering: bool = True
     cont_model_poly: bool = False
     cont_want_to_mask: bool = False
-    cont_mask_ranges_str: str = "[(655, 666), (485, 490),(585, 595)]"
+    cont_mask_ranges_str: str = "[(6550, 6660), (4850, 4900),(5850, 5950)]"
     cont_mask_ranges: list[tuple[float, float]] = '' #field(init=False)  # Initialized in __post_init__
     cont_poly_degree: int = 5
 
     # Blackbody Parameters
-    wave1_bb: float = 600.0
-    wave2_bb: float = 900.0
+    wave1_bb: float = 6000
+    wave2_bb: float = 9000
     t_guess: float = 4000.0
 
     # Cross-Correlation Parameters
     lambda_units_template_crosscorr: str = "a"
     smooth_template_crosscorr: bool = False
     smooth_value_crosscorr: float = 0.0
-    low_wave_corr: float = 840.0
-    high_wave_corr: float = 880.0
+    low_wave_corr: float = 8400
+    high_wave_corr: float = 8800
     is_vel_xcorr: bool = True
     is_z_xcorr: bool = False
     low_vel_corr: float = -1000.0
@@ -184,6 +191,9 @@ class SpectraParams:
     vel_interval_corr: np.ndarray = field(init=False)
     z_interval_corr: np.ndarray = field(init=False)
     interval_corr: np.ndarray = field(init=False)
+    xcorr_limit_wave_range: bool = False
+    xcorr_vel_step: float = 5
+    xcorr_z_step: float = 0.001
 
     template_crosscorr: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "template_emiles.dat"))
 
@@ -200,12 +210,12 @@ class SpectraParams:
     band_custom: bool = False
     resolution_spec: int = 5000
     resolution_template: int = 0
-    low_wave_sigma: float = 840.0
-    high_wave_sigma: float = 890.0
-    low_wave_cont: float = 856.0
-    high_wave_cont: float = 864.0
-    band_sigma: np.ndarray = field(default_factory=lambda: np.array([844.0, 872.0])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
-    cont_sigma: np.ndarray = field(default_factory=lambda: np.array([856.0, 864.0]))
+    low_wave_sigma: float = 8400
+    high_wave_sigma: float = 8900
+    low_wave_cont: float = 8560
+    high_wave_cont: float = 8640
+    band_sigma: np.ndarray = field(default_factory=lambda: np.array([8440, 8720])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
+    cont_sigma: np.ndarray = field(default_factory=lambda: np.array([8560, 8640]))
 
     template_sigma: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "emiles_template_extended_younger.dat"))
 
@@ -213,12 +223,12 @@ class SpectraParams:
     index_file: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "index_list_sample.txt"))
     have_index_file: bool = False
     single_index: bool = False
-    idx_left_blue: float = 847.4
-    idx_right_blue: float = 848.4
-    idx_left_red: float = 856.3
-    idx_right_red: float = 857.7
-    idx_left_line: float = 848.4
-    idx_right_line: float = 851.3
+    idx_left_blue: float = 8474
+    idx_right_blue: float = 8484
+    idx_left_red: float = 8563
+    idx_right_red: float = 8577
+    idx_left_line: float = 8484
+    idx_right_line: float = 8513
     index_usr: np.ndarray = field(init=False)
 
     # LICK/IDS Index Measurements
@@ -234,7 +244,7 @@ class SpectraParams:
     sigma_single_lick: int = 100
     correct_ew_sigma: bool = True
     sigma_lick_coeff_file: str = field(default_factory=lambda: os.path.join(BASE_DIR, "system_files", "sigma_coeff_lick.dat"))
-    lick_index_file: str = field(default_factory=lambda: os.path.join(BASE_DIR, "system_files", "lick_indices.dat"))
+    lick_index_file: str = field(default_factory=lambda: os.path.join(BASE_DIR, "system_files", "lick_indices_angstrom.dat"))
     lick_correct_emission: bool = True
     z_guess_lick_emission: float = 0.0
     lick_ssp_models: list = field(default_factory=lambda: ['Thomas2010', 'xshooter', 'miles', 'smiles'])
@@ -246,10 +256,10 @@ class SpectraParams:
 
     # Fit Lines Default Values
     emission_line: bool = False
-    low_wave_fit: float = 845.0
-    high_wave_fit: float = 870.0
+    low_wave_fit: float = 8450
+    high_wave_fit: float = 8700
     y0: float = 1.0
-    x0: float = 850.0
+    x0: float = 8500
     a: float = -0.8
     sigma: float = 0.5
     m: float = 0.1
@@ -258,18 +268,26 @@ class SpectraParams:
     usr_fit_line: bool = False
     wave_interval_fit: np.ndarray = field(init=False)  # in __post_init__
     guess_param: list = field(init=False)  # in __post_init__
-    real_cat1: float = 849.8
-    real_cat2: float = 854.2
-    real_cat3: float = 866.2
-    index_ca1: list = field(default_factory=lambda: [847.4, 848.4, 856.3, 857.7, 848.4, 851.3])
-    index_ca2: list = field(default_factory=lambda: [847.4, 848.4, 856.3, 857.7, 852.2, 856.2])
-    index_ca3: list = field(default_factory=lambda: [861.9, 864.2, 870.0, 872.5, 864.2, 868.2])
+    real_cat1: float = 8498
+    real_cat2: float = 8542
+    real_cat3: float = 8662
+    index_ca1: list = field(default_factory=lambda: [8474, 8484, 8563, 8577, 8484, 8513])
+    index_ca2: list = field(default_factory=lambda: [8474, 8484, 8563, 8577, 8522, 8562])
+    index_ca3: list = field(default_factory=lambda: [8619, 8642, 8700, 8725, 8642, 8682])
+    wave_limits_cat: np.ndarray = field(default_factory=lambda: np.array([8440, 8720]))
+
 
     # PPXF Kinematics Default Parameters
-    wave1_kin: float = 480.0
-    wave2_kin: float = 550.0
+    kin_stars_templates: list = None
+    kin_lam_temp: list = None
+    kin_velscale_templates: float = None
+    kin_FWHM_gal_cached: Union[float, np.ndarray, None] = None
+
+    wave1_kin: float = 4800
+    wave2_kin: float = 5500
     resolution_kin: float = 3.5
     resolution_kin_r: int = 1600
+    resolution_kin_muse: bool = False
     sigma_guess_kin: float = 100.0
     redshift_guess_kin: float = 0.0
     constant_resolution_lambda: bool = True
@@ -287,6 +305,11 @@ class SpectraParams:
     ppxf_kin_custom_lib: bool = False
     ppxf_kin_lib_folder: str = field(default_factory=lambda: os.path.join(BASE_DIR, "spectralTemplates", "EMILES_BASTI_BASE_KU_FITS"))
     ppxf_kin_custom_temp_suffix: str = '*Eku1.30*.fits'
+
+    ppxf_kin_generic_lib: bool = False
+    ppxf_kin_generic_lib_folder: str = field(default_factory=lambda: os.path.join(BASE_DIR, "spectralTemplates", "EMILES_BASTI_BASE_KU_FITS"))
+    ppxf_kin_FWHM_tem_generic: float = 2.51
+
     ppxf_kin_tie_balmer: bool = False
     ppxf_kin_dust_stars: bool = False
     ppxf_kin_dust_gas: bool = False
@@ -300,13 +323,18 @@ class SpectraParams:
     ppxf_kin_vel_model2: float = 0.0
     ppxf_kin_sigma_model2: float = 50.0
     ppxf_kin_mask_emission: bool = True
+    ppxf_kin_have_user_mask: bool = False
+    ppxf_kin_mask_ranges_str: str = '[(5180, 5210)]'
+
     ppxf_kin_mc_sim: int = 20
+    ppxf_kin_save_spectra: bool = True
+
 
     # PPXF Stellar Population Parameters
     pop_with_gas: bool = True
     pop_without_gas: bool = False
-    wave1_pop: float = 480.0
-    wave2_pop: float = 550.0
+    wave1_pop: float = 4800
+    wave2_pop: float = 5500
     res_pop: float = 3.5
     z_pop: float = 0.0
     sigma_guess_pop: float = 100.0
@@ -341,12 +369,13 @@ class SpectraParams:
     ppxf_pop_dust_stars: bool = False
     ppxf_pop_dust_gas: bool = False
     ppxf_pop_want_to_mask: bool = False
-    ppxf_pop_mask_ranges_str: str = '[(518, 521)]'
+    ppxf_pop_mask_ranges_str: str = '[(5180, 5210)]'
     ppxf_pop_mask_ranges_str_default: str = field(init=False)  # in __post_init__
     ppxf_pop_mask_ranges: list = field(init=False)  # in __post_init__
     ppxf_pop_mask_ranges_default: list = field(init=False)  # in __post_init__
     ppxf_pop_error_nsim: int = 20
     ppxf_pop_lg_age: bool = True
+    ppxf_pop_lg_met: bool = True
     stellar_parameters_lick_ppxf: bool = False
     lick_ssp_models_ppxf: list = field(default_factory=lambda: ['Thomas2010', 'xshooter', 'miles', 'smiles'])
     ssp_model_ppxf: str = 'Thomas2010'
@@ -366,12 +395,12 @@ class SpectraParams:
     have_index_file_corr: bool = True
     index_file_corr: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "index_list_sample.txt"))
     single_index_corr: bool = False
-    idx_left_blue_sigma: float = 847.4
-    idx_right_blue_sigma: float = 848.4
-    idx_left_red_sigma: float = 856.3
-    idx_right_red_sigma: float = 857.7
-    idx_left_line_sigma: float = 848.4
-    idx_right_line_sigma: float = 851.3
+    idx_left_blue_sigma: float = 8474
+    idx_right_blue_sigma: float = 8484
+    idx_left_red_sigma: float = 8563
+    idx_right_red_sigma: float = 8577
+    idx_left_line_sigma: float = 8484
+    idx_right_line_sigma: float = 8513
 
     # Sigma Correction Default Parameters
     sigma_corr: bool = False
@@ -395,13 +424,13 @@ class SpectraParams:
     ifs_lfs_data_default: str = 'None'
     ifs_ow_config: bool = False
     ifs_ow_output: bool = False
-    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200'])
+    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU'])
     ifs_routine_read_default: str = 'MUSE_WFM'
     ifs_origin: str = '14,14'
-    ifs_lmin_tot: int = 480
-    ifs_lmax_tot: int = 550
-    ifs_lmin_snr_default: int = 480
-    ifs_lmax_snr_default: int = 550
+    ifs_lmin_tot: int = 4800
+    ifs_lmax_tot: int = 5500
+    ifs_lmin_snr_default: int = 4800
+    ifs_lmax_snr_default: int = 5500
     ifs_min_snr_mask: int = 0
     ifs_mask: str = 'none'
     ifs_bin_method: str = 'voronoi'
@@ -413,11 +442,13 @@ class SpectraParams:
     ifs_user_routine_file: str = ''
     ifs_manual_bin: bool = False
     ifs_voronoi: bool = True
+    ifs_existing_bin: bool = False
+    ifs_existing_bin_folder: str = ''
 
     # Spectra Pre-processing Default Parameters
     cropping_spectrum: bool = False
-    cropping_low_wave: float = 480.0
-    cropping_high_wave: float = 550.0
+    cropping_low_wave: float = 4800
+    cropping_high_wave: float = 5500
     sigma_clipping: bool = False
     wavelet_cleaning: bool = False
     sigma_wavelets: float = 0.02
@@ -434,7 +465,7 @@ class SpectraParams:
     rebin_step_sigma: int = 60
     degrade: bool = False
     normalize_wave: bool = False
-    norm_wave: float = 500.0
+    norm_wave: float = 5000
     sigma_broad: bool = False
     sigma_to_add: float = 0.0
     add_noise: bool = False
@@ -470,22 +501,21 @@ class SpectraParams:
         self.result_data = misc.create_result_structure(self.result_path)
 
         # Define subdirectories
-        self.result_spec_dir = os.path.join(self.result_data, 'spec')
+        self.result_spec_dir = os.path.join(self.result_data, 'processed_spectra')
         self.result_spec = os.path.join(self.result_spec_dir, '')
         self.result_snr_dir = os.path.join(self.result_data, 'SNR')
-        self.result_bb_dir = os.path.join(self.result_data, 'black_body')
-        self.result_xcorr_dir = os.path.join(self.result_data, 'xcorr')
-        self.result_vel_disp_dir = os.path.join(self.result_data, 'vel_disp')
-        self.result_ew_data_dir = os.path.join(self.result_data, 'ew')
+        self.result_bb_dir = os.path.join(self.result_data, 'planck_black_body_fitting')
+        self.result_xcorr_dir = os.path.join(self.result_data, 'cross-correlation')
+        self.result_vel_disp_dir = os.path.join(self.result_data, 'velocity_dispersion')
+        self.result_ew_data_dir = os.path.join(self.result_data, 'line-strength_analysis')
         self.result_line_fitting_dir = os.path.join(self.result_data, 'line_fitting')
-        self.result_ppxf_kin_data_dir = os.path.join(self.result_data, 'ppxf_kin')
-        self.result_ppxf_pop_data_dir = os.path.join(self.result_data, 'ppxf_pop')
-        self.result_sigma_coeff_dir = os.path.join(self.result_data, 'sigma_coeff')
+        self.result_ppxf_kin_data_dir = os.path.join(self.result_data, 'stars_and_gas_kinematics')
+        self.result_ppxf_pop_data_dir = os.path.join(self.result_data, 'stellar_populations_and_sfh')
+        self.result_sigma_coeff_dir = os.path.join(self.result_data, 'line-strength_sigma_coefficients')
         self.result_plot_dir = os.path.join(self.result_data, 'plots')
         self.result_long_slit_extract = os.path.join(self.result_data, 'longslit_extracted')
 
         # Initialize computed fields
-        self.cont_math_operation = self.markers_cont_operations[0]
 
         try:
             self.wave_limits = np.array([self.wavelength[0], self.wavelength[-1]])
@@ -508,16 +538,17 @@ class SpectraParams:
             self.vel_interval_corr = np.array([])
             self.z_interval_corr = np.array([])
             self.interval_corr = np.array([])
-
-            # self.band_sigma = np.array([])
-            # self.cont_sigma = np.array([])
-
             self.cont_mask_ranges = self.cont_mask_ranges_str
             self.index_usr = np.array([])
 
             self.wave_interval_fit = np.array([])
             self.guess_param = []
 
+        # PPXF kin Masking
+        try:
+            self.ppxf_kin_mask_ranges = eval(self.ppxf_kin_mask_ranges_str)
+        except Exception:
+            self.ppxf_kin_mask_ranges = self.ppxf_kin_mask_ranges_str
 
         # PPXF Stellar Population Masking
         try:

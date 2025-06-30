@@ -25,6 +25,32 @@
 
 ######################################################################################
 #Version histories
+
+#Version 6.6 (20250614):
+#Changed the default wavelength units used by SPAN. Now is Angstrom everywhere
+#Substituted the cross-correlation functions with more reliable ones written from scratch. Now the cross-correlation task is much more solid. 
+#The 'Stars and gas kinematics' task now caches the loaded templates at the first iteration in the 'Process all' mode, reducing the execution time by about a factor 2, instead loading the templates for any spectrum to process in the list. Working to do so also to the 'Stellar populations and SFH' task but it is much more difficult. Anyway, for this task the large execution times depend on the fit, so caching the templates will reduce the execution times by only 10 to 20%.
+#The 'Stars and gas kinematics' now can save also product spectra from the fit (bestfit, bestfit gas, gas with continuum removed, continuum with gas removed).
+#Added the calculation of t50 and t80 for the 'Stellar populations and SFH task'
+#Added the calculation of uncertainties (1sigma) also for the luminosity and mass fraction and cumulative mass of the 'Stellar populations and SFH' if bootstrap simulations for error estimation is activated. 
+#Changed the fit parameters when using pPXF to subtract the emission lines for the 'Line-strength analysis' using the semi-automatic 'Lick/IDS' indices. The fit with pPXF now is performed by calculating first the real noise value of the spectrum (auto_noise = True). 
+#The 'Stars and gas kinematics' now saves also the flux and formal errors of the emission lines, if gas calculation is activated.
+#Refactored the 'resolution' function of the utilities.py module to correct a bug that sometimes showed the resolution as negative value. Now also an error estimation of the FWHM is calculated and showed.
+#Corrected minor bugs.
+
+#Version 6.5 (20250531):
+#Added the Plot maps sub-program for reading and displaying the 2D maps from datacube data
+#Introduced new options in the Spectra Manipulation panel for saving the intermediate spectra, to save only the final spectra, and to NOT save processed spectra
+#Changed the name of the folders to store the results. Now they have the same name of the tasks to improve clarity.
+#Added the WEAVE_LIFU.py routine for datacube extraction.
+#Added the option to use pre-existing mask and bin info files for datacube extraction. 
+#Added the convolution with MUSE LSF for the 'Stars and gas' kinematics task
+#Added selecting the resolution in R or MUSE LSF also for the custom template option in the 'Stars and gas kinematics' task.
+#Added the custom masking for the 'Stars and gas kinematics' task.
+#Added the use of a generic template set in 'Stars and gas kinematics'. For now, only fits files with linear sampling in A can be used.
+#Added the 'Degrade MUSE data' option in the 'Degrade resolution' of the 'Spectra manipulation' panel. This allows to degrade/convert to a fixed FWHM resolution the variable resolution of MUSE.
+#Refactored the read_datacube function in the system_span.py module.
+
 #Version 6.4 (20250220):
 #Complete refactoring of the code, split in different modules. Use of the DataClass to store the GUI parameters and use.
 

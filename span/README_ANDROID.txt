@@ -1,7 +1,8 @@
-# Warning for pydroid: DO Not install span-gui with pip. Open the __main__.py, add the tk dependency: 
-# import tkinter as tk and compile.  
+# Warning for pydroid: DO Not install span-gui with pip. Open the __main__.py and compile. 
+For some Pydroid3 app versions, you may need to add the tk dependency: 
+# import tkinter as tk in the__main__.py
+
 #packages to install for Pydroid3.
- 
 #Install FIRST within the emulated terminal of Pydroid3:
 cython==3.0.11
 #
