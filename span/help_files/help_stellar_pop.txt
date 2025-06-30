@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V6.4
-Daniele Gasparri, February 2025
+SPAN: SPectral ANalysis software V6.6
+Daniele Gasparri, June 2025
 
 ###Stellar populations and SFH ###
 
@@ -23,8 +23,8 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 
 First Section: Basic Parameters
 - Wavelength Range: Defines the spectral region to be fitted. A good estimate of stellar population parameters in galaxies is obtained by focusing on:
-480-550 nm (rest-frame) in the optical, covering age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe.
-840-880 nm (rest-frame) in the near-infrared, including the Ca II triplet, which is useful for stellar kinematics.
+4800-5500 A (rest-frame) in the optical, covering age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe.
+8400-8800 A (rest-frame) in the near-infrared, including the Ca II triplet, which is useful for stellar kinematics.
 - Spectral Resolution FWHM (A): Approximate resolution of your spectrum in the selected range. This is relevant only if including gas emission lines in the fit. A precise value is not required, but a good estimate is recommended.
 - Velocity Dispersion Guess (km/s): An approximate estimate of the actual stellar velocity dispersion.
 - Redshift Guess (z): An initial estimate of the spectrum's redshift. If this value is incorrect, the fit will likely fail.
@@ -45,12 +45,12 @@ Recommended Workflow:
 - Adjust the noise level to achieve chi^2 = 1.
 - Set the regularization so that the current delta Chi^2 falls between 20-50% of the desired delta Chi^2.
 - If uncertain, use "Auto Noise Level Estimation", which performs an initial unregularized fit to determine the optimal noise level.
-- For small spectral ranges (<100 nm) and limited templates, "Auto Noise and Regul. error" can be used to optimize both parameters. A good starting point for S/N = 50 is setting "Fraction of Dchi2 to reach" to 0.20.
+- For small spectral ranges (<1000 A) and limited templates, "Auto Noise and Regul. error" can be used to optimize both parameters. A good starting point for S/N = 50 is setting "Fraction of Dchi2 to reach" to 0.20.
 
 - Polynomial Adjustments:
 Additive Degree: Leave disabled (-1) for reliable results.
-Multiplicative Degree: Adjust based on spectral range (about 1 degree per 10 nm).
-Example: For 480-550 nm, set Mult. degree = 7.
+Multiplicative Degree: Adjust based on spectral range (about 1 degree per 100 A).
+Example: For 4800-5500 A, set Mult. degree = 7.
 
 
 Fourth Section: Template Library Selection
@@ -90,7 +90,7 @@ Select model grids and interpolation mode as in the Line-Strength Analysis modul
 
 
 Final Notes
-By default, templates are V-band normalized (507-595 nm), meaning age, metallicity, and SFH are luminosity-weighted.
+By default, templates are V-band normalized (5070-5950 A), meaning age, metallicity, and SFH are luminosity-weighted.
 Using pPXF's .flux attribute, SPAN derives mass-weighted results from the same fit.
 Best regularization differs for mass-weighted vs. luminosity-weighted results. If mass results are the priority, fine-tune the "Regul. error" accordingly.
 
@@ -102,3 +102,13 @@ Every fit generates three plots:
 - Non-parametric SFH (luminosity-weighted and mass-weighted).
 
 Carefully analyse these plots to determine whether the fit is physically meaningful. No computer can yet decide if a fit, even if statistically excellent, makes sense in the real universe.
+
+
+Outputs:
+In 'Process selected mode' the task produces for the processed spectrum:
+	- An ASCII file (.dat) containing the luminosity and mass fraction and cumulative as a function of the age (mass growth). If the 'Estimate the uncertainties for age and met (long process)' is activated, also the relative uncertainties are added to the file. This file is stored in the 'stellar_population_and_sfh/SFH/' subfolder.  
+	- Two ASCII files containing the luminosity and mass weights respectively. These files are stored in the 'stellar_population_and_sfh/weights/' subfolder
+	- FITS files containing: 1) residual of the fit, 2) bestfit template, 3) emission corrected spectrum (if gas is considered), stored in the 'processed_spectra' subfolder. 
+
+In 'Process all mode', the task stores all the files of the 'Process selected' mode for each spectrum. Moreover:
+	- An ASCII file with kinematics, mean luminosity and mass age, metallicity and alpha/Fe (if available) and the relative uncertainties if 'Estimate the uncertainties for age and met (long process)' if activated, stored in the 'stellar_population_and_sfh' subfolder. 

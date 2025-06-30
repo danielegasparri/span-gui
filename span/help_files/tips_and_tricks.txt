@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V6.4
-Daniele Gasparri, February 2025
+SPAN: SPectral ANalysis software V6.6
+Daniele Gasparri, June 2025
 
 
 Here are some useful tips to help you make the most of SPAN.
@@ -8,13 +8,13 @@ Here are some useful tips to help you make the most of SPAN.
 Due to the variety of 1D spectral formats, SPAN requires you to manually set the wavelength units before loading spectra.
 It does not matter whether the spectra use linear or logarithmic wavelength values—you must specify whether the units are in Angstrom, nanometres, or micrometres.
 If the wavelength units are incorrect, SPAN will display the spectrum with the wrong scale.
-Example: If your optical spectra are in Angstrom but you set nanometres, clicking "Plot" will show a range from 4800 to 5500 nm, which is incorrect.
+Example: If your optical spectra are in Angstrom but you set nanometres, clicking "Plot" will show a range from 48000 to 55000 A, which is incorrect.
 To fix this, select the correct wavelength units and plot one selected spectrum again.
 
 
 2. Improving Lick/IDS Line-Strength Analysis Accuracy
-The "Emission Line(s) Correction" option in the Lick/IDS line-strength analysis uses pPXF to remove gas emissions from the spectra. This process fits the gas component using E-MILES templates and applies a fixed wavelength fitting range (400-650 nm). If the spectra contain edge artifacts (e.g., from X-shooter UVB and VIS arms), the fit may be imperfect.
-Solution: Activate the "Cropping" task in the "Spectra Pre-Processing" panel and crop the spectrum to remove problematic regions. If you want to analyse only the 480-550 nm range for stellar populations, crop the spectra accordingly.
+The "Emission Line(s) Correction" option in the Lick/IDS line-strength analysis uses pPXF to remove gas emissions from the spectra. This process fits the gas component using E-MILES templates and applies a fixed wavelength fitting range (4000-6500 A). If the spectra contain edge artifacts (e.g., from X-shooter UVB and VIS arms), the fit may be imperfect.
+Solution: Activate the "Cropping" task in the "Spectra Pre-Processing" panel and crop the spectrum to remove problematic regions. If you want to analyse only the 4800-5500 A range for stellar populations, crop the spectra accordingly.
 
 
 3. Using "Stellar Populations and SFH" for Kinematics

@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V6.4
-Daniele Gasparri, February 2025
+SPAN: SPectral ANalysis software V6.6
+Daniele Gasparri, June 2025
 
 
 ### Quick start ###
@@ -9,7 +9,7 @@ To get started, press the "Load!" button in the "Prepare and Load Spectra" frame
 The loaded spectra will appear in the central frame on the right (the white window). Simply select a spectrum with the mouse, then click "Plot" to display it. Close the plot window to re-enable the main panel.
 You can now:
 - Analyse the selected spectrum by activating any spectral analysis tasks.
-- Modify the spectrum by opening the "Spectra Manipulation" panel, located in the "Utility" frame on the right.
+- Modify the spectrum by opening the "Spectra Manipulation" panel, located in the "Utilities" frame on the right.
 
 
 Applying a Spectral Manipulation Task
