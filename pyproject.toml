@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "span-gui"
-version = "6.6.0"
+version = "6.6.2"
 description = "GUI program for the manipulation and analysis of astronomical spectra in the optical and NIR wavelength ranges."
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = """
 SPAN License
@@ -47,17 +47,18 @@ classifiers = [
 ]
 
 dependencies = [
-  "numpy>=1.21.6,<1.28.0",
-  "astropy>=6.0.0,<=6.1.7",
-  "pandas>=2.0.0,<=2.2.3",
+  "numpy>=1.24.1,<=2.2.6",
+  "astropy>=6.1.0,<=7.1.0",
+  "pandas>=2.2.3",
   "matplotlib>=3.5.3,<=3.10.3",
-  "scipy>=1.11.2,<1.12.0",
-  "scikit-image>=0.20.0,<=0.25.2",
-  "PyWavelets>=1.5.0,<=1.8.0",
+  "scipy>=1.15.0,<=1.16.0",
+  "scikit-image>=0.25.2",
+  "PyWavelets>=1.7.0,<=1.8.0",
   "joblib>=1.3.2,<=1.4.2",
-  "scikit-learn>=1.3.0,<=1.6.1",
+  "scikit-learn>=1.3.0,<=1.7.0",
   "ppxf>=9.4.1",
-  "vorbin>=3.1.7"
+  "vorbin>=3.1.7",
+  "certifi >= 2025.1.31"
 ]
 
 [tool.setuptools]
