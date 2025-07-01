@@ -16,7 +16,7 @@ Currently, SPAN considers only the wavelength and the flux, discarding the (pote
 
 
 ****What do you need to run SPAN****
-- In order to run the source code, you need Python 3.X and the following modules installed (pip3 install <library>):
+- In order to run the source code, you need Python >=3.10 and the following modules installed (pip3 install <library>):
 
     1) Numpy
     2) Astropy
@@ -29,15 +29,9 @@ Currently, SPAN considers only the wavelength and the flux, discarding the (pote
     9) scikit-learn
     10) ppxf
     11) vorbin
+    12) certifi
     
-    Since the required modules are often updated, it is possible that incompatibilities arise with the newest versions. For this reason, I recommend reading the file 'python_packages.txt' where you will find a list of the required modules and the latest versions that are guaranteed to work with the current version of SPAN.
-
-The needed package versions for desktop devices depend on the operating system:
-	- For macOS, the latest working Matplotlib version is 3.5.3 and you also need Pandas 2.0.0.
-
-    SPAN is optimised and can run also on most Android devices using the Pydroid3 app. The list and versions of packages needed is stored in the 'python_packages_pydroid3.txt' file.
-    To install the Phyton packages required and the proper versions for the Android devices using Pydroid3, you should use the terminal emulator of Pydroid3 to install first the cython==3.0.11 module via pip: 'pip3 install cython==3.0.11', then you should use the embedded pip of Pydroid3 to manually install the other modules with the specific version specified in the 'python_packages_pydroid3.txt' file.
-
+    SPAN is optimised and can run also on most Android devices using the Pydroid3 app. The list and versions of packages needed is stored in the 'README_ANDROID.txt' file.
 
 
  - A screen resolution of at least 1600X900 is required, otherwise the panel will be truncated.

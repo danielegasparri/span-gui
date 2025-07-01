@@ -1,26 +1,27 @@
-# Warning for pydroid: DO Not install span-gui with pip. Open the __main__.py and compile. 
-For some Pydroid3 app versions, you may need to add the tk dependency: 
-# import tkinter as tk in the__main__.py
+SPAN for Android has been tested using the Pydroid3 app (the free version is fine).
+Please, download the latest Pydroid3 app and the Pydroid3 repository (they are two separate apps) from Google Play.
+DO NOT install span-gui with pip. Copy the content of the folder to your device (usually in Download or Documents), open the __main__.py in Pydroid3 and add the tk dependency in __main__.py: 
+ import tkinter as tk
 
-#packages to install for Pydroid3.
-#Install FIRST within the emulated terminal of Pydroid3:
-cython==3.0.11
-#
-#install with the embedded pip in this order:
-Numpy==1.26.1
-meson==1.6.0
-pyerfa==2.0.0
-pillow==10.0.1
-contourpy==1.1.1
-kiwisolver==1.4.5
-tk==0.1.0
-joblib==1.3.2
-pywavelets==1.5.0
-astropy==6.0.0
-matplotlib==3.8.0
-Pandas==2.1.0
-Scipy==1.11.2
-scikit-learn==1.3.0
-scikit-image==0.20.0
-ppxf
-vorbin
+Before compiling, you need to manually install with the embedded pip of Pydroid3 the following modules, in this order:
+  numpy
+  astropy
+  pandas
+  matplotlib
+  scipy
+  scikit-image
+  PyWavelets
+  joblib
+  scikit-learn
+  ppxf
+  vorbin
+  tk
+  certifi
+
+Once done, you need to compile the __main__.py.
+Put your mobile device in landscape mode (horizontal), otherwise the GUI panel will be truncated. 
+Enjoy!
+
+If you experiment an error during the installation of the required modules, try to open the emulated terminal of Pydroid3 and install cython as follow:
+pip3 install cython
+Then proceed with the installation of the required modules via pip

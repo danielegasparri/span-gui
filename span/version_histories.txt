@@ -26,7 +26,9 @@
 ######################################################################################
 #Version histories
 
-#Version 6.6 (20250614):
+#Version 6.6 (20250701):
+#Fixed an error for macOS systems that prevented to download the required files and also the SSPs from pPXF repository (macOS requires an SSL certificate to download files from internet). 
+#Updated the versions of the modules compatibles in order to include also the newest versions of NumPy (2.X.X), and solved the compatibility problems with macOS. Now SPAN requires Python >= 3.10 to run but should be more stable and easy to install for Android and macOS systems.
 #Changed the default wavelength units used by SPAN. Now is Angstrom everywhere
 #Substituted the cross-correlation functions with more reliable ones written from scratch. Now the cross-correlation task is much more solid. 
 #The 'Stars and gas kinematics' task now caches the loaded templates at the first iteration in the 'Process all' mode, reducing the execution time by about a factor 2, instead loading the templates for any spectrum to process in the list. Working to do so also to the 'Stellar populations and SFH' task but it is much more difficult. Anyway, for this task the large execution times depend on the fit, so caching the templates will reduce the execution times by only 10 to 20%.
