@@ -6,6 +6,8 @@
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
 
+![span](https://github.com/user-attachments/assets/a9df793c-cf88-4251-a26d-f8da98426a58)
+
 
 
 ## 🔹 Overview
