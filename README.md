@@ -58,7 +58,7 @@ pip3 install span-gui
 ```
 
 ## ✅ System Requirements
-- Python 3.7+
+- Python 3.10+
 - Screen resolution of at least 1600x900 px (for optimal GUI display)  
 - The following dependencies will be automatically installed:  
 numpy, scipy, astropy, matplotlib, pandas, scikit-learn, scikit-image, PyWavelets, joblib, ppxf, vorbin
