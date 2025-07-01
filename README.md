@@ -3,7 +3,7 @@
 📅 **Release Date:** February 2025  
 
 ![PyPI Version](https://img.shields.io/pypi/v/span-gui)
-![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
 
 
