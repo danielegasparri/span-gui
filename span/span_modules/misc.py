@@ -37,6 +37,8 @@ import os
 import numpy as np
 import urllib.request
 import zipfile
+import ssl
+import certifi
 
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -84,9 +86,9 @@ def create_result_structure(base_path):
     """Creating the directory structure"""
     result_data = os.path.join(base_path, 'SPAN_results')
     subdirectories = [
-        'spec', 'SNR', 'black_body', 'xcorr', 'vel_disp',
-        'ew', 'line_fitting', 'ppxf_kin', 'ppxf_pop',
-        'sigma_coeff', 'plots'
+        'processed_spectra', 'SNR', 'planck_black_body_fitting', 'cross-correlation', 'velocity_dispersion',
+        'line-strength_analysis', 'line_fitting', 'stars_and_gas_kinematics', 'stellar_populations_and_sfh',
+        'line-strength_sigma_coefficients', 'plots'
     ]
     os.makedirs(result_data, exist_ok=True)
     for subdir in subdirectories:
@@ -169,8 +171,10 @@ TEMP_ZIP_PATH = os.path.join(BASE_DIR, "spectralTemplates.zip")
 def download_with_progress(url, dest):
     """Download a file with a progress bar"""
 
+    context = ssl.create_default_context(cafile=certifi.where())
+
     # Get the file size
-    response = urllib.request.urlopen(url)
+    response = urllib.request.urlopen(url, context=context)
     total_size = int(response.getheader('Content-Length', 0))
 
     # Setting up the progress bar

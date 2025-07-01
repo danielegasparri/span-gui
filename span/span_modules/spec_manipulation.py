@@ -27,11 +27,13 @@ try: #try local import if executed as script
     from FreeSimpleGUI_local import FreeSimpleGUI as sg
     from params import SpectraParams
     from span_modules import misc
+    from span_modules import layouts
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
     from . import misc
+    from . import layouts
     from .params import SpectraParams
 
 #python imports
@@ -55,6 +57,10 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     reorder_op = params.reorder_op
     reordered_operations = params.reordered_operations
     active_operations = params.active_operations
+
+    save_intermediate_spectra = params.save_intermediate_spectra
+    save_final_spectra = params.save_final_spectra
+    not_save_spectra = params.not_save_spectra
 
     #DYNAMIC CLEANING PARAMETERS
     clip_factor = params.clip_factor
@@ -105,6 +111,8 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     is_initial_res_fwhm = params.is_initial_res_fwhm
     initial_res_fwhm = params.initial_res_fwhm
     final_res_fwhm = params.final_res_fwhm
+    res_degrade_muse = params.res_degrade_muse
+    res_degrade_muse_value = params.res_degrade_muse_value
 
     #CONTINUUM SUBTRACTION PARAMETERS
     markers_cont_operations = params.markers_cont_operations
@@ -164,52 +172,61 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     fatal_condition = params.fatal_condition
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
+
+    if layout == layouts.layout_macos:
+        default_font_size = 14
+    else:
+        default_font_size = 10
+
     sg.theme('DarkBlue3')
     spec_layout = [
 
+
+
     #Spectra pre-processing
     [sg.Frame('Spectra pre-processing', [
-    [sg.Checkbox('Cropping', key ='cropping', font = ('Helvetica', 10, 'bold'), default = cropping_spectrum, tooltip='Crop the spectrum to a user defined wavelength range'), sg.Text('Lower wave'), sg.InputText(cropping_low_wave, key = 'cropping_low_wave', size = (5,1)), sg.Text('Upper wave'), sg.InputText(cropping_high_wave, key = 'cropping_high_wave', size = (5,1))],
+    [sg.Checkbox('Cropping', key ='cropping', font = ('Helvetica', default_font_size, 'bold'), default = cropping_spectrum, tooltip='Crop the spectrum to a user defined wavelength range'), sg.Text('Lower wave'), sg.InputText(cropping_low_wave, key = 'cropping_low_wave', size = (5,1)), sg.Text('Upper wave'), sg.InputText(cropping_high_wave, key = 'cropping_high_wave', size = (5,1))],
 
-    [sg.Checkbox('Dynamic cleaning', font = ('Helvetica', 10, 'bold'), key = 'sigma_clip', default = sigma_clipping,tooltip='Perform sigma clipping to erase spikes'), sg.Push(), sg.Button('Clean parameters',button_color= ('black','light blue'), size = (23,1))],
+    [sg.Checkbox('Dynamic cleaning', font = ('Helvetica', default_font_size, 'bold'), key = 'sigma_clip', default = sigma_clipping,tooltip='Perform sigma clipping to erase spikes'), sg.Push(), sg.Button('Clean parameters',button_color= ('black','light blue'), size = (23,1))],
 
-    [sg.Checkbox('Wavelet cleaning', font = ('Helvetica', 10, 'bold'), key = 'wavelet_cleaning', default = wavelet_cleaning,tooltip='Perform wavelet cleaning of the spectrum'), sg.Text('sigma:'),sg.InputText(sigma_wavelets, key = 'sigma_wavelets', size = (4,1)), sg.Text('Wavelet layers:'), sg.InputText(wavelets_layers, key = 'wavelets_layers', size = (3,1))],
+    [sg.Checkbox('Wavelet cleaning', font = ('Helvetica', default_font_size, 'bold'), key = 'wavelet_cleaning', default = wavelet_cleaning,tooltip='Perform wavelet cleaning of the spectrum'), sg.Text('sigma:'),sg.InputText(sigma_wavelets, key = 'sigma_wavelets', size = (4,1)), sg.Text('Wavelet layers:'), sg.InputText(wavelets_layers, key = 'wavelets_layers', size = (3,1))],
 
-    [sg.Checkbox('Filtering and denoising', font = ('Helvetica', 10, 'bold'), key = 'filter_denoise', default = filter_denoise,tooltip='Filters to smooth the spectrum'), sg.Push(), sg.Button('Denoise parameters',button_color= ('black','light blue'), size = (23,1))],
+    [sg.Checkbox('Filtering and denoising', font = ('Helvetica', default_font_size, 'bold'), key = 'filter_denoise', default = filter_denoise,tooltip='Filters to smooth the spectrum'), sg.Push(), sg.Button('Denoise parameters',button_color= ('black','light blue'), size = (23,1))],
 
-    [sg.Checkbox('Doppler/z correction', font = ('Helvetica', 10, 'bold'), key = 'dopcor', default = dop_cor,tooltip='Doppler and redshift correction of spectrum, from a list file or from a fixed radial velocity or z value'), sg.Push(), sg.Button('Dopcor parameters',button_color= ('black','light blue'), size = (23,1))],
+    [sg.Checkbox('Doppler/z correction', font = ('Helvetica', default_font_size, 'bold'), key = 'dopcor', default = dop_cor,tooltip='Doppler and redshift correction of spectrum, from a list file or from a fixed radial velocity or z value'), sg.Push(), sg.Button('Dopcor parameters',button_color= ('black','light blue'), size = (23,1))],
 
-    [sg.Checkbox('Heliocentric correction', font = ('Helvetica', 10, 'bold'), key = 'helio_corr', default = helio_corr,tooltip='Heliocentric correction, from a formatted file or by inserting the location, time and object coordinates (RA and Dec) manually'), sg.Push(), sg.Button('Heliocor parameters',button_color= ('black','light blue'), size = (23,1))],
+    [sg.Checkbox('Heliocentric correction', font = ('Helvetica', default_font_size, 'bold'), key = 'helio_corr', default = helio_corr,tooltip='Heliocentric correction, from a formatted file or by inserting the location, time and object coordinates (RA and Dec) manually'), sg.Push(), sg.Button('Heliocor parameters',button_color= ('black','light blue'), size = (23,1))],
 
     ], font=("Helvetica", 12, 'bold'), title_color = 'lightgreen'),
 
     #2) spectra processing
     sg.Frame('Spectra processing', [
-    [sg.Checkbox('Rebin', font = ('Helvetica', 10, 'bold'), key = 'rebin', default = rebinning,tooltip='Rebinning the spectrum, to a linear wavelength step (nm) or to a linear sigma step (km/s)'), sg.Radio('pix lin.', "RADIO1", default=rebinning_linear, key = 'rebin_pix_lin'), sg.InputText(rebin_step_pix, size = (4,1), key = 'rebin_step_pix'), sg.Radio('sigma lin.', "RADIO1", default = rebinning_log, key = 'rebin_sigma_lin'), sg.InputText(rebin_step_sigma, size = (3,1), key = 'rebin_step_sigma')],
-    [sg.Checkbox('Degrade resolution', font = ('Helvetica', 10, 'bold'), key = 'degrade_resolution', default = degrade,tooltip='Degrade resolution to a user defined value'), sg.Push(), sg.Button('Degrade parameters',button_color= ('black','light blue'), size = (20,1))],
+    [sg.Checkbox('Rebin', font = ('Helvetica', default_font_size, 'bold'), key = 'rebin', default = rebinning,tooltip='Rebinning the spectrum, to a linear wavelength step (A) or to a linear sigma step (km/s)'), sg.Radio('pix lin.', "RADIO1", default=rebinning_linear, key = 'rebin_pix_lin'), sg.InputText(rebin_step_pix, size = (4,1), key = 'rebin_step_pix'), sg.Radio('sigma lin.', "RADIO1", default = rebinning_log, key = 'rebin_sigma_lin'), sg.InputText(rebin_step_sigma, size = (3,1), key = 'rebin_step_sigma')],
+    [sg.Checkbox('Degrade resolution', font = ('Helvetica', default_font_size, 'bold'), key = 'degrade_resolution', default = degrade,tooltip='Degrade resolution to a user defined value'), sg.Push(), sg.Button('Degrade parameters',button_color= ('black','light blue'), size = (20,1))],
 
-    [sg.Checkbox('Normalise spectrum to:', font = ('Helvetica', 10, 'bold'), key = 'norm_spec', default = normalize_wave,tooltip='Normalise the flux to a user defined wavelength'), sg.InputText(norm_wave, size = (6,1), key = 'norm_wave'), sg.Text('nm')],
+    [sg.Checkbox('Normalise spectrum to:', font = ('Helvetica', default_font_size, 'bold'), key = 'norm_spec', default = normalize_wave,tooltip='Normalise the flux to a user defined wavelength'), sg.InputText(norm_wave, size = (6,1), key = 'norm_wave'), sg.Text('A')],
 
-    [sg.Checkbox('Sigma broadening', font = ('Helvetica', 10, 'bold'), key = 'broadening_spec', default = sigma_broad,tooltip='Broad the spectrum by adding a user defined sigma (km/s). This will NOT be the total sigma broadening of your spectrum!'), sg.Text('Add sigma (km/s): ', font = ('Helvetica', 10)), sg.InputText(sigma_to_add, size = (4,1), key = 'sigma_to_add')],
-    [sg.Checkbox('Add noise', font = ('Helvetica', 10, 'bold'), key = 'add_noise', default = add_noise,tooltip='Adding poissonian noise to the spectrum'), sg.Text('Signal to Noise (S/N) to add:'), sg.InputText(noise_to_add, size = (5,1), key = 'noise_to_add')],
+    [sg.Checkbox('Sigma broadening', font = ('Helvetica', default_font_size, 'bold'), key = 'broadening_spec', default = sigma_broad,tooltip='Broad the spectrum by adding a user defined sigma (km/s). This will NOT be the total sigma broadening of your spectrum!'), sg.Text('Add sigma (km/s): ', font = ('Helvetica', default_font_size)), sg.InputText(sigma_to_add, size = (4,1), key = 'sigma_to_add')],
+    [sg.Checkbox('Add noise', font = ('Helvetica', default_font_size, 'bold'), key = 'add_noise', default = add_noise,tooltip='Adding poissonian noise to the spectrum'), sg.Text('Signal to Noise (S/N) to add:'), sg.InputText(noise_to_add, size = (5,1), key = 'noise_to_add')],
 
-    [sg.Checkbox('Continuum modelling', font = ('Helvetica', 10, 'bold'), key = 'cont_sub', default = continuum_sub,tooltip='Perform the continuum estimation to subtract or divide to the spectrum'), sg.Push(), sg.Button('Continuum parameters',button_color= ('black','light blue'), size = (20,1))],
+    [sg.Checkbox('Continuum modelling', font = ('Helvetica', default_font_size, 'bold'), key = 'cont_sub', default = continuum_sub,tooltip='Perform the continuum estimation to subtract or divide to the spectrum'), sg.Push(), sg.Button('Continuum parameters',button_color= ('black','light blue'), size = (20,1))],
     [sg.Text('', font = ("Helvetica", 1))],
 
     ], font=("Helvetica", 12, 'bold'),title_color = 'lightgreen'),
 
     #3) spectra math
     sg.Frame('Spectra math', [
-    [sg.Checkbox('Subtract normalised average', font = ('Helvetica', 10, 'bold'), key = 'subtract_norm_avg', default = subtract_normalized_avg,tooltip='Normalise and subtract to the selected spectrum the normalised average of all the spectra')],
-    [sg.Checkbox('Subtract norm. spec.', font = ('Helvetica', 10, 'bold'), key = 'subtract_norm_spec', default = subtract_normalized_spec,tooltip='Normalise and subtract to the selected spectrum a user selected spectrum'), sg.InputText(spectra_to_subtract, size = (17,1), key = 'spec_to_subtract'), sg.FileBrowse(tooltip='Load a spectrum (ASCII or fits) to be normalised and subtracted')],
-    [sg.Checkbox('Add constant', font = ('Helvetica', 10, 'bold'), key = 'add_pedestal', default = add_pedestal,tooltip='Simply add a constant value to the spectrum'), sg.InputText(pedestal_to_add, size = (7,1), key = 'pedestal_to_add'), sg.Checkbox('Multiply by:', font = ('Helvetica', 11, 'bold'), key = 'multiply', default = multiply,tooltip='Multiply the spectrum by a constant'), sg.InputText(multiply_factor , size = (7,1), key = 'multiply_factor')],
-    [sg.Checkbox('Calculate first and second derivatives', default = derivatives, key = 'derivatives', font = ('Helvetica', 10, 'bold'),tooltip='Calculate the derivative of the spectra')],
+    [sg.Checkbox('Subtract normalised average', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_avg', default = subtract_normalized_avg,tooltip='Normalise and subtract to the selected spectrum the normalised average of all the spectra')],
+    [sg.Checkbox('Subtract norm. spec.', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_spec', default = subtract_normalized_spec,tooltip='Normalise and subtract to the selected spectrum a user selected spectrum'), sg.InputText(spectra_to_subtract, size = (17,1), key = 'spec_to_subtract'), sg.FileBrowse(tooltip='Load a spectrum (ASCII or fits) to be normalised and subtracted')],
+    [sg.Checkbox('Add constant', font = ('Helvetica', default_font_size, 'bold'), key = 'add_pedestal', default = add_pedestal,tooltip='Simply add a constant value to the spectrum'), sg.InputText(pedestal_to_add, size = (7,1), key = 'pedestal_to_add'), sg.Checkbox('Multiply by:', font = ('Helvetica', default_font_size, 'bold'), key = 'multiply', default = multiply,tooltip='Multiply the spectrum by a constant'), sg.InputText(multiply_factor , size = (7,1), key = 'multiply_factor')],
+    [sg.Checkbox('Calculate first and second derivatives', default = derivatives, key = 'derivatives', font = ('Helvetica', default_font_size, 'bold'),tooltip='Calculate the derivative of the spectra')],
     [sg.HorizontalSeparator()],
-    [sg.Radio('Average all', "RADIOMATH", key = 'avg_all', default = average_all,tooltip='Average all the loaded spectra'), sg.Radio('Norm. and average all', "RADIOMATH", key = 'norm_avg_all', default = norm_and_average,tooltip='First normalise, then average all the loaded spectra'), sg.Radio('Nothing', "RADIOMATH", key = 'none', default = do_nothing,tooltip='Select this option if you DO NOT want to combine the spectra', font = ('Helvetica', 11, 'bold'))],
-    [sg.Radio('Sum all', "RADIOMATH", key = 'sum_all', default = sum_all,tooltip='Sum all the loaded spectra'), sg.Radio('Norm. and sum all', "RADIOMATH", key = 'norm_sum_all', default = normalize_and_sum_all,tooltip='First normalise, then sum all the loaded spectra'), sg.Checkbox('Use for spec. an.', text_color = 'yellow', key = 'use_for_spec_an', default = use_for_spec_an,tooltip='Select this to use the combined spectrum for the spectral analysis', font = ('Helvetica', 11, 'bold'))],
+    [sg.Radio('Average all', "RADIOMATH", key = 'avg_all', default = average_all,tooltip='Average all the loaded spectra'), sg.Radio('Norm. and average all', "RADIOMATH", key = 'norm_avg_all', default = norm_and_average,tooltip='First normalise, then average all the loaded spectra'), sg.Radio('Nothing', "RADIOMATH", key = 'none', default = do_nothing,tooltip='Select this option if you DO NOT want to combine the spectra', font = ('Helvetica', default_font_size, 'bold'))],
+    [sg.Radio('Sum all', "RADIOMATH", key = 'sum_all', default = sum_all,tooltip='Sum all the loaded spectra'), sg.Radio('Norm. and sum all', "RADIOMATH", key = 'norm_sum_all', default = normalize_and_sum_all,tooltip='First normalise, then sum all the loaded spectra'), sg.Checkbox('Use for spec. an.', text_color = 'yellow', key = 'use_for_spec_an', default = use_for_spec_an,tooltip='Select this to use the combined spectrum for the spectral analysis', font = ('Helvetica', default_font_size, 'bold'))],
     ],font=("Helvetica", 12, 'bold'))],
 
-    [sg.Checkbox('Reorder', key = 'reorder_op', default = reorder_op, tooltip='Activate in case you want to perform the spectra manipulation tasks in different order'), sg.Button('Reorder tasks', tooltip='Change the order of the spectra manipulation tasks'), sg.Push(), sg.Button('I need help',button_color=('black','orange'), size = (11,1)), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
+    # Bottom parameters
+    [sg.Checkbox('Reorder', key = 'reorder_op', default = reorder_op, tooltip='Activate in case you want to perform the spectra manipulation tasks in different order'), sg.Button('Reorder tasks', tooltip='Change the order of the spectra manipulation tasks'), sg.Radio('Save intermediate spectra', "RADIOSAVE", key = 'save_intermediate_spectra', default = save_intermediate_spectra, tooltip='Save a processed spectrum for EACH activated task'), sg.Radio('Save final spectra', "RADIOSAVE", key = 'save_final_spectra', default = save_final_spectra, tooltip='Save only the final processed spectrum after applying the tasks'), sg.Radio('Do not save processed spectra', "RADIOSAVE", key = 'not_save_spectra', default = not_save_spectra, tooltip='Do not save any processed spectrum to disc'), sg.Push(), sg.Button('I need help',button_color=('black','orange'), size = (11,1)), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
     ]
 
     spec_window = sg.Window('Spectra manipulation parameters', spec_layout)
@@ -223,6 +240,9 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
         # Assigning parameters from the GUI to local variables
         reorder_op = spec_values['reorder_op']
+        save_intermediate_spectra = spec_values['save_intermediate_spectra']
+        save_final_spectra = spec_values['save_final_spectra']
+        not_save_spectra = spec_values['not_save_spectra']
 
         # Spectra pre-processing
         cropping_spectrum = spec_values['cropping']
@@ -646,6 +666,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                 [sg.HorizontalSeparator()],
                 [sg.Radio('From FWHM (A):', "RADIORESR", default = is_initial_res_fwhm, key = 'is_initial_res_fwhm', font = ('Helvetica', 12, 'bold')), sg.InputText(initial_res_fwhm, size = (4,1), key = 'degrade_from_l'), sg.Text('to FWHM (A):'), sg.InputText(final_res_fwhm, size = (4,1), key = 'degrade_to_l')],
 
+                [sg.Radio('Degrade MUSE data', "RADIORESR", default = res_degrade_muse, key = 'res_degrade_muse', font = ('Helvetica', 12, 'bold')), sg.Text('to uniform FWHM (A):'), sg.InputText(res_degrade_muse_value, size = (4,1), key = 'res_degrade_muse_value')],
                 [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
                 ]
 
@@ -669,11 +690,14 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                     is_initial_res_fwhm = degrade_res_values['is_initial_res_fwhm']
                     initial_res_fwhm = float(degrade_res_values['degrade_from_l'])
                     final_res_fwhm = float(degrade_res_values['degrade_to_l'])
+                    res_degrade_muse = degrade_res_values['res_degrade_muse']
+                    res_degrade_muse_value = float(degrade_res_values['res_degrade_muse_value'])
+
                 except Exception:
                     sg.Popup('Degrade resolution parameters not valid')
                     continue
 
-                if initial_res_r <=0 or final_res_r <=0 or final_res_r_to_fwhm <=0 or initial_res_fwhm <=0 or final_res_fwhm <=0:
+                if initial_res_r <=0 or final_res_r <=0 or final_res_r_to_fwhm <=0 or initial_res_fwhm <=0 or final_res_fwhm <=0 or res_degrade_muse_value <= 0:
                     sg.Popup ('Resolution values cannot be negative or zero!')
                     continue
 
@@ -869,6 +893,8 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
         is_initial_res_fwhm=is_initial_res_fwhm,
         initial_res_fwhm=initial_res_fwhm,
         final_res_fwhm=final_res_fwhm,
+        res_degrade_muse = res_degrade_muse,
+        res_degrade_muse_value = res_degrade_muse_value,
 
         # Continuum operations
         markers_cont_operations=markers_cont_operations,
@@ -915,7 +941,13 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
         reorder_op=reorder_op,
         current_order=current_order,
         reordered_operations=reordered_operations,
-        active_operations=active_operations
+        active_operations=active_operations,
+
+        # Spectra saving options
+        save_intermediate_spectra = save_intermediate_spectra,
+        save_final_spectra = save_final_spectra,
+        not_save_spectra = not_save_spectra
+
     )
 
     return params

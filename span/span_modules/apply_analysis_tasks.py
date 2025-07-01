@@ -93,38 +93,39 @@ def apply_blackbody_fitting(event, save_plot, params):
             print("Invalid wavelength range: the first wavelength cannot be greater than the second.")
         else:
             sg.popup("Invalid wavelength range: the first wavelength cannot be greater than the second.")
-        return None, None, params
+        return None, None, None, None, params
 
     if (wave1_bb < wavelength[0] or wave2_bb > wavelength[-1]):
         if event == "Process all":
             print("Wavelength interval for blackbody fitting exceeds the spectrum's range!")
         else:
             sg.popup("Wavelength interval for blackbody fitting exceeds the spectrum's range!")
-        return None, None, params
+        return None, None, None, None, params
 
     try:
-        if event == "Process all" and save_plot:
+        if event == "Process all":
             preview = False
-            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
+            temperature_bb, residual_bb, T_err, chi2_red = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
         if event == "Preview result":
             preview = True
             save_plot = False
-            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
+            temperature_bb, residual_bb, T_err, chi2_red = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
         if event == "Process selected":
             preview = False
             save_plot = False
-            temperature_bb, residual_bb = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
+            temperature_bb, residual_bb, T_err, chi2_red = span.blackbody_fit(wavelength, flux, wave1_bb, wave2_bb, t_guess, preview, save_plot, result_plot_dir, prev_spec_nopath)
 
-        print(f"Best Blackbody temperature: {int(temperature_bb)} K\n")
+        print(f"Best Blackbody temperature: {int(temperature_bb)} K ± {int(T_err)}")
+        print(f"Chi2: {chi2_red}")
         print('')
-        return temperature_bb, residual_bb, params
+        return temperature_bb, residual_bb, T_err, chi2_red, params
 
     except Exception:
         if event == "Process all":
             print("Black-body fitting failed")
         else:
             sg.popup("Black-body fitting failed")
-        return None, None, params
+        return None, None, None, None, params
 
 
 
@@ -135,7 +136,7 @@ def apply_cross_correlation(event, save_plot, params):
     using the crosscorr function of the spectral analysis module.
 
     Returns:
-    - Measured velocity or z value
+    - Measured velocity or z value, error
 
     """
 
@@ -148,11 +149,19 @@ def apply_cross_correlation(event, save_plot, params):
     high_wave_corr = params.high_wave_corr
     wave_interval_corr = params.wave_interval_corr
     vel_interval_corr = params.vel_interval_corr
+    low_vel_corr = params.low_vel_corr
+    high_vel_corr = params.high_vel_corr
     z_interval_corr = params.z_interval_corr
+    is_z_xcorr = params.is_z_xcorr
+    is_vel_xcorr = params.is_vel_xcorr
+    low_z_corr = params.low_z_corr
+    high_z_corr = params.high_z_corr
+    xcorr_limit_wave_range = params.xcorr_limit_wave_range
+    xcorr_vel_step = params.xcorr_vel_step
+    xcorr_z_step = params.xcorr_z_step
     smooth_value_crosscorr = params.smooth_value_crosscorr
     smooth_template_crosscorr = params.smooth_template_crosscorr
     interval_corr = params.interval_corr
-    is_vel_xcorr = params.is_vel_xcorr
     prev_spec_nopath = params.prev_spec_nopath
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
@@ -175,137 +184,84 @@ def apply_cross_correlation(event, save_plot, params):
             print("The template file does not exist. Skipping...")
         else:
             sg.popup("The template file does not exist. Skipping...")
-        return None, params
+        return None, None, params
 
-    # Read the template spectrum
-    wave_temp_xcorr, flux_temp_xcorr, _, _ = stm.read_spec(template_crosscorr, lambda_units_template_crosscorr)
-    wave_limits_template_xcorr = np.array([wave_temp_xcorr[0], wave_temp_xcorr[-1]])
+    mode = 'z' if is_z_xcorr else 'v'
+    if mode == 'z':
+        grid = np.arange(low_z_corr, high_z_corr, xcorr_z_step)
+    if mode == 'v':
+        grid = np.arange(low_vel_corr, high_vel_corr, xcorr_vel_step)
+
+    if mode == 'v' and (low_vel_corr < -50000 or high_vel_corr > 50000):
+        print("WARNING: You have selected a velocity range beyond ±50000 km/s. Consider using redshift mode.")
+
+    if xcorr_limit_wave_range:
+        real_low_wave_corr = np.min(wave_interval_corr)
+        real_high_wave_corr = np.max(wave_interval_corr)
+        mask = (wavelength >= real_low_wave_corr) & (wavelength <= real_high_wave_corr)
+        wave_obs = wavelength[mask]
+        flux_obs = flux[mask]
+    else:
+        real_low_wave_corr = np.min(wavelength)
+        real_high_wave_corr = np.max(wavelength)
+
+        wave_obs = wavelength
+        flux_obs = flux
+
+    try:
+        wave_temp_xcorr, flux_temp_xcorr, step_temp_xcorr, name_temp_xcorr = stm.read_spec(template_crosscorr, lambda_units_template_crosscorr)
+        wave_limits_template_xcorr = np.array([wave_temp_xcorr[0], wave_temp_xcorr[len(wave_temp_xcorr)-1]])
+    except Exception:
+        if event == "Process all":
+            print('Cannot read the template.')
+        else:
+            sg.popup('Cannot read the template.')
+        return None, None, params
 
     #Fix the template name for aesthetic purposes
     template_crosscorr_nopath = os.path.splitext(os.path.basename(template_crosscorr))[0] #no path for showing and saving things
 
+    # smooth template
+    if smooth_value_crosscorr > 0 and smooth_template_crosscorr:
+        flux_temp_xcorr = spman.sigma_broad(wave_temp_xcorr, flux_temp_xcorr, smooth_value_crosscorr)
+
     # Check wavelength limits
-    if (wave_interval_corr[0] < wavelength[0] or wave_interval_corr[1] > wavelength[-1] or
-        wave_interval_corr[0] < wave_limits_template_xcorr[0] or wave_interval_corr[1] > wave_limits_template_xcorr[-1]):
+    if (real_low_wave_corr < np.min(wavelength) or real_high_wave_corr > np.max(wavelength) or (wave_limits_template_xcorr[1] < real_low_wave_corr or wave_limits_template_xcorr[0] > real_high_wave_corr)):
         if event == "Process all":
-            print("Wavelength interval for cross-correlation exceeds the range of the spectrum or template!")
+            print("The template does not cover the wavelength range you want to cross-correlate!")
         else:
-            sg.popup("Wavelength interval for cross-correlation exceeds the range of the spectrum or template!")
-        return None, params
+            sg.popup("The template does not cover the wavelength range you want to cross-correlate!")
+        return None, None, params
 
-    real_low_wave_corr = np.min(wave_interval_corr)
-    real_high_wave_corr = np.max(wave_interval_corr)
-
+    #Cross-correlate
     try:
-        if is_vel_xcorr:
-            interval_corr = vel_interval_corr
-            rv, cc, rv_at_max, max_corr_fcn, wavelength, flux, wavelength_template_crosscorr, flux_template_crosscorr = span.crosscorr(
-                wavelength, flux, template_crosscorr, lambda_units_template_crosscorr, wave_interval_corr, smooth_value_crosscorr, interval_corr, is_vel_xcorr)
-            print(f"RV: {rv_at_max} km/s\n")
+        best_shift, cc_values, grid_used, sigma = span.estimate_from_template(
+            wave_obs, flux_obs, wave_temp_xcorr, flux_temp_xcorr, grid, mode=mode)
+
+        unit = 'z' if mode == 'z' else 'km/s'
+        if mode == 'v':
+            print(f"Best {unit}: {best_shift:.2f} ± {sigma:.2f}")
+            print('')
+        if mode == 'z':
+            print(f"Best {unit}: {best_shift:.5f} ± {sigma:.5f}")
             print('')
 
-            if event == 'Preview result':
-                rv_plot = str(round(rv_at_max,1))
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (8.5,4.5))
-                fig.suptitle('Cross-correlation for ' + prev_spec_nopath + ' with ' + template_crosscorr_nopath)
-                ax1.plot(rv, cc)
-                ax1.plot(rv_at_max, max_corr_fcn, 'ro', label = 'RV: ' + rv_plot + 'km/s')
-                ax1.set_xlabel('RV (km/s)')
-                ax1.set_ylabel('Xcorr fcn')
-                ax1.legend(fontsize = 10)
-                ax2.plot(wavelength, flux, label = 'Spectrum')
-                ax2.plot(wavelength_template_crosscorr, flux_template_crosscorr, label = 'Template')
-                ax2.set_xlim(real_low_wave_corr, real_high_wave_corr)
-                ax2.set_ylim(0.4, 1.8)
-                ax2.set_xlabel('Wavelength (nm)')
-                ax2.set_ylabel('Norm flux')
-                ax2.legend(fontsize = 10)
-                plt.show()
-                plt.close()
 
-            if event == 'Process all' and save_plot:
+        if event == 'Preview result':
+            save_crosscorr_plot = False
+            span.plot_cross_correlation(grid_used, cc_values, best_shift, wave_obs, flux_obs, wave_temp_xcorr, flux_temp_xcorr, best_shift, save_crosscorr_plot, prev_spec_nopath, result_plot_dir, mode=mode)
+        if event == 'Process all' and save_plot:
+            span.plot_cross_correlation(grid_used, cc_values, best_shift, wave_obs, flux_obs, wave_temp_xcorr, flux_temp_xcorr, best_shift, save_plot, prev_spec_nopath, result_plot_dir, mode=mode)
 
-                rv_plot = str(round(rv_at_max,1))
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (8.5,4.5))
-                fig.suptitle('Cross-correlation for ' + prev_spec_nopath + ' with ' + template_crosscorr_nopath)
-                ax1.plot(rv, cc)
-                ax1.plot(rv_at_max, max_corr_fcn, 'ro', label = 'RV: ' + rv_plot + 'km/s')
-                ax1.set_xlabel('RV (km/s)')
-                ax1.set_ylabel('Xcorr fcn')
-                ax1.legend(fontsize = 10)
-
-                ax2.plot(wavelength, flux, label = 'Spectrum')
-                ax2.plot(wavelength_template_crosscorr, flux_template_crosscorr, label = 'Template')
-                ax2.set_xlim(real_low_wave_corr, real_high_wave_corr)
-                ax2.set_ylim(0.4, 1.8)
-                ax2.set_xlabel('Wavelength (nm)')
-                ax2.set_ylabel('Norm flux')
-                ax2.legend(fontsize = 10)
-
-                plt.savefig(result_plot_dir + '/Xcorr_' + prev_spec_nopath + '_' + '.png', format='png', dpi=300)
-                plt.close()
-
-            return rv_at_max, params
-
-
-        else:
-            interval_corr = z_interval_corr
-            z, cc, z_at_max, max_corr_fcn, wavelength, flux, wavelength_template_crosscorr, flux_template_crosscorr = span.crosscorr(
-                wavelength, flux, template_crosscorr, lambda_units_template_crosscorr, wave_interval_corr, smooth_value_crosscorr, interval_corr, is_vel_xcorr
-            )
-            print(f"Z: {z_at_max}\n")
-            print('')
-
-            if event == 'Preview result':
-                z_plot = str(round(z_at_max,5))
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (8.5,4.5))
-                fig.suptitle('Cross-correlation for ' + prev_spec_nopath + ' with ' + template_crosscorr_nopath)
-                ax1.plot(z, cc)
-                ax1.plot(z_at_max, max_corr_fcn, 'ro', label = 'Z: ' + z_plot)
-                ax1.set_xlabel('Z')
-                ax1.set_ylabel('Xcorr fcn')
-                ax1.legend(fontsize = 10)
-
-                ax2.plot(wavelength, flux, label = 'Spectrum')
-                ax2.plot(wavelength_template_crosscorr, flux_template_crosscorr, label = 'Template')
-                ax2.set_xlim(real_low_wave_corr, real_high_wave_corr)
-                ax2.set_ylim(0.4, 1.8)
-                ax2.set_xlabel('Wavelength (nm)')
-                ax2.set_ylabel('Norm flux')
-                ax2.legend(fontsize = 10)
-                plt.show()
-                plt.close()
-
-            if event == 'Process all' and save_plot:
-
-                rv_plot = str(round(rv_at_max,1))
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (8.5,4.5))
-                fig.suptitle('Cross-correlation for ' + prev_spec_nopath + ' with ' + template_crosscorr_nopath)
-                ax1.plot(rv, cc)
-                ax1.plot(rv_at_max, max_corr_fcn, 'ro', label = 'RV: ' + rv_plot + 'km/s')
-                ax1.set_xlabel('RV (km/s)')
-                ax1.set_ylabel('Xcorr fcn')
-                ax1.legend(fontsize = 10)
-
-                ax2.plot(wavelength, flux, label = 'Spectrum')
-                ax2.plot(wavelength_template_crosscorr, flux_template_crosscorr, label = 'Template')
-                ax2.set_xlim(real_low_wave_corr, real_high_wave_corr)
-                ax2.set_ylim(0.4, 1.8)
-                ax2.set_xlabel('Wavelength (nm)')
-                ax2.set_ylabel('Norm flux')
-                ax2.legend(fontsize = 10)
-
-                plt.savefig(result_plot_dir + '/'+ 'Xcorr_' + prev_spec_nopath + '_' + '.png', format='png', dpi=300)
-                plt.close()
-
-            return z_at_max, params
+        return best_shift, sigma, params
 
     except Exception:
         if event == "Process all":
-            print("Cross-correlation failed within the given range. Try adjusting the parameters.")
+            print('Cannot find cross-correlation within the ranges you inserted. Try again with different (smaller?) ranges')
         else:
-            sg.popup("Cross-correlation failed within the given range. Try adjusting the parameters.")
-        return None, params
+            sg.Popup ('Cannot find cross-correlation within the ranges you inserted. Try again with different (smaller?) ranges')
+
+        return None, None, params
 
 
 
@@ -414,14 +370,14 @@ def apply_velocity_dispersion(event, save_plot, params):
             # Spectrum and fitted template
             ax1.plot(band_wave, band_flux, label="Spectrum")
             ax1.plot(band_wave, band_flux_template_fitted, label="Fitted template")
-            ax1.set_xlabel("Wavelength (nm)")
+            ax1.set_xlabel("Wavelength (A)")
             ax1.set_ylabel("Norm flux")
             ax1.legend(fontsize=10)
 
             # Residuals
             ax2.plot(band_wave, band_flux - band_flux_template_fitted, linewidth=0.5, label="Residuals")
             ax2.hlines(y=0, xmin=min(band_wave), xmax=max(band_wave), linestyles="--", lw=2, color="r")
-            ax2.set_xlabel("Wavelength (nm)")
+            ax2.set_xlabel("Wavelength (A)")
             ax2.set_ylabel("Residuals")
             ax2.legend(fontsize=10)
 
@@ -732,7 +688,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
 
         # Spectrum wavelength range checks
         lick_wave_limits = np.array([lick_wavelength[0], lick_wavelength[-1]])
-        lick_wave_lower_limit, lick_wave_upper_limit = 420, 630
+        lick_wave_lower_limit, lick_wave_upper_limit = 4200, 6300
 
         if (lick_wave_limits[0] < lick_wave_lower_limit and lick_wave_limits[1] < lick_wave_lower_limit) or \
            (lick_wave_limits[0] > lick_wave_upper_limit and lick_wave_limits[1] > lick_wave_upper_limit):
@@ -752,12 +708,12 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             max_wavelength = np.max(lick_wavelength)
 
             #since ppxf is time consuming, let's limit the wavelength interval to correct the emission
-            if max_wavelength > 650:
-                max_wavelength_lick = 650
+            if max_wavelength > 6500:
+                max_wavelength_lick = 6500
             else:
                 max_wavelength_lick = max_wavelength
-            if min_wavelength < 400:
-                min_wavelength_lick = 400
+            if min_wavelength < 4000:
+                min_wavelength_lick = 4000
             else:
                 min_wavelength_lick = min_wavelength
 
@@ -789,7 +745,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             mask_emission_lick = False
             custom_temp_suffix_lick = None
             best_param_lick = False
-            best_noise_estimate_lick = False
+            best_noise_estimate_lick = True
             frac_chi_lick = 1
             dust_correction_stars_lick = False
             dust_correction_gas_lick = False
@@ -798,6 +754,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             with_plots_lick = False
             ppxf_pop_error_nsim_lick = None
             lick_lg_age = True
+            lick_lg_met = True
 
             #performing ppxf
             if lick_constant_fwhm: # with a fixed delta lambda resolution, no problem
@@ -805,24 +762,24 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
                 if spec_lick_res_fwhm < emiles_resolution:
                     print('WARNING: the resolution of the templates is REALLY lower than the galaxy. Consider to first reduce the resolution of your spectrum with the Degrade resolution task')
 
-                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_lower_abs_lick, age_err_upper_abs_lick, met_err_lower_lick, met_err_upper_lick, alpha_err_lower_lick, alpha_err_upper_lick, mass_age_err_lower_abs_lick, mass_age_err_upper_abs_lick, mass_met_err_lower_lick, mass_met_err_upper_lick, mass_alpha_err_lower_lick, mass_alpha_err_upper_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr_pop_lick, light_weights_lick, mass_weights_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, result_plot_dir)
+                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_abs_lick, met_err_lick, alpha_err_lick, mass_age_err_abs_lick, mass_met_err_lick, mass_alpha_err_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop_lick, light_weights_lick, mass_weights_lick, t50_age_lick, t80_age_lick, t50_cosmic_lick, t80_cosmic_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, lick_lg_met, result_plot_dir)
 
 
             #if I don't have a constant FWHM resolution:
             if not lick_constant_fwhm:
                 #considering a mean fwhm along the lick band. The errors for the indices used for stellar parameters are about 5%, so it's good for now.
-                mean_ref_lick_wavelength = 508
-                spec_lick_res_fwhm = mean_ref_lick_wavelength/spec_lick_res_r*10 #converting in A
+                mean_ref_lick_wavelength = 5080
+                spec_lick_res_fwhm = mean_ref_lick_wavelength/spec_lick_res_r
 
                 #issue a warning in case the resolution of EMILES templates is lower than the galaxy
                 if spec_lick_res_fwhm < emiles_resolution:
                     print('WARNING: the resolution of the templates is REALLY lower than the galaxy. Consider to first reduce the resolution of your spectrum with the Degrade resolution task')
 
-                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_lower_abs_lick, age_err_upper_abs_lick, met_err_lower_lick, met_err_upper_lick, alpha_err_lower_lick, alpha_err_upper_lick, mass_age_err_lower_abs_lick, mass_age_err_upper_abs_lick, mass_met_err_lower_lick, mass_met_err_upper_lick, mass_alpha_err_lower_lick, mass_alpha_err_upper_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr_pop_lick, light_weights_lick, mass_weights_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, result_plot_dir)
+                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_abs_lick, met_err_lick, alpha_err_lick, mass_age_err_abs_lick, mass_met_err_lick, mass_alpha_err_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop_lick, light_weights_lick, mass_weights_lick, t50_age_lick, t80_age_lick, t50_cosmic_lick, t80_cosmic_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, lick_lg_met, result_plot_dir)
 
 
             if lick_correct_emission:
-                lick_wavelength = bestfit_wave_lick/10
+                lick_wavelength = bestfit_wave_lick
                 lick_flux = emission_corrected_flux #using the emission corrected flux from PPXF
                 lick_step = lick_wavelength[1] - lick_wavelength[0]
 
@@ -835,7 +792,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
                 if not lick_correct_emission:
                     #rebinning linear
                     lick_flux = galaxy_lick #using the galaxy flux from pPXF
-                    lick_wavelength = bestfit_wave_lick/10 #using the wavelength grid from pPXF
+                    lick_wavelength = bestfit_wave_lick #using the wavelength grid from pPXF
                     lick_step = lick_wavelength[1] - lick_wavelength[0]
                     lick_wavelength, lick_flux, npoint_resampled = spman.resample(lick_wavelength, lick_flux, lick_step) #Rebinning linear
                 lick_doppler_vel = (kinematics_lick[0])
@@ -849,7 +806,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
         # 3) degrading the resolution, only if smaller than the lick system
         if lick_constant_fwhm and spec_lick_res_fwhm < 8.4:
             lick_degraded_wavelength, lick_degraded_flux = spman.degrade_to_lick(lick_wavelength, lick_flux, spec_lick_res_fwhm, lick_constant_fwhm)
-        elif not lick_constant_fwhm and spec_lick_res_r > 600:
+        elif not lick_constant_fwhm and spec_lick_res_r > 6000:
             lick_degraded_wavelength, lick_degraded_flux = spman.degrade_to_lick(lick_wavelength, lick_flux, spec_lick_res_r, lick_constant_fwhm)
         else:
             print('WARNING: The resolution of the spectrum is smaller than the one needed for the Lick/IDS system. I will still calculate the Lick/IDS indices but the results might be inaccurate')
@@ -1086,6 +1043,7 @@ def apply_cat_line_fitting(event, save_plot, params):
     task_done = params.task_done
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
+    wave_limits_cat = params.wave_limits_cat
 
 
     # 1) HEADER
@@ -1099,7 +1057,8 @@ def apply_cat_line_fitting(event, save_plot, params):
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
 
     # Check wavelength limits
-    if min(wave_interval_fit) < wave_limits[0] or max(wave_interval_fit) > wave_limits[1]:
+    #checking limits
+    if min(wavelength) > wave_limits_cat[0] or max(wavelength) < wave_limits_cat[1]:
         if event == "Process all":
             print("The window band is out of the spectrum range")
         else:
@@ -1145,12 +1104,12 @@ def apply_cat_line_fitting(event, save_plot, params):
         residual_flux = cat_flux_norm - cat_fit
 
         # Print results
-        print("Central wavelength of the fitted CaT lines (nm):", min_wave1, min_wave2, min_wave3)
-        print("Real central wavelength of the CaT lines (nm):", real_cat1, real_cat2, real_cat3)
-        print("Residuals (nm):", residual_wave1, residual_wave2, residual_wave3)
+        print("Central wavelength of the fitted CaT lines (A):", min_wave1, min_wave2, min_wave3)
+        print("Real central wavelength of the CaT lines (A):", real_cat1, real_cat2, real_cat3)
+        print("Residuals (A):", residual_wave1, residual_wave2, residual_wave3)
         print("Residuals in km/s:", delta_rv1, delta_rv2, delta_rv3)
         print("Mean Delta RV:", mean_delta_rv)
-        print("Sigma (nm):", sigma_cat1, sigma_cat2, sigma_cat3)
+        print("Sigma (A):", sigma_cat1, sigma_cat2, sigma_cat3)
         print("Sigma (km/s):", sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel)
         print('')
 
@@ -1184,14 +1143,14 @@ def apply_cat_line_fitting(event, save_plot, params):
             fig.suptitle("CaT Lines Fitting")
             ax1.plot(cat_wave, cat_flux_norm, label="Spectrum")
             ax1.plot(cat_wave, cat_fit, label="Fit line spec")
-            ax1.set_xlabel("Wavelength (nm)")
+            ax1.set_xlabel("Wavelength (A)")
             ax1.set_ylabel("Norm flux")
             ax1.legend(fontsize=10)
 
             # Plot residuals
             ax2.plot(cat_wave, residual_flux, linewidth=0.5, label="Residuals")
             ax2.hlines(y=0, xmin=min(cat_wave), xmax=max(cat_wave), linestyles="--", lw=2, linewidth=2, color="r")
-            ax2.set_xlabel("Wavelength (nm)")
+            ax2.set_xlabel("Wavelength (A)")
             ax2.set_ylabel("Residuals")
             ax2.legend(fontsize=10)
 
@@ -1284,8 +1243,8 @@ def apply_line_fitting(event, save_plot, params):
         residual_flux = line_flux_norm - line_fit
 
         # Print results
-        print("Central wavelength of the fitted line (nm):", min_wave)
-        print("Sigma (nm):", sigma_line)
+        print("Central wavelength of the fitted line (A):", min_wave)
+        print("Sigma (A):", sigma_line)
         print("Sigma (km/s):", sigma_line_vel)
         print('')
         # Plot fitting results
@@ -1295,14 +1254,14 @@ def apply_line_fitting(event, save_plot, params):
             fig.suptitle("Line Fitting")
             ax1.plot(line_wave, line_flux_norm, label="Spectrum")
             ax1.plot(line_wave, line_fit, label="Fit line spec")
-            ax1.set_xlabel("Wavelength (nm)")
+            ax1.set_xlabel("Wavelength (A)")
             ax1.set_ylabel("Norm flux")
             ax1.legend(fontsize=10)
 
             # Plot residuals
             ax2.plot(line_wave, residual_flux, linewidth=0.5, label="Residuals")
             ax2.hlines(y=0, xmin=min(line_wave), xmax=max(line_wave), linestyles="--", lw=2, linewidth=2, color="r")
-            ax2.set_xlabel("Wavelength (nm)")
+            ax2.set_xlabel("Wavelength (A)")
             ax2.set_ylabel("Residuals")
             ax2.legend(fontsize=10)
 
@@ -1341,6 +1300,11 @@ def apply_ppxf_kinematics(event, save_plot, params):
 
     """
 
+    kin_stars_templates = getattr(params, 'kin_stars_templates', None)
+    kin_lam_temp = getattr(params, 'kin_lam_temp', None)
+    kin_velscale_templates = getattr(params, 'kin_velscale_templates', None)
+    kin_FWHM_gal_cached = getattr(params, 'kin_FWHM_gal_cached', None)
+
     wavelength = params.wavelength
     flux = params.flux
     wave1_kin = params.wave1_kin
@@ -1348,6 +1312,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
     resolution_kin = params.resolution_kin
     constant_resolution_lambda = params.constant_resolution_lambda
     resolution_kin_r = params.resolution_kin_r
+    resolution_kin_muse = params.resolution_kin_muse
     redshift_guess_kin = params.redshift_guess_kin
     sigma_guess_kin = params.sigma_guess_kin
     stellar_library_kin = params.stellar_library_kin
@@ -1361,6 +1326,9 @@ def apply_ppxf_kinematics(event, save_plot, params):
     ppxf_kin_custom_lib = params.ppxf_kin_custom_lib
     ppxf_kin_lib_folder = params.ppxf_kin_lib_folder
     ppxf_kin_custom_temp_suffix = params.ppxf_kin_custom_temp_suffix
+    ppxf_kin_generic_lib = params.ppxf_kin_generic_lib
+    ppxf_kin_generic_lib_folder = params.ppxf_kin_generic_lib_folder
+    ppxf_kin_FWHM_tem_generic = params.ppxf_kin_FWHM_tem_generic
     ppxf_kin_dust_gas = params.ppxf_kin_dust_gas
     ppxf_kin_dust_stars = params.ppxf_kin_dust_stars
     ppxf_kin_tie_balmer = params.ppxf_kin_tie_balmer
@@ -1374,7 +1342,10 @@ def apply_ppxf_kinematics(event, save_plot, params):
     ppxf_kin_vel_model2 = params.ppxf_kin_vel_model2
     ppxf_kin_sigma_model2 = params.ppxf_kin_sigma_model2
     ppxf_kin_mask_emission = params.ppxf_kin_mask_emission
+    ppxf_kin_have_user_mask = params.ppxf_kin_have_user_mask
+    ppxf_kin_mask_ranges = params.ppxf_kin_mask_ranges
     ppxf_kin_mc_sim = params.ppxf_kin_mc_sim
+    ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
     prev_spec_nopath = params.prev_spec_nopath
     result_spec = params.result_spec
     result_plot_dir = params.result_plot_dir
@@ -1406,12 +1377,14 @@ def apply_ppxf_kinematics(event, save_plot, params):
             print("The window band is out of the spectrum range")
         else:
             sg.popup("The window band is out of the spectrum range")
-        return None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, params
 
     try:
         #fitting with ppxf
-        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_mc_sim)
+        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached  = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached)
 
+        if kin_stars_templates is None:
+            params = replace(params, kin_stars_templates=updated_templates, kin_lam_temp=kin_lam_temp, kin_velscale_templates=kin_velscale_templates, kin_FWHM_gal_cached = kin_FWHM_gal_cached)
 
     #Saving the single stellar component fit results
         if kin_component == 0 and not ppxf_kin_two_stellar_components:
@@ -1531,20 +1504,39 @@ def apply_ppxf_kinematics(event, save_plot, params):
                     plt.savefig(result_plot_dir + '/'+ 'kin_ppxf_' + prev_spec_nopath + '.png', format='png', dpi=300)
 
         #saving best fit spec
-        if event == 'Process selected' or event == 'Process all':
+        if (event == 'Process selected' or event == 'Process all') and ppxf_kin_save_spectra:
             file_fitted_kin = result_spec+'ppxf_kin_bestfit_' + prev_spec_nopath + '.fits'
+
             uti.save_fits_2d(bestfit_wavelength, bestfit_flux, file_fitted_kin)
+
             print ('Fit of the spectrum saved to: ', file_fitted_kin)
             print('')
 
-        return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, snr_kin, error_kinematics_mc, params
+            if gas_kin and ppxf_kin_save_spectra:
+                try:
+                    file_best_fit_gas = result_spec+'ppxf_kin_bestfit_gas_' + prev_spec_nopath + '.fits'
+                    file_emission_corrected_spec = result_spec+'ppxf_kin_emission_corrected_' + prev_spec_nopath + '.fits'
+                    file_gas_continuum_subtracted = result_spec+'ppxf_kin_gas_cont_subtracted_' + prev_spec_nopath + '.fits'
+
+
+                    uti.save_fits_2d(bestfit_wavelength, bestfit_gas_flux, file_best_fit_gas)
+                    uti.save_fits_2d(bestfit_wavelength, emission_corrected_flux, file_emission_corrected_spec)
+                    uti.save_fits_2d(bestfit_wavelength, gas_without_continuum, file_gas_continuum_subtracted)
+
+                    print ('Best fit gas model, emission corrected spectrum, and gas continuum subtracted spectrum saved to: ', result_spec)
+                except Exception:
+                    print ('Gas lines not found. I do not create gas spectra')
+
+        plt.close() #closing all the plots
+
+        return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, params
 
     except Exception as e:
         if event == "Process all":
             print('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
         else:
             sg.popup('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
-        return None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, params
 
 
 
@@ -1603,6 +1595,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     ppxf_pop_mask_ranges = params.ppxf_pop_mask_ranges
     ppxf_pop_error_nsim = params.ppxf_pop_error_nsim
     ppxf_pop_lg_age = params.ppxf_pop_lg_age
+    ppxf_pop_lg_met = params.ppxf_pop_lg_met
     stellar_parameters_lick_ppxf = params.stellar_parameters_lick_ppxf
     lick_index_file = params.lick_index_file
     sigma_lick_coeff_file = params.sigma_lick_coeff_file
@@ -1612,6 +1605,8 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     prev_spec = params.prev_spec
     result_spec = params.result_spec
     result_ppxf_pop_data_dir = params.result_ppxf_pop_data_dir
+    # result_ppxf_pop_data_dir_weights = params.result_ppxf_pop_data_dir_weights
+    # result_ppxf_pop_data_dir_sfh = params.result_ppxf_pop_data_dir_sfh
     spectra_list_name = params.spectra_list_name
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
@@ -1641,7 +1636,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
             print("The window band is out of the spectrum range")
         else:
             sg.popup("The window band is out of the spectrum range")
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
 
     # Check if custom templates exist
     if ppxf_pop_custom_lib and not ppxf_pop_custom_npz:
@@ -1651,7 +1646,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                 print("The custom templates do not exist. Stopping")
             else:
                 sg.popup("The custom templates do not exist. Stopping")
-            return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+            return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
 
     # Show error calculation message if enabled
     if with_errors:
@@ -1672,7 +1667,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
         ppxf_save_plot = False
 
     try:
-        kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_flux_gas, residual_flux, chi_square, age_err_lower_abs, age_err_upper_abs, met_err_lower, met_err_upper, alpha_err_lower, alpha_err_upper, mass_age_err_lower_abs, mass_age_err_upper_abs, mass_met_err_lower, mass_met_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, snr_pop, light_weights, mass_weights = span.ppxf_pop(wavelength, flux, wave1_pop, wave2_pop, res_pop, z_pop, sigma_guess_pop, fit_components, ppxf_with_plots, with_errors, ppxf_save_plot, prev_spec_nopath, regul_err, additive_degree, multiplicative_degree, ppxf_pop_tie_balmer, stellar_library, ppxf_pop_dust_stars, ppxf_pop_dust_gas, ppxf_pop_noise, age_range_array, met_range_array, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_pop_custom_npz, ppxf_pop_npz_file, ppxf_pop_mask, ppxf_custom_temp_suffix, ppxf_best_param, ppxf_best_noise_estimate, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_want_to_mask, ppxf_pop_mask_ranges, ppxf_pop_error_nsim, ppxf_pop_lg_age, result_plot_dir)
+        kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_flux_gas, residual_flux, chi_square, age_err_abs, met_err, alpha_err, mass_age_err_abs, mass_met_err, mass_alpha_err, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic = span.ppxf_pop(wavelength, flux, wave1_pop, wave2_pop, res_pop, z_pop, sigma_guess_pop, fit_components, ppxf_with_plots, with_errors, ppxf_save_plot, prev_spec_nopath, regul_err, additive_degree, multiplicative_degree, ppxf_pop_tie_balmer, stellar_library, ppxf_pop_dust_stars, ppxf_pop_dust_gas, ppxf_pop_noise, age_range_array, met_range_array, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_pop_custom_npz, ppxf_pop_npz_file, ppxf_pop_mask, ppxf_custom_temp_suffix, ppxf_best_param, ppxf_best_noise_estimate, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_want_to_mask, ppxf_pop_mask_ranges, ppxf_pop_error_nsim, ppxf_pop_lg_age, ppxf_pop_lg_met, result_plot_dir)
 
 
         age_ssp =0
@@ -1706,8 +1701,8 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                 dop_vel_pop_ppxf = kinematics[0]
                 sigma_pop_ppxf = kinematics[1]
 
-            #Extracting the wave (in nm) and emission corrected flux from the ppxf fit
-            lick_wavelength_ppxf = bestfit_wave/10
+            #Extracting the wave (in A) and emission corrected flux from the ppxf fit
+            lick_wavelength_ppxf = bestfit_wave
             lick_flux_ppxf = emission_corrected_flux
             lick_step_ppxf = lick_wavelength_ppxf[1] - lick_wavelength_ppxf[0]
 
@@ -1791,20 +1786,37 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                 file_fit_stellar_template = result_spec+'ppxf_fit_pop_stellar_template_' + prev_spec_nopath + '.fits'
                 file_spec_emission_corrected = result_spec+'ppxf_fit_pop_emission_corrected_' + prev_spec_nopath + '.fits'
 
-                #saving the SFH and weights
-                file_sfh = result_ppxf_pop_data_dir+'/'+spectra_list_name+'_ppxf_fit_pop_SFH_' + prev_spec_nopath + '.dat'
-                file_all_light_weights = result_ppxf_pop_data_dir+'/'+spectra_list_name+'_ppxf_fit_pop_light_weights_' + prev_spec_nopath + '.dat'
-                file_all_mass_weights = result_ppxf_pop_data_dir+'/'+spectra_list_name+'_ppxf_fit_pop_mass_weights_' + prev_spec_nopath + '.dat'
+                #saving the SFH and weights in specific subfolders
+                result_ppxf_pop_data_dir_weights = os.path.join(result_ppxf_pop_data_dir, 'weights')
+                result_ppxf_pop_data_dir_sfh = os.path.join(result_ppxf_pop_data_dir, 'SFH')
 
-                bestfit_wave = bestfit_wave/10. #converting to nm
+                os.makedirs(result_ppxf_pop_data_dir_weights, exist_ok=True)
+                os.makedirs(result_ppxf_pop_data_dir_sfh, exist_ok=True)
+
+                file_sfh = result_ppxf_pop_data_dir_sfh+'/'+spectra_list_name+'_ppxf_fit_pop_SFH_' + prev_spec_nopath + '.dat'
+                file_all_light_weights = result_ppxf_pop_data_dir_weights+'/'+spectra_list_name+'_ppxf_fit_pop_light_weights_' + prev_spec_nopath + '.dat'
+                file_all_mass_weights = result_ppxf_pop_data_dir_weights+'/'+spectra_list_name+'_ppxf_fit_pop_mass_weights_' + prev_spec_nopath + '.dat'
+
+                bestfit_wave = bestfit_wave
 
                 #in case I don't have gas
                 try:
                     #saving the SFH with lg ages or with linear ages
+                    lum_cumulative = np.cumsum(light_weights_age_bin)
+                    mass_cumulative = np.cumsum(mass_weights_age_bin)
                     if ppxf_pop_lg_age:
-                        np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin]), header="lg_age(dex)\tlum_fraction\tmass_fraction", delimiter='\t')
+
+                        if with_errors:
+                            np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin, lum_cumulative, mass_cumulative, light_weights_age_std, mass_weights_age_std, cumulative_mass_std]), header="lg_age(dex)\tlum_fraction\tmass_fraction\tcumulative_lum\tcumulative_mass\terr_lum\terr_mass\terr_cumul", delimiter='\t')
+                        else:
+                            np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin, lum_cumulative, mass_cumulative]), header="lg_age(dex)\tlum_fraction\tmass_fraction\tcumulative_lum\tcumulative_mass", delimiter='\t')
+
+
                     else:
-                        np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin]), header="age(Gyr)\tlum_fraction\tmass_fraction", delimiter='\t')
+                        if with_errors:
+                            np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin, lum_cumulative, mass_cumulative, light_weights_age_std, mass_weights_age_std, cumulative_mass_std]), header="age(Gyr)\tlum_fraction\tmass_fraction\tcumulative_lum\tcumulative_mass\terr_lum\terr_mass\terr_cumul", delimiter='\t')
+                        else:
+                            np.savetxt(file_sfh, np.column_stack([pop_age, light_weights_age_bin, mass_weights_age_bin, lum_cumulative, mass_cumulative]), header="age(Gyr)\tlum_fraction\tmass_fraction\tcumulative_lum\tcumulative_mass", delimiter='\t')
 
                     print ('File containing the luminosity and mass SFH saved: ', file_sfh)
 
@@ -1847,11 +1859,11 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
             except TypeError:
                 print ('Something went wrong')
 
-        return kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err_lower, met_err_upper, mass_met_err_lower, mass_met_err_upper, snr_pop, ppxf_pop_lg_age, age_err_lower_abs, age_err_upper_abs, mass_age_err_lower_abs, mass_age_err_upper_abs, alpha_err_lower, alpha_err_upper, mass_alpha_err_lower, mass_alpha_err_upper, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params
+        return kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err, mass_met_err, snr_pop, ppxf_pop_lg_age, ppxf_pop_lg_met, age_err_abs, mass_age_err_abs, alpha_err, mass_alpha_err, t50_age, t80_age, t50_cosmic, t80_cosmic, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params
 
     except Exception:
         if event == "Process all":
             print('Stellar populations and SFH failed. Common cause: The templates do not cover the wavelength range you want to fit.\nOther possible expalations:\n- Check the age-metallicity range\n- If you used custom templates, check if they are on a regular age and metallicity grid.\n Skipping...')
         else:
             sg.popup('Stellar populations and SFH failed. Common cause: The templates do not cover the wavelength range you want to fit.\nOther possible expalations:\n- Check the age-metallicity range\n- If you used custom templates, check if they are on a regular age and metallicity grid.\n Skipping...')
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
