@@ -47,6 +47,11 @@ import ppxf.sps_util as lib
 from urllib import request
 from pathlib import Path
 
+import ssl
+import certifi
+import shutil
+import urllib.request
+
 #Python imports
 import numpy as np
 import math as mt
@@ -817,7 +822,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 filename = ppxf_dir / 'sps_models' / basename
                 if not filename.is_file():
                     url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
-                    request.urlretrieve(url, filename)
+                    download_file(url, filename)
 
             #loading the templates and convolve them with the FWHM of the galaxy spectrum
             if is_resolution_gal_constant:
@@ -1702,7 +1707,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             filename = ppxf_dir / 'sps_models' / basename
             if not filename.is_file():
                 url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
-                request.urlretrieve(url, filename)
+                download_file(url, filename)
 
         if stellar_library == 'xshooter': #Xshooter templates require the custom xshooter_ppxf module
             print(stellar_library)
@@ -3798,5 +3803,14 @@ def pick_ssp_template(desired_age, desired_metal, ages, metals, templates):
 
     return model, i_closest, j_closest
 
+
+
+# Function to download the pPXF SSP models accounting also for the SSL certificate problem arising with some MacOS distributions
+def download_file(url, dest_path):
+    """Download a file using SSL context compatible with macOS"""
+    context = ssl.create_default_context(cafile=certifi.where())
+
+    with urllib.request.urlopen(url, context=context) as response, open(dest_path, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
 #********************** END OF SPECTRA ANALYSIS FUNCTIONS *********************************
 #******************************************************************************************
