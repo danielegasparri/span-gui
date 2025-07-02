@@ -204,6 +204,7 @@ def blackbody_fit(wavelength, flux, initial_wave, final_wave, t_guess, with_plot
 
 ################## CROSS-CORRELATION FUNCTIONS ##################################
 def preprocess_spectrum(wavelength, flux, kernel_size=51):
+    flux = flux.astype(np.float64)
     continuum = medfilt(flux, kernel_size=kernel_size)
     continuum[continuum < 1e-6] = 1e-6
     norm_flux = flux / continuum
@@ -688,8 +689,8 @@ def cat_fitting (wavelength, flux):
 
     step = wavelength[1]-wavelength[0]
 
-    wave1 = 844
-    wave2 = 872
+    wave1 = 8440
+    wave2 = 8720
 
     #extract the line flux and wavelength arrays
     line_wave = wavelength[(wavelength >= wave1) & (wavelength <= wave2)]
@@ -702,7 +703,7 @@ def cat_fitting (wavelength, flux):
 
     #initial guesses
     y0 = 1
-    x0 = 850
+    x0 = 8500
     a = -0.8
     sigma = 0.1
     m = 0.1
@@ -713,9 +714,9 @@ def cat_fitting (wavelength, flux):
         if i == 0:
             guess = guess
         if i == 1:
-            guess+= [y0,854,-0.6, 0.2, m, c]
+            guess+= [y0,8540,-0.6, 0.2, m, c]
         if i == 2:
-            guess+= [y0,866,-0.6, 0.2, m, c]
+            guess+= [y0,8660,-0.6, 0.2, m, c]
 
     #fitting to the spectra
     popt_spec, pconv_spec = curve_fit(uti.multiple_gauss, line_wave, line_flux_spec_norm, p0=guess)

@@ -284,12 +284,21 @@ def read_datacube(file_path):
                 return data, wave
 
             # --- WEAVE ---, as MUSE but with more extensions
-            if 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) > 4:
+            elif 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) > 4:
                 data = hdu[1].data
                 hdr = hdu[1].header
                 nwave = data.shape[0]
                 wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CD3_3']
                 print("Datacube format detected: WEAVE")
+                return data, wave
+
+            # JWST NIRSpec datacube: data in HDU[1], CDELT3
+            elif 'CDELT3' in hdu[1].header and 'CRVAL3' in hdu[1].header:
+                data = hdu[1].data
+                hdr = hdu[1].header
+                nwave = data.shape[0]
+                wave = (hdr['CRVAL3'] + np.arange(nwave) * hdr['CDELT3'])*1e4
+                print("Datacube format detected: JWST")
                 return data, wave
 
             # Generic: fallback if 3D and no keywords
