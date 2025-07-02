@@ -26,7 +26,9 @@
 ######################################################################################
 #Version histories
 
-#Version 6.6 (20250701):
+#Version 6.6 (20250702):
+#Added support to JWST NIRSpec datacubes for the cube extraction sub-program
+#Corrected minor bugs caused by updating the modules (especially numpy and scipy) required by SPAN
 #Fixed an error for macOS systems that prevented to download the required files and also the SSPs from pPXF repository (macOS requires an SSL certificate to download files from internet). 
 #Updated the versions of the modules compatibles in order to include also the newest versions of NumPy (2.X.X), and solved the compatibility problems with macOS. Now SPAN requires Python >= 3.10 to run but should be more stable and easy to install for Android and macOS systems.
 #Changed the default wavelength units used by SPAN. Now is Angstrom everywhere

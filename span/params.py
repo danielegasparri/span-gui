@@ -424,7 +424,7 @@ class SpectraParams:
     ifs_lfs_data_default: str = 'None'
     ifs_ow_config: bool = False
     ifs_ow_output: bool = False
-    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU'])
+    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU', 'JWST_NIRSPEC'])
     ifs_routine_read_default: str = 'MUSE_WFM'
     ifs_origin: str = '14,14'
     ifs_lmin_tot: int = 4800
