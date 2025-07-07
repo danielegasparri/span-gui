@@ -295,6 +295,7 @@ class SpectraParams:
     markers_ppxf_kin: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xshooter'])
     stellar_library_kin: str = 'emiles'
     additive_degree_kin: int = 4
+    multiplicative_degree_kin: int = -1
     kin_moments: int = 4
     gas_kin: bool = False
     no_gas_kin: bool = True
@@ -309,6 +310,7 @@ class SpectraParams:
     ppxf_kin_generic_lib: bool = False
     ppxf_kin_generic_lib_folder: str = field(default_factory=lambda: os.path.join(BASE_DIR, "spectralTemplates", "EMILES_BASTI_BASE_KU_FITS"))
     ppxf_kin_FWHM_tem_generic: float = 2.51
+    ppxf_kin_fixed_kin: bool = False
 
     ppxf_kin_tie_balmer: bool = False
     ppxf_kin_dust_stars: bool = False
@@ -324,7 +326,7 @@ class SpectraParams:
     ppxf_kin_sigma_model2: float = 50.0
     ppxf_kin_mask_emission: bool = True
     ppxf_kin_have_user_mask: bool = False
-    ppxf_kin_mask_ranges_str: str = '[(5180, 5210)]'
+    ppxf_kin_mask_ranges_str: str = '[(5180, 5210), (5320, 5380)]'
 
     ppxf_kin_mc_sim: int = 20
     ppxf_kin_save_spectra: bool = True
