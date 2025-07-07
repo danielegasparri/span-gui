@@ -727,7 +727,7 @@ def cat_fitting (wavelength, flux):
 
 #*****************************************************************************************************
 # 8) kinematics with ppxf and EMILES SSP models
-def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None):
+def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, kinematics_fixed = None):
 
     """
      This function uses the pPXF algorith to retrieve the n kinematics moments
@@ -911,31 +911,17 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
         lam_temp=sps.lam_temp
         FWHM_gal_cached = FWHM_gal
 
-    #loading or not the mask emission, if activated and only for stars fitting
+    #Detecting when the emission mask is needed
     if kin_fit_stars and mask_lines:
-        # Compute a mask for gas emission lines
-        goodpix = util.determine_goodpixels(ln_lam1, lam_range_temp, z)
+        use_emission_mask = True
     else:
-        goodpix = None
+        use_emission_mask = False
 
+    #loading or not the mask emission, if activated and only for stars fitting
+    goodpix = build_goodpixels_with_mask(
+        ln_lam1, lam_range_temp, z, mask_ranges=mask_ranges, user_mask = have_user_mask,
+        use_emission_mask=use_emission_mask)
 
-    #now it is time to define the user mask, if masking is activated, and transform to Angstrom.
-    if have_user_mask:
-        if mask_lines:
-            print('Goodpix and mask cannot be used together. Continuing with user mask and neglecting goodpix...')
-            goodpix = None
-
-        if z > high_z:
-            corrected_mask_ranges = [(start / (1 + z), end  /(1 + z)) for start, end in mask_ranges]
-            mask_ranges = corrected_mask_ranges
-            user_mask = spman.mask_spectrum(wave, mask_ranges)
-        else:
-            corrected_mask_ranges = [(start , end ) for start, end in mask_ranges]
-            mask_ranges = corrected_mask_ranges
-            user_mask = spman.mask_spectrum(wave, mask_ranges)
-        mask = user_mask
-    else:
-        mask = None
 
     error_kinematics_mc = 0
 
@@ -1023,8 +1009,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Running ppxf in silent mode to find the best noise level...')
 
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                    moments=moments, degree= additive_degree,
-                    lam=wave, lam_temp=lam_temp, quiet = True, bias =0, dust = dust, component = component, global_search = global_search, mask = mask) #no penalty for estimation of the noise
+                    moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
+                    lam=wave, lam_temp=lam_temp, quiet = True, bias =0, dust = dust, component = component, global_search = global_search) #no penalty for estimation of the noise
 
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
@@ -1037,8 +1023,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             #do the fit!
             pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                moments=moments, plot = True, degree= additive_degree,
-                lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search, mask = mask)
+                moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
+                lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search)
 
 
             if not two_stellar_components:
@@ -1055,7 +1041,10 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if not two_stellar_components:
                 print("".join("%8.2g" % f for f in errors))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
-                prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
+                try:
+                    prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
+                except Exception:
+                    prec = 7
                 print(f"Best-fitting redshift z = {redshift_fit:#.{prec}f} "
                     f"+/- {redshift_err:#.{prec}f}")
             else:
@@ -1123,9 +1112,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                         #no regularization!
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
-                        moments=kin_moments, degree=additive_degree,
+                        moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=bestfit_wavelength, lam_temp=lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search, mask = mask)
+                        quiet = True, dust = dust, component = component, global_search = global_search)
 
                         kinematics_mc = pp.sol
 
@@ -1202,9 +1191,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                         #fitting the noisy templates
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
-                        moments=kin_moments, degree=additive_degree,
+                        moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=bestfit_wavelength, lam_temp=lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search, mask = mask)
+                        quiet = True, dust = dust, component = component, global_search = global_search)
 
                         kinematics_mc = pp.sol
 
@@ -1298,7 +1287,6 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
         print ('Fitting the stars and at least one gas component')
         try:
-            # tied_balmer = False
             tie_balmer=tied_balmer
             limit_doublets=False
 
@@ -1312,8 +1300,31 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('With tied Balmer lines, I activate the gas dust correction for you')
 
             templates = np.column_stack([stars_templates, gas_templates])
-            vel = c*np.log(1 + z)
-            start = [vel, sigma_guess]
+
+            # If I fix the stellar moments, here I define them
+            if fixed_moments and kinematics_fixed is not None:
+                print('\n*** Fiximg the kinematics of stars ***')
+                kin_moments_stars = -kin_moments # fixing the moments
+                if abs(kin_moments_stars) == 2:
+                    start_stars = [kinematics_fixed[0], kinematics_fixed[1]]
+                if abs(kin_moments_stars) == 3:
+                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2]]
+                if abs(kin_moments_stars) == 4:
+                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3]]
+                if abs(kin_moments_stars) == 5:
+                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3], kinematics_fixed[4]]
+                if abs(kin_moments_stars) == 6:
+                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3], kinematics_fixed[4], kinematics_fixed[5]]
+
+                vel = c*np.log(1 + z) # Now this velocity is only for the gas component(s)
+                start = [vel, sigma_guess]
+
+            else:
+                kin_moments_stars = kin_moments
+                vel = c*np.log(1 + z)
+                start_stars = [vel, sigma_guess]
+                start = [vel, sigma_guess]
+
             n_temps = stars_templates.shape[1]
 
             # grouping the emission lines: 1) balmer, 2) forbidden, 3) others
@@ -1333,8 +1344,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('Balmer, forbidden and other lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden +[3]*n_others
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments, kin_moments, kin_moments]
-                start = [start, start, start, start]
+                moments = [kin_moments_stars, kin_moments, kin_moments, kin_moments]
+                start = [start_stars, start, start, start]
 
             if n_forbidden !=0 and n_balmer !=0 and n_others == 0:
                 #####
@@ -1342,8 +1353,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Forbidden and Balmer lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments, kin_moments]
-                start = [start, start, start]
+                moments = [kin_moments_stars, kin_moments, kin_moments]
+                start = [start_stars, start, start]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others !=0:
                 #####
@@ -1351,8 +1362,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Forbidden and other lines')
                 component = [0]*n_temps + [1]*n_others + [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments, kin_moments]
-                start = [start, start, start]
+                moments = [kin_moments_stars, kin_moments, kin_moments]
+                start = [start_stars, start, start]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others ==0:
                 #######
@@ -1360,8 +1371,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Only forbidden lines')
                 component = [0]*n_temps + [1]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments]
-                start = [start, start]
+                moments = [kin_moments_stars, kin_moments]
+                start = [start_stars, start]
 
             if n_forbidden ==0 and n_balmer != 0 and n_others ==0:
                 ######
@@ -1369,8 +1380,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('Only balmer lines')
                 component = [0]*n_temps + [1]*n_balmer
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments]
-                start = [start, start]
+                moments = [kin_moments_stars, kin_moments]
+                start = [start_stars, start]
 
             if n_forbidden ==0 and n_balmer != 0 and n_others !=0:
                 #######
@@ -1378,8 +1389,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Balmer and other lines')
                 component = [0]*n_temps + [1]*n_balmer [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments, kin_moments]
-                start = [start, start, start]
+                moments = [kin_moments_stars, kin_moments, kin_moments]
+                start = [start_stars, start, start]
 
             if n_forbidden ==0 and n_balmer == 0 and n_others !=0:
                 ########
@@ -1387,8 +1398,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('Only other lines')
                 component = [0]*n_temps + [1]*n_others
                 gas_component = np.array(component) > 0
-                moments = [kin_moments, kin_moments]
-                start = [start, start]
+                moments = [kin_moments_stars, kin_moments]
+                start = [start_stars, start]
 
             if n_forbidden ==0 and n_balmer == 0 and n_others ==0:
                 ########### NO GAS COMPONENT
@@ -1396,8 +1407,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print ('No gas lines found. Fitting only the stellar component')
                 component = 0
                 gas_component = np.array(component) > 0
-                moments = kin_moments
-                start = start
+                moments = kin_moments_stars
+                start = start_stars
             t = clock()
 
             #define the dust components, if activated
@@ -1426,12 +1437,12 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                 if gas:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                        moments=moments, degree= additive_degree,
-                        lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, mask = mask)
+                        moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
+                        lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust)
                 else:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                        moments=moments, degree= additive_degree,
-                        lam=wave, lam_temp=lam_temp,component=component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, mask = mask)
+                        moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
+                        lam=wave, lam_temp=lam_temp,component=component, gas_names=gas_names, quiet = True, bias = 0, dust = dust)
 
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
@@ -1444,8 +1455,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             #finally fitting
             if gas: #with gas np.sum(component)==0
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                    moments=moments, plot = True, degree= additive_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust, mask = mask)
+                    moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
+                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust)
 
                 errors = [array * np.sqrt(pp.chi2) for array in pp.error]
                 gas_flux = pp.gas_flux
@@ -1453,8 +1464,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             else: #without gas
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
-                    moments=moments, plot = True, degree= additive_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, dust = dust, mask = mask)
+                    moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
+                    lam=wave, lam_temp=lam_temp,component=component, dust = dust)
 
                 errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
 
@@ -1467,14 +1478,20 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if not gas:
                 print("".join("%8.2g" % f for f in errors))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
-                prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
+                try:
+                    prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
+                except Exception:
+                    prec = 7
                 print(f"Best-fitting redshift z = {redshift_fit:#.{prec}f} "
                     f"+/- {redshift_err:#.{prec}f}")
             else:
                 stellar_uncertainties = errors[0]
                 print("".join("%8.2g" % f for f in stellar_uncertainties))
                 print('Elapsed time in pPXF: %.2f s' % (clock() - t))
-                prec = int(1 - np.floor(np.log10(redshift_err[0])))  # two digits of uncertainty
+                try:
+                    prec = int(1 - np.floor(np.log10(redshift_err[0])))  # two digits of uncertainty
+                except Exception:
+                    prec = 7
                 print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
                     f"+/- {redshift_err[0]:#.{prec}f}")
 
@@ -1538,9 +1555,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
                     #fitting!
                     pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
-                    moments=kin_moments, degree=additive_degree,
+                    moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=bestfit_wavelength, lam_temp=lam_temp,
-                    component=0, quiet = True, dust = dust, mask = mask)
+                    component=0, quiet = True, dust = dust)
 
                     kinematics_mc = pp.sol
 
@@ -3813,5 +3830,68 @@ def download_file(url, dest_path):
 
     with urllib.request.urlopen(url, context=context) as response, open(dest_path, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
+
+
+
+# Function to define the goodpixels for pPXF kinematics, both for emission lines and user mask
+def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, mask_ranges=None, user_mask = False,
+                                high_z=0.01, use_emission_mask=True):
+    """
+    Returns an array of goodpixels for pPXF, combining optional emission-line masking
+    and optional user-defined masking.
+
+    Parameters
+    ----------
+    ln_lam1 : array_like
+        Natural log of wavelength grid (output of log-rebinning).
+    lam_range_temp : list or array
+        Wavelength range of the template [start, end] in Angstrom.
+    redshift : float
+        Redshift of the galaxy.
+    mask_ranges : list of tuples, optional
+        List of (start, end) wavelength intervals to mask (in Angstrom, observed frame).
+    high_z : float
+        Threshold to decide whether to de-redshift the mask intervals.
+    use_emission_mask : bool
+        If True, applies automatic masking of emission lines via determine_goodpixels().
+
+    Returns
+    -------
+    final_goodpix : ndarray
+        Array of indices of good pixels to use in pPXF.
+    """
+
+    n_pixels = len(ln_lam1)
+
+    # Step 1: emission-line masking or use all pixels
+    if use_emission_mask:
+        goodpix = util.determine_goodpixels(ln_lam1, lam_range_temp, redshift)
+    else:
+        goodpix = np.arange(n_pixels)
+
+    # Step 2: user-defined masking
+    if mask_ranges is not None and len(mask_ranges) > 0 and user_mask:
+        wave_log = np.exp(ln_lam1)
+        user_mask_log = np.zeros(n_pixels, dtype=bool)
+
+        # Shift ranges to rest-frame if needed
+        if redshift > high_z:
+            corrected_mask_ranges = [(start / (1 + redshift), end / (1 + redshift)) for start, end in mask_ranges]
+        else:
+            corrected_mask_ranges = mask_ranges
+
+        for start, end in corrected_mask_ranges:
+            user_mask_log |= (wave_log >= start) & (wave_log <= end)
+
+        # Get indices to exclude
+        badpix = np.where(user_mask_log)[0]
+
+        # Remove user-masked pixels from current goodpix
+        final_goodpix = np.array([i for i in goodpix if i not in badpix])
+    else:
+        final_goodpix = goodpix
+
+    return final_goodpix
+
 #********************** END OF SPECTRA ANALYSIS FUNCTIONS *********************************
 #******************************************************************************************
