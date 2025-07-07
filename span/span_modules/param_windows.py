@@ -83,7 +83,7 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
 
     # Define GUI layout
     bb_layout = [
-        [sg.Text('Wave interval (nm):'),
+        [sg.Text('Wave interval (A):'),
          sg.InputText(wave1_bb, size=(6,1), key='left_wave_bb'), sg.Text('-'),
          sg.InputText(wave2_bb, size=(6,1), key='right_wave_bb')],
         [sg.Text('Initial Temperature guess'),
@@ -153,6 +153,9 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
     is_z_xcorr = params.is_z_xcorr
     low_z_corr = params.low_z_corr
     high_z_corr = params.high_z_corr
+    xcorr_limit_wave_range = params.xcorr_limit_wave_range
+    xcorr_vel_step = params.xcorr_vel_step
+    xcorr_z_step = params.xcorr_z_step
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
@@ -170,19 +173,12 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
          sg.InputText(smooth_value_crosscorr, size=(6,1), key='xcorr_smooth_template_value'),
          sg.Button('View template', button_color=('black', 'light blue'))],
         [sg.HorizontalSeparator()],
-        [sg.Text('Wavelength interval to cross-correlate (nm):', font=('Helvetica', 10, 'bold')),
-         sg.InputText(low_wave_corr, size=(6,1), key='xcorr_left_lambda'),
-         sg.Text('-'),
-         sg.InputText(high_wave_corr, size=(6,1), key='xcorr_right_lambda')],
-        [sg.Radio('Considering the velocity range (km/s):', "RADIOONLY2", default=is_vel_xcorr, key='is_vel_xcorr'),
-         sg.InputText(low_vel_corr, size=(7,1), key='xcorr_low_vel'),
-         sg.Text('-'),
-         sg.InputText(high_vel_corr, size=(7,1), key='xcorr_high_vel')],
-        [sg.Radio('Considering the redshift range (z):', "RADIOONLY2", default=is_z_xcorr, key='is_z_xcorr'),
-         sg.InputText(low_z_corr, size=(7,1), key='low_z_corr'),
-         sg.Text('-'),
-         sg.InputText(high_z_corr, size=(7,1), key='high_z_corr')],
-        [sg.Push(), sg.Button('Confirm', button_color=('white', 'black'), size=(18,1))]
+
+        [sg.Checkbox('Restrict wavelength range', key='xcorr_limit_wave_range', font = ('', default_size, 'bold'), default = xcorr_limit_wave_range), sg.Text('λ min'), sg.InputText(low_wave_corr, size=(8,1), key='xcorr_left_lambda'), sg.Text('λ max'), sg.InputText(high_wave_corr, size=(8,1), key='xcorr_right_lambda')],
+
+        [sg.Radio('Velocity range (km/s):', "RADIOONLY2", default = is_vel_xcorr, key = 'is_vel_xcorr',tooltip='Use for peculiar Doppler motion or low (<0.01) redshift galaxies', font = ('', default_size, 'bold')), sg.InputText(low_vel_corr, size = (7,1), key = 'xcorr_low_vel'), sg.Text('-'), sg.InputText(high_vel_corr, size = (7,1), key = 'xcorr_high_vel'), sg.Text('Step (km/s)'), sg.InputText(xcorr_vel_step, key = 'xcorr_vel_step', size = (7,1))],
+        [sg.Radio('Redshift range (z):', "RADIOONLY2", default = is_z_xcorr, key = 'is_z_xcorr',tooltip='Use for cosmological redshift estimation, where the velocity has no physical meaning', font = ('', default_size, 'bold')), sg.InputText(low_z_corr, size = (7,1), key = 'low_z_corr'), sg.Text('-'), sg.InputText(high_z_corr, size = (7,1), key = 'high_z_corr'), sg.Text('Step (z)'), sg.InputText(xcorr_z_step, key = 'xcorr_z_step', size = (7,1))],
+        [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
     ]
 
     print('*** Cross-corr parameters window open. The main panel will be inactive until you close the window ***')
@@ -213,18 +209,40 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
             sg.popup('Smooth template value not valid!')
             continue
 
-        try:
-            low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
-            high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
-            wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
-        except ValueError:
-            sg.popup('Limit wave values not valid!')
-            continue
+
+
+
+        # try:
+        #     low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
+        #     high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
+        #     wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
+        # except ValueError:
+        #     sg.popup('Limit wave values not valid!')
+        #     continue
+
+
+        #cheching the input wavelength range
+        xcorr_limit_wave_range = xcorr_values['xcorr_limit_wave_range']
+        if xcorr_limit_wave_range:
+            try:
+                low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
+                high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
+                wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
+                # real_low_wave_corr = np.min(wave_interval_corr)
+                # real_high_wave_corr = np.max(wave_interval_corr)
+            except Exception:
+                sg.popup('Limit wave values not valid!')
+                continue
+
+
+
+
 
         if is_vel_xcorr:
             try:
                 low_vel_corr = float(xcorr_values['xcorr_low_vel'])
                 high_vel_corr = float(xcorr_values['xcorr_high_vel'])
+                xcorr_vel_step = float(xcorr_values['xcorr_vel_step'])
                 if abs(low_vel_corr - high_vel_corr) < 4:
                     sg.popup('Velocity interval too small')
                     continue
@@ -236,6 +254,8 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
             try:
                 low_z_corr = float(xcorr_values['low_z_corr'])
                 high_z_corr = float(xcorr_values['high_z_corr'])
+                xcorr_z_step = float(xcorr_values['xcorr_z_step'])
+
                 if low_z_corr < 0 or high_z_corr < 0:
                     sg.popup('Redshift values must be greater than zero!')
                     continue
@@ -253,15 +273,18 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
             if not os.path.isfile(template_crosscorr):
                 sg.popup('The template does not exist. I have nothing to show!')
                 continue
-
-            wave_template, flux_template, _, _ = stm.read_spec(template_crosscorr, lambda_units_template_crosscorr)
-            if smooth_value_crosscorr > 0:
-                flux_template = spman.sigma_broad(wave_template, flux_template, smooth_value_crosscorr)
+            try:
+                wave_template, flux_template, _, _ = stm.read_spec(template_crosscorr, lambda_units_template_crosscorr)
+                if smooth_value_crosscorr > 0:
+                    flux_template = spman.sigma_broad(wave_template, flux_template, smooth_value_crosscorr)
+            except Exception:
+                sg.popup('Cannot read the template!')
+                continue
 
             plt.title(template_crosscorr)
             plt.plot(wave_template, flux_template)
             plt.xlim(low_wave_corr, high_wave_corr)
-            plt.xlabel('Wavelength (nm)')
+            plt.xlabel('Wavelength (A)')
             plt.ylabel('Normalised Flux')
             plt.show()
             plt.close()
@@ -288,7 +311,10 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
                    high_vel_corr=high_vel_corr,
                    is_z_xcorr=is_z_xcorr,
                    low_z_corr=low_z_corr,
-                   high_z_corr=high_z_corr)
+                   high_z_corr=high_z_corr,
+                   xcorr_limit_wave_range = xcorr_limit_wave_range,
+                   xcorr_vel_step = xcorr_vel_step,
+                   xcorr_z_step = xcorr_z_step)
 
 
 
@@ -337,7 +363,7 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
          sg.Radio('H band', "RADIOBAND", default=band_h, key='sigma_band_h'),
          sg.Radio('K band', "RADIOBAND", default=band_k, key='sigma_band_k')],
         [sg.Radio('Fitting a custom band', "RADIOBAND", default=band_custom, key='sigma_custom_band'),
-         sg.Text('Wave interval (nm)'),
+         sg.Text('Wave interval (A)'),
          sg.InputText(low_wave_sigma, size=(5, 1), key='sigma_left_lambda'),
          sg.Text('-'),
          sg.InputText(high_wave_sigma, size=(5, 1), key='sigma_right_lambda'),
@@ -375,11 +401,11 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
 
         # Assign predefined bands
         predefined_bands = {
-            "cat": ([844., 872.], [856., 864.]),
-            "halpha": ([642., 661.], [651., 654.]),
-            "nad": ([560., 615.], [591., 597.]),
-            "h": ([1660., 1720.], [1693., 1704.]),
-            "k": ([2270., 2370.], [2270., 2280.])
+            "cat": ([8440., 8702.], [8560., 8604.]),
+            "halpha": ([6420., 6610.], [6510., 6540.]),
+            "nad": ([5600., 6150.], [5910., 5970.]),
+            "h": ([16600., 17200.], [16930., 17040.]),
+            "k": ([22700., 23700.], [22700., 22800.])
         }
         for band, (sigma, cont) in predefined_bands.items():
             if locals()[f"band_{band}"]:
@@ -413,12 +439,17 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
                 sg.popup('The template does not exist. I have nothing to show!')
                 continue
 
-            wave_template, flux_template, _, _ = stm.read_spec(template_sigma, lambda_units_template_sigma)
+            # Reading the template
+            try:
+                wave_template, flux_template, _, _ = stm.read_spec(template_sigma, lambda_units_template_sigma)
+            except Exception:
+                sg.popup('Cannot read the template!')
+                continue
 
             plt.title(template_sigma)
             plt.plot(wave_template, flux_template)
             plt.xlim(band_sigma[0], band_sigma[1])
-            plt.xlabel('Wavelength (nm)')
+            plt.xlabel('Wavelength (A)')
             plt.ylabel('Normalised Flux')
             plt.show()
             plt.close()
@@ -621,7 +652,8 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         if ew_event == 'Sigma coeff parameters':
             sg.theme('LightBlue1')
             sigmacorr_layout = [
-                [sg.Radio('Index list file:', "RADIOCOEFF1", default = have_index_file_corr, key = 'ew_corr_idx_file'), sg.InputText(index_file_corr, size = (15,1), key = 'idx_corr_file'), sg.Radio('Usr index', "RADIOCOEFF1", default = single_index_corr, key = 'ew_corr_single_idx'), sg.Text('blue continuum:'), sg.InputText(idx_left_blue_sigma, size = (5,1), key = 'left_wave_blue_cont'), sg.Text('-'), sg.InputText(idx_right_blue_sigma, size = (5,1), key = 'right_wave_blue_cont'), sg.Text('red continuum:'), sg.InputText(idx_left_red_sigma, size = (5,1), key = 'left_wave_red_cont'), sg.Text('-'),  sg.InputText(idx_right_red_sigma, size = (5,1), key = 'right_wave_red_cont'), sg.Text('line:'), sg.InputText(idx_left_line_sigma, size = (5,1), key = 'left_line'), sg.Text('-'), sg.InputText(idx_right_line_sigma, size = (5,1), key = 'right_line')],
+                [sg.Radio('Index list file:', "RADIOCOEFF1", default = have_index_file_corr, key = 'ew_corr_idx_file'), sg.InputText(index_file_corr, size = (25,1), key = 'idx_corr_file'), sg.FileBrowse(tooltip='Load a list file containing the names of the indices')],
+                [sg.Radio('Usr index', "RADIOCOEFF1", default = single_index_corr, key = 'ew_corr_single_idx'), sg.Text('blue continuum:'), sg.InputText(idx_left_blue_sigma, size = (5,1), key = 'left_wave_blue_cont'), sg.Text('-'), sg.InputText(idx_right_blue_sigma, size = (5,1), key = 'right_wave_blue_cont'), sg.Text('red continuum:'), sg.InputText(idx_left_red_sigma, size = (5,1), key = 'left_wave_red_cont'), sg.Text('-'),  sg.InputText(idx_right_red_sigma, size = (5,1), key = 'right_wave_red_cont'), sg.Text('line:'), sg.InputText(idx_left_line_sigma, size = (5,1), key = 'left_line'), sg.Text('-'), sg.InputText(idx_right_line_sigma, size = (5,1), key = 'right_line')],
                 [sg.Text('Sample spectra list:'), sg.InputText(stellar_spectra_coeff_file, size = (17,1), key = 'sigma_coeff_sample_list'), sg.FileBrowse(tooltip='Load a list file containing the names of the sample spectra'), sg.Radio('nm', "RADIOCOEFF", key = 'sigma_coeff_sample_list_wave_nm', default = lambda_units_coeff_nm), sg.Radio('A', "RADIOCOEFF", key = 'sigma_coeff_sample_list_wave_a', default = lambda_units_coeff_a), sg.Radio('mu', "RADIOCOEFF", default = lambda_units_coeff_mu, key = 'sigma_coeff_sample_list_wave_mu'), sg.Checkbox('Add a sigma (km/s): ', key = 'sigma_coeff_sample_smooth', default = smooth_stellar_sample ), sg.InputText(smooth_value_sample, size = (5,1), key = 'sigma_coeff_sample_smooth_sigma')],
 
                 [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
@@ -1119,12 +1151,17 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     resolution_kin = params.resolution_kin
     constant_resolution_r = params.constant_resolution_r
     resolution_kin_r = params.resolution_kin_r
+    resolution_kin_muse = params.resolution_kin_muse
     ppxf_kin_preloaded_lib = params.ppxf_kin_preloaded_lib
     markers_ppxf_kin = params.markers_ppxf_kin
     stellar_library_kin = params.stellar_library_kin
     ppxf_kin_custom_lib = params.ppxf_kin_custom_lib
     ppxf_kin_lib_folder = params.ppxf_kin_lib_folder
     ppxf_kin_custom_temp_suffix = params.ppxf_kin_custom_temp_suffix
+    ppxf_kin_generic_lib = params.ppxf_kin_generic_lib
+    ppxf_kin_generic_lib_folder = params.ppxf_kin_generic_lib_folder
+    ppxf_kin_FWHM_tem_generic = params.ppxf_kin_FWHM_tem_generic
+    ppxf_kin_fixed_kin = params.ppxf_kin_fixed_kin
     no_gas_kin = params.no_gas_kin
     gas_kin = params.gas_kin
     ppxf_kin_mask_emission = params.ppxf_kin_mask_emission
@@ -1139,42 +1176,50 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_kin_sigma_model2 = params.ppxf_kin_sigma_model2
     kin_moments = params.kin_moments
     additive_degree_kin = params.additive_degree_kin
+    multiplicative_degree_kin = params.multiplicative_degree_kin
     ppxf_kin_noise = params.ppxf_kin_noise
     kin_best_noise = params.kin_best_noise
     with_errors_kin = params.with_errors_kin
+    ppxf_kin_have_user_mask = params.ppxf_kin_have_user_mask
+    ppxf_kin_mask_ranges_str = params.ppxf_kin_mask_ranges_str
     ppxf_kin_mc_sim = params.ppxf_kin_mc_sim
     ppxf_kin_tie_balmer = params.ppxf_kin_tie_balmer
     ppxf_kin_dust_stars = params.ppxf_kin_dust_stars
     ppxf_kin_dust_gas = params.ppxf_kin_dust_gas
+    ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
 
 
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
     ppxf_kin_layout = [
-        [sg.Text('Wavelength interval (nm):', font = ('', default_size, 'bold')), sg.InputText(wave1_kin, size = (5,1), key = 'left_wave_ppxf_kin'), sg.Text('-'), sg.InputText(wave2_kin, size = (5,1), key = 'right_wave_ppxf_kin'), sg.Text('Sigma (km/s):',font = ('', default_size, 'bold')), sg.InputText(sigma_guess_kin, size = (5,1), key = 'sigma_guess_kin'), sg.Text('Redshift (z):',font = ('', default_size, 'bold')),sg.InputText(redshift_guess_kin, size = (7,1), key = 'redshift_guess_kin')],
+        [sg.Text('Wavelength interval (A):', font = ('', default_size, 'bold')), sg.InputText(wave1_kin, size = (5,1), key = 'left_wave_ppxf_kin'), sg.Text('-'), sg.InputText(wave2_kin, size = (5,1), key = 'right_wave_ppxf_kin'), sg.Text('Sigma (km/s):',font = ('', default_size, 'bold')), sg.InputText(sigma_guess_kin, size = (5,1), key = 'sigma_guess_kin'), sg.Text('Redshift (z):',font = ('', default_size, 'bold')),sg.InputText(redshift_guess_kin, size = (7,1), key = 'redshift_guess_kin')],
         [sg.HorizontalSeparator()],
-        [sg.Radio('Spec. constant FWHM resolution (A):', "RADIORES1", default = constant_resolution_lambda, key = 'constant_resolution_lambda',tooltip='Instrumental resolution (FWHM) in A of the spectral region',font = ('', default_size, 'bold')), sg.InputText(resolution_kin , size = (4,1), key = 'ppxf_resolution'), sg.Radio('Spec. constant R resolution:', "RADIORES1", key = 'constant_resolution_r', default = constant_resolution_r,font = ('', default_size, 'bold')), sg.InputText(resolution_kin_r, size = (6,1), key = 'ppxf_resolution_r')],
+        [sg.Radio('Spec. res. FWHM (A):', "RADIORES1", default = constant_resolution_lambda, key = 'constant_resolution_lambda',tooltip='If the spectra have a constant resolution in terms of FWHM (in A)',font = ('', default_size, 'bold')), sg.InputText(resolution_kin , size = (4,1), key = 'ppxf_resolution'), sg.Radio('Spec. res. R:', "RADIORES1", key = 'constant_resolution_r', default = constant_resolution_r,font = ('', default_size, 'bold'), tooltip='If the spectra have a constant resolving power in terms of R'), sg.InputText(resolution_kin_r, size = (6,1), key = 'ppxf_resolution_r'), sg.Radio('Spec. res. MUSE data', "RADIORES1", key = 'resolution_kin_muse', default = resolution_kin_muse,font = ('', default_size, 'bold'), tooltip='If MUSE spectra, using a polynomial LSF')],
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Preset SPS libraries included with SPAN:', 'RADIOLIBKIN', default = ppxf_kin_preloaded_lib, key = 'ppxf_kin_preloaded_lib', font = ('', default_size, 'bold')), sg.InputCombo(markers_ppxf_kin, key='markers_ppxf_kin',default_value=stellar_library_kin, readonly=True, size = (14,1))],                                                                                                                                                                                                            [sg.Radio('Custom (E)MILES:', 'RADIOLIBKIN', default = ppxf_kin_custom_lib, key = 'ppxf_kin_custom_lib', font = ('', default_size, 'bold'),tooltip='Select a folder containing your set of (E)MILES templates'), sg.InputText(ppxf_kin_lib_folder, size = (27,1), key = 'ppxf_kin_lib_folder'), sg.FolderBrowse(), sg.Text('Prefix:', font = ('', default_size, 'bold'), tooltip='Emiles templates have a suffix, please provide it'), sg.InputText(ppxf_kin_custom_temp_suffix, size = (12,1), key = 'ppxf_kin_custom_temp_suffix') ],
+        [sg.Radio('Generic templates:', 'RADIOLIBKIN', default = ppxf_kin_generic_lib, key = 'ppxf_kin_generic_lib', font = ('', default_size, 'bold'),tooltip='Select a folder containing FITS files with linear sample and lamba in A'), sg.InputText(ppxf_kin_generic_lib_folder, size = (27,1), key = 'ppxf_kin_generic_lib_folder'), sg.FolderBrowse(), sg.Text('FWHM tem. (A):', font = ('', default_size, 'bold'), tooltip='Set the resolution of the templates'), sg.InputText(ppxf_kin_FWHM_tem_generic, size = (5,1), key = 'ppxf_kin_FWHM_tem_generic') ],
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Fitting only stellar kinematics',"RADIOKIN", key = 'no_gas_kin', default = no_gas_kin, font = ('', default_size, 'bold'),tooltip='Considering only the kinematics of stars'), sg.Checkbox('Masking the gas emission lines', default = ppxf_kin_mask_emission, key = 'ppxf_kin_mask_emission', tooltip = ('Activate the masking if gas emission is present!'))],
-        [sg.Text(''), sg.Checkbox('Fit two stellar components with the following parameters:', default = ppxf_kin_two_stellar_components, key = 'ppxf_kin_two_stellar_components', tooltip='Enable to fit TWO stellar SSPs with different V and sigma', font = ('', default_size, 'bold'))],
+        [sg.Text(''), sg.Checkbox('Fit two stellar components with the following parameters:', default = ppxf_kin_two_stellar_components, key = 'ppxf_kin_two_stellar_components', tooltip='Enable to fit TWO stellar SSPs with different V and sigma. Only for preset and EMILES SSP', font = ('', default_size, 'bold'))],
         [sg.Text(''), sg.Text('Select SSP model 1:'), sg.Text('Age(Gyr):'), sg.InputText(ppxf_kin_age_model1, size = (4,1), key = 'ppxf_kin_age_model1'), sg.Text('[M/H]:'), sg.InputText(ppxf_kin_met_model1, size = (4,1), key = 'ppxf_kin_met_model1'), sg.Text('Vel.(km/s):'),sg.InputText(ppxf_kin_vel_model1, size = (4,1), key = 'ppxf_kin_vel_model1'), sg.Text('Sigma(km/s):'), sg.InputText(ppxf_kin_sigma_model1, size = (4,1), key = 'ppxf_kin_sigma_model1')],
 
         [sg.Text(''), sg.Text('Select SSP model 2:'), sg.Text('Age(Gyr):'), sg.InputText(ppxf_kin_age_model2, size = (4,1), key = 'ppxf_kin_age_model2'), sg.Text('[M/H]:'), sg.InputText(ppxf_kin_met_model2, size = (4,1), key = 'ppxf_kin_met_model2'), sg.Text('Vel.(km/s):'),sg.InputText(ppxf_kin_vel_model2, size = (4,1), key = 'ppxf_kin_vel_model2'), sg.Text('Sigma(km/s):'), sg.InputText(ppxf_kin_sigma_model2, size = (4,1), key = 'ppxf_kin_sigma_model2')],
-
         [sg.Text('', font = ('', 1))],
-        [sg.Radio('Fitting gas and stellar kinematics together', "RADIOKIN", key = 'gas_kin', default = gas_kin, font = ('', default_size, 'bold'),tooltip='Fitting the kinematics of ONE stellar component and the gas emission')],
+        [sg.Radio('Fitting gas and stellar kinematics', "RADIOKIN", key = 'gas_kin', default = gas_kin, font = ('', default_size, 'bold'),tooltip='Fitting the kinematics of ONE stellar component and the gas emission'), sg.Checkbox('Fixing stellar kinematics first', default = ppxf_kin_fixed_kin, key = 'ppxf_kin_fixed_kin', tooltip = ('Perform a first fit with stellar kinematics and fix the moments for the gas fitting'))],
+
+        [sg.HorizontalSeparator()],
         [sg.Checkbox('Correct for dust the stars', key = 'ppxf_kin_dust_stars', default = ppxf_kin_dust_stars, tooltip='Applying the default 2-params attenuation curve for stars of Cappellari 2023'), sg.Checkbox('Correct for dust the gas', key = 'ppxf_kin_dust_gas', default = ppxf_kin_dust_gas, tooltip='Applying the Calzetti extinction curve for gas'), sg.Checkbox('Tie Balmer lines', key = 'ppxf_kin_tie_balmer', default = ppxf_kin_tie_balmer)],
+        [sg.Checkbox('Mask custom regions (A):', default = ppxf_kin_have_user_mask, key = 'ppxf_kin_have_user_mask', tooltip='Insert the regions you want to mask. NOT compatible with masking emission lines'), sg.InputText(ppxf_kin_mask_ranges_str, size = (30,1), key = 'ppxf_kin_mask_ranges')],
         [sg.HorizontalSeparator()],
 
-        [sg.Text('Moments to fit:', font = ('', default_size, 'bold'), tooltip='Moments of the LOSVD. Minimum 2 (V and sigma), maximum 6. Proposed value = 4'), sg.InputText(kin_moments, size = (3,1), key = 'kin_moments'), sg.Text('Additive degree:', font = ('', default_size, 'bold'), tooltip='Additive degree to the fit'), sg.InputText(additive_degree_kin, size = (3,1), key = 'additive_degree_kin'), sg.Text('Noise:', font = ('', default_size, 'bold'), tooltip='Mean noise per pixel of the spectrum'), sg.InputText(ppxf_kin_noise, size = (8,1), key = 'ppxf_kin_noise'), sg.Checkbox('Auto noise estimation', default = kin_best_noise, key = ('kin_best_noise'), tooltip='Auto estimate the noise level of the spectrum for the best formal error estimation')],
+        [sg.Text('Moments to fit:', font = ('', default_size, 'bold'), tooltip='Moments of the LOSVD. Minimum 2 (V and sigma), maximum 6. Proposed value = 4'), sg.InputText(kin_moments, size = (3,1), key = 'kin_moments'), sg.Text('Add. degree:', font = ('', default_size, 'bold'), tooltip='Additive degree to the fit. Deactivate (-1) if you are interested to gas flux'), sg.InputText(additive_degree_kin, size = (3,1), key = 'additive_degree_kin'), sg.Text('Mult. degree:', font = ('', default_size, 'bold'), tooltip='Multiplicative degree to the fit. Use if you want to use gas flux'), sg.InputText(multiplicative_degree_kin, size = (3,1), key = 'multiplicative_degree_kin'), sg.Text('Noise:', font = ('', default_size, 'bold'), tooltip='Mean noise per pixel of the spectrum'), sg.InputText(ppxf_kin_noise, size = (6,1), key = 'ppxf_kin_noise'), sg.Checkbox('Auto noise', default = kin_best_noise, key = ('kin_best_noise'), tooltip='Auto calculate the noise level of the spectrum for the best formal error estimation')],
         [sg.HorizontalSeparator()],
 
-        [sg.Checkbox('Estimate the uncertainties with MonteCarlo simulations', font = ('', default_size, 'bold'), key = 'with_errors_kin', default = with_errors_kin, tooltip='Calculate the uncertainties in the LOSVD with MonteCarlo simulations'), sg.Text('N. sim.:'), sg.InputText(ppxf_kin_mc_sim, size = (7,1), key = 'ppxf_kin_mc_sim')],
+        [sg.Checkbox('Estimate the uncertainties with MonteCarlo simulations', font = ('', default_size, 'bold'), key = 'with_errors_kin', default = with_errors_kin, tooltip='Calculate the uncertainties in the LOSVD with MonteCarlo simulations'), sg.Text('N. simulations:'), sg.InputText(ppxf_kin_mc_sim, size = (7,1), key = 'ppxf_kin_mc_sim')],
+        [sg.Checkbox('Save processed spectra', key = 'ppxf_kin_save_spectra', default = ppxf_kin_save_spectra, tooltip='For each spectrum, save the bestfit model, gas, emission, emission corrected, if available')],
         [sg.Button("Help", size=(12, 1),button_color=('black','orange')), sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
         ]
 
@@ -1191,23 +1236,55 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
 
         constant_resolution_lambda = ppxf_kin_values['constant_resolution_lambda']
         constant_resolution_r = ppxf_kin_values['constant_resolution_r']
+        resolution_kin_muse = ppxf_kin_values['resolution_kin_muse']
         stellar_library_kin = ppxf_kin_values['markers_ppxf_kin']
+        ppxf_kin_fixed_kin = ppxf_kin_values['ppxf_kin_fixed_kin']
 
         gas_kin = ppxf_kin_values['gas_kin']
         no_gas_kin = ppxf_kin_values['no_gas_kin']
         kin_best_noise = ppxf_kin_values['kin_best_noise']
         with_errors_kin = ppxf_kin_values['with_errors_kin']
+        ppxf_kin_save_spectra = ppxf_kin_values['ppxf_kin_save_spectra']
 
-        #parameters for custom EMILES templates
+        #parameters for templates
         ppxf_kin_preloaded_lib = ppxf_kin_values['ppxf_kin_preloaded_lib']
         ppxf_kin_custom_lib = ppxf_kin_values['ppxf_kin_custom_lib']
         ppxf_kin_lib_folder = ppxf_kin_values['ppxf_kin_lib_folder']
         ppxf_kin_custom_temp_suffix = ppxf_kin_values['ppxf_kin_custom_temp_suffix']
 
+        # Generic templates
+        ppxf_kin_generic_lib = ppxf_kin_values['ppxf_kin_generic_lib']
+        ppxf_kin_generic_lib_folder = ppxf_kin_values['ppxf_kin_generic_lib_folder']
+
+        #checking if the resolution is meaningful
+        if ppxf_kin_generic_lib:
+            try:
+                ppxf_kin_FWHM_tem_generic = float(ppxf_kin_values['ppxf_kin_FWHM_tem_generic'])
+                if ppxf_kin_FWHM_tem_generic <=0:
+                    sg.popup('Template resolution must be positive!')
+                    ppxf_kin_FWHM_tem_generic = params.ppxf_kin_FWHM_tem_generic
+                    continue
+            except Exception:
+                sg.popup('Invalid template resolution!')
+                ppxf_kin_FWHM_tem_generic = params.ppxf_kin_FWHM_tem_generic
+                continue
+
         #parameters for dust
         ppxf_kin_tie_balmer = ppxf_kin_values['ppxf_kin_tie_balmer']
         ppxf_kin_dust_stars = ppxf_kin_values['ppxf_kin_dust_stars']
         ppxf_kin_dust_gas = ppxf_kin_values['ppxf_kin_dust_gas']
+
+        # Masking
+        ppxf_kin_have_user_mask = ppxf_kin_values['ppxf_kin_have_user_mask']
+        if ppxf_kin_have_user_mask:
+            try:
+                ppxf_kin_mask_ranges_str = ppxf_kin_values['ppxf_kin_mask_ranges']
+                ppxf_kin_mask_ranges = eval(ppxf_kin_mask_ranges_str)
+            except Exception:
+                sg.Popup('Masking values not valid')
+                ppxf_kin_mask_ranges_str = params.ppxf_kin_mask_ranges_str
+                # ppxf_kin_mask_ranges = ppxf_kin_mask_ranges_default
+                continue
 
         #checking the existence of the custom templates in the specified folder
         if ppxf_kin_custom_lib:
@@ -1219,6 +1296,11 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         ppxf_kin_mask_emission = ppxf_kin_values['ppxf_kin_mask_emission']
         ppxf_kin_two_stellar_components = ppxf_kin_values['ppxf_kin_two_stellar_components']
 
+        # checking the compatibility with the generic template option
+        if ppxf_kin_two_stellar_components and ppxf_kin_generic_lib:
+            sg.popup('WARNING: fit with two stellar components is NOT compatible with the generic templates option')
+            continue
+
         #check on the wavelength band
         try:
             wave1_kin = float(ppxf_kin_values['left_wave_ppxf_kin'])
@@ -1228,6 +1310,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             sigma_guess_kin = float(ppxf_kin_values['sigma_guess_kin'])
             redshift_guess_kin = float(ppxf_kin_values['redshift_guess_kin'])
             additive_degree_kin = int(ppxf_kin_values['additive_degree_kin'])
+            multiplicative_degree_kin = int(ppxf_kin_values['multiplicative_degree_kin'])
 
             kin_moments = int(ppxf_kin_values['kin_moments'])
             ppxf_kin_noise = float(ppxf_kin_values['ppxf_kin_noise'])
@@ -1275,6 +1358,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             redshift_guess_kin=redshift_guess_kin,
             resolution_kin=resolution_kin,
             resolution_kin_r=resolution_kin_r,
+            resolution_kin_muse=resolution_kin_muse,
             constant_resolution_lambda=constant_resolution_lambda,
             constant_resolution_r=constant_resolution_r,
             ppxf_kin_preloaded_lib=ppxf_kin_preloaded_lib,
@@ -1282,6 +1366,10 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             ppxf_kin_custom_lib=ppxf_kin_custom_lib,
             ppxf_kin_lib_folder=ppxf_kin_lib_folder,
             ppxf_kin_custom_temp_suffix=ppxf_kin_custom_temp_suffix,
+            ppxf_kin_generic_lib = ppxf_kin_generic_lib,
+            ppxf_kin_generic_lib_folder = ppxf_kin_generic_lib_folder,
+            ppxf_kin_FWHM_tem_generic = ppxf_kin_FWHM_tem_generic,
+            ppxf_kin_fixed_kin = ppxf_kin_fixed_kin,
             no_gas_kin=no_gas_kin, gas_kin=gas_kin,
             ppxf_kin_mask_emission=ppxf_kin_mask_emission,
             ppxf_kin_two_stellar_components=ppxf_kin_two_stellar_components,
@@ -1295,10 +1383,17 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             ppxf_kin_sigma_model2 = ppxf_kin_sigma_model2,
             kin_moments = kin_moments,
             additive_degree_kin = additive_degree_kin,
+            multiplicative_degree_kin = multiplicative_degree_kin,
             ppxf_kin_noise = ppxf_kin_noise,
             kin_best_noise = kin_best_noise,
             with_errors_kin = with_errors_kin,
-            ppxf_kin_mc_sim = ppxf_kin_mc_sim
+            ppxf_kin_have_user_mask = ppxf_kin_have_user_mask,
+            ppxf_kin_mask_ranges_str = ppxf_kin_mask_ranges_str,
+            ppxf_kin_mc_sim = ppxf_kin_mc_sim,
+            ppxf_kin_tie_balmer = ppxf_kin_tie_balmer,
+            ppxf_kin_dust_stars = ppxf_kin_dust_stars,
+            ppxf_kin_dust_gas = ppxf_kin_dust_gas,
+            ppxf_kin_save_spectra = ppxf_kin_save_spectra
             )
 
     return params
@@ -1336,6 +1431,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_pop_want_to_mask = params.ppxf_pop_want_to_mask
     ppxf_pop_mask_ranges_str = params.ppxf_pop_mask_ranges_str
     ppxf_pop_lg_age = params.ppxf_pop_lg_age
+    ppxf_pop_lg_met = params.ppxf_pop_lg_met
     with_errors = params.with_errors
     ppxf_min_age = params.ppxf_min_age
     ppxf_max_age = params.ppxf_max_age
@@ -1361,7 +1457,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     sg.theme('LightBlue1')
 
     ppxf_pop_layout = [
-        [sg.Text('Wavelength interval (nm):', font = ('', default_size, 'bold')), sg.InputText(wave1_pop, size = (5,1), key = 'left_wave_ppxf_pop'), sg.Text('-'), sg.InputText(wave2_pop, size = (5,1), key = 'right_wave_ppxf_pop'), sg.Text('Spec. resolution FWHM (A):', font = ('', default_size, 'bold'),tooltip='Instrumental resolution (FWHM) in A of the spectral region'), sg.InputText(res_pop , size = (4,1), key = 'resolution_ppxf_pop')],
+        [sg.Text('Wavelength interval (A):', font = ('', default_size, 'bold')), sg.InputText(wave1_pop, size = (5,1), key = 'left_wave_ppxf_pop'), sg.Text('-'), sg.InputText(wave2_pop, size = (5,1), key = 'right_wave_ppxf_pop'), sg.Text('Spec. resolution FWHM (A):', font = ('', default_size, 'bold'),tooltip='Instrumental resolution (FWHM) in A of the spectral region'), sg.InputText(res_pop , size = (4,1), key = 'resolution_ppxf_pop')],
         [sg.Text('Velocity dispersion guess (km/s):', font = ('', default_size, 'bold')), sg.InputText(sigma_guess_pop, size = (9,1), key = 'sigma_guess_pop'), sg.Text('Redshift guess (z):', font = ('', default_size, 'bold')), sg.InputText(z_pop, size = (8,1), key = 'ppxf_z_pop')],
         [sg.HorizontalSeparator()],
 
@@ -1375,8 +1471,8 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
 
         [sg.Radio('Preset SPS libraries included with SPAN:', 'RADIOLIBPPXF', default = ppxf_pop_preloaded_lib, key = 'ppxf_pop_preloaded_lib', font = ('', default_size, 'bold'), tooltip='Use the sMILES library to measure also the Alpha/Fe'), sg.InputCombo(markers_ppxf, key='markers_ppxf',default_value=stellar_library, readonly=True, size = (14,1))],                                                                                                                                                                                                            [sg.Radio('Custom (E)MILES:', 'RADIOLIBPPXF', default = ppxf_pop_custom_lib, key = 'ppxf_pop_custom_lib', font = ('', default_size, 'bold'),tooltip='Select a folder containing your set of (E)MILES templates'), sg.InputText(ppxf_pop_lib_folder, size = (21,1), key = 'ppxf_pop_lib_folder'), sg.FolderBrowse(), sg.Text('Prefix:', font = ('', default_size, 'bold'), tooltip='Emiles templates have a suffix, please provide it'), sg.InputText(ppxf_custom_temp_suffix, size = (10,1), key = 'ppxf_custom_temp_suffix') ],
         [sg.Radio('Custom .npz template set:', 'RADIOLIBPPXF', default = ppxf_pop_custom_npz, key = 'ppxf_pop_custom_npz', font = ('', default_size, 'bold'), tooltip='Use your custom .npz template set'), sg.InputText(ppxf_pop_npz_file, size = (21,1), key = 'ppxf_pop_npz_file'), sg.FileBrowse()],
-        [sg.Checkbox('Mask the emission lines', default = ppxf_pop_mask, key = 'ppxf_pop_mask', tooltip='If activated, you should perform a fit without gas emission'), sg.Checkbox('Regions to mask (nm):', default = ppxf_pop_want_to_mask, key = 'ppxf_pop_want_to_mask'), sg.InputText(ppxf_pop_mask_ranges_str, size = (14,1), key = 'ppxf_pop_mask_ranges')],
-        [sg.Checkbox('Convolve templates to galaxy resolution', default = ppxf_pop_convolve, key = 'ppxf_pop_convolve', tooltip='If activated, the templates are convolved to the resolution of the galaxy spectrum'), sg.Checkbox('Consider ages in log10 for mean values', default = ppxf_pop_lg_age, key = 'ppxf_pop_lg_age', tooltip='If de-activated, the mean ages are calculated in the linear grid (in Gyr) instead the default log10 grid of pPXF')],
+        [sg.Checkbox('Mask the emission lines', default = ppxf_pop_mask, key = 'ppxf_pop_mask', tooltip='If activated, you should perform a fit without gas emission'), sg.Checkbox('Mask custom regions (A):', default = ppxf_pop_want_to_mask, key = 'ppxf_pop_want_to_mask', tooltip='Insert custom masking. NOT compatible with masking emission lines'), sg.InputText(ppxf_pop_mask_ranges_str, size = (20,1), key = 'ppxf_pop_mask_ranges')],
+        [sg.Checkbox('Convolve templates to galaxy res.', default = ppxf_pop_convolve, key = 'ppxf_pop_convolve', tooltip='If activated, the templates are convolved to the resolution of the galaxy spectrum'), sg.Checkbox('Mean ages in log10', default = ppxf_pop_lg_age, key = 'ppxf_pop_lg_age', tooltip='If de-activated, the mean ages are calculated in the linear grid (in Gyr) instead the default log10 grid of pPXF'), sg.Checkbox('Mean metal in log10', default = ppxf_pop_lg_met, key = 'ppxf_pop_lg_met', tooltip='If de-activated, the mean metallicities (including Alpha/Fe) are calculated in the linear grid instead the default log10 grid of pPXF') ],
         [sg.HorizontalSeparator()],
 
         [sg.Text('Age range for SPS models (Gyr):', font = ('', default_size, 'bold'))],
@@ -1406,6 +1502,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         ppxf_pop_dust_gas = ppxf_pop_values['ppxf_pop_dust_gas']
         ppxf_best_noise_estimate = ppxf_pop_values['ppxf_best_noise_estimate']
         ppxf_pop_lg_age = ppxf_pop_values['ppxf_pop_lg_age']
+        ppxf_pop_lg_met = ppxf_pop_values['ppxf_pop_lg_met']
         stellar_parameters_lick_ppxf = ppxf_pop_values['stellar_parameters_lick_ppxf']
         ssp_model_ppxf = ppxf_pop_values['ssp_model_ppxf']
         interp_model_ppxf = ppxf_pop_values['interp_model_ppxf']
@@ -1416,8 +1513,8 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 ppxf_pop_mask_ranges = eval(ppxf_pop_mask_ranges_str)
             except Exception:
                 sg.Popup('Masking values not valid')
-                ppxf_pop_mask_ranges_str = ppxf_pop_mask_ranges_str_default
-                ppxf_pop_mask_ranges = ppxf_pop_mask_ranges_default
+                ppxf_pop_mask_ranges_str = params.ppxf_pop_mask_ranges_str
+                # ppxf_pop_mask_ranges = ppxf_pop_mask_ranges_default
                 continue
 
 
@@ -1531,6 +1628,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 ppxf_pop_want_to_mask = ppxf_pop_want_to_mask,
                 ppxf_pop_mask_ranges_str = ppxf_pop_mask_ranges_str,
                 ppxf_pop_lg_age = ppxf_pop_lg_age,
+                ppxf_pop_lg_met = ppxf_pop_lg_met,
                 with_errors = with_errors,
                 ppxf_min_age = ppxf_min_age,
                 ppxf_max_age = ppxf_max_age,

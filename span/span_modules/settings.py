@@ -142,7 +142,10 @@ def clear_all_tasks(window, params):
                      reorder_op=False,
                      active_operations=[],
                      reordered_operations=[],
-                     current_order=None)
+                     current_order=None,
+                     save_intermediate_spectra=True,
+                     save_final_spectra=False,
+                     not_save_spectra=False)
 
     # Reset Spectral Analysis Frame
     window['bb_fitting'].Update(value=False)
@@ -195,7 +198,6 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_kin': values['ppxf_kin'],
             'ppxf_pop': values['ppxf_pop'],
 
-            'save_intermediate_files': values['save_intermediate_files'],
             'save_plots': values['save_plots'],
             },
 
@@ -247,6 +249,8 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'is_initial_res_fwhm': params.is_initial_res_fwhm,
             'degrade_from_l': params.initial_res_fwhm,
             'degrade_to_l': params.final_res_fwhm,
+            'res_degrade_muse': params.res_degrade_muse,
+            'res_degrade_muse_value': params.res_degrade_muse_value,
 
             'norm_spec': params.normalize_wave,
             'norm_wave': params.norm_wave,
@@ -296,6 +300,9 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'current_order': params.current_order,
             'active_operations': params.active_operations,
             'reordered_operations': params.reordered_operations,
+            'save_intermediate_spectra': params.save_intermediate_spectra,
+            'save_final_spectra': params.save_final_spectra,
+            'not_save_spectra': params.not_save_spectra,
 
 
             'sigma_coeff': params.sigma_coeff,
@@ -322,6 +329,9 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'xcorr_high_vel': params.high_vel_corr,
             'low_z_corr': params.low_z_corr,
             'high_z_corr': params.high_z_corr,
+            'xcorr_limit_wave_range': params.xcorr_limit_wave_range,
+            'xcorr_vel_step': params.xcorr_vel_step,
+            'xcorr_z_step': params.xcorr_z_step,
 
             #Velocity dispersion parameters
             'template_sigma': params.template_sigma,
@@ -400,12 +410,14 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'right_wave_ppxf_kin': params.wave2_kin,
             'stellar_library_kin': params.stellar_library_kin,
             'constant_resolution_lambda': params.constant_resolution_lambda,
+            'resolution_kin_muse': params.resolution_kin_muse,
             'ppxf_resolution': params.resolution_kin,
             'constant_resolution_r': params.constant_resolution_r,
             'ppxf_resolution_r': params.resolution_kin_r,
             'sigma_guess_kin': params.sigma_guess_kin,
             'redshift_guess_kin': params.redshift_guess_kin,
             'additive_degree_kin': params.additive_degree_kin,
+            'multiplicative_degree_kin': params.multiplicative_degree_kin,
             'gas_kin': params.gas_kin,
             'no_gas_kin': params.no_gas_kin,
             'kin_best_noise': params.kin_best_noise,
@@ -416,6 +428,10 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_kin_custom_lib': params.ppxf_kin_custom_lib,
             'ppxf_kin_lib_folder': params.ppxf_kin_lib_folder,
             'ppxf_kin_custom_temp_suffix': params.ppxf_kin_custom_temp_suffix,
+            'ppxf_kin_generic_lib': params.ppxf_kin_generic_lib,
+            'ppxf_kin_generic_lib_folder': params.ppxf_kin_generic_lib_folder,
+            'ppxf_kin_FWHM_tem_generic': params.ppxf_kin_FWHM_tem_generic,
+            'ppxf_kin_fixed_kin': params.ppxf_kin_fixed_kin,
             'ppxf_kin_tie_balmer': params.ppxf_kin_tie_balmer,
             'ppxf_kin_dust_stars': params.ppxf_kin_dust_stars,
             'ppxf_kin_dust_gas': params.ppxf_kin_dust_gas,
@@ -429,7 +445,11 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_kin_vel_model2': params.ppxf_kin_vel_model2,
             'ppxf_kin_sigma_model2': params.ppxf_kin_sigma_model2,
             'ppxf_kin_mask_emission': params.ppxf_kin_mask_emission,
+            'ppxf_kin_have_user_mask': params.ppxf_kin_have_user_mask,
+            'ppxf_kin_mask_ranges_str': params.ppxf_kin_mask_ranges_str,
+
             'ppxf_kin_mc_sim': params.ppxf_kin_mc_sim,
+            'ppxf_kin_save_spectra': params.ppxf_kin_save_spectra,
 
             #Stellar populations and SFH parameters
             'left_wave_ppxf_pop': params.wave1_pop,
@@ -467,6 +487,7 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_pop_mask_ranges_str': params.ppxf_pop_mask_ranges_str,
             'ppxf_pop_error_nsim': params.ppxf_pop_error_nsim,
             'ppxf_pop_lg_age': params.ppxf_pop_lg_age,
+            'ppxf_pop_lg_met': params.ppxf_pop_lg_met,
             'stellar_parameters_lick_ppxf': params.stellar_parameters_lick_ppxf,
             'ssp_model_ppxf': params.ssp_model_ppxf,
             'interp_model_ppxf': params.interp_model_ppxf,
@@ -495,6 +516,8 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ifs_user_routine_file': params.ifs_user_routine_file,
             'ifs_manual_bin': params.ifs_manual_bin,
             'ifs_voronoi': params.ifs_voronoi,
+            'ifs_existing_bin': params.ifs_existing_bin,
+            'ifs_existing_bin_folder': params.ifs_existing_bin_folder,
         }
     }
     with open(filename, 'w') as file:
@@ -565,6 +588,8 @@ def load_settings(filename, params):
                 is_initial_res_fwhm=params_data.get('is_initial_res_fwhm', params.is_initial_res_fwhm),
                 initial_res_fwhm=params_data.get('degrade_from_l', params.initial_res_fwhm),
                 final_res_fwhm=params_data.get('degrade_to_l', params.final_res_fwhm),
+                res_degrade_muse= params_data.get('res_degrade_muse', params.res_degrade_muse),
+                res_degrade_muse_value= params_data.get('res_degrade_muse_value', params.res_degrade_muse_value),
 
                 normalize_wave=params_data.get('norm_spec', params.normalize_wave),
                 norm_wave=params_data.get('norm_wave', params.norm_wave),
@@ -614,6 +639,9 @@ def load_settings(filename, params):
                 current_order=params_data.get('current_order', params.current_order),
                 active_operations=params_data.get('active_operations', params.active_operations),
                 reordered_operations=params_data.get('reordered_operations', params.reordered_operations),
+                save_intermediate_spectra=params_data.get('save_intermediate_spectra', params.save_intermediate_spectra),
+                save_final_spectra=params_data.get('save_final_spectra', params.save_final_spectra),
+                not_save_spectra=params_data.get('not_save_spectra', params.not_save_spectra),
 
                 sigma_coeff=params_data.get('sigma_coeff', params.sigma_coeff),
                 sigma_corr=params_data.get('sigma_corr', params.sigma_corr),
@@ -638,6 +666,9 @@ def load_settings(filename, params):
                 high_vel_corr=params_data.get('xcorr_high_vel', params.high_vel_corr),
                 low_z_corr=params_data.get('low_z_corr', params.low_z_corr),
                 high_z_corr=params_data.get('high_z_corr', params.high_z_corr),
+                xcorr_limit_wave_range=params_data.get('xcorr_limit_wave_range', params.xcorr_limit_wave_range),
+                xcorr_vel_step=params_data.get('xcorr_vel_step', params.xcorr_vel_step),
+                xcorr_z_step=params_data.get('xcorr_z_step', params.xcorr_z_step),
 
                 # Velocity dispersion parameters
                 template_sigma=params_data.get('template_sigma', params.template_sigma),
@@ -721,11 +752,13 @@ def load_settings(filename, params):
                 stellar_library_kin=params_data.get('stellar_library_kin', params.stellar_library_kin),
                 constant_resolution_lambda=params_data.get('constant_resolution_lambda', params.constant_resolution_lambda),
                 resolution_kin=params_data.get('ppxf_resolution', params.resolution_kin),
+                resolution_kin_muse = params_data.get('resolution_kin_muse', params.resolution_kin_muse),
                 constant_resolution_r=params_data.get('constant_resolution_r', params.constant_resolution_r),
                 resolution_kin_r=params_data.get('ppxf_resolution_r', params.resolution_kin_r),
                 sigma_guess_kin=params_data.get('sigma_guess_kin', params.sigma_guess_kin),
                 redshift_guess_kin=params_data.get('redshift_guess_kin', params.redshift_guess_kin),
                 additive_degree_kin=params_data.get('additive_degree_kin', params.additive_degree_kin),
+                multiplicative_degree_kin=params_data.get('multiplicative_degree_kin', params.multiplicative_degree_kin),
                 gas_kin=params_data.get('gas_kin', params.gas_kin),
                 no_gas_kin=params_data.get('no_gas_kin', params.no_gas_kin),
                 kin_best_noise=params_data.get('kin_best_noise', params.kin_best_noise),
@@ -736,6 +769,11 @@ def load_settings(filename, params):
                 ppxf_kin_custom_lib=params_data.get('ppxf_kin_custom_lib', params.ppxf_kin_custom_lib),
                 ppxf_kin_lib_folder=params_data.get('ppxf_kin_lib_folder', params.ppxf_kin_lib_folder),
                 ppxf_kin_custom_temp_suffix=params_data.get('ppxf_kin_custom_temp_suffix', params.ppxf_kin_custom_temp_suffix),
+                ppxf_kin_generic_lib=params_data.get('ppxf_kin_generic_lib', params.ppxf_kin_generic_lib),
+                ppxf_kin_generic_lib_folder=params_data.get('ppxf_kin_generic_lib_folder', params.ppxf_kin_generic_lib_folder),
+                ppxf_kin_FWHM_tem_generic=params_data.get('ppxf_kin_FWHM_tem_generic', params.ppxf_kin_FWHM_tem_generic),
+                ppxf_kin_fixed_kin=params_data.get('ppxf_kin_fixed_kin', params.ppxf_kin_fixed_kin),
+
                 ppxf_kin_tie_balmer=params_data.get('ppxf_kin_tie_balmer', params.ppxf_kin_tie_balmer),
                 ppxf_kin_dust_stars=params_data.get('ppxf_kin_dust_stars', params.ppxf_kin_dust_stars),
                 ppxf_kin_dust_gas=params_data.get('ppxf_kin_dust_gas', params.ppxf_kin_dust_gas),
@@ -749,7 +787,10 @@ def load_settings(filename, params):
                 ppxf_kin_vel_model2=params_data.get('ppxf_kin_vel_model2', params.ppxf_kin_vel_model2),
                 ppxf_kin_sigma_model2=params_data.get('ppxf_kin_sigma_model2', params.ppxf_kin_sigma_model2),
                 ppxf_kin_mask_emission=params_data.get('ppxf_kin_mask_emission', params.ppxf_kin_mask_emission),
+                ppxf_kin_have_user_mask=params_data.get('ppxf_kin_have_user_mask', params.ppxf_kin_have_user_mask),
+                ppxf_kin_mask_ranges_str=params_data.get('ppxf_kin_mask_ranges_str', params.ppxf_kin_mask_ranges_str),
                 ppxf_kin_mc_sim=params_data.get('ppxf_kin_mc_sim', params.ppxf_kin_mc_sim),
+                ppxf_kin_save_spectra=params_data.get('ppxf_kin_save_spectra', params.ppxf_kin_save_spectra),
 
                 # Stellar populations and SFH parameters
                 wave1_pop=params_data.get('left_wave_ppxf_pop', params.wave1_pop),
@@ -787,6 +828,7 @@ def load_settings(filename, params):
                 ppxf_pop_mask_ranges_str=params_data.get('ppxf_pop_mask_ranges_str', params.ppxf_pop_mask_ranges_str),
                 ppxf_pop_error_nsim=params_data.get('ppxf_pop_error_nsim', params.ppxf_pop_error_nsim),
                 ppxf_pop_lg_age=params_data.get('ppxf_pop_lg_age', params.ppxf_pop_lg_age),
+                ppxf_pop_lg_met=params_data.get('ppxf_pop_lg_met', params.ppxf_pop_lg_met),
                 stellar_parameters_lick_ppxf=params_data.get('stellar_parameters_lick_ppxf', params.stellar_parameters_lick_ppxf),
                 ssp_model_ppxf=params_data.get('params.ssp_model_ppxf', params.ssp_model_ppxf),
                 interp_model_ppxf=params_data.get('interp_model_ppxf', params.interp_model_ppxf),
@@ -815,6 +857,8 @@ def load_settings(filename, params):
                 ifs_user_routine_file=params_data.get('ifs_user_routine_file', params.ifs_user_routine_file),
                 ifs_manual_bin=params_data.get('ifs_manual_bin', params.ifs_manual_bin),
                 ifs_voronoi=params_data.get('ifs_voronoi', params.ifs_voronoi),
+                ifs_existing_bin = params_data.get('ifs_existing_bin', params.ifs_existing_bin),
+                ifs_existing_bin_folder = params_data.get('ifs_existing_bin_folder', params.ifs_existing_bin_folder),
 
 
         )
