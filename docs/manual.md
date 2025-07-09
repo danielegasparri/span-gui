@@ -85,20 +85,20 @@ In this window you will find two panels separated by a horizontal line.
 ### The upper panel ###
 This top panel is divided in three frames.
 Any operation begins within the upper-left frame, called "Prepare and load spectra". There are four basic steps to load the spectra to SPAN and start the analysis.
-- 1. Extract spectra from 2D or 3D fits:
+1. **Extract spectra from 2D or 3D fits:**
     This step is mandatory if you do not still have the 1D spectra needed by SPAN. It allows you to extract 1D spectra either from 2D fully reduced fits images or 3D fully reduced fits images, i.e. datacube.
     - If you have 2D fits of long-slit spectra with the dispersion axis along the X axis of the image, press the "Long-slit extraction" button. There you can fit the trace, correct for distortion and/or slope and extract a 1D spectrum or a series of 1D spectra binned in order to reach a Signal to Noise (S/N) threshold;
     - If you have MUSE or CALIFA data cubes, press the "DataCube extraction" button. To achieve the extraction, SPAN uses routines inspired to the famous GIST Pipeline (Bittner et al. 2019).
-Both these extraction routines will save the 1D spectra in the "SPAN_results" folder and a spectra file list in the directory where you are running SPAN, ready to be loaded.
+    Both these extraction routines will save the 1D spectra in the "SPAN_results" folder and a spectra file list in the directory where you are running SPAN, ready to be loaded.
 
-- 2. Generate a spectra list with 1D spectra. If you already have 1D spectra stored in a folder (and the relative subfolders, if any), you should click now on the button "Generate a spectra list containing 1D spectra". You should then browse the folder where you stored your spectra. SPAN will read all the spectra contained in the selected folder and in any eventual subfolder and will create an ASCII file with their names and paths. The spectra list generated will be automatically loaded in the "Browse the spectra list or one spectrum". In case you want to load just a single 1D spectrum, you can skip this step.
+2. **Generate a spectra list with 1D spectra.** If you already have 1D spectra stored in a folder (and the relative subfolders, if any), you should click now on the button "Generate a spectra list containing 1D spectra". You should then browse the folder where you stored your spectra. SPAN will read all the spectra contained in the selected folder and in any eventual subfolder and will create an ASCII file with their names and paths. The spectra list generated will be automatically loaded in the "Browse the spectra list or one spectrum". In case you want to load just a single 1D spectrum, you can skip this step.
 
-- 3. Browse the spectra list or one spectrum.
+3. Browse the spectra list or one spectrum.
 If you generated a spectra list in the previous step, this has been automatically loaded here. In this case you should only select the wavelength units of the spectra contained in the spectra list. It is therefore important that all your spectra share the same wavelength units. It doesn't matter whether they are linearly or logarithmically rebinned, SPAN will read them correctly as far as you select the correct wavelength units.
 In case your spectra list is already in your device (and skipped the step 2.) you should browse it, then select the right wavelength units of the spectra.
 In case you just want to load a single 1D spectrum, just browse the spectrum and activate the option "I browsed a single spectrum".
 
-- 4. Finally load the spectra to SPAN.
+4. Finally load the spectra to SPAN.
 This step is self explicative. Once you browsed the spectra list or the single spectrum and set the right wavelength units in step 3., here you need to press the "Load!" button to effectively load your spectra (or a spectrum) in the listbox on the right. Once done, select one spectrum in the listbox and check if everything is ok by pressing the "Plot" button. Since the official wavelength units of SPAN are Angtrom, you should check if the wavelength scale reproduced in the plot is actually correct. If not, you probably made a mistake in step 3., by setting the wrong wavelength units of your spectra. Try again with a different unit and press the "Plot" button again. Now the spectrum should be in the correct wavelength range.
 
 
@@ -262,7 +262,7 @@ WARNING: All the wavelengths of SPAN are given in A, in air, and all the velocit
 
 Here is a description of the functions:
 
-1) **Utilities frame:**  
+1. **Utilities frame:**  
     - Show the header of the selected spectrum = shows the header of the selected spectrum, both fits and ASCII;
     - Show the wavelength step of the spectrum = shows the step of the selected spectrum;
     - Estimate the resolution = shows the resolution of the selected spectrum by trying to fit an emission sky line. In The W1 and W2 you should put a small wavelength interval containing a sky line: it's up to you!
@@ -271,7 +271,7 @@ Here is a description of the functions:
     - Convert Flux = converts the flux from frequency to lambda and vice-versa. The buttons "see plot", "save one" and "save all" are active to see and save the results for one or all the spectra;
     - S/N = measures the Signal to Noise in the selected spectrum, in the W. central wavelength selected by the user. The buttons "save one" and "save all" are active to save one or all the SNR calculated for the spectra.
 
-2) **Spectra manipulation panel:**  
+2. **Spectra manipulation panel:**  
     - Spectra pre-processing frame
         - Cropping = performs a simple cropping of the spectra. If the wavelength window to crop is outside the spectrum, SPAN will ignore the task and will not perform the crop;
         - Dynamic cleaning = performs a sigma clipping on the spectra. The sigma clip factor, the resolving power of the spectrum and the velocity dispersion (instrumental and/or intrinsic) of the selected spectrum is required in order to perform a better cleaning. For the "Process all" mode, the option "R and sigma vel file" is available in order to have R (resolution) and sigma values for all the spectra to be processed. Be VERY careful to use this task with strong emission line spectra;
@@ -298,7 +298,7 @@ Here is a description of the functions:
         - Norm. and sum all = Normalizes and sum all the spectra (only available in "Process selected"). The option "Use for spec. an." forces the program to use the result of one of these 4 operations for the following spectral analysis;
 
 
-3) **Spectral analysis:**  
+3. **Spectral analysis:**  
     - Blackbody fitting = performs a fit of the spectrum with Planck's blackbody equation and gives the temperature estimation. It works with any type of spectra but it performs better for stellar spectra, with wide (at least 5000 A) wavelength range;
     b)  Cross-correlation = performs a cross-correlation of the spectra with a user selected template. This uses the function crosscorrRV of pyastronomy. The user can smooth the template to a velocity dispersion value in order to improve the cross-correlation and should identify a narrow region of the spectrum to be cross-correlated (tip: the Calcium triplet lines are the best features);
     - Velocity dispersion = performs the measurement of the velocity dispersion of the spectra by fitting with a user provided template. Some pre-loaded bands in the visible and NIR are shown but the user can select an independent band. The routine succeeds with strong features (the CaT is the best). It is a little rough but very fast and gives reasonably accurate results;
@@ -313,31 +313,30 @@ Here is a description of the functions:
 
 The two light-blue buttons in the upper left corner of SPAN (in the "Prepare and load spectra" frame) are sub-programs that might help you to generate the 1D spectra needed. Here is how they works:
 
-1) **Long-slit extraction:** Allows the extraction of a single 1D spectrum or a series of 1D spectra from a reduced and wavelength calibrated 2D fits image containing the long-slit spectrum of a source, with dispersion axis along the X-axis and the spatial axis along the Y-axis.
+1. **Long-slit extraction:** Allows the extraction of a single 1D spectrum or a series of 1D spectra from a reduced and wavelength calibrated 2D fits image containing the long-slit spectrum of a source, with dispersion axis along the X-axis and the spatial axis along the Y-axis.
 Before proceed to the extraction, you need to load a valid 2D fits image, then you need to:
     - Open the spectrum and see if everything is ok;
     - Fit the photometric trace in order to find the maximum along the dispersion axis. You need to set the degree of polynomial curve that will be used to fit the trace and correct the distortion and slope of the spectrum;
-    - Correct the spectrum for distortion and slope using the model trace obtained in the previous step.
-Then, you can:
+    - Correct the spectrum for distortion and slope using the model trace obtained in the previous step. Then, you can:
     - Extract and save only one 1D spectrum within the selected Y range (useful for point sources);
     - Extract and save a series of n 1D spectra covering all the spatial axis and obtained by binning contiguous rows in order to reach the desired S/N. A spectra list file ready to be loaded to SPAN is also generated, as well as a text file containing the position of the bins relative to the central region of the galaxy and the S/N. 
     The S/N threshold that you must insert is just a very rough estimation of the real S/N. A good starting value to produce 1D spectra with bins with realistic S/N > 30 is 20. Adjust the SNR Threshold to your preference by looking at the real S/N of the bins.
     The pixel scale parameter is optional. If you set to zero it will not be considered. This option is useful if you have the spectrum of an extended source (e.g. a galaxy) and want to sample different regions.
 
-2) **DataCube extraction:** Following the GIST pipeline standard (Bittner at al., 2019, 2021), this sub-program allows you to extract 1D spectra from MUSE and CALIFA DataCubes using the Voronoi binning (Cappellari et al., 2003) or manual binning. It also allows to visualise the DataCube loaded and dynamically create a mask (if needed).
+2. **DataCube extraction:** Following the GIST pipeline standard (Bittner at al., 2019, 2021), this sub-program allows you to extract 1D spectra from MUSE and CALIFA DataCubes using the Voronoi binning (Cappellari et al., 2003) or manual binning. It also allows to visualise the DataCube loaded and dynamically create a mask (if needed).
 
 
 In the menu bar you can find more sub-programs that might help you in the difficult task of analysing and processing astronomical spectra. They work independently from the main program, so you can also not load spectra if you don't need to perform tasks on them. Here is how they works:
 
-1) **Text editor:** A simple ASCII file editor where you can create, read or modify ASCII files, included those generated by the SPAN tasks. Some basics operations are available, such find, replace and merge rows;
+1. **Text editor:** A simple ASCII file editor where you can create, read or modify ASCII files, included those generated by the SPAN tasks. Some basics operations are available, such find, replace and merge rows;
 
-2) **FITS header editor:** An header editor to add, remove and save the keywords of fits header files. You can select between: "Single fits header editor" to work with the keywords of one fits file, "List of fits header editor" to modify the keywords of a list of fits files, "Extract keyword from list" to extract and save in an ASCII file one or more keywords from the headers of a list of fits files;
+2. **FITS header editor:** An header editor to add, remove and save the keywords of fits header files. You can select between: "Single fits header editor" to work with the keywords of one fits file, "List of fits header editor" to modify the keywords of a list of fits files, "Extract keyword from list" to extract and save in an ASCII file one or more keywords from the headers of a list of fits files;
 
-3) **Plot data:** A sub-program to plot the data generated by the "Spectral analysis" frame and, in general, all the data stored in ASCII space-separated data. Once you browse for the text file and click the "Load" button, the program will automatically recognise the column names. Select a name for the x and y axis and plot the data to see them in an IDL style plot.
+3. **Plot data:** A sub-program to plot the data generated by the "Spectral analysis" frame and, in general, all the data stored in ASCII space-separated data. Once you browse for the text file and click the "Load" button, the program will automatically recognise the column names. Select a name for the x and y axis and plot the data to see them in an IDL style plot.
 You can personalise the plot by adding the error bars, set the log scale, add a linear fit (simple fit without considering the uncertainties), set the labels, the range, the font size, size and colours of the markers and decide if visualise the legend or not. You may also save the plot in high resolution PNG image format, in the directory where you run SPAN.
 If any error occur, the program will warn you.
 
-4) **Plot maps:** A sub-program to plot 2D maps from extracted quantities from datacubes. If you extracted datacube spectra and performed some spectral analysis with SPAN, you can load the RUNNAME_table.fits file stored in the extracted spectra folder within the "SPAN_results" folder, and any of the ASCII files generated by any spectral analysis task in the "Processl all" mode. SPAN will show you the quantities available from this file yo generate beautiful and customizable 2D maps.
+4. **Plot maps:** A sub-program to plot 2D maps from extracted quantities from datacubes. If you extracted datacube spectra and performed some spectral analysis with SPAN, you can load the RUNNAME_table.fits file stored in the extracted spectra folder within the "SPAN_results" folder, and any of the ASCII files generated by any spectral analysis task in the "Processl all" mode. SPAN will show you the quantities available from this file yo generate beautiful and customizable 2D maps.
 
 
 
