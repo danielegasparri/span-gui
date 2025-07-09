@@ -19,8 +19,8 @@ Currently, SPAN considers only the wavelength and the flux, discarding the (pote
 
 
 ## What do you need to run SPAN ##
-- In order to run the source code, you need Python >=3.10 and the following modules installed (pip3 install <library>):
 
+- In order to run the source code, you need Python >=3.10 and the following modules installed (pip3 install <library>):
     1) Numpy
     2) Astropy
     3) Pandas
