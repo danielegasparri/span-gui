@@ -45,6 +45,7 @@ Two additional options allow for dust correction:
 ### Third Section: Noise Estimation, Regularization and polynomials
 Noise and Regularization: These are critical for obtaining reliable results. Refer to the pPXF documentation for an in-depth guide.
 Recommended Workflow:
+
 - Perform an unregularized fit (Regul. error = 0).
 - Adjust the noise level to achieve chi^2 = 1.
 - Set the regularization so that the current delta Chi^2 falls between 20-50% of the desired delta Chi^2.
@@ -59,6 +60,7 @@ Example: For 4800-5500 A, set Mult. degree = 7.
 
 ### Fourth Section: Template Library Selection
 Choose the SSP model library for fitting:
+
 - E-MILES, Galaxev, FSPS (pPXF defaults).
 - X-shooter Spectral Library (R = 10,000) (high-resolution spectra).
 - sMILES Library (Knowles et al., 2023) (4 alpha/Fe values, Salpeter IMF).
@@ -68,6 +70,7 @@ If your spectra have higher resolution than the templates, apply the "Degrade Re
 **Template Handling:**  
 The sMILES templates are stored in spectralTemplates/sMILES_afeh. This folder can hosts any kind of sMILES templates, not just those provided with SPAN.
 If replacing templates, ensure:
+
 - A regular grid of ages and metallicities.
 - No mixing of different IMF templates.
 
@@ -102,6 +105,7 @@ Best regularization differs for mass-weighted vs. luminosity-weighted results. I
 
 ## Outputs ##
 Every fit generates three plots:
+
 - Fitted Spectrum
 - Age and Metallicity Distribution (luminosity-weighted and mass-weighted).
 - Non-parametric SFH (luminosity-weighted and mass-weighted).
@@ -109,9 +113,11 @@ Every fit generates three plots:
 Carefully analyse these plots to determine whether the fit is physically meaningful. No computer can yet decide if a fit, even if statistically excellent, makes sense in the real universe.
 
 In **"Process selected"** mode the task produces for the processed spectrum:
+
 - An ASCII file (.dat) containing the luminosity and mass fraction and cumulative as a function of the age (mass growth). If the "Estimate the uncertainties for age and met (long process)" is activated, also the relative uncertainties are added to the file. This file is stored in the "stellar_population_and_sfh/SFH/" subfolder.
 - Two ASCII files containing the luminosity and mass weights respectively. These files are stored in the "stellar_population_and_sfh/weights/" subfolder
 - FITS files containing: 1) residual of the fit, 2) bestfit template, 3) emission corrected spectrum (if gas is considered), stored in the "processed_spectra" subfolder.
 
 In **"Process all"** mode, the task stores all the files of the "Process selected" mode for each spectrum. In addition:
+
 - An ASCII file with kinematics, mean luminosity and mass age, metallicity and alpha/Fe (if available) and the relative uncertainties if "Estimate the uncertainties for age and met (long process)" if activated, stored in the "stellar_population_and_sfh" subfolder.

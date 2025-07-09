@@ -27,6 +27,7 @@ The parameters are grouped into seven sections, separated by horizontal dividers
 ### Second Section: Spectral Resolution 
 This section requires the spectral resolution of the spectra. It is essential to avoid mixing spectra with different resolutions within the same dataset.
 Additionally, specify whether the resolution is expressed in terms of:
+
 - FWHM (Full Width at Half Maximum)
 - Resolving Power (R = Lambda/DeltaLambda)
 - MUSE LSF
@@ -39,8 +40,8 @@ If fitting a narrow spectral region (<= 1000 A), the choice between constant FWH
 	2. Galaxev (subsample) 
 	3. FSPS (subsample)
 	4. X-shooter Spectral Library (XSL) (complete sample with Salpeter IMF, better suited for higher resolution spectra, R = 10,000)  
-  If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectral Processing module.
-  You can use any kind of EMILES templates or even generic templates. These should have the wavelength scale in linear units and Angstrom. 
+If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectral Processing module.
+You can use any kind of EMILES templates or even generic templates. These should have the wavelength scale in linear units and Angstrom. 
 
 
 ### Fourth Section: Which component to fit
@@ -58,8 +59,7 @@ There are two masking options available: the manual ones, by inserting the wavel
   Minimum: 2 (radial velocity + velocity dispersion).
   Maximum: 6.
   Typical values: 2 for regular galaxies and/or for the two stellar component fit, 4 for interacting or asymmetric galaxies.
-- Polynomial Degree: Specifies the degree of additive and multiplicative polynomials used by pPXF to adjust the continuum level of spectral templates. Additive polynomials give reliable kinematics results. A degree of 4 is a good starting point. 
-WARNING: Additive polynomials are fine for pure kinematics analysis but not for measuring the gas line fluxes. If you are interested also to a correct measurement of gas line fluxes, you should deactivate the additive degree polynomials (set the degree to -1) and use ONLY the multiplicative degree polynomials. 
+- Polynomial Degree: Specifies the degree of additive and multiplicative polynomials used by pPXF to adjust the continuum level of spectral templates. Additive polynomials give reliable kinematics results. A degree of 4 is a good starting point. **WARNING:** Additive polynomials are fine for pure kinematics analysis but not for measuring the gas line fluxes. If you are interested also to a correct measurement of gas line fluxes, you should deactivate the additive degree polynomials (set the degree to -1) and use ONLY the multiplicative degree polynomials. 
 - Noise Level: Represents the expected mean noise level in the spectrum (assumed constant across the wavelength range), used to compute the Chi^2 of the fit and derive formal uncertainties.
 As per the pPXF documentation (pPXF Documentation), formal uncertainties are meaningful only if Chi2 = 1.
 If unsure about the noise level, enable "Auto Noise". This feature will:
@@ -76,6 +76,7 @@ Particularly useful for galaxies with very low velocity dispersion compared to t
 
 ## Outputs ##
 In **"Process selected"** mode, if the option "Save processed spectra" is activated, the task produces:
+
 - bestfit model spectrum
 - bestfit gas model spectrum (if kinematics of stars and gas is activated)
 - emission corrected spectrum (if kinematics of stars and gas is activated)
