@@ -120,12 +120,15 @@ If you want to work with just one spectrum, you DO NOT need a spectra list. SImp
 4. **How do I handle a lot of spectra stored in different folders and within a lot of non spectra files?**
 There is a simple answer for that. The "Generate spectra list containing 1D spectra" will scan the selected folder and all the relative sub-folders looking for fits, .txt and .dat files. You just need to put all your spectra in this root folder, which can contain as many subfolders as you want. Then, once you load this spectra list, SPAN will recognize automatically which file is a spectrum and which not and will delete from the listbox all non valid spectra. Anyway, I advice you to create working folder or subfolders as clean as possible from non spectra files.
 &nbsp;
+
 5. **How do I reset the parameters and the tasks if I played for so long that the entropy of SPAN now tends to infinite?**
 Don't panic! Click "Edit → Clear All Tasks" to deactivate all the tasks, or a more aggressive "File → Restore Default Parameters" to restore the default parameters.
 &nbsp;
+
 6. **Can I save and reload my custom parameters?**
 Yes! Use "File → Save Parameters..." and "File → Load Parameters...".
 &nbsp;
+
 7. **Where do my processed spectra and analysis results are saved?**
 Outputs are stored in the:
 
