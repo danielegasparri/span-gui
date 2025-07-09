@@ -219,45 +219,6 @@ def main():
             window['Spectra manipulation'].update(button_color= ('black','light blue'))
 
 
-    #****************** SUB WINDOWS DEFINITION AND PARAMETERS OF THE SPECTRAL ANALYSIS FRAME *****************************
-        #1) BLACKBODY PARAMETERS
-        bb_fit = values['bb_fitting']
-        if (event == 'Blackbody parameters'):
-            params = param_windows.blackbody_parameters(params)
-
-        #2) CROSS-CORRELATION PARAMETERS
-        cross_corr = values['xcorr']
-        if (event == 'Cross-corr parameters'):
-            params = param_windows.crosscorr_parameters(params)
-
-        # 3) VELOCITY DISPERSION PARAMETERS
-        sigma_measurement = values['sigma_measurement']
-        if (event == 'Sigma parameters'):
-            params = param_windows.sigma_parameters(params)
-
-        #4) EQUIVALENT WIDTH PARAMETERS
-        ew_measurement = values['ew_measurement']
-        if (event == 'Line-strength parameters'):
-            params = param_windows.line_strength_parameters(params)
-
-        #5) LINE(S) FITTING PARAMETERS
-        line_fitting = values['line_fitting']
-        if event == 'Line fitting parameters':
-            params = param_windows.line_fitting_parameters(params)
-
-        #6) KINEMATICS WITH PPXF
-        perform_kinematics = values['ppxf_kin']
-        if (event == 'Kinematics parameters'):
-            params = param_windows.kinematics_parameters(params)
-
-        #7) STELLAR POPULATIONS WITH PPXF
-        stellar_pop = values['ppxf_pop']
-        if (event == 'Population parameters'):
-            params = param_windows.population_parameters(params)
-
-        save_plot = values['save_plots']
-
-
     #********************************** STAND ALONE SUB-PROGRAMS *************************
         # LONG-SLIT SPECTRA EXTRACTION
         if event == 'Long-slit extraction':
@@ -328,6 +289,45 @@ def main():
             sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
             continue
 
+
+    #****************** SUB WINDOWS DEFINITION AND PARAMETERS OF THE SPECTRAL ANALYSIS FRAME *****************************
+        #1) BLACKBODY PARAMETERS
+        bb_fit = values['bb_fitting']
+        if (event == 'Blackbody parameters'):
+            params = param_windows.blackbody_parameters(params)
+
+        #2) CROSS-CORRELATION PARAMETERS
+        cross_corr = values['xcorr']
+        if (event == 'Cross-corr parameters'):
+            params = param_windows.crosscorr_parameters(params)
+
+        # 3) VELOCITY DISPERSION PARAMETERS
+        sigma_measurement = values['sigma_measurement']
+        if (event == 'Sigma parameters'):
+            params = param_windows.sigma_parameters(params)
+
+        #4) EQUIVALENT WIDTH PARAMETERS
+        ew_measurement = values['ew_measurement']
+        if (event == 'Line-strength parameters'):
+            params = param_windows.line_strength_parameters(params)
+
+        #5) LINE(S) FITTING PARAMETERS
+        line_fitting = values['line_fitting']
+        if event == 'Line fitting parameters':
+            params = param_windows.line_fitting_parameters(params)
+
+        #6) KINEMATICS WITH PPXF
+        perform_kinematics = values['ppxf_kin']
+        if (event == 'Kinematics parameters'):
+            params = param_windows.kinematics_parameters(params)
+
+        #7) STELLAR POPULATIONS WITH PPXF
+        stellar_pop = values['ppxf_pop']
+        if (event == 'Population parameters'):
+            params = param_windows.population_parameters(params)
+
+        save_plot = values['save_plots']
+
      #********************************** PLOT EVENT *************************
         if event == 'Plot':
             wavelength, flux, step, name = stm.read_spec(params.prev_spec, params.lambda_units)
@@ -338,7 +338,7 @@ def main():
             plt.show()
             plt.close()
 
-     #********************************** LOADING AND CHECKING THE SPECTRAHELO FILES *************************
+     #********************************** LOADING AND CHECKING THE SPECTRAHELP FILES *************************
         if event == 'Read me':
             f = open(os.path.join(BASE_DIR, "help_files", "readme_span.txt"), 'r')
             file_contents = f.read()
