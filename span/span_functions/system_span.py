@@ -43,7 +43,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-
+import ast
+from matplotlib.backend_bases import MouseButton
 
 from astropy.io import fits
 from astropy.time import Time
@@ -1294,6 +1295,141 @@ def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"
     fig.canvas.mpl_connect('button_press_event', onclick)
     plt.show()
 
+#***********************************************
 
+# Functions for the graphical masking of the 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks
+
+def graphical_masking_1D(wavelength, flux, existing_mask_str, touch_mode=False):
+    """
+    GUI masking tool for 1D spectrum with desktop and touch-friendly mode.
+    - On desktop: Ctrl + left/right drag to mask/unmask
+    - On touch: double-tap switches between mask/unmask; drag always applies current mode
+    """
+
+    # Try to load existing mask regions
+    try:
+        mask_regions = ast.literal_eval(existing_mask_str)
+        if not isinstance(mask_regions, list):
+            mask_regions = []
+    except Exception:
+        mask_regions = []
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(wavelength, flux, lw=0.7, color='black')
+    # ax.set_title("Draw regions to mask. Close window to apply.")
+    if touch_mode:
+        ax.set_title("Tap and drag to mask | double tap, then tap + drag to unmask | Close window to apply")
+    else:
+        ax.set_title("Ctrl + left drag to mask | Ctrl + right drag to unmask | Close window to apply")
+    ax.set_xlabel("Wavelength (Å)")
+    ax.set_ylabel("Flux")
+
+    # Set X/Y limits with margin
+    x_margin = 0.01 * (np.max(wavelength) - np.min(wavelength))
+    y_margin = 0.05 * (np.max(flux) - np.min(flux))
+    ax.set_xlim(np.min(wavelength) - x_margin, np.max(wavelength) + x_margin)
+    ax.set_ylim(np.min(flux) - y_margin, np.max(flux) + y_margin)
+
+    # Visual height for the masking band
+    band_height = np.max(flux) - np.min(flux) + 2 * y_margin
+    band_bottom = np.min(flux) - y_margin
+
+    # Draw existing mask regions
+    patches = []
+    for (x0, x1) in mask_regions:
+        rect = plt.Rectangle((x0, band_bottom), x1 - x0, band_height,
+                             linewidth=0, facecolor='red', alpha=0.3)
+        ax.add_patch(rect)
+        patches.append(rect)
+
+    # Variables to store dragging
+    start_point = None
+    dragging = False
+    deselecting = False
+
+    # Touch-mode masking toggle
+    masking_mode = [True]  # True = mask, False = unmask
+    mode_text = None
+    if touch_mode:
+        mode_text = ax.text(0.99, 1.02, 'Mode: MASK', transform=ax.transAxes,
+                            ha='right', va='bottom', fontsize=10, color='green')
+
+    def toggle_mode(event):
+        if not touch_mode:
+            return
+        # Toggle only if in axes
+        if event.inaxes != ax:
+            return
+        masking_mode[0] = not masking_mode[0]
+        if mode_text:
+            mode_text.set_text('Mode: MASK' if masking_mode[0] else 'Mode: UNMASK')
+            mode_text.set_color('green' if masking_mode[0] else 'red')
+            fig.canvas.draw_idle()
+
+    def on_press(event):
+        nonlocal start_point, dragging, deselecting
+
+        if event.inaxes != ax or event.xdata is None:
+            return
+
+        if touch_mode:
+            start_point = event.xdata
+            dragging = True
+            deselecting = not masking_mode[0]
+        else:
+            if event.key is None or (('control' not in event.key.lower()) and ('ctrl' not in event.key.lower())):
+                return
+            if event.button == MouseButton.LEFT:
+                start_point = event.xdata
+                dragging = True
+                deselecting = False
+            elif event.button == MouseButton.RIGHT:
+                start_point = event.xdata
+                dragging = True
+                deselecting = True
+
+    def on_release(event):
+        nonlocal start_point, dragging, deselecting
+
+        if start_point is None or event.xdata is None:
+            return
+
+        end_point = event.xdata
+        x0, x1 = sorted([start_point, end_point])
+        dragging = False
+
+        if not deselecting:
+            # Add masked region
+            mask_regions.append((x0, x1))
+            rect = plt.Rectangle((x0, band_bottom), x1 - x0, band_height,
+                                 linewidth=0, facecolor='red', alpha=0.3)
+            ax.add_patch(rect)
+            patches.append(rect)
+        else:
+            # Remove any region overlapping with this range
+            new_regions = []
+            for (a, b), patch in zip(mask_regions, patches):
+                if b < x0 or a > x1:
+                    new_regions.append((a, b))
+                else:
+                    patch.remove()
+            mask_regions[:] = new_regions
+            patches[:] = [p for p in ax.patches]
+
+        fig.canvas.draw_idle()
+        start_point = None
+
+    # Connect events
+    fig.canvas.mpl_connect("button_press_event", on_press)
+    fig.canvas.mpl_connect("button_release_event", on_release)
+    if touch_mode:
+        fig.canvas.mpl_connect("button_press_event", toggle_mode)
+
+    plt.show()
+    plt.close()
+
+    # Convert result to clean float
+    final_regions = sorted([(float(round(a, 2)), float(round(b, 2))) for a, b in mask_regions])
+    return '[' + ', '.join(f'({a}, {b})' for a, b in final_regions) + ']'
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************

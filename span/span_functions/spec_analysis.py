@@ -1780,30 +1780,16 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
         stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
 
 
-    #loading or not the mask emission
+    #Detecting when the emission mask is needed
     if mask_emission:
-        # Compute a mask for gas emission lines
-        goodpix = util.determine_goodpixels(ln_lam1, lam_range_temp, z)
+        use_emission_mask = True
     else:
-        goodpix = None
+        use_emission_mask = False
 
-    #now it is time to define the user mask, if masking is activated, and transform to Angstrom.
-    if have_user_mask:
-        if mask_emission:
-            print('Goodpix and mask cannot be used together. Continuing with user mask and neglecting goodpix...')
-            goodpix = None
-
-        if z > high_z:
-            corrected_mask_ranges = [(start / (1 + z), end  /(1 + z)) for start, end in mask_ranges]
-            mask_ranges = corrected_mask_ranges
-            user_mask = spman.mask_spectrum(wave, mask_ranges)
-        else:
-            corrected_mask_ranges = [(start , end ) for start, end in mask_ranges]
-            mask_ranges = corrected_mask_ranges
-            user_mask = spman.mask_spectrum(wave, mask_ranges)
-        mask = user_mask
-    else:
-        mask = None
+    #loading or not the mask emission, if activated and only for stars fitting
+    goodpix = build_goodpixels_with_mask(
+        ln_lam1, lam_range_temp, z, mask_ranges=mask_ranges, user_mask = have_user_mask,
+        use_emission_mask=use_emission_mask)
 
     #definying and check on regularization value
     if regul_err > 0:
@@ -1879,7 +1865,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=wave, lam_temp=sps.lam_temp,
                     regul=try_regularization, reg_dim=reg_dim,
-                    component=component, dust = dust, mask = mask, quiet = True)
+                    component=component, dust = dust, quiet = True)
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
                 noise = best_noise
@@ -1933,7 +1919,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                         moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=1/regul_err, reg_dim=reg_dim,
-                        component=component, dust = dust, mask = mask, quiet = True)
+                        component=component, dust = dust, quiet = True)
                     current_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                     print(f"Current Delta Chi^2: {(pp.chi2 - 1)*galaxy.size:#.4g}")
                     print(f"Desired Delta Chi^2: {np.sqrt(2*galaxy.size):#.4g}")
@@ -1974,8 +1960,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                 moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
                 lam=wave, lam_temp=sps.lam_temp,
-                regul=regularization, reg_dim=reg_dim,
-                mask = mask, dust = dust)
+                regul=regularization, reg_dim=reg_dim, dust = dust)
 
 
             #setting up the result parameters
@@ -2246,14 +2231,14 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=try_regularization, reg_dim=reg_dim,
                         component=component, gas_component=gas_component,
-                        gas_names=gas_names, dust=dust, mask = mask, quiet = True)
+                        gas_names=gas_names, dust=dust, quiet = True)
 
                 else:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                         moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=wave, lam_temp=sps.lam_temp,
                         regul=regularization, reg_dim=reg_dim,
-                        component=component, dust = dust, mask = mask, quiet = True)
+                        component=component, dust = dust, quiet = True)
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
                 noise = best_noise
@@ -2308,7 +2293,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                             lam=wave, lam_temp=sps.lam_temp,
                             regul=1/regul_err, reg_dim=reg_dim,
                             component=component, gas_component=gas_component,
-                            gas_names=gas_names, dust=dust, mask=mask, quiet = True)
+                            gas_names=gas_names, dust=dust, quiet = True)
 
                         current_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                         print(f"Current Delta Chi^2: {(pp.chi2 - 1)*galaxy.size:#.4g}")
@@ -2322,7 +2307,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                             moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                             lam=wave, lam_temp=sps.lam_temp,
                             regul=1/regul_err, reg_dim=reg_dim,
-                            component=component, dust=dust, mask = mask, quiet = True)
+                            component=component, dust=dust, quiet = True)
                         current_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                         print(f"Current Delta Chi^2: {(pp.chi2 - 1)*galaxy.size:#.4g}")
                         print(f"Desired Delta Chi^2: {np.sqrt(2*galaxy.size):#.4g}")
@@ -2365,13 +2350,13 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     lam=wave, lam_temp=sps.lam_temp,
                     regul=regularization, reg_dim=reg_dim,
                     component=component, gas_component=gas_component,
-                    gas_names=gas_names, dust=dust, mask = mask)
+                    gas_names=gas_names, dust=dust)
             else:
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=wave, lam_temp=sps.lam_temp,
                     regul=regularization, reg_dim=reg_dim,
-                    component=component, mask = mask, dust = dust)
+                    component=component, dust = dust)
 
                     #setting up the result parameters
             light_weights = pp.weights[~gas_component]
@@ -2702,14 +2687,14 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                     lam=wave, lam_temp=sps.lam_temp, regul =5,
                     reg_dim=reg_dim,
                     component=component, gas_component=gas_component,
-                    gas_names=gas_names, dust=dust, mask = mask, quiet =1)
+                    gas_names=gas_names, dust=dust, quiet =1)
 
             else:
                 pp = ppxf(templates, galaxy1, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=wave, lam_temp=sps.lam_temp, regul =5,
                     reg_dim=reg_dim,
-                    component=component, mask = mask, dust = dust, quiet =1)
+                    component=component, dust = dust, quiet =1)
 
 
             print(f"{j + 1}/{nrand}: Elapsed time in pPXF: {clock() - t:.2f} s")
