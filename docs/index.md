@@ -53,7 +53,7 @@ SPAN has been tested with the following spectra:
 - **SAURON spectra**
 - **X-Shooter library spectra**
 - **JWST spectra**
-- **MUSE, CALIFA, WEAVE LIFU and JWST NIRSpec IFU data cubes**
+- **MUSE, CALIFA, WEAVE LIFU, and JWST NIRSpec IFU data cubes**
 - **(E)MILES, GALAXEV, FSPS SSP templates**
 - **ESO reduced spectra products** for optical and NIR spectra
 

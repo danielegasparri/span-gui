@@ -1,4 +1,4 @@
-SPAN License
+# SPAN License
 
 1. This software is licensed **for non-commercial use only**.
 2. The source code may be **freely redistributed** for non-commercial purposes, but this license notice must always be included.

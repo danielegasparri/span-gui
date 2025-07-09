@@ -11,14 +11,16 @@ This module provides a simple and efficient way to visualize data from ASCII fil
 
 
 **How to Use**  
-1) Select a text file and click "Load".
-2) The program will automatically detect the column names.
-3) Choose which columns to use for the X and Y axes.
-4) Click "Plot" to visualize the data in an IDL-style plot.
+
+1. Select a text file and click "Load".
+2. The program will automatically detect the column names.
+3. Choose which columns to use for the X and Y axes.
+4. Click "Plot" to visualize the data in an IDL-style plot.
 
 
 **Customization Options**  
 You can modify the plot appearance by:
+
 - Adding error bars.
 - Enabling a logarithmic scale.
 - Applying a linear fit (basic fitting without considering uncertainties).

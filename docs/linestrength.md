@@ -40,7 +40,7 @@ The interpolation between the measured and model indices is performed with two d
 
 1. **Linear interpolation**  
    A multi-dimensional linear interpolation using the "griddata" function from the "SciPy" module retrieves age, metallicity, and alpha/Fe (where available) from the observed Lick/IDS indices projected onto the model grids.
-2. **Machine learning**  
+2. **Supervised Machine Learning**  
    The **Gaussian Process Regression (GPR)** has proven to be a powerful tool for deriving stellar parameters from stellar spectra (e.g. Bu et al., 2015,2020). To our knowledge, no attempt has yet been made to apply GPR to unresolved galaxy spectra in the context of Lick/IDS line-strength studies. In SPAN, I trained the GPR algorithm with the line-strength predictions of the SSP models. The trained models, stored in the "system_files" folder, are used to constrain the age, metallicity, alpha/Fe and the relative uncertainties of the stellar populations. The GPR method results to be 10 times faster and yields results in excellent agreement with the linear interpolation method for spectra with S/N > 20. For lower S/N spectra, the GPR still converges whereas the simple linear interpolation fails to find a solution or gives very large uncertainties.  
 
 

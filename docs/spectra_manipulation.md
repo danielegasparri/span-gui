@@ -8,6 +8,7 @@ Daniele Gasparri, July 2025
 
 
 The Spectra Manipulation panel provides several essential operations for processing spectra, organized into three sections:
+
 - Spectra Pre-Processing
 - Spectra Processing
 - Spectra Math
@@ -28,13 +29,11 @@ If no task is selected, the original spectrum is shown.
 
 **Mathematical Operations in "Spectra Math"**  
 The four operations in the "Spectra Math" frame:
+
 - Average All
 - Normalize and Average All
 - Sum All
-- Normalize and Sum All
-operate on all original spectra, regardless of any individual task selected.
-If "Use for Spec. Analysis" is enabled, the program will prioritise the combined result for spectral analysis, overriding any single-spectrum tasks.
-Use this option carefully: A terminal message will confirm when combined spectra are set for analysis.
+- Normalize and Sum All operate on all original spectra, regardless of any individual task selected. If "Use for Spec. Analysis" is enabled, the program will prioritise the combined result for spectral analysis, overriding any single-spectrum tasks. Use this option carefully: A terminal message will confirm when combined spectra are set for analysis.
 
 
 **Impact on Spectral Analysis**  
