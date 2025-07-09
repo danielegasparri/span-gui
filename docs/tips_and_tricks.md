@@ -50,7 +50,6 @@ When using template-based spectral analysis (e.g., SFH or kinematics), ensure th
 You have two options for handling redshifted spectra:
     - Option 1 (Recommended for multiple tasks): De-redshift the spectra using the "Doppler/z Correction" in the "Spectra Manipulation" panel. Then, set redshift = 0 in the analysis tasks.
     - Option 2: Enter the real redshift value directly in each spectral analysis task.
-
 Important:
 When de-redshifting spectra, the corrected spectral resolution is FWHM_gal/(1 + z). If spectra are not de-redshifted, SPAN will automatically adjust the resolution in kinematics and stellar population analyses.
 
@@ -58,7 +57,6 @@ When de-redshifting spectra, the corrected spectral resolution is FWHM_gal/(1 + 
 9. **Key Considerations for pPXF and Lick/IDS Analysis**  
 When performing kinematics or line-strength index analysis with pPXF, the resolution of the templates must be higher (i.e., lower FWHM) than the resolution of the spectra.
 If this is not the case, degrade the resolution using "Degrade Resolution" in the "Spectra Manipulation" panel.
-
 The Lick/IDS index analysis uses a pre-loaded subset of E-MILES templates (Padova isochrones, FWHM = 2.51 A).
 If your spectra have higher resolution (FWHM_spec < 2.51 A), degrade the spectra to at least 2.51 A before fitting.
 
