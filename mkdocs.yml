@@ -1,0 +1,19 @@
+site_name: SPAN
+repo_url: https://github.com/danielegasparri/span-gui
+docs_dir: docs
+theme:
+  name: readthedocs
+nav:
+  - Home: index.md
+  - Manual: manual.md
+  - Quick start: quick_start.md
+  - Tips and Tricks: tips_and_tricks.md
+  - Long-slit spectra extraction: long-slit_extraction.md
+  - Datacube spectra extraction: datacube_extraction.md
+  - Spectra manipulation: spectra_manipulation.md
+  - Spectra analysis overview: spectral_analysis_overview.md
+  - Stars and gas kinematics: stars_and_gas_kinematics.md
+  - Stellar populations and SFH: stellar_populations_and_SFH.md
+  - Plotting 2D data: plot_data.md
+  - Plotting 2D maps: plot_maps.md
+  - Changelog: changelog.md
