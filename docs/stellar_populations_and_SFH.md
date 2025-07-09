@@ -1,7 +1,11 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
-###Stellar populations and SFH ###
+# Stellar populations and SFH #
+
+![Stellar populations](img/stellar_populations.png)
+*Stellar populations and SFH parameters*
+
 
 This module is one of the most critical tools within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023) to fit a galaxy's spectrum using a set of Single Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
 

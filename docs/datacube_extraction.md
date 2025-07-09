@@ -1,7 +1,11 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
-### DataCube extraction ###
+# DataCube extraction #
+
+![Datacube extraction](img/datacube_extraction.png)
+*Datacube extraction parameters*
+
 
 This module allows you to extract a series of n 1D spectra from a 3D FITS image (i.e., a datacube) following the GIST pipeline standard (Bittner et al., 2019, 2021).
 

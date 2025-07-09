@@ -1,8 +1,12 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
 
-****Plot maps window****
+# Plot maps window #
+
+![Plot maps](img/map_plotting.png)
+*Plot maps window*
+
 
 This window provides a simple and efficient way to visualise 2D maps from spectra processed from datacubes and fully processed with SPAN using the 'DataCube extraction' routine and any Spectral analysis task. 
 You need two files in order to plot the maps:

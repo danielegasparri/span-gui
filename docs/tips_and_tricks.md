@@ -1,6 +1,7 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
+# Tips and Tricks #
 
 Here are some useful tips to help you make the most of SPAN.
 

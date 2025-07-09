@@ -1,7 +1,11 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
-### Stars and gas kinematics ###
+# Stars and gas kinematics #
+
+![Kinematics](img/kinematics.png)
+*Stars and gas kinematics parameters*
+
 
 SPAN utilizes the capabilities of the pPXF algorithm (Cappellari 2023) to perform a comprehensive kinematic analysis of both stellar and gaseous components in galaxy spectra, covering the optical and near-infrared (NIR) regions.
 

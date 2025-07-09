@@ -1,5 +1,8 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
+
+# Span user manual #
+
 
 ****Purpose****
 SPAN is a Python 3.X multi-platform graphical interface program designed to perform operations and analyses on astronomical wavelength calibrated 1D spectra.

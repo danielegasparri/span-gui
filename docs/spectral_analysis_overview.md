@@ -1,7 +1,7 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
-###The Spectral analysis panel### 
+# The Spectral analysis panel#
 
 This panel consists of a single frame containing both basic and advanced spectral analysis tools:
 1) Blackbody fitting

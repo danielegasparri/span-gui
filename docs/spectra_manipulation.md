@@ -1,5 +1,11 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
+
+# Spectra manipulation panel #
+
+![Spectra manipulation](img/spectra_manipulation.png)
+*Spectra manipulation panel*
+
 
 The Spectra Manipulation panel provides several essential operations for processing spectra, organized into three sections:
 - Spectra Pre-Processing

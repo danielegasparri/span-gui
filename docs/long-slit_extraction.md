@@ -1,7 +1,11 @@
 SPAN: SPectral ANalysis Software V6.6
-Daniele Gasparri, June 2025
+Daniele Gasparri, July 2025
 
-### Long-slit extraction ###
+# Long-slit extraction #
+
+![Long-slit extraction](img/longslit_extraction.png)
+*Long-slit extraction parameters*
+
 
 This module allows you to extract a single 1D spectrum or a series of 1D spectra from a fully reduced 2D FITS image of a long-slit spectrum. The dispersion axis should be aligned with the X-axis, while the spatial axis should be along the Y-axis.
 
