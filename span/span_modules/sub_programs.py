@@ -177,8 +177,8 @@ def plot_maps_window(BASE_DIR, layout):
         [sg.Text("Select the quantity to plot:", font=("Helvetica", 14))],
         [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
         [sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(
-            values=["inferno", "viridis", "plasma", "magma", "cividis"],
-            default_value="inferno",
+            values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet"],
+            default_value="jet",
             key="-CMAP-",
             readonly=True,
             font=("Helvetica", 12)
