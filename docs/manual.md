@@ -343,18 +343,18 @@ If any error occur, the program will warn you.
 
 The menu bar was introduced in version 4.5 of SPAN, offering several helpful options to enhance your experience with spectral analysis. Here is a detailed overview of some options that you won't find in the main panel (unless you are using the Android version):
 
-1) File --> Save Parameters...: Allows you to save all parameters and values from the main panel and the various parameter windows of the tasks in a .json file.
+1. File --> Save Parameters...: Allows you to save all parameters and values from the main panel and the various parameter windows of the tasks in a .json file.
 This feature is very useful as it enables you to preserve any modifications made to parameters, facilitating the restoration of your session each time you reopen SPAN;
-2) File --> Load Parameters...: Allows to load the parameters saved in the .json file. This functionality allows you to resume your work with personalised parameters instead of modifying the default ones every time;
-3) File --> Restore Default Parameters: Resets all the parameters to their default values. Useful if numerous parameter modifications during a lengthy session have resulted in issues, allowing you to start from fresh;
-4) Edit --> Clear All Tasks: Immediately deactivates all tasks activated during the session, enabling a clean restart;
-5) Edit --> Clean Output: Deletes the content of the output window. Particularly useful during extended sessions where the generated output may become quite large.
-6) Edit --> Show result folder: shows the location of the "SPAN_results" folder in case you forgot;
-7) Edit --> Change result folder...: create a new "SPAN_results" folder wherever you want to store the results.
+2. File --> Load Parameters...: Allows to load the parameters saved in the .json file. This functionality allows you to resume your work with personalised parameters instead of modifying the default ones every time;
+3. File --> Restore Default Parameters: Resets all the parameters to their default values. Useful if numerous parameter modifications during a lengthy session have resulted in issues, allowing you to start from fresh;
+4. Edit --> Clear All Tasks: Immediately deactivates all tasks activated during the session, enabling a clean restart;
+5. Edit --> Clean Output: Deletes the content of the output window. Particularly useful during extended sessions where the generated output may become quite large.
+6. Edit --> Show result folder: shows the location of the "SPAN_results" folder in case you forgot;
+7. Edit --> Change result folder...: create a new "SPAN_results" folder wherever you want to store the results.
 
 Please, report any bug or comment to daniele.gasparri@gmail.com
 Have fun!
 
-Daniele Gasparri
-2025-07-08
+Daniele Gasparri  
+2025-07-08  
 Greetings from the Canary islands!
