@@ -6,7 +6,6 @@ theme:
 nav:
   - Home: index.md
   - Quick start: quick_start.md
-  - Tips and Tricks: tips_and_tricks.md
   - Long-slit spectra extraction: long-slit_extraction.md
   - Datacube spectra extraction: datacube_extraction.md
   - Spectra manipulation: spectra_manipulation.md
@@ -15,5 +14,6 @@ nav:
   - Stellar populations and SFH: stellar_populations_and_SFH.md
   - Plotting 2D data: plot_data.md
   - Plotting 2D maps: plot_maps.md
+  - Tips and Tricks: tips_and_tricks.md
   - User Manual: manual.md
   - Changelog: changelog.md
