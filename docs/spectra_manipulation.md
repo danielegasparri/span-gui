@@ -13,7 +13,7 @@ The Spectra Manipulation panel provides several essential operations for process
 - Spectra Math
 
 
-**Activating and Reordering Tasks**
+**Activating and Reordering Tasks**  
 To apply a task, enable the corresponding checkbox.
 Tasks are executed sequentially, following the order in which they appear, starting from the leftmost frame.
 If you need to change the execution order, first activate the desired tasks, then click "Reorder tasks" to arrange them in the window that opens.
@@ -26,7 +26,7 @@ Intermediate previews are not available. If you apply three tasks, the preview r
 If no task is selected, the original spectrum is shown.
 
 
-**Mathematical Operations in "Spectra Math"**
+**Mathematical Operations in "Spectra Math"**  
 The four operations in the "Spectra Math" frame:
 - Average All
 - Normalize and Average All
@@ -37,6 +37,6 @@ If "Use for Spec. Analysis" is enabled, the program will prioritise the combined
 Use this option carefully: A terminal message will confirm when combined spectra are set for analysis.
 
 
-**Impact on Spectral Analysis**
+**Impact on Spectral Analysis**  
 Any task performed in these frames modifies the selected spectrum and will affect the results in the "Spectral Analysis" panel if you intend to use it.
 If at least one task has been activated in the Spectra Manipulation panel, the button color in the main GUI will change to a very annoying red hue. This will remember you that you have active tasks in the Spectra Manipulation panel that are modifying your spectra.

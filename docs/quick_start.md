@@ -12,7 +12,7 @@ You can now:
 - Modify the spectrum by opening the "Spectra Manipulation" panel, located in the "Utilities" frame on the right.
 
 
-**Applying a Spectral Manipulation Task**
+**Applying a Spectral Manipulation Task**  
 Let's try modifying a spectrum:
 - Open the "Spectra Manipulation" panel.
 - Activate one of the available tasks, e.g., "Add noise".
@@ -25,7 +25,7 @@ The results will be saved in the "SPAN_results/spec" folder, located within the 
 Tip: The output window provides real-time updates on all tasks performed by the program.
 
 
-**Performing a Spectral Analysis Task**
+**Performing a Spectral Analysis Task**   
 Now, let's try a spectral analysis task:
 - In the "Spectral Analysis" frame, activate "Line-Strength Analysis".
 - Click "Line-Strength Parameters" to view the available settings.
@@ -39,7 +39,7 @@ If multiple tasks are active, the processed spectrum will reflect all applied mo
 If no tasks are selected, the original spectrum is used.
 
 
-**Resetting and Managing Parameters**
+**Resetting and Managing Parameters**  
 If too many tasks are activated and the program becomes difficult to manage, don't worry!
 - Click "Edit → Clear All Tasks" to reset all active tasks.
 - To restore default parameters, select "File → Restore Default Parameters".
@@ -47,7 +47,7 @@ If too many tasks are activated and the program becomes difficult to manage, don
 - To change the SPAN_results folder location, use "Edit → Change Result Folder...".
 
 
-**Exploring Additional Sample Spectra**
+**Exploring Additional Sample Spectra**  
 You can experiment with other preloaded 1D spectra lists provided with SPAN.
 For example:
 - In "3. Browse the spectra list or just one spectrum", load the spectra list "ngc5806_bins.dat" in the "example_files" folder. This file contains 39 optical spectra of the galaxy NGC 5806.

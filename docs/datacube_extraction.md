@@ -37,7 +37,7 @@ Once satisfied, close the Matplotlib window. The mask will be automatically save
 If you open the "Generate mask" window but no masking is needed, simply close the window. An unmasked file will be created automatically but it will not have effect of the DataCube.
 
 
-**Signal-to-Noise Masking and Binning**
+**Signal-to-Noise Masking and Binning**  
 Optionally, you can:
 - Mask spaxels with low S/N values by specifying a threshold.
 - Binning. You have the option to: 1) bin contiguous spaxels using the Voronoi method to achieve the desired S/N; 2) Define n manual bins with mouse multiple selection. The manual bin selection lets you to have the full control on the spaxels to bin. By clicking to the "Manual binning" button, an iterative Matplotlib will appear showing your DataCube. You can select any region to be binned by Ctrl+left-click or dragging on the image. Deselecting can be performed by Ctrl+right-click or dragging. On touchscreen devices (i.e. Android), manual binning regions are selected performed by tapping and dragging. Deselecting is not yet available. Once set your manual regions to be binned, close the matplotlib window; 3) Use pre-existing bin info from a different run. This is useful, for example, if you have a datacube splitted between blue and red arm (e.g. WEAVE LIFU) and you want to sample exactly the same regions. You just need to select the folder where the bin info and masking files are stored from the previous run that you want to take as reference for the binning info. SPAN will find the required files in the folder, copy to the new folder where you are saving the new extracted spectra and rename them according to the folder name. Therefore, the extraction routine will use these bin and mask info instead of generating new ones.
@@ -45,7 +45,7 @@ Optionally, you can:
 You can always preview the results by clicking on the "Preview bins" button. If Voronoi binning is activated, you will see the Voronoi bins colour coded by their S/N. If Manual binning is activated, you will see the regions you selected that will be binned. In this case you will see still the single spaxels inside these regions, colour coded by their S/N.
 
 
-**Starting the Extraction**
+**Starting the Extraction**  
 Once all parameters are set, click "Extract!"—and grab a coffee! The extraction process may take several minutes.
 
 Upon completion, both GIST-standard and SPAN-standard spectra will be saved.

@@ -12,7 +12,7 @@ This module is one of the most critical tools within the spectral analysis frame
 The provided settings allow for an optimal use of pPXF, though not all of its parameters and functionalities are included in this interface.
 
 
-**Requirements for Reliable Results**
+**Requirements for Reliable Results**  
 The full spectral fitting method requires spectra with an acceptable Signal-to-Noise Ratio (S/N):
 - S/N > 15 for basic results.
 - S/N > 50 for high-accuracy results.
@@ -25,7 +25,7 @@ The default settings offer a good starting point for most local galaxy spectra a
 The parameters are grouped into six sections, separated by horizontal dividers. Below is a brief description of each:
 
 
-**First Section: Basic Parameters**
+**First Section: Basic Parameters**  
 - Wavelength Range: Defines the spectral region to be fitted. A good estimate of stellar population parameters in galaxies is obtained by focusing on:
 4800-5500 A (rest-frame) in the optical, covering age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe.
 8400-8800 A (rest-frame) in the near-infrared, including the Ca II triplet, which is useful for stellar kinematics.
@@ -34,7 +34,7 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 - Redshift Guess (z): An initial estimate of the spectrum's redshift. If this value is incorrect, the fit will likely fail.
 
 
-**Second Section: Gas Emission Lines and Dust Attenuation**
+**Second Section: Gas Emission Lines and Dust Attenuation**  
 - If the spectrum contains emission lines, select "Fitting with gas" for improved results.
 - If the spectrum includes multiple Balmer emission lines, enable "Tie Balmer" to constrain their ratios. This automatically applies the Calzetti et al. (2000) dust attenuation curve.
 Two additional options allow for dust correction:
@@ -42,7 +42,7 @@ Two additional options allow for dust correction:
 - "Correct for dust (gas)": Uses the Calzetti (2000) 1-parameter attenuation model.
 
 
-**Third Section: Noise Estimation, Regularization and polynomials**
+**Third Section: Noise Estimation, Regularization and polynomials**  
 Noise and Regularization: These are critical for obtaining reliable results. Refer to the pPXF documentation for an in-depth guide.
 Recommended Workflow:
 - Perform an unregularized fit (Regul. error = 0).
@@ -57,7 +57,7 @@ Multiplicative Degree: Adjust based on spectral range (about 1 degree per 100 A)
 Example: For 4800-5500 A, set Mult. degree = 7.
 
 
-**Fourth Section: Template Library Selection**
+**Fourth Section: Template Library Selection**  
 Choose the SSP model library for fitting:
 - E-MILES, Galaxev, FSPS (pPXF defaults).
 - X-shooter Spectral Library (R = 10,000) (high-resolution spectra).
@@ -76,7 +76,7 @@ E-MILES, sMILES, and X-shooter work best for quiescent galaxies but lack very yo
 For star-forming galaxies, consider FSPS (Conroy et al., 2010).
 
 
-**Fifth Section: Custom Masking and Stellar Constraints**
+**Fifth Section: Custom Masking and Stellar Constraints**  
 You can mask out the emission Lines. In this case, you should select the "Fitting without gas" in Section 3.
 Custom masking is available and can be added also to the automatic masking of the emission lines. 
 There are two masking options available: the manual ones, by inserting the wavelength interval in the text box or a graphical mode activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking in done, you can close the Matplotlib window and the text box will update with the new ranges selected.
@@ -85,7 +85,7 @@ Age and Metallicity Ranges:
 Limit the maximum template age based on the galaxy's cosmic age. For high-redshift galaxies, reducing the upper age limit is recommended.
 
 
-**Sixth Section: Uncertainty Estimation and Lick Indices**
+**Sixth Section: Uncertainty Estimation and Lick Indices**  
 Bootstrap Uncertainty Estimation (Kacharov et al., 2018) can be enabled to compute error on age and metallicity.
 Suggested simulations: 20-50 (balance between accuracy and speed).
 

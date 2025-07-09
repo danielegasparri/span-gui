@@ -15,17 +15,17 @@ This panel consists of a single frame containing both basic and advanced spectra
 Each task operates independently and does not modify the input spectrum.
 
 
-**Working with the Input Spectrum**
+**Working with the Input Spectrum**  
 WARNING: The input spectrum may be affected by the tasks activated in the Spectra manipulation panel.
 If you wish to analyze the original spectrum, ensure that all the Spectra manipulation tasks are deactivated (they are disabled by default).
 
 
-**Previewing Results**
+**Previewing Results**  
 Click "Preview result" to display the analysis output in the output frame and as a Matplotlib plot.
 Once satisfied with the preview, you can proceed with processing either a single spectrum or all spectra in the list.
 
 
-**Processing the Spectra**
+**Processing the Spectra**  
 - Process a Single Spectrum:
 Click "Process selected" to apply all activated tasks to the currently selected spectrum. The results will be displayed in the output frame.
 
@@ -34,7 +34,7 @@ Click "Process all" to apply all activated tasks to every spectrum in your list 
 Important: This is the only way to save spectral analysis results to a file.
 
 
-**Saving Plots**
+**Saving Plots**  
 To save plots generated during the analysis in the "Process all" mode. enable the "Save plots" option.
 The program will automatically save a PNG file for each spectrum and each selected analysis task.
 Saved plots will be stored in the "SPAN_results/plots" folder.
