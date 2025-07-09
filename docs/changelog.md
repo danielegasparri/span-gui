@@ -5,75 +5,76 @@ Daniele Gasparri, July 2025
 # Version histories #
 
 **Version 6.6 (20250708):**  
-Added the option 'Fixing stellar kinematics first' to the 'Stars and gas kinematics' task and the option 'Fitting gas and stellar kinematics' to perform a first fit only to the stellar component and then fix the LOSVD values of the stars to perform a second fit including the gas, as suggested by Cappellari 2017. 
+- Added the option 'Fixing stellar kinematics first' to the 'Stars and gas kinematics' task and the option 'Fitting gas and stellar kinematics' to perform a first fit only to the stellar component and then fix the LOSVD values of the stars to perform a second fit including the gas, as suggested by Cappellari 2017. 
 Added the new function 'build_goodpixels_with_mask' in the 'spec_analysis.py' module in order to use only the 'goodpix' keyword to allow both the emission lines and user mask. The keyword 'mask' is not used anymore for kinematics and sellar populations and SFH since it is not compatible with goodpix, so until now it was not possible to use both the masking of emission lines provided by pPXF and the user mask.
-Added the option to set multiplicative polynomial to 'Stars and gas kinematics' task, which are needed if a reliable estimation of gas flux is needed besides kinematics.
-Added support to JWST NIRSpec datacubes for the cube extraction sub-program
-Corrected minor bugs caused by updating the modules (especially numpy and scipy) required by SPAN
-Fixed an error for macOS systems that prevented to download the required files and also the SSPs from pPXF repository (macOS requires an SSL certificate to download files from internet). 
-Updated the versions of the modules compatibles in order to include also the newest versions of NumPy (2.X.X), and solved the compatibility problems with macOS. Now SPAN requires Python >= 3.10 to run but should be more stable and easy to install for Android and macOS systems.
-Changed the default wavelength units used by SPAN. Now is Angstrom everywhere
-Substituted the cross-correlation functions with more reliable ones written from scratch. Now the cross-correlation task is much more solid. 
-The 'Stars and gas kinematics' task now caches the loaded templates at the first iteration in the 'Process all' mode, reducing the execution time by about a factor 2, instead loading the templates for any spectrum to process in the list. Working to do so also to the 'Stellar populations and SFH' task but it is much more difficult. Anyway, for this task the large execution times depend on the fit, so caching the templates will reduce the execution times by only 10 to 20%.
-The 'Stars and gas kinematics' now can save also product spectra from the fit (bestfit, bestfit gas, gas with continuum removed, continuum with gas removed).
-Added the calculation of t50 and t80 for the 'Stellar populations and SFH task'
-Added the calculation of uncertainties (1sigma) also for the luminosity and mass fraction and cumulative mass of the 'Stellar populations and SFH' if bootstrap simulations for error estimation is activated. 
-Changed the fit parameters when using pPXF to subtract the emission lines for the 'Line-strength analysis' using the semi-automatic 'Lick/IDS' indices. The fit with pPXF now is performed by calculating first the real noise value of the spectrum (auto_noise = True). 
-The 'Stars and gas kinematics' now saves also the flux and formal errors of the emission lines, if gas calculation is activated.
-Refactored the 'resolution' function of the utilities.py module to correct a bug that sometimes showed the resolution as negative value. Now also an error estimation of the FWHM is calculated and showed.
-Corrected minor bugs.
+- Added the option to set multiplicative polynomial to 'Stars and gas kinematics' task, which are needed if a reliable estimation of gas flux is needed besides kinematics.
+- Added support to JWST NIRSpec datacubes for the cube extraction sub-program
+- Corrected minor bugs caused by updating the modules (especially numpy and scipy) required by SPAN
+- Fixed an error for macOS systems that prevented to download the required files and also the SSPs from pPXF repository (macOS requires an SSL certificate to download files from internet). 
+- Updated the versions of the modules compatibles in order to include also the newest versions of NumPy (2.X.X), and solved the compatibility problems with macOS. Now SPAN requires Python >= 3.10 to run but should be more stable and easy to install for Android and macOS systems.
+- Changed the default wavelength units used by SPAN. Now is Angstrom everywhere
+- Substituted the cross-correlation functions with more reliable ones written from scratch. Now the cross-correlation task is much more solid. 
+- The 'Stars and gas kinematics' task now caches the loaded templates at the first iteration in the 'Process all' mode, reducing the execution time by about a factor 2, instead loading the templates for any spectrum to process in the list. Working to do so also to the 'Stellar populations and SFH' task but it is much more difficult. Anyway, for this task the large execution times depend on the fit, so caching the templates will reduce the execution times by only 10 to 20%.
+- The 'Stars and gas kinematics' now can save also product spectra from the fit (bestfit, bestfit gas, gas with continuum removed, continuum with gas removed).
+- Added the calculation of t50 and t80 for the 'Stellar populations and SFH task'
+- Added the calculation of uncertainties (1sigma) also for the luminosity and mass fraction and cumulative mass of the 'Stellar populations and SFH' if bootstrap simulations for error estimation is activated. 
+- Changed the fit parameters when using pPXF to subtract the emission lines for the 'Line-strength analysis' using the semi-automatic 'Lick/IDS' indices. The fit with pPXF now is performed by calculating first the real noise value of the spectrum (auto_noise = True). 
+- The 'Stars and gas kinematics' now saves also the flux and formal errors of the emission lines, if gas calculation is activated.
+- Refactored the 'resolution' function of the utilities.py module to correct a bug that sometimes showed the resolution as negative value. Now also an error estimation of the FWHM is calculated and showed.
+
 
 **Version 6.5 (20250531):**  
-Added the Plot maps sub-program for reading and displaying the 2D maps from datacube data
-Introduced new options in the Spectra Manipulation panel for saving the intermediate spectra, to save only the final spectra, and to NOT save processed spectra
-Changed the name of the folders to store the results. Now they have the same name of the tasks to improve clarity.
-Added the WEAVE_LIFU.py routine for datacube extraction.
-Added the option to use pre-existing mask and bin info files for datacube extraction. 
-Added the convolution with MUSE LSF for the 'Stars and gas' kinematics task
-Added selecting the resolution in R or MUSE LSF also for the custom template option in the 'Stars and gas kinematics' task.
-Added the custom masking for the 'Stars and gas kinematics' task.
-Added the use of a generic template set in 'Stars and gas kinematics'. For now, only fits files with linear sampling in A can be used.
-Added the 'Degrade MUSE data' option in the 'Degrade resolution' of the 'Spectra manipulation' panel. This allows to degrade/convert to a fixed FWHM resolution the variable resolution of MUSE.
-Refactored the read_datacube function in the system_span.py module.
+- Added the Plot maps sub-program for reading and displaying the 2D maps from datacube data
+- Introduced new options in the Spectra Manipulation panel for saving the intermediate spectra, to save only the final spectra, and to NOT save processed spectra
+- Changed the name of the folders to store the results. Now they have the same name of the tasks to improve clarity.
+- Added the WEAVE_LIFU.py routine for datacube extraction.
+- Added the option to use pre-existing mask and bin info files for datacube extraction. 
+- Added the convolution with MUSE LSF for the 'Stars and gas' kinematics task
+- Added selecting the resolution in R or MUSE LSF also for the custom template option in the 'Stars and gas kinematics' task.
+- Added the custom masking for the 'Stars and gas kinematics' task.
+- Added the use of a generic template set in 'Stars and gas kinematics'. For now, only fits files with linear sampling in A can be used.
+- Added the 'Degrade MUSE data' option in the 'Degrade resolution' of the 'Spectra manipulation' panel. This allows to degrade/convert to a fixed FWHM resolution the variable resolution of MUSE.
+- Refactored the read_datacube function in the system_span.py module.
 
 **Version 6.4 (20250220):**  
 Complete refactoring of the code, split in different modules. Use of the DataClass to store the GUI parameters and use.
 
 **Version 6.3 (20250205):**  
-The spectral manipulation tasks are now grouped in a secondary panel called Spectra manipulation. Removed the GIST pipeline for copyright issues.
-Added the two component stellar fitting for the stars and kinematics task.
- Major modifications to the 'DataCube extraction' sub-program. Added the manual binning mode by drawing custom regions on the datacube.
+- The spectral manipulation tasks are now grouped in a secondary panel called Spectra manipulation. 
+- Removed the GIST pipeline for copyright issues.
+- Added the two component stellar fitting for the stars and kinematics task.
+- Major modifications to the 'DataCube extraction' sub-program. Added the manual binning mode by drawing custom regions on the datacube.
 
 **Version 6.2 (20250115):**  
-Added the option to insert a custom template set in pPXF .npz format for the 'Stellar populations and SFH' task
-Major changes to the 'cube_extract' module to improve efficiency
+- Added the option to insert a custom template set in pPXF .npz format for the 'Stellar populations and SFH' task.
+- Major changes to the 'cube_extract' module to improve efficiency.
 
 **Version 6.1 (20250107):**  
-Major change to the spectra manipulation frame. Re-arranged the spectra math tasks and introduced the possobility for the user to re-order the spectra manipulation tasks.
-Added the dust parametrization for the 'Stars and gas kinematics' tasks.
+- Major change to the spectra manipulation frame: re-arranged the spectra math tasks and introduced the possobility for the user to re-order the spectra manipulation tasks.
+- Added the dust parametrization for the 'Stars and gas kinematics' tasks.
 
 **Version 6.0 (20241118):**  
 Major change to the layout and the structure of the main span code. Now the code recognizes the operating system used and adapts the layout. No need to compile different files for different operating system anymore.
 
 **Version 5.8 (20241114):**  
-Modified the 'Stars and gas kinematics' and the 'Stellar populations and SFH' tasks to deal with cosmological redshift galaxy spectra, fixed some minor bugs, cleaned the code and rearranged the plots generated for better clarity.
-Modified the Stellar populations and SFH task to deal either with log10 ages and linear ages.
-Changed from ASCII files to FITS 1d format the residual, emission corrected and best template spectra generated by the stellar populations and SFH task.
-Fixed a bug in the Line-strength analysis and the Lick/IDS option that caused wrong measurements when the emission correction was disabled and doppler correction enabled.
-Fixed the plots generated by the Line-strength analysis task in the 'Process all' mode.
-Added the selection of custom EMILES SSP templates also for kinematics
-Now it is possible to insert any sMILES template in the spectralTemplates/sMILES_afeh folder to work with alpha/Fe in the 'Stellar populations and SFH' task.
+- Modified the 'Stars and gas kinematics' and the 'Stellar populations and SFH' tasks to deal with cosmological redshift galaxy spectra, fixed some minor bugs, cleaned the code and rearranged the plots generated for better clarity.
+- Modified the Stellar populations and SFH task to deal either with log10 ages and linear ages.
+- Changed from ASCII files to FITS 1d format the residual, emission corrected and best template spectra generated by the stellar populations and SFH task.
+- Fixed a bug in the Line-strength analysis and the Lick/IDS option that caused wrong measurements when the emission correction was disabled and doppler correction enabled.
+- Fixed the plots generated by the Line-strength analysis task in the 'Process all' mode.
+- Added the selection of custom EMILES SSP templates also for kinematics
+- Now it is possible to insert any sMILES template in the spectralTemplates/sMILES_afeh folder to work with alpha/Fe in the 'Stellar populations and SFH' task.
 
 **Version 5.7 (20241029):**  
-Major changes to 'Cube extraction' to be more flexible and more user friendly. Introduced the datacube dynamic visualisation in a matplotlib window and the 'Generate mask' button that allows the user to graphically generate a spectral mask.
-Major changes to the "Stellar populations and SFH" task to include: sMILES models with alpha/Fe, dust absorption (replacing the obsolete reddening keyword of pPXF), uncertainties estimation with bootstrap simulations, auto noise estimation for the fitting so that Chi2 = 1 for non regularized fits and masking user defined spectral regions. Improved plots, now plotting also the alpha/Fe-[Z/H] weights. Saving the luminosity and mass weights.
-Stellar and gas kinematics: fixed the xshooter library that could not be used with spetra with R = constant resolution.
-Changed the Dopcor task, now called 'Doppler/z correction': now the user can correct the spectra both with radial velocity values and redshift (z).
-Adjusted the layout of the 'Cross-corr parameters' and 'Sigma parameters' windows. Added and improved the cross-correlation task: now it can consider also the cosmological redshift instead only velocity values.
-Added the help files for the 'Cube extraction'
-The user defined parameters are saved now also for the sub-programs.
-Corrected minor bugs in the system_span read_spec function and added the read_datacube function.
-Corrected minor bugs in the spec_analysis.py module
+- Major changes to 'Cube extraction' to be more flexible and more user friendly. Introduced the datacube dynamic visualisation in a matplotlib window and the 'Generate mask' button that allows the user to graphically generate a spectral mask.
+- Major changes to the "Stellar populations and SFH" task to include: sMILES models with alpha/Fe, dust absorption (replacing the obsolete reddening keyword of pPXF), uncertainties estimation with bootstrap simulations, auto noise estimation for the fitting so that Chi2 = 1 for non regularized fits and masking user defined spectral regions. Improved plots, now plotting also the alpha/Fe-[Z/H] weights. Saving the luminosity and mass weights.
+- Stellar and gas kinematics: fixed the Xshooter library that could not be used with spetra with R = constant resolution.
+- Changed the Dopcor task, now called 'Doppler/z correction': now the user can correct the spectra both with radial velocity values and redshift (z).
+- Adjusted the layout of the 'Cross-corr parameters' and 'Sigma parameters' windows. Added and improved the cross-correlation task: now it can consider also the cosmological redshift instead only velocity values.
+- Added the help files for the 'Cube extraction'
+- The user defined parameters are saved now also for the sub-programs.
+- Corrected minor bugs in the system_span read_spec function and added the read_datacube function.
+- Corrected minor bugs in the spec_analysis.py module
 
 **Version 5.6 (20240824):**  
 Modified the "Stars and kinematics" task to include more parameters.
@@ -82,10 +83,13 @@ Modified the "Stars and kinematics" task to include more parameters.
 Integrated the GPR Machine learning for Lick/IDS analysis. Corrected minor bugs.
 
 **Version 5.4 (20240527):**  
-Integrated the full GIST pipeline. Added the xshooter SSP library (XSL) of Verro et al. 2022 to 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks. Added the custom (E)MILES template selection for 'Stellar populations and SFH' task, the possibility to mask the emission lines and an algorithm to find automatically the best ppxf parameters for stellar populations: noise and Regul. err. Changed the format of the fits file saved in the 'Convert spectrum to' task. Corrected minor bugs.
+- Integrated a modified, updated and running version of the GIST pipeline as independent sub-program fo facilitate users in the migration process from GIST to SPAN (NOTE OR THE EDITOR: well, this was not a good idea since I've never got the authorization to publish this modified version of GIST, so I had to remove from further SPAN distributions. Goodbye GIST). 
+- Added the Xshooter SSP library (XSL) of Verro et al. 2022 to 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks. 
+- Added the custom (E)MILES template selection for 'Stellar populations and SFH' task, the possibility to mask the emission lines and an algorithm to find automatically the best ppxf parameters for stellar populations: noise and Regul. err. Changed the format of the fits file saved in the 'Convert spectrum to' task. Corrected minor bugs.
 
 **Version 5.3 (20240515):**  
-Integrated a modified version of the GIST pipeline in order to bin and extract data cube spectra. Rearranged the Open spectra frame. Changeg the names of some spectral analysis tasks.
+- Integrated a modified version of the GIST pipeline in order to bin and extract data cube spectra. 
+- Rearranged the Open spectra frame. Changeg the names of some spectral analysis tasks.
 
 **Version 5.2 (20240505):**  
 Embedd freesimplegui, improved ppxf stellar populations with more parameters and better plots.
@@ -94,21 +98,21 @@ Embedd freesimplegui, improved ppxf stellar populations with more parameters and
 Changed Pysimplegui with Freesimplegui since pysimplegui is not free anymore. Added pixel noise to ppxf stellar populations layout and changed the file format of saved plots, from eps to high resolution png.
 
 **Version 5.0 (20240221):**  
-Rearranged the spectra pre-processing framework by incorporating crop and wavelet cleaning tasks.
-Added parameters buttons to sigma clip cleaning (now dynamic cleaning), dopcor, and heliocor.
-Fixed a bug in the "Compare with" task.
-Introduced the continuum modeling task, allowing for a more refined way to model and subtract (or divide) the continuum of the spectra.
+- Rearranged the spectra pre-processing framework by incorporating crop and wavelet cleaning tasks.
+- Added parameters buttons to sigma clip cleaning (now dynamic cleaning), dopcor, and heliocor.
+- Fixed a bug in the "Compare with" task.
+- Introduced the continuum modeling task, allowing for a more refined way to model and subtract (or divide) the continuum of the spectra.
 
 **Version 4.7 (20240201):**  
-Since PySimpleGUI is not free anymore, I switched to FreeSimpleGUI. Moreover FreeSimpleGUI license permits redistribution, so I embedded it in the distribution. Thank you FreeSimpleGUI guys for saving SPAN!
-Adapted the code to the new release of ppxf. Ppxf is no longer included in the code package and must be installed via pip.
-Provided the option to choose between three stellar libraries for the ppxf tasks (kinematics and stellar populations).
-Added the capability to save all parameters and load them.
-Implemented some minor changes to the layout.
+- Since PySimpleGUI is not free anymore, I switched to FreeSimpleGUI. Moreover FreeSimpleGUI license permits redistribution, so I embedded it in the distribution. Thank you FreeSimpleGUI guys for saving SPAN!
+- Adapted the code to the new release of ppxf. Ppxf is no longer included in the code package and must be installed via pip.
+- Provided the option to choose between three stellar libraries for the ppxf tasks (kinematics and stellar populations).
+- Added the capability to save all parameters and load them.
+- Implemented some minor changes to the layout.
 
 **Version 4.6 (20240114):**  
-Included the emission correction and interpolation of the Lick/IDS indices in the EW measurement task. This provides information about the age, metallicity, and alpha-enhancement of the stellar populations of galaxies using the models of Thomas 2010.
-Implemented Monte Carlo simulations to estimate uncertainties on stellar parameters via Lick/IDS index interpolation.
+- Included the emission correction and interpolation of the Lick/IDS indices in the EW measurement task. This provides information about the age, metallicity, and alpha-enhancement of the stellar populations of galaxies using the models of Thomas 2010.
+- Implemented Monte Carlo simulations to estimate uncertainties on stellar parameters via Lick/IDS index interpolation.
 
 **Version 4.5 (20231221):**  
 Added the Lick/IDS index measurements and sigma correction in the EW task.
@@ -117,8 +121,8 @@ Added the Lick/IDS index measurements and sigma correction in the EW task.
 Introduced the 2D spectra extraction standalone panel (still experimental), enabling the correction and extraction of long-slit 1D spectra from a 2D fits wavelength-calibrated images.
 
 **Version 4.3 (20230207):**  
-Added the plot window to display the results generated by SPAN.
-Implemented the "match rows" feature in the text editor to match and merge rows of two ASCII files, space-separated, with one column in common.
+- Added the plot window to display the results generated by SPAN.
+- Implemented the "match rows" feature in the text editor to match and merge rows of two ASCII files, space-separated, with one column in common.
 
 **Version 4.2 (20231203):**  
 Introduced the fits header editor button with three possible operations on the fits files:
@@ -130,30 +134,30 @@ Extract a keyword from a list of fits files.
 Added the blackbody fitting task.
 
 **Version 4.0 (20231123):**  
-Adjusted the layout of the spectral analysis.
-Added the terminal output.
-Fixed various bugs.
-Rectified the progress bar.
-Introduced the text editor and the menu bar.
+- Adjusted the layout of the spectral analysis.
+- Added the terminal output.
+- Fixed various bugs.
+- Rectified the progress bar.
+- Introduced the text editor and the menu bar.
 
 **Version 3.5 (20221120):**  
 Added the ppxf algorithm for kinematics and stellar populations.
 
 **Version 3.4 (20221114):**  
-Included the Line(s) fitting task.
-Corrected minor bugs.
+- Included the Line(s) fitting task.
+- Corrected minor bugs.
 
 **Version 3.3 (20221109):**  
-Modified the Cross-correlation calculation.
-Fixed a bug that caused the program to crash if two spectral analysis tasks were selected.
-Implemented checks and existing conditions on the spectral analysis files and values.
+- Modified the Cross-correlation calculation.
+- Fixed a bug that caused the program to crash if two spectral analysis tasks were selected.
+- Implemented checks and existing conditions on the spectral analysis files and values.
 
 **Version 3.2 (20221106):**  
 Added tooltips to the tasks/buttons for better clarification of their functions.
 
 **Version 3.1 (20221105):**  
-Rearranged the GUI.
-Fixed a bug in the sigma coefficient calculation task.
+- Rearranged the GUI.
+- Fixed a bug in the sigma coefficient calculation task.
 
 **Version 3.0 (20221104):**  
 Implemented key values instead of increasing numbers in the GUI. This allows adding and modifying entries without changing all the value numbers.
@@ -186,18 +190,18 @@ Adjusted the utility menu and added the possibility to save the SNR of the spect
 Rearranged the utility menu and introduced the conversion of flux from Jansky to MKS and MKS f_lambda.
 
 **Version 2.0 (20210630):**  
-Added the 'compare spectra' utility.
-Improved the sigma clipping, now called the clean task.
-Rearranged the tasks in the pre-processing and processing frames.
-Enhanced the plot for velocity dispersion measurements.
-Implemented a check on the existence of the loaded spectra.
+- Added the 'compare spectra' utility.
+- Improved the sigma clipping, now called the clean task.
+- Rearranged the tasks in the pre-processing and processing frames.
+- Enhanced the plot for velocity dispersion measurements.
+- Implemented a check on the existence of the loaded spectra.
 
 **Version 1.9 (20210626):**  
 Some cosmetic changes to the graphical layout.
 
 **Version 1.8 (20210626):**  
-Added the save plot option in the spectral analysis frame.
-Improved plots of the sigma coeff determination task.
+- Added the save plot option in the spectral analysis frame.
+- Improved plots of the sigma coeff determination task.
 
 **Version 1.7 (20210615):**  
 Changed the file names of the result files to include a timestamp, preventing overwriting of older files. Changed the name of the probram.
