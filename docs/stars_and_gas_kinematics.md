@@ -18,13 +18,13 @@ Fine-tuning the fit requires adjusting specific parameters.
 ## Parameter Overview ##
 The parameters are grouped into seven sections, separated by horizontal dividers. Below is a brief description of each:
 
-**First Section: Basic Parameters**
+### First Section: Basic Parameters
 - Wavelength Range: Defines the spectral range to be fitted. A robust estimation of both stellar and gaseous components is achieved by selecting the visible band region 4800-5500 A (or its equivalent range for high-redshift galaxies), which includes key absorption and emission lines. This is a commonly used standard range. In the NIR, the most prominent spectral features for stellar kinematics are the Ca II triplet (CaT) lines in the 8400-8800 A rest-frame range, while for gas emission, the Paschen lines (especially PaB) should be considered.
 - Sigma (km/s): An initial estimate of the expected velocity dispersion of your galaxy spectrum.
 - Redshift (z): An approximate redshift value of the spectrum. Important: Avoid loading spectra with significantly different redshifts. If necessary, de-redshift your data before performing kinematic analysis. This can be done using the Doppler/z correction task in SPAN's Spectra manipulation panel.
 
 
-**Second Section: Spectral Resolution**  
+### Second Section: Spectral Resolution 
 This section requires the spectral resolution of the spectra. It is essential to avoid mixing spectra with different resolutions within the same dataset.
 Additionally, specify whether the resolution is expressed in terms of:
 - FWHM (Full Width at Half Maximum)
