@@ -1,7 +1,7 @@
 SPAN: SPectral ANalysis software V6.6
 Daniele Gasparri, July 2025
 
-# Span user manual #
+# SPAN user manual #
 
 
 ## Purpose ##
