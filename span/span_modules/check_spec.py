@@ -46,13 +46,11 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
-def load_and_validate_spectra(spectra_list, lambda_units, window):
 
+def load_and_validate_spectra(spectra_list, lambda_units, window):
     """
     Loads and validates a list of spectra, ensuring they exist and are readable.
-
     """
-
     fatal_condition = 0  # Flag to indicate critical failure
 
     # Check if the spectra list file exists
@@ -61,11 +59,14 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
         return 0, [], [], 1  # Fatal condition
 
     try:
-        df_list_spec = pd.read_csv(spectra_list, delimiter=" ")
-        spectra_number = len(df_list_spec.index)
+        # Open the file and read all lines as complete strings without splitting by spaces
+        with open(spectra_list, "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
     except Exception:
         sg.popup("Cannot read the spectra list. Ensure the format is correct.")
         return 0, [], [], 1  # Fatal condition
+
+    spectra_number = len(lines)
 
     print(f"You want to load {spectra_number} spectra")
     print("Now checking if they really exist and are valid...")
@@ -73,34 +74,21 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
 
     # Resolve absolute/relative paths
     spec_names = []
-    with open(spectra_list, "r") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if not os.path.isabs(line):
-                spec_names.append(os.path.join(BASE_DIR, line))
-            else:
-                spec_names = np.loadtxt(spectra_list, dtype="str", delimiter=" ", usecols=[0]).tolist()
-                break  # Assumes consistent path format (all absolute or all relative)
+    for line in lines:
+        if not os.path.isabs(line):
+            spec_names.append(os.path.join(BASE_DIR, line))
+        else:
+            spec_names.append(line)
 
-    # Clean spurious characters
-    spec_names = [str(spectrum).strip() for spectrum in spec_names]
-    #Clean the path
+    # Normalize paths to avoid inconsistencies
+    spec_names = [os.path.normpath(spectrum) for spectrum in spec_names]
     spec_names_nopath = [os.path.basename(spectrum) for spectrum in spec_names]
 
     # Update the listbox in the GUI
     window["-LIST-"].Update(spec_names_nopath)
 
-    # Validate the spectra list format
-    if len(spec_names) != spectra_number:
-        sg.popup("Warning: The format of the spectra list might be incorrect. "
-                 "Did you forget to add #Spectrum as the first line?")
-        return 0, [], [], 1  # Fatal condition
-
     # Check if spectra files exist
     spec_not_exist = [s for s in spec_names if not os.path.isfile(s)]
-    # spec_not_exist = [s.replace("\\", "/") for s in spec_not_exist]
     if spec_not_exist:
         if len(spec_not_exist) == len(spec_names):
             sg.popup("None of the spectra exist. Please check the file list and reload.")
@@ -174,7 +162,6 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
     print("")
 
     return spectra_number, spec_names, spec_names_nopath, fatal_condition
-
 
 
 def validate_and_load_spectrum(params, window):

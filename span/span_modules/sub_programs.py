@@ -56,7 +56,6 @@ from astropy.io import fits
 from astropy.table import Table
 
 from dataclasses import replace
-# from params import SpectraParams
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
@@ -164,7 +163,117 @@ def plot_data_window(BASE_DIR, layout):
 
 
 
-#2) TEXT EDITOR
+# 2) PLOT MAPS
+def plot_maps_window(BASE_DIR, layout):
+    layout, scale_win, fontsize, default_size = misc.get_layout()
+    sg.theme("DarkBlue3")
+    map_layout = [
+        [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
+        [sg.Input(key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+        [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
+        [sg.Input(key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+        [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
+        [sg.HorizontalSeparator()],
+        [sg.Text("Select the quantity to plot:", font=("Helvetica", 14))],
+        [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
+        [sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(
+            values=["inferno", "viridis", "plasma", "magma", "cividis"],
+            default_value="inferno",
+            key="-CMAP-",
+            readonly=True,
+            font=("Helvetica", 12)
+        )],
+        [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
+
+    ]
+
+    map_window = sg.Window("2D Map Viewer", map_layout)
+
+    x, y, bin_id = None, None, None
+    result_df = None
+    selected_quantity = None
+
+    while True:
+        map_event, map_values = map_window.read()
+        if map_event in (sg.WIN_CLOSED, "Exit"):
+            break
+        elif map_event == "Load Files":
+            try:
+                fits_path = map_values["-FITS-"]
+                txt_path = map_values["-TXT-"]
+
+                # Extract RUN_NAME from the file
+                fits_run = fits_path.split("/")[-1].split("_table")[0]
+                txt_run = txt_path.split("/")[-1].split("_bins_list")[0]
+
+                if fits_run != txt_run:
+                    proceed = sg.popup_yes_no(
+                        "WARNING: The selected files appear to belong to different runs.\n\n"
+                        f"FITS table run: {fits_run}\nTXT run: {txt_run}\n\n"
+                        "Proceed anyway?",
+                        title="Run name mismatch"
+                    )
+                    if proceed != "Yes":
+                        sg.popup("File loading aborted.")
+                        continue
+
+                x, y, bin_id = stm.load_fits_data(fits_path)
+                result_df = stm.load_analysis_results(txt_path)
+                col_names = list(result_df.columns)[1:]  # exclude first column (filename)
+                map_window["-LIST-"].update(values=col_names)
+                sg.popup("Files loaded successfully.")
+
+            except Exception as e:
+                sg.popup_error(f"Error loading files:\n{e}")
+
+        elif map_event == "-LIST-":
+            if map_values["-LIST-"]:
+                selected_quantity = map_values["-LIST-"][0]
+        elif map_event == "Plot Map":
+            if x is not None and result_df is not None and selected_quantity:
+                stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"])
+            else:
+                sg.popup("Please load files and select a quantity.")
+
+        elif map_event == "Save selected":
+            if x is not None and result_df is not None and selected_quantity:
+                save_path = sg.popup_get_file(
+                    "Save PNG file",
+                    save_as=True,
+                    no_window=True,
+                    file_types=(("PNG Files", "*.png"),),
+                    default_extension=".png"
+                )
+                if save_path:
+                    stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, save_path=save_path, cmap=map_values["-CMAP-"])
+                    sg.popup("Image saved successfully.")
+            else:
+                sg.popup("Please load files and select a quantity before saving.")
+
+        elif map_event == "Save ALL":
+            if x is not None and result_df is not None:
+                folder = sg.popup_get_folder("Select output folder for PNGs", no_window=True)
+                if folder:
+                    for quantity in result_df.columns[1:]:  # skip first col (filename)
+                        filename = f"{folder}/{stm.sanitize_filename(quantity)}.png"
+                        stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, save_path=filename, cmap=map_values["-CMAP-"])
+                    sg.popup("All maps saved successfully.")
+            else:
+                sg.popup("Please load files before saving.")
+
+        elif map_event == 'Help':
+            f = open(os.path.join(BASE_DIR, "help_files", "help_maps..txt"), 'r')
+            file_contents = f.read()
+            if layout == layouts.layout_android:
+                sg.popup_scrolled(file_contents, size=(120, 30))
+            else:
+                sg.popup_scrolled(file_contents, size=(100, 40))
+
+    map_window.close()
+
+
+
+#3) TEXT EDITOR
 def text_editor_window(layout):
     print('***** Text editor open. The main panel will be inactive until you close the editor *****')
 
@@ -327,7 +436,7 @@ def text_editor_window(layout):
 
 
 
-# 3) FITS HEADER EDITOR
+# 4) FITS HEADER EDITOR
 def fits_header_window():
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
@@ -587,7 +696,7 @@ def fits_header_window():
 
 
 
-# 4) LONG-SLIT EXTRACTION
+# 5) LONG-SLIT EXTRACTION
 def long_slit_extraction(BASE_DIR, layout, params):
 
     file_path_spec_extr = params.file_path_spec_extr
@@ -751,7 +860,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
 
 
 
-# 5) DATACUBE EXTRACTION
+# 6) DATACUBE EXTRACTION
 def datacube_extraction(params):
 
     result_data = params.result_data
@@ -773,10 +882,12 @@ def datacube_extraction(params):
     ifs_origin = params.ifs_origin
     ifs_mask = params.ifs_mask
     ifs_output = params.ifs_output
-    ifs_lmin_snr_default = params.ifs_lmin_snr_default
-    ifs_lmax_snr_default = params.ifs_lmax_snr_default
+    ifs_lmin_snr_default = params.ifs_lmin_tot #params.ifs_lmin_snr_default
+    ifs_lmax_snr_default = params.ifs_lmax_tot #params.ifs_lmax_snr_default
     ifs_manual_bin = params.ifs_manual_bin
     ifs_voronoi = params.ifs_voronoi
+    ifs_existing_bin = params.ifs_existing_bin
+    ifs_existing_bin_folder = params.ifs_existing_bin_folder
     ifs_bin_method = params.ifs_bin_method
     ifs_covariance = params.ifs_covariance
     ifs_prepare_method = params.ifs_prepare_method
@@ -787,8 +898,8 @@ def datacube_extraction(params):
     sg.theme('LightBlue1')
 
     cube_ifs_layout = [
-        [sg.Text('Select a fits cube:', font = ('', default_size, 'bold'), tooltip='Select a datacube WITHIN the inputData folder'), sg.InputText(ifs_input, size=(30, 1), key = 'ifs_input'), sg.FileBrowse(file_types=(('fits file', '*.fits'),)), sg.Button('View datacube', button_color=('black','light blue'), size = (18,1), tooltip='Take a look at the datacube, it may be useful')],
-        [sg.Text('Name of the run:', tooltip='Just give a name for this session'), sg.InputText(ifs_run_id, size = (15,1), key = 'ifs_run_id'), sg.Text('z:', tooltip='Redshift estimation. Put zero to not correct for redshift'), sg.InputText(ifs_redshift, size = (8,1), key = 'ifs_redshift'), sg.Text('Wave to extract (nm):', tooltip='Wavelength range you want to extract. Look at the datacube if you do not know'), sg.InputText(ifs_lmin_tot, size = (6,1), key = 'ifs_lmin_tot'), sg.Text('-'), sg.InputText(ifs_lmax_tot, size = (6,1), key = 'ifs_lmax_tot')],
+        [sg.Text('Select a fits cube:', font = ('', default_size, 'bold'), tooltip='Select a datacube WITHIN the inputData folder'), sg.InputText(ifs_input, size=(30, 1), key = 'ifs_input'), sg.FileBrowse(file_types=(('fits file', '*.fits *.fit'),)), sg.Button('View datacube', button_color=('black','light blue'), size = (18,1), tooltip='Take a look at the datacube, it may be useful')],
+        [sg.Text('Name of the run:', tooltip='Just give a name for this session'), sg.InputText(ifs_run_id, size = (15,1), key = 'ifs_run_id'), sg.Text('z:', tooltip='Redshift estimation. Put zero to not correct for redshift'), sg.InputText(ifs_redshift, size = (8,1), key = 'ifs_redshift'), sg.Text('Wave to extract (A):', tooltip='Wavelength range you want to extract. Look at the datacube if you do not know'), sg.InputText(ifs_lmin_tot, size = (6,1), key = 'ifs_lmin_tot'), sg.Text('-'), sg.InputText(ifs_lmax_tot, size = (6,1), key = 'ifs_lmax_tot')],
 
         [sg.HorizontalSeparator()],
 
@@ -798,8 +909,11 @@ def datacube_extraction(params):
 
         [sg.HorizontalSeparator()],
 
-        [sg.Text('Select a fits mask:', font = ('', default_size, 'bold'), tooltip='If you do not have a mask file, you can create with the button on the right'), sg.InputText(ifs_mask, size=(30, 1), key = 'ifs_mask'), sg.FileBrowse(file_types=(('fits file', '*.fits'),)), sg.Button('Generate mask',button_color=('black','light blue'), size = (18,1), tooltip='Generate a mask, even without really masking any spaxel')],
-        [sg.Text('Min S/N to mask:', tooltip='Masking all the spaxels with low S/N'), sg.InputText(ifs_min_snr_mask, size = (6,1), key = 'ifs_min_snr_mask'), sg.Radio('Voronoi bin', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Automatic voronoi rebinning'), sg.Text('Target S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50'), sg.InputText(ifs_target_snr, size = (5,1), key = 'ifs_target_snr'), sg.Radio('Manual bin', "RADIOVOR", default=ifs_manual_bin, key='ifs_manual_bin', tooltip='Select region(s) to bin. Masking is not applied here'), sg.Button('Manual binning')],
+        [sg.Text('Select a mask:', font = ('', default_size, 'bold'), tooltip='If you do not have a mask file, you can create with the button on the right'), sg.InputText(ifs_mask, size=(20, 1), key = 'ifs_mask'), sg.FileBrowse(file_types=(('fits file', '*.fits'),)), sg.Button('Generate mask',button_color=('black','light blue'), size = (18,1), tooltip='Generate a mask, even without really masking any spaxel'), sg.Text('Min S/N to mask:', tooltip='Masking all the spaxels with low S/N'), sg.InputText(ifs_min_snr_mask, size = (6,1), key = 'ifs_min_snr_mask')],
+
+        [sg.HorizontalSeparator()],
+
+        [sg.Radio('Voronoi bin', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Automatic voronoi rebinning'), sg.Text('S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50'), sg.InputText(ifs_target_snr, size = (4,1), key = 'ifs_target_snr'), sg.Radio('Manual bin', "RADIOVOR", default=ifs_manual_bin, key='ifs_manual_bin', tooltip='Select region(s) to bin. Masking is not applied here'), sg.Button('Manual binning'), sg.Radio('Existing bins', "RADIOVOR", default=ifs_existing_bin, key='ifs_existing_bin', tooltip='Use already available mask and bin info'), sg.Input(ifs_existing_bin_folder, key='ifs_existing_bin_folder', size = (11,1)), sg.FolderBrowse(tooltip='Browse the folder where your *_table.fits and *_mask.fits are located')],
 
         [sg.HorizontalSeparator()],
 
@@ -836,6 +950,10 @@ def datacube_extraction(params):
         ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
         ifs_voronoi = cube_ifs_values['ifs_voronoi']
 
+        ifs_existing_bin = cube_ifs_values['ifs_existing_bin']
+        if ifs_existing_bin:
+            ifs_existing_bin_folder = cube_ifs_values['ifs_existing_bin_folder']
+
         try:
             ifs_redshift = float(cube_ifs_values['ifs_redshift'])
             ifs_lmin_tot = float(cube_ifs_values['ifs_lmin_tot'])
@@ -844,10 +962,8 @@ def datacube_extraction(params):
             ifs_target_snr = float(cube_ifs_values['ifs_target_snr'])
 
             #converting to A
-            ifs_lmin_tot = ifs_lmin_tot*10
-            ifs_lmax_tot = ifs_lmax_tot*10
-            ifs_lmin_snr = ifs_lmin_snr_default*10
-            ifs_lmax_snr = ifs_lmax_snr_default*10
+            ifs_lmin_snr = ifs_lmin_tot
+            ifs_lmax_snr = ifs_lmax_tot
 
         except Exception:
             sg.popup ('Invalid input parameters!')
@@ -861,11 +977,6 @@ def datacube_extraction(params):
         if cube_ifs_event == ('Exit'):
             print ('Cube extraction routine closed. This main panel is now active again')
             print ('')
-            #reverting to nm:
-            ifs_lmin_tot = ifs_lmin_tot/10
-            ifs_lmax_tot = ifs_lmax_tot/10
-            ifs_lmin_snr = ifs_lmin_snr_default/10
-            ifs_lmax_snr = ifs_lmax_snr_default/10
             break
 
         #routine to view the datacube
@@ -1112,7 +1223,8 @@ def datacube_extraction(params):
                     continue
 
 
-
+        if ifs_existing_bin:
+            cubextr.handle_existing_bin_files(ifs_existing_bin_folder, ifs_output_dir, ifs_run_id)
 
         # preview mode for voronoi binning
         if cube_ifs_event == 'Preview bins' and not ifs_manual_bin:
@@ -1128,7 +1240,7 @@ def datacube_extraction(params):
                 ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
                 ifs_covariance, ifs_prepare_method)
             try:
-                cubextr.extract(config, preview, voronoi, ifs_manual_bin)
+                cubextr.extract(config, preview, voronoi, ifs_manual_bin, ifs_existing_bin)
             except Exception as e:
                 sg.popup("Error showing the bins:", str(e))
                 continue
@@ -1360,7 +1472,7 @@ def datacube_extraction(params):
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
                     ifs_covariance_manual, ifs_prepare_method)
                 try:
-                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Sorry, Error.", str(e))
                     continue
@@ -1402,7 +1514,7 @@ def datacube_extraction(params):
                     ifs_covariance_manual, ifs_prepare_method)
                 try:
                     #running the cubextract module to produce the spaxel and BIN_ID map
-                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Error! Cannot show the bins", str(e))
                     continue
@@ -1464,7 +1576,7 @@ def datacube_extraction(params):
                 # 5) Run cubextract again with the new bin configuration
                 try:
                     mock_voronoi = True # Fake voronoi bin required
-                    cubextr.extract(config_manual, False, mock_voronoi, ifs_manual_bin)
+                    cubextr.extract(config_manual, False, mock_voronoi, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.Popup("ERROR performing the extraction")
 
@@ -1489,7 +1601,7 @@ def datacube_extraction(params):
                     voronoi = True
                     preview = False
                     #calling the cube_extraction routine
-                    cubextr.extract(config, preview, voronoi, ifs_manual_bin)
+                    cubextr.extract(config, preview, voronoi, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.Popup ('ERROR performing the extraction')
                     continue
@@ -1546,15 +1658,19 @@ def datacube_extraction(params):
 
 
             #saving the extracted spectra also in single fits files SPAN-ready
-            root_spectra_file = result_data+'/'+ifs_run_id+'/'+ifs_run_id+'_BinSpectra_linear.fits'
-            hdul = fits.open(root_spectra_file)
-            data_flux = hdul[1].data['SPEC']
-            data_variance = hdul[1].data['ESPEC']
-            wavelengths = hdul[2].data['WAVE']
+            try:
+                root_spectra_file = result_data+'/'+ifs_run_id+'/'+ifs_run_id+'_BinSpectra_linear.fits'
+                hdul = fits.open(root_spectra_file)
+                data_flux = hdul[1].data['SPEC']
+                data_variance = hdul[1].data['ESPEC']
+                wavelengths = hdul[2].data['WAVE']
 
-            #creating the subdirectoy to store the single bins spectra
-            single_bins_dir = result_data+'/'+ifs_run_id+'/bins'
-            os.makedirs(single_bins_dir, exist_ok=True)
+                #creating the subdirectoy to store the single bins spectra
+                single_bins_dir = result_data+'/'+ifs_run_id+'/bins'
+                os.makedirs(single_bins_dir, exist_ok=True)
+            except Exception:
+                sg.popup('Wavelength interval not covered by the spectra!')
+                continue
 
             #saving the spectra
             # writing the single spectra with 'BIN_ID' in the filename
@@ -1575,7 +1691,7 @@ def datacube_extraction(params):
 
                     # Craring the HDU
                     hdulist = fits.HDUList([primary_hdu, table_hdu])
-                    filename = f"{single_bins_dir}/{ifs_run_id}_bin_id_{i:03}.fits"
+                    filename = f"{single_bins_dir}/{ifs_run_id}_bin_id_{i:04}.fits"
                     hdulist.writeto(filename, overwrite=True)
             except Exception as e:
                 sg.Popup('Results already present in the folder. Please, change the run_id name and try again')
@@ -1604,13 +1720,6 @@ def datacube_extraction(params):
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
-
-        #reverting to nm:
-        ifs_lmin_tot = ifs_lmin_tot/10
-        ifs_lmax_tot = ifs_lmax_tot/10
-        ifs_lmin_snr = ifs_lmin_snr_default/10
-        ifs_lmax_snr = ifs_lmax_snr_default/10
-
     cube_ifs_window.close()
 
     #updating the parameters
@@ -1636,6 +1745,8 @@ def datacube_extraction(params):
                     ifs_lmax_snr_default = ifs_lmax_snr_default,
                     ifs_manual_bin = ifs_manual_bin,
                     ifs_voronoi = ifs_voronoi,
+                    ifs_existing_bin = ifs_existing_bin,
+                    ifs_existing_bin_folder = ifs_existing_bin_folder,
                     ifs_bin_method = ifs_bin_method,
                     ifs_covariance = ifs_covariance,
                     ifs_prepare_method = ifs_prepare_method

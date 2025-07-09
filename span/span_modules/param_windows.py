@@ -562,7 +562,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         [sg.Text(' '), sg.Checkbox('Emission line(s) correction:', default = lick_correct_emission, key = 'lick_correct_emission'), sg.Text('Redshift guess'), sg.InputText(z_guess_lick_emission, key = 'z_guess_lick_emission', size = (15,1)), sg.Text(' '), sg.Checkbox('Perform Doppler correction', default = dop_correction_lick, key = 'dop_correction_lick')],
         [sg.Text(' '), sg.Checkbox('Correct for sigma:', default = correct_ew_sigma, key = 'correct_ew_sigma'), sg.Radio('Auto', "RADIOLICKSIGMA", default = radio_lick_sigma_auto, key = 'radio_lick_sigma_auto'), sg.Radio('Single (km/s):', "RADIOLICKSIGMA", default = radio_lick_sigma_single, key = 'radio_lick_sigma_single'), sg.InputText(sigma_single_lick, size = (5,1), key = 'sigma_single_lick'), sg.Radio('List:', "RADIOLICKSIGMA", default = radio_lick_sigma_list, key = 'radio_lick_sigma_list'), sg.InputText(sigma_lick_file, key = 'sigma_lick_file', size = (17,1)), sg.FileBrowse(size = (10,1)) ],
         [sg.Text(' '), sg.Checkbox('Estimate stellar parameters with SSP models:', default = stellar_parameters_lick, key = 'stellar_parameters_lick',tooltip='Perform interpolation with SSP model grids to retrieve age, metellicity and alpha enhancement. The Thomas2010 models are the most reliable'), sg.InputCombo(lick_ssp_models, key='ssp_model',default_value=ssp_model, readonly=True, size = (14,1)), sg.Text('Interpolation mode:',tooltip='Interpolate linearly with griddata function or with machine learning Gaussian Process Regression (GPR)'), sg.InputCombo(interp_modes, key='interp_model',default_value=interp_model, readonly=True, size = (14,1))],
-        [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))],
+        [sg.Push(), sg.Button("Help", size=(12, 1),button_color=('black','orange')), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))],
         [sg.HorizontalSeparator()],
 
         #7) Determination of the velocity disperion coefficients. Stand alone: need a separate sample of spectra
@@ -978,6 +978,14 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 df.to_csv(results_ew, index= False, sep=' ')
                 print('EWs corrected saved to ', results_ew)
                 sg.popup ('Succeed!')
+        
+        if ew_event == 'Help':
+            f = open(os.path.join(BASE_DIR, "help_files", "linestrength.txt"), 'r')
+            file_contents = f.read()
+            if layout == layouts.layout_android:
+                sg.popup_scrolled(file_contents, size=(120, 30))
+            else:
+                sg.popup_scrolled(file_contents, size=(100, 40))
 
     ew_window.close()
 
@@ -1187,6 +1195,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_kin_dust_stars = params.ppxf_kin_dust_stars
     ppxf_kin_dust_gas = params.ppxf_kin_dust_gas
     ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
+    # prev_spec = params.prev_spec_nopath
 
 
 
@@ -1212,7 +1221,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
 
         [sg.HorizontalSeparator()],
         [sg.Checkbox('Correct for dust the stars', key = 'ppxf_kin_dust_stars', default = ppxf_kin_dust_stars, tooltip='Applying the default 2-params attenuation curve for stars of Cappellari 2023'), sg.Checkbox('Correct for dust the gas', key = 'ppxf_kin_dust_gas', default = ppxf_kin_dust_gas, tooltip='Applying the Calzetti extinction curve for gas'), sg.Checkbox('Tie Balmer lines', key = 'ppxf_kin_tie_balmer', default = ppxf_kin_tie_balmer)],
-        [sg.Checkbox('Mask custom regions (A):', default = ppxf_kin_have_user_mask, key = 'ppxf_kin_have_user_mask', tooltip='Insert the regions you want to mask. NOT compatible with masking emission lines'), sg.InputText(ppxf_kin_mask_ranges_str, size = (30,1), key = 'ppxf_kin_mask_ranges')],
+        [sg.Checkbox('Mask custom regions (A):', default=ppxf_kin_have_user_mask, key='ppxf_kin_have_user_mask', tooltip='Insert the regions you want to mask.'), sg.InputText(ppxf_kin_mask_ranges_str, size=(30, 1), key='ppxf_kin_mask_ranges'), sg.Button('Graphical masking', key='ppxf_kin_graphical_mask',button_color= ('black','light blue'), tooltip='Opens a plot window to draw the regions to mask')],
         [sg.HorizontalSeparator()],
 
         [sg.Text('Moments to fit:', font = ('', default_size, 'bold'), tooltip='Moments of the LOSVD. Minimum 2 (V and sigma), maximum 6. Proposed value = 4'), sg.InputText(kin_moments, size = (3,1), key = 'kin_moments'), sg.Text('Add. degree:', font = ('', default_size, 'bold'), tooltip='Additive degree to the fit. Deactivate (-1) if you are interested to gas flux'), sg.InputText(additive_degree_kin, size = (3,1), key = 'additive_degree_kin'), sg.Text('Mult. degree:', font = ('', default_size, 'bold'), tooltip='Multiplicative degree to the fit. Use if you want to use gas flux'), sg.InputText(multiplicative_degree_kin, size = (3,1), key = 'multiplicative_degree_kin'), sg.Text('Noise:', font = ('', default_size, 'bold'), tooltip='Mean noise per pixel of the spectrum'), sg.InputText(ppxf_kin_noise, size = (6,1), key = 'ppxf_kin_noise'), sg.Checkbox('Auto noise', default = kin_best_noise, key = ('kin_best_noise'), tooltip='Auto calculate the noise level of the spectrum for the best formal error estimation')],
@@ -1284,6 +1293,20 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
                 sg.Popup('Masking values not valid')
                 ppxf_kin_mask_ranges_str = params.ppxf_kin_mask_ranges_str
                 # ppxf_kin_mask_ranges = ppxf_kin_mask_ranges_default
+                continue
+
+        # Graphical masking
+        if ppxf_kin_event == 'ppxf_kin_graphical_mask' and ppxf_kin_values['ppxf_kin_have_user_mask']:
+            try:
+                prev_spec_mask = ''
+                prev_spec_mask = params.prev_spec
+                touch_mode = (layout == layouts.layout_android)
+                wavelength_mask, flux_mask, step_mask, name_mask = stm.read_spec(prev_spec_mask, params.lambda_units)
+                current_mask_str = ppxf_kin_window['ppxf_kin_mask_ranges'].get()
+                updated_mask = stm.graphical_masking_1D(wavelength_mask, flux_mask, current_mask_str, touch_mode=touch_mode)
+                ppxf_kin_window['ppxf_kin_mask_ranges'].update(updated_mask)
+            except Exception:
+                sg.popup('You need to load at least one spectrum to perform the graphical masking!')
                 continue
 
         #checking the existence of the custom templates in the specified folder
@@ -1471,7 +1494,9 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
 
         [sg.Radio('Preset SPS libraries included with SPAN:', 'RADIOLIBPPXF', default = ppxf_pop_preloaded_lib, key = 'ppxf_pop_preloaded_lib', font = ('', default_size, 'bold'), tooltip='Use the sMILES library to measure also the Alpha/Fe'), sg.InputCombo(markers_ppxf, key='markers_ppxf',default_value=stellar_library, readonly=True, size = (14,1))],                                                                                                                                                                                                            [sg.Radio('Custom (E)MILES:', 'RADIOLIBPPXF', default = ppxf_pop_custom_lib, key = 'ppxf_pop_custom_lib', font = ('', default_size, 'bold'),tooltip='Select a folder containing your set of (E)MILES templates'), sg.InputText(ppxf_pop_lib_folder, size = (21,1), key = 'ppxf_pop_lib_folder'), sg.FolderBrowse(), sg.Text('Prefix:', font = ('', default_size, 'bold'), tooltip='Emiles templates have a suffix, please provide it'), sg.InputText(ppxf_custom_temp_suffix, size = (10,1), key = 'ppxf_custom_temp_suffix') ],
         [sg.Radio('Custom .npz template set:', 'RADIOLIBPPXF', default = ppxf_pop_custom_npz, key = 'ppxf_pop_custom_npz', font = ('', default_size, 'bold'), tooltip='Use your custom .npz template set'), sg.InputText(ppxf_pop_npz_file, size = (21,1), key = 'ppxf_pop_npz_file'), sg.FileBrowse()],
-        [sg.Checkbox('Mask the emission lines', default = ppxf_pop_mask, key = 'ppxf_pop_mask', tooltip='If activated, you should perform a fit without gas emission'), sg.Checkbox('Mask custom regions (A):', default = ppxf_pop_want_to_mask, key = 'ppxf_pop_want_to_mask', tooltip='Insert custom masking. NOT compatible with masking emission lines'), sg.InputText(ppxf_pop_mask_ranges_str, size = (20,1), key = 'ppxf_pop_mask_ranges')],
+
+        [sg.Checkbox('Mask the emission lines', default = ppxf_pop_mask, key = 'ppxf_pop_mask', tooltip='If activated, you should perform a fit without gas emission'), sg.Checkbox('Regions to mask (A):', default = ppxf_pop_want_to_mask, key = 'ppxf_pop_want_to_mask'), sg.InputText(ppxf_pop_mask_ranges_str, size = (14,1), key = 'ppxf_pop_mask_ranges'), sg.Button('Graphical masking', key='ppxf_pop_graphical_mask',button_color= ('black','light blue'), tooltip='Opens a plot window to draw the regions to mask')],
+
         [sg.Checkbox('Convolve templates to galaxy res.', default = ppxf_pop_convolve, key = 'ppxf_pop_convolve', tooltip='If activated, the templates are convolved to the resolution of the galaxy spectrum'), sg.Checkbox('Mean ages in log10', default = ppxf_pop_lg_age, key = 'ppxf_pop_lg_age', tooltip='If de-activated, the mean ages are calculated in the linear grid (in Gyr) instead the default log10 grid of pPXF'), sg.Checkbox('Mean metal in log10', default = ppxf_pop_lg_met, key = 'ppxf_pop_lg_met', tooltip='If de-activated, the mean metallicities (including Alpha/Fe) are calculated in the linear grid instead the default log10 grid of pPXF') ],
         [sg.HorizontalSeparator()],
 
@@ -1515,6 +1540,21 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 sg.Popup('Masking values not valid')
                 ppxf_pop_mask_ranges_str = params.ppxf_pop_mask_ranges_str
                 # ppxf_pop_mask_ranges = ppxf_pop_mask_ranges_default
+                continue
+
+        # graphical masking
+        if ppxf_pop_event == 'ppxf_pop_graphical_mask' and ppxf_pop_values['ppxf_pop_want_to_mask']:
+
+            try:
+                prev_spec_mask_pop = ''
+                prev_spec_mask_pop = params.prev_spec
+                touch_mode = (layout == layouts.layout_android)
+                wavelength_mask_pop, flux_mask_pop, step_mask_pop, name_mask_pop = stm.read_spec(prev_spec_mask_pop, params.lambda_units)
+                current_mask_str_pop = ppxf_pop_window['ppxf_pop_mask_ranges'].get()
+                updated_mask_pop = stm.graphical_masking_1D(wavelength_mask_pop, flux_mask_pop, current_mask_str_pop, touch_mode=touch_mode)
+                ppxf_pop_window['ppxf_pop_mask_ranges'].update(updated_mask_pop)
+            except Exception:
+                sg.popup('You need to load at least one spectrum to perform the graphical masking!')
                 continue
 
 

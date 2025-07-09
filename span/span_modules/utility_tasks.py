@@ -82,7 +82,7 @@ def show_sampling(wavelength):
 
     print('*** Showing sampling ***')
     step_spectrum, is_linear = uti.show_sampling(wavelength)
-    sg.popup('Step: ', round(step_spectrum, 4), 'nm')
+    sg.popup('Step: ', round(step_spectrum, 4), 'A')
 
 
 
@@ -101,12 +101,12 @@ def show_resolution(wavelength, flux, res_wave1, res_wave2):
         sg.popup('Wavelength window outside the limits of the spectrum!')
         return
 
-    resolution_R, line_wave, line_flux_spec_norm, line_flux_spec_fit = uti.resolution(wavelength, flux, res_wave1, res_wave2)
+    resolution_R, fwhm, fwhm_err, line_wave, line_flux_spec_norm, line_flux_spec_fit = uti.resolution (wavelength, flux, res_wave1, res_wave2)
     print('Resolution R: ', resolution_R)
 
     plt.plot(line_wave, line_flux_spec_norm, label='Spectrum')
     plt.plot(line_wave, line_flux_spec_fit, label='Fit line spec')
-    plt.xlabel('Wavelength (nm)')
+    plt.xlabel('Wavelength (A)')
     plt.ylabel('Flux')
     plt.title(f'Resolution: {round(resolution_R)}')
     plt.legend()
@@ -162,12 +162,12 @@ def compare_spectra(prev_spec, spec_compare_file, lambda_units):
         fig.suptitle('Compared spectra')
         ax1.plot(wavelength, flux, label='Selected spectrum')
         ax1.plot(wave_compare, flux_compare, label='Comparison spectrum')
-        ax1.set_xlabel('Wavelength (nm)')
+        ax1.set_xlabel('Wavelength (A)')
         ax1.set_ylabel('Flux')
         ax1.legend()
         ax2.plot(wavelength, norm_flux, label='Normalised selected spectrum')
         ax2.plot(wave_compare, norm_compare_flux, label='Normalised comparison spectrum')
-        ax2.set_xlabel('Wavelength (nm)')
+        ax2.set_xlabel('Wavelength (A)')
         ax2.set_ylabel('Normalised flux')
         ax2.legend()
 
@@ -205,11 +205,11 @@ def convert_flux_task(event, prev_spec, prev_spec_nopath, spec_names, spec_names
                     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
                     fig.suptitle('Original - Converted Spectrum')
                     ax1.plot(wavelength, flux, label='Original spectrum')
-                    ax1.set_xlabel('Wavelength (nm)')
+                    ax1.set_xlabel('Wavelength (A)')
                     ax1.set_ylabel('Flux density')
                     ax1.legend(fontsize=10)
                     ax2.plot(wavelength, converted_flux, label='Converted flux')
-                    ax2.set_xlabel('Wavelength (nm)')
+                    ax2.set_xlabel('Wavelength (A)')
                     ax2.set_ylabel('Flux density')
                     ax2.legend(fontsize=10)
                     plt.show()
@@ -281,9 +281,9 @@ def snr_analysis(event, prev_spec, spec_names, spec_names_nopath, spectra_number
             try:
                 snr_pix, snr_ang = uti.show_snr(wavelength, flux, snr_wave, epsilon_wave_snr)
                 if event == 'Show snr':
-                    sg.popup(f'SNR per pixel: {int(round(snr_pix))}, SNR per Ångström: {int(round(snr_ang))} at {snr_wave} nm')
+                    sg.popup(f'SNR per pixel: {int(round(snr_pix))}, SNR per Ångström: {int(round(snr_ang))} at {snr_wave} A')
                 if event == 'Save one':
-                    print(f'SNR per pixel: {int(round(snr_pix))}, SNR per Ångström: {int(round(snr_ang))} at {snr_wave} nm')
+                    print(f'SNR per pixel: {int(round(snr_pix))}, SNR per Ångström: {int(round(snr_ang))} at {snr_wave} A')
             except Exception:
                 sg.popup('Failed to calculate the S/N')
 
@@ -316,11 +316,11 @@ def snr_analysis(event, prev_spec, spec_names, spec_names_nopath, spectra_number
                 snr_ang_array[i] = int(snr_ang)
 
         # Save results to files
-        file_snr_pix = f"{result_snr_dir}/{spectra_list_name}_SNR_pix_@{snr_wave}nm_{timestamp}.dat"
-        file_snr_ang = f"{result_snr_dir}/{spectra_list_name}_SNR_ang_@{snr_wave}nm_{timestamp}.dat"
+        file_snr_pix = f"{result_snr_dir}/{spectra_list_name}_SNR_pix_@{snr_wave}A_{timestamp}.dat"
+        file_snr_ang = f"{result_snr_dir}/{spectra_list_name}_SNR_ang_@{snr_wave}A_{timestamp}.dat"
 
-        snr_pix_id = ['#Spectrum', f'SNR_per_pix@{snr_wave}nm']
-        snr_ang_id = ['#Spectrum', f'SNR_per_Ang@{snr_wave}nm']
+        snr_pix_id = ['#Spectrum', f'SNR_per_pix@{snr_wave}A']
+        snr_ang_id = ['#Spectrum', f'SNR_per_Ang@{snr_wave}A']
 
         snr_pix_data_array = np.column_stack((spec_names_nopath, snr_pix_array))
         snr_ang_data_array = np.column_stack((spec_names_nopath, snr_ang_array))

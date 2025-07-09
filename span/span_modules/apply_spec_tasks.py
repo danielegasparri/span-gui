@@ -66,7 +66,7 @@ BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 
 
-def apply_cropping(event, save_plot, save_intermediate_files, params):
+def apply_cropping(event, save_plot, params):
 
     """
     Applies the cropping task to a spectrum, limiting its wavelength range
@@ -95,7 +95,7 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
             return params  # Ritorna i params originali senza modifiche
 
         # Save cropped spectrum if requested
-        if save_intermediate_files and (event in ['Process all', 'Process selected']):
+        if params.save_intermediate_spectra and (event in ['Process all', 'Process selected']):
             try:
                 file_cropped = os.path.join(params.result_spec, f'crop_{params.prev_spec_nopath}.fits')
                 uti.save_fits(new_wavelength, new_flux, file_cropped)
@@ -108,7 +108,7 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
         # if event == 'Process all' and save_plot:
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Cropped')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend(fontsize=10)
         #     plt.title(f'Cropped {params.prev_spec_nopath}')
@@ -126,7 +126,7 @@ def apply_cropping(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
+def apply_sigma_clipping(event, save_plot, params):
 
     """
     Applies sigma clipping to clean the spectrum dynamically
@@ -153,7 +153,7 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
             return params  # Return original params if clipping fails
 
         # Save clipped spectrum if requested
-        if save_intermediate_files and (event in ['Process all', 'Process selected']):
+        if params.save_intermediate_spectra and (event in ['Process all', 'Process selected']):
             file_clipped = os.path.join(params.result_spec, f'clip_{params.prev_spec_nopath}.fits')
             uti.save_fits(clip_wavelength, clip_flux, file_clipped)
             print(f'File saved: {file_clipped}')
@@ -162,7 +162,7 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
         # if event == 'Process all' and save_plot:
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(clip_wavelength, clip_flux, label='Cleaned')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend(fontsize=10)
         #     plt.title(f'Cleaned {params.prev_spec_nopath}')
@@ -180,7 +180,7 @@ def apply_sigma_clipping(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, params):
+def apply_sigma_clipping_from_file(event, save_plot, params, i):
 
     """
     Apply sigma clipping using values from an external file
@@ -224,23 +224,23 @@ def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, pa
     try:
         clip_wavelength, clip_flux = spman.sigma_clip(
             params.wavelength, params.flux, params.clip_factor,
-            sigma_clip_resolution[params.spectrum_index], sigma_clip_vel_value[params.spectrum_index])
+            sigma_clip_resolution[i], sigma_clip_vel_value[i])
 
         # Saving spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
-            file_clipped = os.path.join(params.result_spec, f'clip_{params.spec_names_nopath[params.spectrum_index]}.fits')
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+            file_clipped = os.path.join(params.result_spec, f'clip_{params.spec_names_nopath[i]}.fits')
             uti.save_fits(clip_wavelength, clip_flux, file_clipped)
             print(f'File saved: {file_clipped}')
 
         # Saving plots
         # if event == 'Process all' and save_plot:
-        #     plt.title(f'Cleaned {params.spec_names_nopath[params.spectrum_index]}')
+        #     plt.title(f'Cleaned {params.spec_names_nopath[i]}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(clip_wavelength, clip_flux, label='Cleaned')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
-        #     plt.savefig(os.path.join(params.result_plot_dir, f'cleaned_{params.spec_names_nopath[params.spectrum_index]}.png'), dpi=300)
+        #     plt.savefig(os.path.join(params.result_plot_dir, f'cleaned_{params.spec_names_nopath[i]}.png'), dpi=300)
         #     plt.close()
 
         return replace(params,
@@ -253,7 +253,7 @@ def apply_sigma_clipping_from_file(event, save_plot, save_intermediate_files, pa
 
 
 
-def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
+def apply_wavelet_cleaning(event, save_plot, params):
 
     """
     Applies wavelet-based noise reduction to the spectrum
@@ -275,7 +275,7 @@ def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
         denoised_flux = spman.wavelet_cleaning(params.wavelength, params.flux, params.sigma_wavelets, params.wavelets_layers)
 
         # Saving the spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_wavelet = os.path.join(params.result_spec, f'wavelet_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, denoised_flux, file_wavelet)
             print(f'File saved: {file_wavelet}')
@@ -285,7 +285,7 @@ def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Wavelet Cleaned {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, denoised_flux, label='Cleaned')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'wavelet_cleaned_{params.prev_spec_nopath}.png'), dpi=300)
@@ -304,7 +304,7 @@ def apply_wavelet_cleaning(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_denoising(event, save_plot, save_intermediate_files, params):
+def apply_denoising(event, save_plot, params):
 
     """
     Applies various denoising techniques to the spectrum
@@ -334,7 +334,7 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
             new_flux = spman.bandpass(params.wavelength, new_flux, params.bandpass_lower_cut_off, params.bandpass_upper_cut_off, params.bandpass_order)
 
         # Saving the spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_denoised = os.path.join(params.result_spec, f'denoised_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, new_flux, file_denoised)
             print(f'File saved: {file_denoised}')
@@ -344,7 +344,7 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Denoised {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, new_flux, label='Denoised')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'denoised_{params.prev_spec_nopath}.png'), dpi=300)
@@ -359,7 +359,7 @@ def apply_denoising(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
+def apply_doppler_correction(event, save_plot, params):
 
     """
     Applies Doppler correction to the spectrum
@@ -380,7 +380,7 @@ def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
         new_wavelength, new_flux = spman.dopcor(params.wavelength, params.flux, params.dop_cor_single_shot_vel, params.dop_cor_have_vel)
 
         # Saving
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_dopcor = os.path.join(params.result_spec, f'dopcor_{params.prev_spec_nopath}.fits')
             uti.save_fits(new_wavelength, new_flux, file_dopcor)
             print(f'File saved: {file_dopcor}')
@@ -390,7 +390,7 @@ def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Doppler Corrected {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Dop cor')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'dopcor_{params.prev_spec_nopath}.png'), dpi=300)
@@ -407,7 +407,7 @@ def apply_doppler_correction(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files, params):
+def apply_doppler_correction_from_file(event, save_plot, params, i):
 
     """
     Apply Doppler correction using values from an external file
@@ -449,26 +449,26 @@ def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files
     # Apply Doppler correction
     try:
         new_wavelength, new_flux = spman.dopcor(
-            params.wavelength, params.flux, dopcor_values[params.spectrum_index], params.dop_cor_have_vel)
+            params.wavelength, params.flux, dopcor_values[i], params.dop_cor_have_vel)
 
         # Print for debugging
-        print(params.spec_names_nopath[params.spectrum_index], dopcor_values[params.spectrum_index])
+        print(params.spec_names_nopath[i], dopcor_values[i])
 
         # Save the corrected spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
-            file_dopcor = os.path.join(params.result_spec, f'dopcor_{params.spec_names_nopath[params.spectrum_index]}.fits')
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+            file_dopcor = os.path.join(params.result_spec, f'dopcor_{params.spec_names_nopath[i]}.fits')
             uti.save_fits(new_wavelength, new_flux, file_dopcor)
             print(f'File saved: {file_dopcor}')
 
         # Save plot if required
         # if event == 'Process all' and save_plot:
-        #     plt.title(f'Doppler Corrected {params.spec_names_nopath[params.spectrum_index]}')
+        #     plt.title(f'Doppler Corrected {params.spec_names_nopath[i]}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Dop cor')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
-        #     plt.savefig(os.path.join(params.result_plot_dir, f'dopcor_{params.spec_names_nopath[params.spectrum_index]}.png'), dpi=300)
+        #     plt.savefig(os.path.join(params.result_plot_dir, f'dopcor_{params.spec_names_nopath[i]}.png'), dpi=300)
         #     plt.close()
 
 
@@ -483,7 +483,7 @@ def apply_doppler_correction_from_file(event, save_plot, save_intermediate_files
 
 
 
-def apply_heliocentric_correction(event, save_plot, save_intermediate_files, params):
+def apply_heliocentric_correction(event, save_plot, params):
 
     """
     Applies heliocentric velocity correction
@@ -510,7 +510,7 @@ def apply_heliocentric_correction(event, save_plot, save_intermediate_files, par
         print(f'Heliocentric correction: {correction} km/s')
 
         # Save the corrected spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_helio = os.path.join(params.result_spec, f'helio_{params.prev_spec_nopath}.fits')
             uti.save_fits(new_wavelength, new_flux, file_helio)
             print(f'File saved: {file_helio}')
@@ -520,7 +520,7 @@ def apply_heliocentric_correction(event, save_plot, save_intermediate_files, par
         #     plt.title(f'Heliocentric Corrected {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Helio cor')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'heliocor_{params.prev_spec_nopath}.png'), dpi=300)
@@ -537,7 +537,7 @@ def apply_heliocentric_correction(event, save_plot, save_intermediate_files, par
 
 
 
-def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_files, params):
+def apply_heliocentric_correction_from_file(event, save_plot, params, i):
 
     """
     Apply heliocentric correction using values from an external file
@@ -596,29 +596,29 @@ def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_
     # Apply the heliocentric correction
     try:
         correction, new_wavelength, new_flux = spman.helio_corr(
-            params.wavelength, params.flux, date[params.spectrum_index],
-            location[params.spectrum_index], ra[params.spectrum_index], dec[params.spectrum_index])
+            params.wavelength, params.flux, date[i],
+            location[i], ra[i], dec[i])
 
         # Output the correction information
-        print(params.spec_names_nopath[params.spectrum_index], date[params.spectrum_index],
-              location[params.spectrum_index], ra[params.spectrum_index], dec[params.spectrum_index],
+        print(params.spec_names_nopath[i], date[i],
+              location[i], ra[i], dec[i],
               correction, 'km/s')
 
         # Save the corrected spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
-            file_heliocorr = os.path.join(params.result_spec, f'heliocorr_{params.spec_names_nopath[params.spectrum_index]}.fits')
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+            file_heliocorr = os.path.join(params.result_spec, f'heliocorr_{params.spec_names_nopath[i]}.fits')
             uti.save_fits(new_wavelength, new_flux, file_heliocorr)
             print(f'File saved: {file_heliocorr}')
 
         # Save plot if required
         # if event == 'Process all' and save_plot:
-        #     plt.title(f'Heliocentric Corrected {params.spec_names_nopath[params.spectrum_index]}')
+        #     plt.title(f'Heliocentric Corrected {params.spec_names_nopath[i]}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(new_wavelength, new_flux, label='Helio cor')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
-        #     plt.savefig(os.path.join(params.result_plot_dir, f'heliocor_{params.spec_names_nopath[params.spectrum_index]}.png'), dpi=300)
+        #     plt.savefig(os.path.join(params.result_plot_dir, f'heliocor_{params.spec_names_nopath[i]}.png'), dpi=300)
         #     plt.close()
 
 
@@ -633,8 +633,7 @@ def apply_heliocentric_correction_from_file(event, save_plot, save_intermediate_
 
 
 
-
-def apply_rebinning(event, save_plot, save_intermediate_files, params):
+def apply_rebinning(event, save_plot, params):
 
     """
     Applies rebinning to the spectrum (linear or logarithmic)
@@ -661,7 +660,7 @@ def apply_rebinning(event, save_plot, save_intermediate_files, params):
             rebinned_wave, rebinned_flux = params.wavelength, params.flux  # No rebinning applied
 
         # Save the rebinned spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_rebinned = os.path.join(params.result_spec, f'rebinned_{params.prev_spec_nopath}.fits')
             uti.save_fits(rebinned_wave, rebinned_flux, file_rebinned)
             print(f'File saved: {file_rebinned}')
@@ -671,7 +670,7 @@ def apply_rebinning(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Rebinned {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(rebinned_wave, rebinned_flux, label='Binned')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'rebin_{params.prev_spec_nopath}.png'), dpi=300)
@@ -688,7 +687,7 @@ def apply_rebinning(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_resolution_degradation(event, save_plot, save_intermediate_files, params):
+def apply_resolution_degradation(event, save_plot, params):
 
     """
     Applies resolution degradation to the spectrum
@@ -713,7 +712,7 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
             print('*** Degrading resolution (R to R) ***')
             degraded_wave, degraded_flux = spman.degrade(params.wavelength, params.flux, params.initial_res_r, params.final_res_r, True)
 
-            if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+            if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
                 file_degraded = os.path.join(params.result_spec, f'degraded_R{int(round(params.final_res_r))}_{params.prev_spec_nopath}.fits')
                 uti.save_fits(degraded_wave, degraded_flux, file_degraded)
                 print(f'File saved: {file_degraded}')
@@ -723,7 +722,7 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
             print('*** Degrading resolution from R to FWHM ***')
             degraded_wave, degraded_flux = spman.degradeRtoFWHM(params.wavelength, params.flux, params.initial_res_r, params.final_res_r_to_fwhm)
 
-            if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+            if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
                 file_degraded_R_to_FWHM = os.path.join(params.result_spec, f'degraded_FWHM{round(params.final_res_r_to_fwhm, 1)}_{params.prev_spec_nopath}.fits')
                 uti.save_fits(degraded_wave, degraded_flux, file_degraded_R_to_FWHM)
                 print(f'File saved: {file_degraded_R_to_FWHM}')
@@ -733,17 +732,28 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
             print('*** Degrading resolution in FWHM ***')
             degraded_wave, degraded_flux = spman.degrade_lambda(params.wavelength, params.flux, params.initial_res_fwhm, params.final_res_fwhm)
 
-            if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+            if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
                 file_degraded_lambda = os.path.join(params.result_spec, f'degraded_FWHM{round(params.final_res_fwhm, 1)}_{params.prev_spec_nopath}.fits')
                 uti.save_fits(degraded_wave, degraded_flux, file_degraded_lambda)
                 print(f'File saved: {file_degraded_lambda}')
+
+
+        # Case D: Degrading MUSE data to a constant FWHM
+        if params.res_degrade_muse:
+            print ('*** Degrading resolution of MUSE data to a constant FWHM ***')
+            degraded_wave, degraded_flux = spman.degrade_muse(params.wavelength, params.flux, params.res_degrade_muse_value)
+
+            if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+                file_degraded_res_muse = os.path.join(params.result_spec, f'degraded_FWHM{round(params.res_degrade_muse_value, 1)}_{params.prev_spec_nopath}.fits')
+                uti.save_fits(degraded_wave, degraded_flux, file_degraded_res_muse)
+                print(f'File saved: {file_degraded_res_muse}')
 
         # Save plot if required
         # if event == 'Process all' and save_plot:
         #     plt.title(f'Degraded {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(degraded_wave, degraded_flux, label='Degraded')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'degrade_{params.prev_spec_nopath}.png'), dpi=300)
@@ -760,7 +770,7 @@ def apply_resolution_degradation(event, save_plot, save_intermediate_files, para
 
 
 
-def apply_normalisation(event, save_plot, save_intermediate_files, params):
+def apply_normalisation(event, save_plot, params):
 
     """
     Normalises the spectrum at a given wavelength
@@ -788,7 +798,7 @@ def apply_normalisation(event, save_plot, save_intermediate_files, params):
         normalised_flux = spman.norm_spec(params.wavelength, params.flux, params.norm_wave, epsilon_norm, params.flux)
 
         # Save the normalised spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_normalised = os.path.join(params.result_spec, f'norm{params.norm_wave}_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, normalised_flux, file_normalised)
             print(f'File saved: {file_normalised}')
@@ -798,7 +808,7 @@ def apply_normalisation(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Normalised {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, normalised_flux, label='Normalised')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'norm_{params.prev_spec_nopath}.png'), dpi=300)
@@ -814,7 +824,7 @@ def apply_normalisation(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
+def apply_sigma_broadening(event, save_plot, params):
 
     """
     Broadens the spectrum by a given sigma value
@@ -835,7 +845,7 @@ def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
         broadened_flux = spman.sigma_broad(params.wavelength, params.flux, params.sigma_to_add)
 
         # Save the broadened spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_broad = os.path.join(params.result_spec, f'broad{int(round(params.sigma_to_add))}_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, broadened_flux, file_broad)
             print(f'File saved: {file_broad}')
@@ -845,7 +855,7 @@ def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Sigma broad {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, broadened_flux, label='Broadened')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'broad_{params.prev_spec_nopath}.png'), dpi=300)
@@ -861,7 +871,7 @@ def apply_sigma_broadening(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_noise_addition(event, save_plot, save_intermediate_files, params):
+def apply_noise_addition(event, save_plot, params):
 
     """
     Adds noise to the spectrum
@@ -882,7 +892,7 @@ def apply_noise_addition(event, save_plot, save_intermediate_files, params):
         noisy_flux = spman.add_noise(params.wavelength, params.flux, params.noise_to_add)
 
         # Save the noisy spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_noise = os.path.join(params.result_spec, f'SNR{int(round(params.noise_to_add))}_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, noisy_flux, file_noise)
             print(f'File saved: {file_noise}')
@@ -892,7 +902,7 @@ def apply_noise_addition(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Add noise {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, noisy_flux, label='Noisy')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'SNR_{params.prev_spec_nopath}.png'), dpi=300)
@@ -908,7 +918,7 @@ def apply_noise_addition(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_continuum_subtraction(event, save_plot, save_intermediate_files, params):
+def apply_continuum_subtraction(event, save_plot, params):
 
     """
     Performs continuum modelling and subtraction
@@ -936,7 +946,7 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
                 params.cont_poly_degree, params.cont_math_operation, preview)
 
         # Save the modified spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_cont_sub = os.path.join(params.result_spec, f'cont_sub_{params.prev_spec_nopath}.fits')
             file_cont = os.path.join(params.result_spec, f'cont_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, corrected_flux, file_cont_sub)
@@ -948,7 +958,7 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
         #     plt.title(f'Continuum {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, corrected_flux, label='Cont. removed')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'cont_{params.prev_spec_nopath}.png'), dpi=300)
@@ -966,7 +976,7 @@ def apply_continuum_subtraction(event, save_plot, save_intermediate_files, param
 
 
 
-def apply_subtract_normalised_average(event, save_plot, save_intermediate_files, params):
+def apply_subtract_normalised_average(event, save_plot, params):
 
     """
     Subtracts the normalised average spectrum
@@ -989,7 +999,7 @@ def apply_subtract_normalised_average(event, save_plot, save_intermediate_files,
                                             params.spectra_number, params.spec_names)
 
         # Save the modified spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_subtracted_avg = os.path.join(params.result_spec, f'subtracted_average_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, subtracted_flux, file_subtracted_avg)
             print(f'File saved: {file_subtracted_avg}')
@@ -999,7 +1009,7 @@ def apply_subtract_normalised_average(event, save_plot, save_intermediate_files,
         #     plt.title(f'Subtract average {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, subtracted_flux, label='Subtracted')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'sub_avg_{params.prev_spec_nopath}.png'), dpi=300)
@@ -1016,7 +1026,7 @@ def apply_subtract_normalised_average(event, save_plot, save_intermediate_files,
 
 
 
-def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files, params):
+def apply_subtract_normalised_spectrum(event, save_plot, params):
 
     """
     Subtracts a single normalised spectrum
@@ -1041,7 +1051,7 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
         updated_flux = spmt.sub_norm_single(params.wavelength, params.flux, params.spectra_to_subtract, params.lambda_units)
 
         # Save the modified spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             file_subtracted_single = os.path.join(params.result_spec, f'subtracted_single_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, updated_flux, file_subtracted_single)
             print(f'File saved: {file_subtracted_single}')
@@ -1051,7 +1061,7 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
         #     plt.title(f'Subtract norm spec {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, updated_flux, label='Subtracted')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'sub_norm_spec_{params.prev_spec_nopath}.png'), dpi=300)
@@ -1067,7 +1077,7 @@ def apply_subtract_normalised_spectrum(event, save_plot, save_intermediate_files
 
 
 
-def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
+def apply_add_pedestal(event, save_plot, params):
 
     """
     Adds a constant pedestal value to the spectrum
@@ -1088,7 +1098,7 @@ def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
         updated_flux = params.flux + params.pedestal_to_add
 
         # Save the modified spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             pedestal_suffix = str(int(round(params.pedestal_to_add)))
             file_pedestal = os.path.join(params.result_spec, f'pedestal{pedestal_suffix}_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, updated_flux, file_pedestal)
@@ -1099,7 +1109,7 @@ def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Pedestal {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, updated_flux, label='Pedestal')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'pedestal_{params.prev_spec_nopath}.png'), dpi=300)
@@ -1115,7 +1125,7 @@ def apply_add_pedestal(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_multiplication(event, save_plot, save_intermediate_files, params):
+def apply_multiplication(event, save_plot, params):
 
     """
     Multiplies the spectrum by a constant factor
@@ -1136,7 +1146,7 @@ def apply_multiplication(event, save_plot, save_intermediate_files, params):
         updated_flux = params.flux * params.multiply_factor
 
         # Save the modified spectrum
-        if save_intermediate_files and (event == 'Process all' or event == 'Process selected'):
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
             multiplied_suffix = str(int(round(params.multiply_factor)))
             file_multiplied = os.path.join(params.result_spec, f'multiplied{multiplied_suffix}_{params.prev_spec_nopath}.fits')
             uti.save_fits(params.wavelength, updated_flux, file_multiplied)
@@ -1147,7 +1157,7 @@ def apply_multiplication(event, save_plot, save_intermediate_files, params):
         #     plt.title(f'Multiply {params.prev_spec_nopath}')
         #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
         #     plt.plot(params.wavelength, updated_flux, label='Multiplied')
-        #     plt.xlabel("Wavelength (nm)")
+        #     plt.xlabel("Wavelength (A)")
         #     plt.ylabel("Flux")
         #     plt.legend()
         #     plt.savefig(os.path.join(params.result_plot_dir, f'multiply_{params.prev_spec_nopath}.png'), dpi=300)
@@ -1163,7 +1173,7 @@ def apply_multiplication(event, save_plot, save_intermediate_files, params):
 
 
 
-def apply_derivatives(event, save_plot, save_intermediate_files, params):
+def apply_derivatives(event, save_plot, params):
 
     """
     Computes the first and second derivatives of the spectrum
@@ -1202,7 +1212,7 @@ def apply_derivatives(event, save_plot, save_intermediate_files, params):
             axes[2].set_ylabel('Flux')
             axes[2].legend()
 
-            plt.xlabel('Wavelength (nm)')
+            plt.xlabel('Wavelength ($\AA$)')
             plt.tight_layout()
             if event == 'Preview spec.':
                 plt.show()
@@ -1227,7 +1237,7 @@ def apply_derivatives(event, save_plot, save_intermediate_files, params):
 
 
 
-def combine_spectra(event, save_plot, save_intermediate_files, params):
+def combine_spectra(event, save_plot, params):
 
     """
     Combine multiple spectra using averaging, summation, and normalisation
@@ -1253,7 +1263,7 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             average_spec = spmt.average(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = average_spec[:, 0], average_spec[:, 1]
 
-            if event == 'Process selected' and save_intermediate_files:
+            if event == 'Process selected' and params.save_intermediate_spectra:
                 file_avg = os.path.join(params.result_spec, 'avg_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_avg)
                 print(f'File saved: {file_avg}')
@@ -1264,7 +1274,7 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             average_norm_spec = spmt.average_norm(params.lambda_units, params.wavelength, params.flux, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = average_norm_spec[:, 0], average_norm_spec[:, 1]
 
-            if event == 'Process selected' and save_intermediate_files:
+            if event == 'Process selected' and params.save_intermediate_spectra:
                 file_avg_norm = os.path.join(params.result_spec, 'norm_avg_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_avg_norm)
                 print(f'File saved: {file_avg_norm}')
@@ -1275,7 +1285,7 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             sum_spec = spmt.sum_spec(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = sum_spec[:, 0], sum_spec[:, 1]
 
-            if event == 'Process selected' and save_intermediate_files:
+            if event == 'Process selected' and params.save_intermediate_spectra:
                 file_sum = os.path.join(params.result_spec, 'sum_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_sum)
                 print(f'File saved: {file_sum}')
@@ -1286,7 +1296,7 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
             sum_norm_spec = spmt.sum_norm_spec(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = sum_norm_spec[:, 0], sum_norm_spec[:, 1]
 
-            if event == 'Process selected' and save_intermediate_files:
+            if event == 'Process selected' and params.save_intermediate_spectra:
                 file_sum_norm = os.path.join(params.result_spec, 'norm_sum_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_sum_norm)
                 print(f'File saved: {file_sum_norm}')
@@ -1295,7 +1305,7 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
         if event == 'Preview spec.' and proc_wavelength is not None and proc_flux is not None:
             plt.plot(params.original_wavelength, params.original_flux, label='Original spec.')
             plt.plot(proc_wavelength, proc_flux, label='Processed')
-            plt.xlabel('Wavelength (nm)', fontsize=9)
+            plt.xlabel('Wavelength ($\AA$)', fontsize=9)
             plt.title('Spectral Combination')
             plt.ylabel('Flux')
             plt.legend(fontsize=10)
@@ -1304,8 +1314,8 @@ def combine_spectra(event, save_plot, save_intermediate_files, params):
 
         # Return updated parameters
         return replace(params,
-                       proc_wavelength=proc_wavelength,
-                       proc_flux=proc_flux)
+                        proc_wavelength=proc_wavelength,
+                        proc_flux=proc_flux)
 
     except Exception:
         print('Spectra combination failed')

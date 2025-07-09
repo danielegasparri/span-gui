@@ -27,16 +27,18 @@ import numpy as np
 try: #try local import if executed as script
     #GUI import
     from params import SpectraParams
+    from span_functions import spec_analysis as span
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from .params import SpectraParams
+    from span.span_functions import spec_analysis as span
 
 # from params import SpectraParams
 
 
 
-def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc,
+def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, gas_component, gas_names, gas_flux, gas_flux_err,
                             kin_component, snr_kin, df_kin, kin_file, df_kin_mc=None, kin_file_mc=None, df_kin_gas=None, kin_file_gas=None):
 
     """
@@ -45,20 +47,20 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
     """
 
     try:
-        kin_component = np.max(kin_component)
-        if kin_component == 0 and not params.ppxf_kin_two_stellar_components:
-            vel = round(kinematics[0])
-            sigma = round(kinematics[1])
-            h3 = round(kinematics[2],3)
-            h4 = round(kinematics[3],3)
-            h5 = round(kinematics[4],3)
-            h6 = round(kinematics[5],3)
-            err_vel = round(error_kinematics[0])
-            err_sigma = round(error_kinematics[1])
-            err_h3 = round(error_kinematics[2],3)
-            err_h4 = round(error_kinematics[3],3)
-            err_h5 = round(error_kinematics[4],3)
-            err_h6 = round(error_kinematics[5],3)
+        number_kin_component = np.max(kin_component)
+        if number_kin_component == 0 and not params.ppxf_kin_two_stellar_components:
+            vel = round(kinematics[0],3)
+            sigma = round(kinematics[1],3)
+            h3 = round(kinematics[2],5)
+            h4 = round(kinematics[3],5)
+            h5 = round(kinematics[4],5)
+            h6 = round(kinematics[5],5)
+            err_vel = round(error_kinematics[0],3)
+            err_sigma = round(error_kinematics[1],3)
+            err_h3 = round(error_kinematics[2],5)
+            err_h4 = round(error_kinematics[3],5)
+            err_h5 = round(error_kinematics[4],5)
+            err_h6 = round(error_kinematics[5],5)
             #writing to file
             df_kin.at[i, 'RV(km/s)']= vel
             df_kin.at[i, 'Sigma(km/s)']= sigma
@@ -95,38 +97,38 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')
 
         #saving the two component stellar fit results
-        elif kin_component == 0 and params.ppxf_kin_two_stellar_components:
+        elif number_kin_component == 0 and params.ppxf_kin_two_stellar_components:
 
             # adding the columns to the file
             if i == 0:
                 new_component = ['RV_2(km/s)', 'Sigma_2(km/s)', 'H3_2', 'H4_2', 'H5_2', 'H6_2', 'errRV_2','errSigma_2', 'errH3_2','errH4_2', 'errH5_2', 'errH6_2']
                 df_kin[new_component] = 0. #filling with zeros
 
-            vel1 = round(kinematics[0][0])
-            sigma1 = round(kinematics[0][1])
-            h31 = round(kinematics[0][2],3)
-            h41 = round(kinematics[0][3],3)
-            h51 = round(kinematics[0][4],3)
-            h61 = round(kinematics[0][5],3)
-            err_vel1 = round(error_kinematics[0][0])
-            err_sigma1 = round(error_kinematics[0][1])
-            err_h31 = round(error_kinematics[0][2],3)
-            err_h41 = round(error_kinematics[0][3],3)
-            err_h51 = round(error_kinematics[0][4],3)
-            err_h61 = round(error_kinematics[0][5],3)
+            vel1 = round(kinematics[0][0],3)
+            sigma1 = round(kinematics[0][1],3)
+            h31 = round(kinematics[0][2],5)
+            h41 = round(kinematics[0][3],5)
+            h51 = round(kinematics[0][4],5)
+            h61 = round(kinematics[0][5],5)
+            err_vel1 = round(error_kinematics[0][0],3)
+            err_sigma1 = round(error_kinematics[0][1],3)
+            err_h31 = round(error_kinematics[0][2],5)
+            err_h41 = round(error_kinematics[0][3],5)
+            err_h51 = round(error_kinematics[0][4],5)
+            err_h61 = round(error_kinematics[0][5],5)
 
-            vel2 = round(kinematics[1][0])
-            sigma2 = round(kinematics[1][1])
-            h32 = round(kinematics[1][2],3)
-            h42 = round(kinematics[1][3],3)
-            h52 = round(kinematics[1][4],3)
-            h62 = round(kinematics[1][5],3)
-            err_vel2 = round(error_kinematics[1][0])
-            err_sigma2 = round(error_kinematics[1][1])
-            err_h32 = round(error_kinematics[1][2],3)
-            err_h42 = round(error_kinematics[1][3],3)
-            err_h52 = round(error_kinematics[1][4],3)
-            err_h62 = round(error_kinematics[1][5],3)
+            vel2 = round(kinematics[1][0],3)
+            sigma2 = round(kinematics[1][1],3)
+            h32 = round(kinematics[1][2],5)
+            h42 = round(kinematics[1][3],5)
+            h52 = round(kinematics[1][4],5)
+            h62 = round(kinematics[1][5],5)
+            err_vel2 = round(error_kinematics[1][0],3)
+            err_sigma2 = round(error_kinematics[1][1],3)
+            err_h32 = round(error_kinematics[1][2],5)
+            err_h42 = round(error_kinematics[1][3],5)
+            err_h52 = round(error_kinematics[1][4],5)
+            err_h62 = round(error_kinematics[1][5],5)
 
             #filling the dataframe columns for component 1
             df_kin.at[i, 'RV(km/s)']= vel1
@@ -160,7 +162,7 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
             #writing to file
             df_kin.to_csv(kin_file, index= False, sep=' ')
 
-            # considering also the errorrw with MonteCarlo simulations
+            # considering also the errorrs with MonteCarlo simulations
             if params.with_errors_kin:
                 #updating the dataframe with the second stellar component
                 if i == 0:
@@ -168,7 +170,7 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     df_kin_mc[new_component_mc] = 0. #filling with zeros
 
                 # extracting the MonteCarlo errors from the error array
-                err_rv_kin_mc1, err_sigma_kin_mc1, err_h3_kin_mc1, err_h4_kin_mc1, err_h5_kin_mc1, err_h6_kin_mc1, err_rv_kin_mc2, err_sigma_kin_mc2, err_h3_kin_mc2, err_h4_kin_mc2, err_h5_kin_mc2, err_h6_kin_mc2  = np.round(error_kinematics_mc[0],3)
+                err_rv_kin_mc1, err_sigma_kin_mc1, err_h3_kin_mc1, err_h4_kin_mc1, err_h5_kin_mc1, err_h6_kin_mc1, err_rv_kin_mc2, err_sigma_kin_mc2, err_h3_kin_mc2, err_h4_kin_mc2, err_h5_kin_mc2, err_h6_kin_mc2  = np.round(error_kinematics_mc[0],5)
 
                 # assigning to the dataframe the first component
                 df_kin_mc.at[i, 'RV(km/s)']= vel1
@@ -204,18 +206,18 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
 
         #Saving the stellar and gas fit results
         else:
-            vel = round(kinematics[0][0])
-            sigma = round(kinematics[0][1])
-            h3 = round(kinematics[0][2],3)
-            h4 = round(kinematics[0][3],3)
-            h5 = round(kinematics[0][4],3)
-            h6 = round(kinematics[0][5],3)
-            err_vel = round(error_kinematics[0][0])
-            err_sigma = round(error_kinematics[0][1])
-            err_h3 = round(error_kinematics[0][2],3)
-            err_h4 = round(error_kinematics[0][3],3)
-            err_h5 = round(error_kinematics[0][4],3)
-            err_h6 = round(error_kinematics[0][5],3)
+            vel = round(kinematics[0][0],3)
+            sigma = round(kinematics[0][1],3)
+            h3 = round(kinematics[0][2],5)
+            h4 = round(kinematics[0][3],5)
+            h5 = round(kinematics[0][4],5)
+            h6 = round(kinematics[0][5],5)
+            err_vel = round(error_kinematics[0][0],3)
+            err_sigma = round(error_kinematics[0][1],3)
+            err_h3 = round(error_kinematics[0][2],5)
+            err_h4 = round(error_kinematics[0][3],5)
+            err_h5 = round(error_kinematics[0][4],5)
+            err_h6 = round(error_kinematics[0][5],5)
 
             df_kin.at[i, 'RV(km/s)']= vel
             df_kin.at[i, 'Sigma(km/s)']= sigma
@@ -233,26 +235,53 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
 
             df_kin.to_csv(kin_file, index= False, sep=' ')
 
-            #writing also the kin gas file
-            if params.gas_kin:
-                for t in range (1,kin_component+1):
-                    df_kin_gas.at[i, f'RV(km/s)_{t}']= round(kinematics[t][0])
-                    df_kin_gas.at[i, f'Sigma(km/s)_{t}']= round(kinematics[t][1])
-                    df_kin_gas.at[i, f'H3_{t}']= round(kinematics[t][2],3)
-                    df_kin_gas.at[i, f'H4_{t}']= round(kinematics[t][3],3)
-                    df_kin_gas.at[i, f'H5_{t}']= round(kinematics[t][4],3)
-                    df_kin_gas.at[i, f'H6_{t}']= round(kinematics[t][5],3)
-                    df_kin_gas.at[i, f'errRV_{t}']= round(error_kinematics[t][0])
-                    df_kin_gas.at[i, f'errSigma_{t}']= round(error_kinematics[t][1])
-                    df_kin_gas.at[i, f'errH3_{t}']= round(error_kinematics[t][2],3)
-                    df_kin_gas.at[i, f'errH4_{t}']= round(error_kinematics[t][3],3)
-                    df_kin_gas.at[i, f'errH5_{t}']= round(error_kinematics[t][4],3)
-                    df_kin_gas.at[i, f'errH6_{t}']= round(error_kinematics[t][5],3)
 
-                    df_kin_gas.to_csv(kin_file_gas, index= False, sep=' ')
+            #writing also the kin gas file. I need to create it here because I need to know the names of the columns
+            if params.gas_kin:
+
+                if df_kin_gas is None or not isinstance(df_kin_gas, pd.DataFrame) and i ==0:
+
+                    kin_id_gas = ['#Spectrum']
+                    for name in gas_names:
+                        kin_id_gas += [
+                            f'RV(km/s)_{name}', f'Sigma(km/s)_{name}',
+                            f'H3_{name}', f'H4_{name}', f'H5_{name}', f'H6_{name}',
+                            f'Flux_{name}', f'Flux_err_{name}',
+                            f'errRV_{name}', f'errSigma_{name}',
+                            f'errH3_{name}', f'errH4_{name}', f'errH5_{name}', f'errH6_{name}'
+                        ]
+
+                    spectra_number = len(params.spec_names_nopath)
+                    gas_data = np.zeros((spectra_number, len(kin_id_gas) - 1))
+                    df_kin_gas = pd.DataFrame(np.column_stack((params.spec_names_nopath, gas_data)), columns=kin_id_gas)
+
+
+                kin_component = np.array(kin_component)
+
+                for t, comp in enumerate(kin_component[gas_component]):
+                    name = gas_names[t]
+                    df_kin_gas.at[i, f'RV(km/s)_{name}']= round(kinematics[comp][0],3)
+                    df_kin_gas.at[i, f'Sigma(km/s)_{name}']= round(kinematics[comp][1],3)
+                    df_kin_gas.at[i, f'H3_{name}']= round(kinematics[comp][2],5)
+                    df_kin_gas.at[i, f'H4_{name}']= round(kinematics[comp][3],5)
+                    df_kin_gas.at[i, f'H5_{name}']= round(kinematics[comp][4],5)
+                    df_kin_gas.at[i, f'H6_{name}']= round(kinematics[comp][5],5)
+                    #gas flux
+                    df_kin_gas.at[i, f'Flux_{name}']= round(gas_flux[t],5)
+                    df_kin_gas.at[i, f'Flux_err_{name}']= round(gas_flux_err[t],5)
+                    df_kin_gas.at[i, f'errRV_{name}']= round(error_kinematics[comp][0],3)
+                    df_kin_gas.at[i, f'errSigma_{name}']= round(error_kinematics[comp][1],3)
+                    df_kin_gas.at[i, f'errH3_{name}']= round(error_kinematics[comp][2],5)
+                    df_kin_gas.at[i, f'errH4_{name}']= round(error_kinematics[comp][3],5)
+                    df_kin_gas.at[i, f'errH5_{name}']= round(error_kinematics[comp][4],5)
+                    df_kin_gas.at[i, f'errH6_{name}']= round(error_kinematics[comp][5],5)
+
+                    # df_kin_gas.to_csv(kin_file_gas, index= False, sep=' ')
+                if df_kin_gas is not None and kin_file_gas is not None:
+                    df_kin_gas.to_csv(kin_file_gas, index=False, sep=' ')
 
             if params.with_errors_kin:
-                err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
+                err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],5)
 
                 df_kin_mc.at[i, 'RV(km/s)']= vel
                 df_kin_mc.at[i, 'Sigma(km/s)']= sigma
@@ -278,15 +307,16 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 print ('File with stellar kinematics and MonteCarlo uncertainties saved: ', kin_file_mc)
             print('')
 
+        return df_kin_gas
     except Exception:
         print('Cannot write the files')
+        return None
 
 
 
 def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_mass, mass_light,
-                                     chi_square, met_err_lower, met_err_upper, mass_met_err_lower,
-                                     mass_met_err_upper, snr_pop, age_err_lower_abs, age_err_upper_abs,
-                                     mass_age_err_lower_abs, mass_age_err_upper_abs, ssp_lick_indices_ppxf,
+                                     chi_square, met_err, mass_met_err, snr_pop, age_err_abs,
+                                     mass_age_err_abs, alpha_err, mass_alpha_err, t50_age, t80_age, t50_cosmic, t80_cosmic, ssp_lick_indices_ppxf,
                                      ssp_lick_indices_err_ppxf, ppxf_lick_params, df_pop, pop_file,
                                      df_ssp_param_ppxf, ssp_param_file_ppxf):
 
@@ -312,9 +342,6 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
         # Handling alpha enhancement if using sMILES
         alpha, mass_alpha = (None, None)
 
-
-
-
         # storing the values in the dataframes and save to disc
         if params.stellar_library == 'sMILES' and not params.ppxf_pop_custom_lib:
             alpha = info_pop[2]
@@ -324,41 +351,35 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
         df_pop.at[i, 'Sigma(km/s)']= round(sigma_pop_ppxf,2)
         df_pop.at[i, 'H3']= round(h3_pop_ppxf,3)
         df_pop.at[i, 'H4']= round(h4_pop_ppxf,3)
-
         df_pop.at[i, 'lum_met(dex)']= round(met,2)
         df_pop.at[i, 'M/L']= round(mass_light,3)
-
         df_pop.at[i, 'mass_met(dex)']= round(mass_met,3)
         df_pop.at[i, 'Chi2']= round(chi_square,3)
-        df_pop.at[i, 'err_lum_met_lower(dex)']= round(met_err_lower,3)
-        df_pop.at[i, 'err_lum_met_upper(dex)']= round(met_err_upper,3)
-        df_pop.at[i, 'err_mass_met_lower(dex)']= round(mass_met_err_lower,3)
-        df_pop.at[i, 'err_mass_met_upper(dex)']= round(mass_met_err_upper,3)
+        df_pop.at[i, 'err_lum_met(dex)']= round(met_err,3)
+        df_pop.at[i, 'err_mass_met(dex)']= round(mass_met_err,3)
+        df_pop.at[i, 't50_age']= round(t50_age,2)
+        df_pop.at[i, 't80_age']= round(t80_age,2)
+        df_pop.at[i, 't50_cosmic']= round(t50_cosmic,2)
+        df_pop.at[i, 't80_cosmic']= round(t80_cosmic,2)
         df_pop.at[i, 'S/N']= round(snr_pop)
 
         if params.ppxf_pop_lg_age:
             df_pop.at[i, 'lum_lg_age(dex)']= round(age,2)
             df_pop.at[i, 'mass_lg_age(dex)']= round(mass_age,2)
-            df_pop.at[i, 'err_lum_lg_age_lower(dex)']= round(age_err_lower_abs,2)
-            df_pop.at[i, 'err_lum_lg_age_upper(dex)']= round(age_err_upper_abs,2)
-            df_pop.at[i, 'err_mass_lg_age_lower(dex)']= round(mass_age_err_lower_abs,2)
-            df_pop.at[i, 'err_mass_lg_age_upper(dex)']= round(mass_age_err_upper_abs,2)
+            df_pop.at[i, 'err_lum_lg_age(dex)']= round(age_err_abs,2)
+            df_pop.at[i, 'err_mass_lg_age(dex)']= round(mass_age_err_abs,2)
         else:
             df_pop.at[i, 'lum_age(Gyr)']= round(age,1)
             df_pop.at[i, 'mass_age(Gyr)']= round(mass_age,1)
-            df_pop.at[i, 'err_lum_age_lower(Gyr)']= round(age_err_lower_abs,2)
-            df_pop.at[i, 'err_lum_age_upper(Gyr)']= round(age_err_upper_abs,2)
-            df_pop.at[i, 'err_mass_age_lower(Gyr)']= round(mass_age_err_lower_abs,2)
-            df_pop.at[i, 'err_mass_age_upper(Gyr)']= round(mass_age_err_upper_abs,2)
+            df_pop.at[i, 'err_lum_age(Gyr)']= round(age_err_abs,2)
+            df_pop.at[i, 'err_mass_age(Gyr)']= round(mass_age_err_abs,2)
 
         #In case I use the sMILES with alpha/Fe
         if params.stellar_library == 'sMILES' and not params.ppxf_pop_custom_lib:
             df_pop.at[i, 'lum_alpha(dex)']= round(alpha,2)
             df_pop.at[i, 'mass_alpha(dex)']= round(mass_alpha,2)
-            df_pop.at[i, 'err_lum_alpha_lower(dex)']= round(alpha_err_lower,2)
-            df_pop.at[i, 'err_lum_alpha_upper(dex)']= round(alpha_err_upper,2)
-            df_pop.at[i, 'err_mass_alpha_lower(dex)']= round(mass_alpha_err_lower,2)
-            df_pop.at[i, 'err_mass_alpha_upper(dex)']= round(mass_alpha_err_upper,2)
+            df_pop.at[i, 'err_lum_alpha(dex)']= round(alpha_err,2)
+            df_pop.at[i, 'err_mass_alpha(dex)']= round(mass_alpha_err,2)
 
         #storing to the file
         df_pop.to_csv(pop_file, index= False, sep=' ')
@@ -469,13 +490,14 @@ def save_ew_indices_to_file(i, params, num_indices, ew_array, err_array, ew_arra
 
 
 
+
 def save_lick_indices_to_file(i, params, num_lick_indices, lick_ew_array, lick_err_array, lick_ew_array_mag,
                               lick_err_array_mag, lick_snr_ew_array, df_ew_lick, ew_lick_file, df_ew_lick_mag,
                               ew_lick_file_mag, df_snr_lick_ew, snr_lick_ew_file, ew_lick_id, ew_lick_id_mag,
                               snr_lick_ew_id, spectra_lick_id, df_lick_param, ssp_lick_param_file, lick_for_ssp,
                               df_ssp_param, ssp_param_file, age, err_age, met, err_met, alpha, err_alpha, save_plot,
                               ssp_lick_indices_list, ssp_lick_indices_err_list, spectra_list_name, result_plot_dir,
-                              ssp_model):
+                              ssp_model, lick_to_plot, lick_err_to_plot):
 
     """
     Saves Lick/IDS indices, equivalent width (EW), EW in magnitudes, and signal-to-noise ratio (SNR) to files.
@@ -526,16 +548,14 @@ def save_lick_indices_to_file(i, params, num_lick_indices, lick_ew_array, lick_e
 
             #doing plot pf the index-index-grid
             if save_plot:
-                if i == 0:
-                    lick_to_plot = []
-                    lick_err_to_plot = []
                 lick_to_plot.append(ssp_lick_indices_list)
                 lick_err_to_plot.append(ssp_lick_indices_err_list)
 
-                if i == (params.spectra_number_to_process-1):
-                    lick_to_plot = np.vstack(lick_to_plot)  # Stack
-                    lick_err_to_plot = np.vstack(lick_err_to_plot)
-                    span.lick_grids(ssp_model, lick_to_plot, lick_err_to_plot, age, False, True, spectra_list_name, result_plot_dir)
+                if i == (params.spectra_number_to_process - 1):
+                    lick_to_plot_np = np.vstack(lick_to_plot)
+                    lick_err_to_plot_np = np.vstack(lick_err_to_plot)
+                    span.lick_grids(ssp_model, lick_to_plot_np, lick_err_to_plot_np, age, False, True, spectra_list_name, result_plot_dir)
+
 
         if i == (params.spectra_number_to_process-1):
             print ('File EW saved: ', ew_lick_file)
@@ -550,7 +570,7 @@ def save_lick_indices_to_file(i, params, num_lick_indices, lick_ew_array, lick_e
 
 
 
-def save_velocity_or_redshift_to_file(i, params, value_at_max, df_rv, rv_file):
+def save_velocity_or_redshift_to_file(i, params, value_at_max, err, df_rv, rv_file):
 
     """
     Saves velocity (RV) or redshift (z) to file based on cross-correlation method.
@@ -561,6 +581,7 @@ def save_velocity_or_redshift_to_file(i, params, value_at_max, df_rv, rv_file):
     if params.is_vel_xcorr:
         try:
             df_rv.at[i, 'RV(km/s)']= round(value_at_max,1)
+            df_rv.at[i, 'err']= round(err,1)
             df_rv.to_csv(rv_file, index= False, sep=' ')
 
             if i == (params.spectra_number_to_process-1):
@@ -577,6 +598,7 @@ def save_velocity_or_redshift_to_file(i, params, value_at_max, df_rv, rv_file):
             df_rv.rename(columns={'RV(km/s)': 'z'}, inplace=True)
             #filling the values
             df_rv.at[i, 'z'] = round(value_at_max, 5)
+            df_rv.at[i, 'err'] = round(err, 5)
             df_rv.to_csv(rv_file, index= False, sep=' ')
 
             if i == (params.spectra_number_to_process-1):

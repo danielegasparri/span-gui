@@ -51,11 +51,13 @@ def create_blackbody_file(result_bb_dir, spectra_list_name, timestamp, spectra_n
     bb_file = os.path.join(result_bb_dir, f"{spectra_list_name}_bb_data_{timestamp}.dat")
 
     # Define column headers
-    bb_id = ['#Spectrum', 'T(K)']
+    bb_id = ['#Spectrum', 'T(K)', 'err', 'chi2']
 
     # Initialise an array with zero values
     bb_values = np.zeros(spectra_number)
-    bb_data_array = np.column_stack((spec_names_nopath, bb_values))
+    bb_err = np.zeros(spectra_number)
+    bb_chi2 = np.zeros(spectra_number)
+    bb_data_array = np.column_stack((spec_names_nopath, bb_values, bb_err, bb_chi2))
 
     # Generate a DataFrame and add the data
     df_bb = pd.DataFrame(bb_data_array, columns=bb_id)
@@ -78,11 +80,12 @@ def create_cross_correlation_file(result_xcorr_dir, spectra_list_name, timestamp
     rv_file = os.path.join(result_xcorr_dir, f"{spectra_list_name}_rv_data_{timestamp}.dat")
 
     # Define column headers
-    rv_id = ['#Spectrum', 'RV(km/s)']
+    rv_id = ['#Spectrum', 'RV(km/s)', 'err']
 
     # Initialise an array with zero values
     rv_values = np.zeros(spectra_number)
-    rv_data_array = np.column_stack((spec_names_nopath, rv_values))
+    error_values = np.zeros(spectra_number)
+    rv_data_array = np.column_stack((spec_names_nopath, rv_values, error_values))
 
     # Generate a DataFrame and add the data
     df_rv = pd.DataFrame(rv_data_array, columns=rv_id)
@@ -471,25 +474,9 @@ def create_kinematics_files(result_ppxf_kin_data_dir, spectra_list_name, timesta
         df_kin.to_csv(kin_file_mc, index=True, sep=' ')
         kinematics_files["stellar_mc"] = kin_file_mc
 
-    # Gas kinematics file
+    # # Gas kinematics file
     if gas_kin:
         kin_file_gas = os.path.join(result_ppxf_kin_data_dir, f"{spectra_list_name}_kin_data_gas_{timestamp}.dat")
-
-        # Define headers for gas kinematics
-        kin_id_gas = ['#Spectrum']
-        for i in range(1, 4):  # Three different gas components
-            kin_id_gas += [f'RV(km/s)_{i}', f'Sigma(km/s)_{i}', f'H3_{i}', f'H4_{i}', f'H5_{i}', f'H6_{i}',
-                           f'errRV_{i}', f'errSigma_{i}', f'errH3_{i}', f'errH4_{i}', f'errH5_{i}', f'errH6_{i}']
-
-        # Initialise arrays with zero values
-        gas_kinematics_data = np.zeros((spectra_number, len(kin_id_gas) - 1))
-
-        # Combine data into a structured array
-        kin_gas_data_array = np.column_stack((spec_names_nopath, gas_kinematics_data))
-
-        # Create a DataFrame and save it to a file
-        df_kin_gas = pd.DataFrame(kin_gas_data_array, columns=kin_id_gas)
-        df_kin_gas.to_csv(kin_file_gas, index=True, sep=' ')
         kinematics_files["gas"] = kin_file_gas
 
     return kinematics_files
@@ -511,16 +498,16 @@ def create_stellar_population_files(result_ppxf_pop_data_dir, spectra_list_name,
     # Define column headers based on whether log age or linear age is used
     if ppxf_pop_lg_age:
         pop_id = ['#Spectrum', 'RV(km/s)', 'Sigma(km/s)', 'H3', 'H4', 'lum_lg_age(dex)', 'lum_met(dex)', 'lum_alpha(dex)',
-                  'err_lum_lg_age_lower(dex)', 'err_lum_lg_age_upper(dex)', 'err_lum_met_lower(dex)', 'err_lum_met_upper(dex)',
-                  'err_lum_alpha_lower(dex)', 'err_lum_alpha_upper(dex)', 'M/L', 'mass_lg_age(dex)', 'mass_met(dex)', 'mass_alpha(dex)',
-                  'err_mass_lg_age_lower(dex)', 'err_mass_age_upper(dex)', 'err_mass_met_lower(dex)', 'err_mass_met_upper(dex)',
-                  'err_mass_alpha_lower(dex)', 'err_mass_alpha_upper(dex)', 'Chi2', 'S/N']
+                  'err_lum_lg_age(dex)', 'err_lum_met(dex)',
+                  'err_lum_alpha(dex)', 'M/L', 'mass_lg_age(dex)', 'mass_met(dex)', 'mass_alpha(dex)',
+                  'err_mass_lg_age(dex)', 'err_mass_met(dex)',
+                  'err_mass_alpha(dex)', 't50_age', 't80_age', 't50_cosmic', 't80_cosmic', 'Chi2', 'S/N']
     else:
         pop_id = ['#Spectrum', 'RV(km/s)', 'Sigma(km/s)', 'H3', 'H4', 'lum_age(Gyr)', 'lum_met(dex)', 'lum_alpha(dex)',
-                  'err_lum_age_lower(Gyr)', 'err_lum_age_upper(Gyr)', 'err_lum_met_lower(dex)', 'err_lum_met_upper(dex)',
-                  'err_lum_alpha_lower(dex)', 'err_lum_alpha_upper(dex)', 'M/L', 'mass_age(Gyr)', 'mass_met(dex)', 'mass_alpha(dex)',
-                  'err_mass_age_lower(Gyr)', 'err_mass_age_upper(Gyr)', 'err_mass_met_lower(dex)', 'err_mass_met_upper(dex)',
-                  'err_mass_alpha_lower(dex)', 'err_mass_alpha_upper(dex)', 'Chi2', 'S/N']
+                  'err_lum_age(Gyr)', 'err_lum_met(dex)',
+                  'err_lum_alpha(dex)', 'M/L', 'mass_age(Gyr)', 'mass_met(dex)', 'mass_alpha(dex)',
+                  'err_mass_age(Gyr)', 'err_mass_met(dex)',
+                  'err_mass_alpha(dex)', 't50_age', 't80_age', 't50_cosmic', 't80_cosmic', 'Chi2', 'S/N']
 
     # Initialise arrays with zero values
     population_data = np.zeros((spectra_number, len(pop_id) - 1))
