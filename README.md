@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/span-gui/badge/?version=latest)](https://span-gui.readthedocs.io/en/latest/)
 
+![span_main](https://github.com/user-attachments/assets/5f40c1a1-f146-4d03-839b-00264100fc02)
+
 
 ## 🔹 Overview
 **SPAN** is a cross-platform graphical user interface (GUI) program designed to manipulate and analyze astronomical 1D spectra. It is optimized for the study of galaxy and stellar spectra in the **optical and near-infrared (NIR) bands**.  
