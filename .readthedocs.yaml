@@ -5,9 +5,6 @@ build:
   tools:
     python: "3.10"
 
-sphinx:
-  configuration: docs/conf.py  # NON USATO ma obbligatorio con Sphinx (lo ignoriamo qui)
-
 mkdocs:
   configuration: mkdocs.yml
 
