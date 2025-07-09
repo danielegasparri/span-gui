@@ -919,9 +919,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
     #loading or not the mask emission, if activated and only for stars fitting
     goodpix = build_goodpixels_with_mask(
-        ln_lam1, lam_range_temp, z, mask_ranges=mask_ranges, user_mask = have_user_mask,
+        ln_lam1, lam_range_temp, z, redshift_0, mask_ranges=mask_ranges, user_mask = have_user_mask,
         use_emission_mask=use_emission_mask)
-
 
     error_kinematics_mc = 0
 
@@ -1696,6 +1695,9 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
     lam_range_gal = np.array([np.min(wave), np.max(wave)])/(1 + z)
     if z > high_z:
         FWHM_gal /= 1 + z
+        redshift_0 = redshift
+    else:
+        redshift_0 = redshift
     z = 0
 
     #Log rebin to the restframe wavelength
@@ -1788,7 +1790,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
     #loading or not the mask emission, if activated and only for stars fitting
     goodpix = build_goodpixels_with_mask(
-        ln_lam1, lam_range_temp, z, mask_ranges=mask_ranges, user_mask = have_user_mask,
+        ln_lam1, lam_range_temp, z, redshift_0, mask_ranges=mask_ranges, user_mask = have_user_mask,
         use_emission_mask=use_emission_mask)
 
     #definying and check on regularization value
@@ -3819,8 +3821,7 @@ def download_file(url, dest_path):
 
 
 # Function to define the goodpixels for pPXF kinematics, both for emission lines and user mask
-def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, mask_ranges=None, user_mask = False,
-                                high_z=0.01, use_emission_mask=True):
+def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, redshift_0, mask_ranges=None, user_mask = False, use_emission_mask=True):
     """
     Returns an array of goodpixels for pPXF, combining optional emission-line masking
     and optional user-defined masking.
@@ -3835,8 +3836,8 @@ def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, mask_ranges=No
         Redshift of the galaxy.
     mask_ranges : list of tuples, optional
         List of (start, end) wavelength intervals to mask (in Angstrom, observed frame).
-    high_z : float
-        Threshold to decide whether to de-redshift the mask intervals.
+    redshift_0 : float
+        Cosmological redshift according to pPXF nomenclature
     use_emission_mask : bool
         If True, applies automatic masking of emission lines via determine_goodpixels().
 
@@ -3860,10 +3861,7 @@ def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, mask_ranges=No
         user_mask_log = np.zeros(n_pixels, dtype=bool)
 
         # Shift ranges to rest-frame if needed
-        if redshift > high_z:
-            corrected_mask_ranges = [(start / (1 + redshift), end / (1 + redshift)) for start, end in mask_ranges]
-        else:
-            corrected_mask_ranges = mask_ranges
+        corrected_mask_ranges = [(start / (1 + redshift_0), end / (1 + redshift_0)) for start, end in mask_ranges]
 
         for start, end in corrected_mask_ranges:
             user_mask_log |= (wave_log >= start) & (wave_log <= end)
