@@ -20,11 +20,11 @@ Solution: Activate the "Cropping" task in the "Spectra Pre-Processing" panel and
 
 3. **Using "Stellar Populations and SFH" for Kinematics**  
 The "Stellar Populations and SFH" module can be used for kinematics analysis, as an alternative to "Stars and Gas Kinematics". To adapt the settings for kinematics:
-- Set Mult. degree = -1 (disable).
-- Set Add. degree > 0.
-- Enable "Convolve templates to galaxy resolution".
-- Enable "Mask emission lines" if focusing on stellar components.
-- Set Regul. error = 0 to disable regularization.
+    - Set Mult. degree = -1 (disable).
+    - Set Add. degree > 0.
+    - Enable "Convolve templates to galaxy resolution".
+    - Enable "Mask emission lines" if focusing on stellar components.
+    - Set Regul. error = 0 to disable regularization.
 
 
 4. **Saving and Loading Parameters**  
@@ -48,8 +48,8 @@ When using template-based spectral analysis (e.g., SFH or kinematics), ensure th
 
 8. **Handling High-Redshift Spectra (z > 0.01)**  
 You have two options for handling redshifted spectra:
-- Option 1 (Recommended for multiple tasks): De-redshift the spectra using the "Doppler/z Correction" in the "Spectra Manipulation" panel. Then, set redshift = 0 in the analysis tasks.
-- Option 2: Enter the real redshift value directly in each spectral analysis task.
+    - Option 1 (Recommended for multiple tasks): De-redshift the spectra using the "Doppler/z Correction" in the "Spectra Manipulation" panel. Then, set redshift = 0 in the analysis tasks.
+    - Option 2: Enter the real redshift value directly in each spectral analysis task.
 
 Important:
 When de-redshifting spectra, the corrected spectral resolution is FWHM_gal/(1 + z). If spectra are not de-redshifted, SPAN will automatically adjust the resolution in kinematics and stellar population analyses.
