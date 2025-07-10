@@ -85,6 +85,7 @@ In this window you will find two panels separated by a horizontal line.
 ### The upper panel ###
 This top panel is divided in three frames.
 Any operation begins within the upper-left frame, called "Prepare and load spectra". There are four basic steps to load the spectra to SPAN and start the analysis.
+
 1. **Extract spectra from 2D or 3D fits:**
     This step is mandatory if you do not still have the 1D spectra needed by SPAN. It allows you to extract 1D spectra either from 2D fully reduced fits images or 3D fully reduced fits images, i.e. datacube.
     - If you have 2D fits of long-slit spectra with the dispersion axis along the X axis of the image, press the "Long-slit extraction" button. There you can fit the trace, correct for distortion and/or slope and extract a 1D spectrum or a series of 1D spectra binned in order to reach a Signal to Noise (S/N) threshold;
@@ -93,12 +94,12 @@ Any operation begins within the upper-left frame, called "Prepare and load spect
 
 2. **Generate a spectra list with 1D spectra.** If you already have 1D spectra stored in a folder (and the relative subfolders, if any), you should click now on the button "Generate a spectra list containing 1D spectra". You should then browse the folder where you stored your spectra. SPAN will read all the spectra contained in the selected folder and in any eventual subfolder and will create an ASCII file with their names and paths. The spectra list generated will be automatically loaded in the "Browse the spectra list or one spectrum". In case you want to load just a single 1D spectrum, you can skip this step.
 
-3. Browse the spectra list or one spectrum.
+3. **Browse the spectra list or one spectrum.** 
 If you generated a spectra list in the previous step, this has been automatically loaded here. In this case you should only select the wavelength units of the spectra contained in the spectra list. It is therefore important that all your spectra share the same wavelength units. It doesn't matter whether they are linearly or logarithmically rebinned, SPAN will read them correctly as far as you select the correct wavelength units.
 In case your spectra list is already in your device (and skipped the step 2.) you should browse it, then select the right wavelength units of the spectra.
 In case you just want to load a single 1D spectrum, just browse the spectrum and activate the option "I browsed a single spectrum".
 
-4. Finally load the spectra to SPAN.
+4. **Finally load the spectra to SPAN.** 
 This step is self explicative. Once you browsed the spectra list or the single spectrum and set the right wavelength units in step 3., here you need to press the "Load!" button to effectively load your spectra (or a spectrum) in the listbox on the right. Once done, select one spectrum in the listbox and check if everything is ok by pressing the "Plot" button. Since the official wavelength units of SPAN are Angtrom, you should check if the wavelength scale reproduced in the plot is actually correct. If not, you probably made a mistake in step 3., by setting the wrong wavelength units of your spectra. Try again with a different unit and press the "Plot" button again. Now the spectrum should be in the correct wavelength range.
 
 
@@ -143,7 +144,7 @@ At the bottom of the "Utilities" frame, you will find 3 light blue buttons. Thes
 
 In order to work properly, the program needs some text files containing information about your data. To see how they must be formatted, please take a look at those coming with SPAN and already set by default in the graphic interface.
 
-IMPORTANT: The text files MUST always have the first line as header, identified by # (e.g. #spectrum)
+**IMPORTANT:** The text files MUST always have the first line as header, identified by # (e.g. #spectrum)
           
 1. Spectra file list task:
     It is essential. If you don't believe it, try to perform any task without upload the spectra and you will see the effects! It is just an ASCII file containing the path (relative if they are in a subfolder of SPAN, absolute if they are elsewhere) and the complete names (with file extension) of the spectra you want to process. You can use any spectra you want, with different format (fits, ASCII...) and resolutions, but it is mandatory to use spectra with the same wavelength units. If you just want to play with one spectrum, then load the ASCII or fits 1D spectrum and activate the option "I browsed a single spectrum" before clicking the button "Load!".
@@ -204,8 +205,7 @@ Some external files may be needed for specific options of the "Spectral analysis
 
 
 6. Calculate velocity dispersion coefficients, located in the "Line-strength parameters" sub-window :
-    It determines 4 spline correction coefficients in order to correct the equivalent width of galactic spectra broadened by the velocity dispersion. It needs a sample of unbroadened spectra that are a good match of the expected stellar populations of the galaxy spectra you want to correct to the zero velocity dispersion frame. The input file is just an ASCII file containing the list of the spectra used as sample. By default, the program has stored the spectra of 31 giant K and early M (<5) stars of the IRTF catalog. This means that this sample is suitable only for the NIR band (8500-24000 A).
-Why this wavelength-limited sample? Because the Lick/IDS indices in the optical already have their own correction coefficients, safely stored in SPAN and ready to be used. There is no need to calculate them again! 
+    It determines 4 spline correction coefficients in order to correct the equivalent width of galactic spectra broadened by the velocity dispersion. It needs a sample of unbroadened spectra that are a good match of the expected stellar populations of the galaxy spectra you want to correct to the zero velocity dispersion frame. The input file is just an ASCII file containing the list of the spectra used as sample. 
 
                                             example_coeff_determ.dat
                                             
