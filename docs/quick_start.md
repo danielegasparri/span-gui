@@ -22,7 +22,7 @@ Let's try modifying a spectrum:
 - Press "Preview Spec." in the main panel to view the result.
 - If satisfied, save the modified spectrum by clicking "Process Selected" (ensure the plot window is closed first!).
 - To apply the selected task to all loaded spectra, click "Process All". 
-The results will be saved in the "SPAN_results/spec" folder, located within the directory you selected when first opening SPAN.
+The results will be saved in the "SPAN_results/processed_spectra" folder, located within the directory you selected when first opening SPAN.
 
 Tip: The output window provides real-time updates on all tasks performed by the program.
 

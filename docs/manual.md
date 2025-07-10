@@ -1,10 +1,10 @@
 SPAN: SPectral ANalysis software V6.6
 Daniele Gasparri, July 2025
 
-# SPAN user manual #
+# SPAN user manual
 
 
-## Purpose ##
+## Purpose
 SPAN is a Python 3.X multi-platform graphical interface program designed to perform operations and analyses on astronomical wavelength calibrated 1D spectra.
 SPAN has been developed and optimised to analyse galaxy and stellar spectra in the optical and near infrared (NIR) bands.
 SPAN accepts as input ASCII and fits spectra files.
@@ -18,7 +18,7 @@ SPAN DOES NOT accept ASCII spectra files with Fortran scientific notation, like 
 Currently, SPAN considers only the wavelength and the flux, discarding the (potential) column with uncertainties.
 
 
-## What do you need to run SPAN ##
+## What do you need to run SPAN
 
 - In order to run the source code, you need Python >=3.10 and the following modules installed (pip3 install <library>):
     1) Numpy
@@ -40,7 +40,7 @@ SPAN is optimised and can run also on most Android devices using the Pydroid3 ap
  - A screen resolution of at least 1600X900 is required, otherwise the panel will be truncated.
  
     
-## How SPAN works ##
+## How SPAN works
 SPAN can work with just one 1D spectrum, either in Fits or ASCII format, with the first column to be wavelength and the second flux. The wavelength and the flux of the fits files must be in the primary HDU. 
 
 SPAN can load and process a list of n 1D spectra, where n must be greater than 1. In order to do this, you need to create and load a text file containing the relative path of the spectra (with respect to the location of the main SPAN program), or the absolute path, and the complete spectra names. The first row of this list file must be commented with # and usually contains something like that: #Spectrum. You can put any type of 1D spectra in this file list, but I strongly suggest to insert spectra with at least the SAME wavelength unit scale.
@@ -52,7 +52,7 @@ You can find example file lists in the example_files directory. They are:
 2. ngc5806_bins.dat contains the spatial bins of a spiral galaxy observed with the TNG telescope at resolution FWHM of 3.5 A from 4700 to 6700 A. Sampling is logarithmic and wavelengths are in log(A). SPAN will take care of everything; you just need to set "A" in the "Wavelength of the spectra is in:" option of the "Prepare and load" frame before clicking "Load!";
 
 
-## Quick start ##
+## Quick start
 If you installed SPAN as a Python package (pip3 install span-gui), just type in the terminal "span-gui" in your working directory. This can be any folder on your device but don't forget its location, because SPAN will save the spectra list files here.
 
 At the first run, SPAN will ask you to download the auxiliary SSP spectral templates, which do not come with the Pypi of GIThub distribution for size issues. You can skip the download and SPAN will work, but the spectral analysis tasks devoted to full spectral fitting will use only the SSP sample provided by pPXF (EMILES, FSPS, GALAXEV, and, of course, any of the template that you will provide!).
@@ -64,7 +64,7 @@ Once everything is set, press the "Load!" button to load the example files.
 
 The spectra loaded will appear in the upper central frame (the white window). Just select one spectrum with the mouse, then click "Plot" to see it. Close the plot to activate again the main panel.
 You can analyse the selected spectrum by activating any of the spectral analysis tasks and/or you can modify the spectrum by opening the "Spectra manipulation" panel in the "Utilities" frame on the right.
-Let's open the "Spectra manipulation" panel and activate one of the many tasks, for example the "Add noise", then we confirm the choice by pressing the "Confirm" button. Now, we are back to the main panel and we press the "Preview spec." button to see the result. If you like it, you can click the "Process selected" button to save this new noisy spectrum (but first you need to close the plot window!). If you press the "Process all" button, you will apply the task selected to all the loaded spectra. The results will be stored in the folder "SPAN_results/spec", located in the folder you have selected the first time you opened SPAN. The output window is your friend: it will tell you all the things that the program is doing.
+Let's open the "Spectra manipulation" panel and activate one of the many tasks, for example the "Add noise", then we confirm the choice by pressing the "Confirm" button. Now, we are back to the main panel and we press the "Preview spec." button to see the result. If you like it, you can click the "Process selected" button to save this new noisy spectrum (but first you need to close the plot window!). If you press the "Process all" button, you will apply the task selected to all the loaded spectra. The results will be stored in the folder "SPAN_results/processed_spectra", located in the folder you have selected the first time you opened SPAN. The output window is your friend: it will tell you all the things that the program is doing.
 
 Now, let's try something in the "Spectral analysis" frame. We activate the "Line-strength analysis" task and take a look at the parameters to set by clicking the button "Line-strength parameters". We select the "Single index option" and confirm the selection by clicking the button "Confirm". The "Line-strength analysis" window will close automatically and we are back to the main panel. Now, we click the "Preview result" button to see the result of this task.
 The spectrum does look strange to you? Did you deactivate the "Add noise" task above? If not, the "Line-strength analysis" task is analysing this noisy spectrum and not the original one.
@@ -77,12 +77,12 @@ If you want to change the location of the SPAN_results folder, you can do it wit
 You can play with other sample 1D spectra by loading the ready to use spectra list files provided with SPAN, for example the "ngc5806_bins.dat" located in the "example_files" folder. This spectra list contains 39 1D spectra in the optical window of the galaxy NGC 5806.Just browse this spectra list in the "3. Browse the spectra list or one spectrum" section of the "Prepare and load spectra" frame.
 
 
-## General description and usage ##
+## General description and usage
 
 SPAN is composed by a main graphical window that shows most of the spectral analysis tasks that the user can perform on 1D spectra.
 In this window you will find two panels separated by a horizontal line.
 
-### The upper panel ###
+### The upper panel
 This top panel is divided in three frames.
 Any operation begins within the upper-left frame, called "Prepare and load spectra". There are four basic steps to load the spectra to SPAN and start the analysis.
 
@@ -106,7 +106,7 @@ This step is self explicative. Once you browsed the spectra list or the single s
 The right frame (Utilities) is a standalone frame that allows you to find out information about the selected spectrum, such as the header, the sampling (in A), the S/N, or simply convert the spectrum to ASCII or binary fits. Finally, here you will find the "Spectra manipulation panel" and some other sub-programs that you may find useful. We'll talk about them later.
 
 
-### The Spectra manipulation panel ###
+### The Spectra manipulation panel
 Since version 6.3, all the tasks devoted to the manipulation of the spectra have been grouped in the "Spectra manipulation" panel.
 Here you will find some useful tasks that can be performed on spectra, grouped into the "Spectra pre-processing," "Spectra processing," and "Spectra math" frames. Any task executed within these frames modifies the selected spectrum and will have effects on the "Spectral analysis" frame.
 You can choose multiple tasks (e.g., rebinning, dopcor, adding noise...) without limitations. The "Preview spec." button allows you to observe the effect of the task(s) performed.
@@ -118,7 +118,7 @@ You can change the order of the tasks performed. Activate the tasks you want to 
 The four math tasks in the "Spectra math" frame that involve all the spectra ("Average all," "Normalise and average all," "Sum all," "Norm. and sum all") act on all the original spectra loaded (and don't work if you have loaded just one spectrum), and remain insensitive to other tasks performed. By activating the "Use for spec. an." option, you force the program to utilise the result of these operations for the spectral analysis, disregarding any other task performed on individual spectra. Be cautious in managing this option. In any case, a message in the terminal window will appear, indicating that you are using the combined original spectra for spectral analysis.
 
 
-### The bottom panel ###
+### The bottom panel
 This panel is composed by two frames. The left one contains basic and more advanced spectral analysis tools.
 The "Spectral analysis frame" contains the following tasks: 1) Blackbody fitting, 2) Cross-correlation, 3) Velocity dispersion, 4) Line-strength analysis, 5) Line(s) fitting, 6) Stars and gas kinematics, 7) Stellar populations and SFH.
 Each task is independent from the others and does not modify the spectra.
@@ -128,7 +128,7 @@ The "Preview result" button will display the task(s) result on the selected spec
 The right frame displays the text output of the software. This is how SPAN communicates with you. This panel reproduces the computer terminal and shows the output of the operations performed, including errors and warnings.
 
 
-### Apply the tasks ###
+### Apply the tasks
 Once you are satisfied with your work, you can process the spectra or the single selected spectrum. The "Process selected" button will perform all the tasks activated in the "Spectra manipulation" panel and in the "Spectral analysis" frame, saving the new processed spectrum to a fits file. By default, the program will save intermediate spectra if more than one Spectra manipulation task is activated, i.e. one version for each activated task in the Spectra manipulation panel. For example, if you have selected rebinning, sigma broadening, and add noise, the program will save a spectrum with rebinning done, a second spectrum with rebinning + sigma broadening applied, and a third with rebinning + sigma broadening + add noise applied.
 If you are not interested in saving all the intermediate spectra files modified in the "Spectra manipulation" panel, you can select the "Save final spectra" option at the very bottom of the "Spectra manipulation" panel, and only the spectrum at the end of the selected tasks (if any) will be saved. This is strongly recommended to do if you are applying more than one task with the reorder option activated. If you are planning to use the tasks of the "Spectra manipulation" panel just as preparatory phases to the spectral analysis, maybe you do not want to save the processed spectra every time you perform a spectral analysis task. In this case, in the "Spectra manipulation" panel you can select the option "Do not save processed spectra".
 WARNING: In the "Process selected mode", the results of the spectral analysis frame will be written only in the output frame.
@@ -136,11 +136,11 @@ WARNING: In the "Process selected mode", the results of the spectral analysis fr
 By clicking "Process all", you will apply all the tasks to all the spectra in your list. This is the only way to save the results of the "Spectral analysis" frame in an ACII file. You can also store the plots generated during the spectral analysis by activating the option "Save plots" at the very bottom of the SPAN panel. The plots will be saved in high resolution PNG format and stored in the "plots" subdirectory of the "SPAN_results" folder.
 
 
-### The sub programs ###
+### The sub programs
 At the bottom of the "Utilities" frame, you will find 3 light blue buttons. These are sub-programs that will allow you to: open, create and modify an ASCII file (Text editor), add and modify the keywords in the header of fits files (FITS header editor), and plot the data generated by the Spectral Analysis in the "Process all" mode.
 
 
-## The input files ##
+## The input files
 
 In order to work properly, the program needs some text files containing information about your data. To see how they must be formatted, please take a look at those coming with SPAN and already set by default in the graphic interface.
 
@@ -251,9 +251,19 @@ Some external files may be needed for specific options of the "Spectral analysis
 
                                     
 
+## File organization
+SPAN generates different types of **results**, which are all stored in the "SPAN_results" folder:
+
+- **Extracted spectra** from the "long-slit extraction" and the "Datacube extraction" routines. The spectra extracted from long-slit data are stored in the "longslit_extracted" folded. The spectra extracted from datacube data are stored in "RUN_NAME" folded.
+- **Processed spectra** in FITS format, both in the "Process selected" and "Process all" mode. These are processed spectra from the "Spectra Manipulation" panel or auxiliary spectra generated from Spectral analysis tasks (e.g. best fit, residuals from the "Stars and gas kinematics" and "Stellar populations and SFH" tasks). These spectra are stored in the "processed_spectra" folder. 
+- **ASCII files** in plain text .dat format, containing the results of the Spectral analysis tasks, which are generated only in the "Process all" mode. These products are saved in specific folders with the same name of the spectral analysis taks
+- **Plots** in high resolution (300 dpi) PNG images. They are generated only for the Spectral analysis tasks and are the plots displayed also in the "Preview result" mode. These plots are saved only in "Process all" mode and if the option "Save spectral analysis plots" is activated. If you just need one specific plot for one spectrum in the list, you can save it directly from the Matplotlib window that opens in the "Preview result" mode. These plots are stored in the "plots" folder. 
+
+The **spectra list** files generated by the "Generate spectra list containing 1D spectra" are saved in the so called "working directory" which is the directory where SPAN has been executed from your computer. 
 
 
-## List of operations you can perform ##
+
+## List of operations you can perform
 
 SPAN can perform many operations on the spectra.
 
@@ -308,7 +318,7 @@ Here is a description of the functions:
     
 
 
-# The sub-programs #
+# The sub-programs
 
 The two light-blue buttons in the upper left corner of SPAN (in the "Prepare and load spectra" frame) are sub-programs that might help you to generate the 1D spectra needed. Here is how they works:
 
@@ -339,7 +349,7 @@ If any error occur, the program will warn you.
 
 
 
-# Tricks in the menu bar #
+# Tricks in the menu bar
 
 The menu bar was introduced in version 4.5 of SPAN, offering several helpful options to enhance your experience with spectral analysis. Here is a detailed overview of some options that you won't find in the main panel (unless you are using the Android version):
 
