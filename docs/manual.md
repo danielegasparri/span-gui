@@ -47,13 +47,13 @@ SPAN can load and process a list of n 1D spectra, where n must be greater than 1
 It seems difficult, but don't worry: the button "Generate spectra list containing 1D spectra" will help you to create a spectra list file by selecting a folder containing the spectra you want to process.
 
 You can find example file lists in the example_files directory. They are:
-1) xshooter_vis_sample_list_spectra.dat, already preloaded in the main application (you just need to click "Load!"), contains 5 spectra of the central regions of nearby galaxies observed with the VIS arm of ESO XShooter spectrograph at resolution of R = 5000. Wavelength units are in nm. Sampling is linear and the wavelength units to set ("Wavelength of the spectra is in:") are "nm";
-2) ngc5806_bins.dat contains the spatial bins of a spiral galaxy observed with the TNG telescope at resolution FWHM of 3.5 A from 4700 to 6700 A. Sampling is logarithmic and wavelengths are in log(A). SPAN will take care of everything; you just need to set "A" in the "Wavelength of the spectra is in:" option of the "Prepare and load" frame before clicking "Load!";
+
+1. xshooter_vis_sample_list_spectra.dat, already preloaded in the main application (you just need to click "Load!"), contains 5 spectra of the central regions of nearby galaxies observed with the VIS arm of ESO XShooter spectrograph at resolution of R = 5000. Wavelength units are in nm. Sampling is linear and the wavelength units to set ("Wavelength of the spectra is in:") are "nm";
+2. ngc5806_bins.dat contains the spatial bins of a spiral galaxy observed with the TNG telescope at resolution FWHM of 3.5 A from 4700 to 6700 A. Sampling is logarithmic and wavelengths are in log(A). SPAN will take care of everything; you just need to set "A" in the "Wavelength of the spectra is in:" option of the "Prepare and load" frame before clicking "Load!";
 
 
 ## Quick start ##
 If you installed SPAN as a Python package (pip3 install span-gui), just type in the terminal "span-gui" in your working directory. This can be any folder on your device but don't forget its location, because SPAN will save the spectra list files here.
-If you want to compile the source code go to the root folder of SPAN and type in the terminal: python3 __main__.py. In this case, the spectral list files will be saved here. 
 
 At the first run, SPAN will ask you to download the auxiliary SSP spectral templates, which do not come with the Pypi of GIThub distribution for size issues. You can skip the download and SPAN will work, but the spectral analysis tasks devoted to full spectral fitting will use only the SSP sample provided by pPXF (EMILES, FSPS, GALAXEV, and, of course, any of the template that you will provide!).
 
