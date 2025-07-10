@@ -90,7 +90,7 @@ Integrated the GPR Machine learning for Lick/IDS analysis. Corrected minor bugs.
 
 **Version 5.4 (20240527):**  
 
-- Integrated a modified, updated and running version of the GIST pipeline as independent sub-program fo facilitate users in the migration process from GIST to SPAN (NOTE OR THE EDITOR: well, this was not a good idea since I've never got the authorization to publish this modified version of GIST, so I had to remove from further SPAN distributions. Goodbye GIST). 
+- Integrated a modified, updated and running version of the GIST pipeline as independent sub-program fo facilitate users in the migration process from GIST to SPAN (NOTE OF THE EDITOR: well, this was not a good idea since I've never got the authorization to publish this modified version of GIST, so I had to remove from further SPAN distributions. Goodbye GIST). 
 - Added the Xshooter SSP library (XSL) of Verro et al. 2022 to 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks. 
 - Added the custom (E)MILES template selection for 'Stellar populations and SFH' task, the possibility to mask the emission lines and an algorithm to find automatically the best ppxf parameters for stellar populations: noise and Regul. err. Changed the format of the fits file saved in the 'Convert spectrum to' task. Corrected minor bugs.
 
