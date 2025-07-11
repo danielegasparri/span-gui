@@ -88,7 +88,7 @@ def create_result_structure(base_path):
     subdirectories = [
         'processed_spectra', 'SNR', 'planck_black_body_fitting', 'cross-correlation', 'velocity_dispersion',
         'line-strength_analysis', 'line_fitting', 'stars_and_gas_kinematics', 'stellar_populations_and_sfh',
-        'line-strength_sigma_coefficients', 'plots'
+        'line-strength_sigma_coefficients', 'plots', 'spectra_lists'
     ]
     os.makedirs(result_data, exist_ok=True)
     for subdir in subdirectories:
