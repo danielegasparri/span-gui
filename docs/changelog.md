@@ -4,8 +4,12 @@ Daniele Gasparri, July 2025
 
 # Version histories #
 
-**Version 6.6 (20250708):**  
+**Version 6.6 (20250710):**  
 
+- Fixed a bug that prevented the Lick/IDS measurements in the 'Line-strength analysis' in high-redshift spectra, since SPAN was checking the wavelength compatibility of the spectra with the Lick wavelength range not considering the rest-frame corrected wavelengths.
+- Replaced the np.chararray function in the code since it has been deprecated with recent Numpy versions (2.X.X). 
+- Added a luminosity slider to the 'View datacube' option of the 'Datacube extraction' sub-program to facilitate reading datacube slices. 
+- Added the 'spectra_lists' folder to the 'SPAN_results' path where SPAN saves all the spectra file lists generated with different routines (i.e. 'Generate spectra list containing 1D spectra', 'Long-slit extraction' with the S/N spectral bins option, and 'Datacube extraction' spectral bins. 
 - Added the option 'Fixing stellar kinematics first' to the 'Stars and gas kinematics' task and the option 'Fitting gas and stellar kinematics' to perform a first fit only to the stellar component and then fix the LOSVD values of the stars to perform a second fit including the gas, as suggested by Cappellari 2017. 
 Added the new function 'build_goodpixels_with_mask' in the 'spec_analysis.py' module in order to use only the 'goodpix' keyword to allow both the emission lines and user mask. The keyword 'mask' is not used anymore for kinematics and sellar populations and SFH since it is not compatible with goodpix, so until now it was not possible to use both the masking of emission lines provided by pPXF and the user mask.
 - Added the option to set multiplicative polynomial to 'Stars and gas kinematics' task, which are needed if a reliable estimation of gas flux is needed besides kinematics.

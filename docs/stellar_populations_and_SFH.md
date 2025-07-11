@@ -29,7 +29,7 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 - Wavelength Range: Defines the spectral region to be fitted. A good estimate of stellar population parameters in galaxies is obtained by focusing on:
 4800-5500 A (rest-frame) in the optical, covering age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe.
 8400-8800 A (rest-frame) in the near-infrared, including the Ca II triplet, which is useful for stellar kinematics.
-- Spectral Resolution FWHM (A): Approximate resolution of your spectrum in the selected range. This is relevant only if including gas emission lines in the fit. A precise value is not required, but a good estimate is recommended.
+- Spectral Resolution FWHM (A): Approximate resolution of your spectrum **in the selected wavelength range**. This is relevant only if including gas emission lines in the fit. A precise value is not required, but a good estimate is recommended.
 - Velocity Dispersion Guess (km/s): An approximate estimate of the actual stellar velocity dispersion.
 - Redshift Guess (z): An initial estimate of the spectrum's redshift. If this value is incorrect, the fit will likely fail.
 
@@ -75,8 +75,8 @@ If replacing templates, ensure:
 - No mixing of different IMF templates.
 
 **Important Notes on Stellar Population Models**  
-E-MILES, sMILES, and X-shooter work best for quiescent galaxies but lack very young stellar populations (<50-60 Myr).
-For star-forming galaxies, consider FSPS (Conroy et al., 2010).
+E-MILES, sMILES, and X-shooter work best for quiescent galaxies but lack very young stellar populations (<30-60 Myr).
+For hightly star-forming galaxies, consider FSPS (Conroy et al., 2010) or other templates with (also) very young ages.
 
 
 ### Fifth Section: Custom Masking and Stellar Constraints
@@ -85,7 +85,7 @@ Custom masking is available and can be added also to the automatic masking of th
 There are two masking options available: the manual ones, by inserting the wavelength interval in the text box or a graphical mode activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking in done, you can close the Matplotlib window and the text box will update with the new ranges selected.
 
 **Age and Metallicity Ranges:**  
-Limit the maximum template age based on the galaxy's cosmic age. For high-redshift galaxies, reducing the upper age limit is recommended.
+Limit the maximum template age based on the galaxy's cosmic age. For high-redshift galaxies, reducing the upper age limit is strongly recommended.
 
 
 ### Sixth Section: Uncertainty Estimation and Lick Indices
