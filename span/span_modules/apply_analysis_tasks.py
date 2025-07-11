@@ -690,6 +690,25 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
         lick_wave_limits = np.array([lick_wavelength[0], lick_wavelength[-1]])
         lick_wave_lower_limit, lick_wave_upper_limit = 4200, 6300
 
+        # Adjusting the resolution. For R input resolving power, I consider a mean FWHM value in the middle of the Lick/IDS interval. Since it is relatively small, it is a good approximation.
+        if not lick_constant_fwhm:
+            mean_ref_lick_wavelength = 5080
+            spec_lick_res_fwhm = (mean_ref_lick_wavelength/spec_lick_res_r) # the resolving power dows not change with redshift!
+                
+        # Adjusting the parameters when z is inserted and the correction to restframe needed
+        if dop_correction_lick and z_guess_lick_emission > 0:
+            
+            lick_wavelength /= (1 + z_guess_lick_emission)
+            lick_wave_limits  /= (1 + z_guess_lick_emission)
+            
+            #setting up the resolution, if dop/z correction is activated and resolution is given in FWHM
+            if lick_constant_fwhm and z_guess_lick_emission > 0.01:
+                spec_lick_res_fwhm  /= 1 + z_guess_lick_emission
+
+                
+        redshift_lick =  0 # now the real redshift is zero. 
+
+
         if (lick_wave_limits[0] < lick_wave_lower_limit and lick_wave_limits[1] < lick_wave_lower_limit) or \
            (lick_wave_limits[0] > lick_wave_upper_limit and lick_wave_limits[1] > lick_wave_upper_limit):
             if event == "Process all":
@@ -757,26 +776,12 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             lick_lg_met = True
 
             #performing ppxf
-            if lick_constant_fwhm: # with a fixed delta lambda resolution, no problem
+            # if lick_constant_fwhm: # with a fixed delta lambda resolution, no problem
                 #issue a warning in case the resolution of EMILES templates is lower than the galaxy
-                if spec_lick_res_fwhm < emiles_resolution:
-                    print('WARNING: the resolution of the templates is REALLY lower than the galaxy. Consider to first reduce the resolution of your spectrum with the Degrade resolution task')
+            if spec_lick_res_fwhm < emiles_resolution:
+                print('WARNING: the resolution of the templates is REALLY lower than the galaxy. Consider to first reduce the resolution of your spectrum with the Degrade resolution task')
 
-                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_abs_lick, met_err_lick, alpha_err_lick, mass_age_err_abs_lick, mass_met_err_lick, mass_alpha_err_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop_lick, light_weights_lick, mass_weights_lick, t50_age_lick, t80_age_lick, t50_cosmic_lick, t80_cosmic_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, lick_lg_met, result_plot_dir)
-
-
-            #if I don't have a constant FWHM resolution:
-            if not lick_constant_fwhm:
-                #considering a mean fwhm along the lick band. The errors for the indices used for stellar parameters are about 5%, so it's good for now.
-                mean_ref_lick_wavelength = 5080
-                spec_lick_res_fwhm = mean_ref_lick_wavelength/spec_lick_res_r
-
-                #issue a warning in case the resolution of EMILES templates is lower than the galaxy
-                if spec_lick_res_fwhm < emiles_resolution:
-                    print('WARNING: the resolution of the templates is REALLY lower than the galaxy. Consider to first reduce the resolution of your spectrum with the Degrade resolution task')
-
-                kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_abs_lick, met_err_lick, alpha_err_lick, mass_age_err_abs_lick, mass_met_err_lick, mass_alpha_err_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop_lick, light_weights_lick, mass_weights_lick, t50_age_lick, t80_age_lick, t50_cosmic_lick, t80_cosmic_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, z_guess_lick_emission, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, lick_lg_met, result_plot_dir)
-
+            kinematics_lick, info_pop_lick, info_pop_mass_lick, mass_light_lick, errors_lick, galaxy_lick, bestfit_flux_lick, bestfit_wave_lick, bestfit_flux_gas_lick, residual_lick, chi_square_lick, age_err_abs_lick, met_err_lick, alpha_err_lick, mass_age_err_abs_lick, mass_met_err_lick, mass_alpha_err_lick, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop_lick, light_weights_lick, mass_weights_lick, t50_age_lick, t80_age_lick, t50_cosmic_lick, t80_cosmic_lick = span.ppxf_pop(lick_wavelength, lick_flux, min_wavelength_lick, max_wavelength_lick, spec_lick_res_fwhm, redshift_lick, sigma_guess_lick, fit_components_lick, with_plots_lick, lick_ppxf_with_errors, lick_save_plot, spec_name_lick, regul_err_lick, additive_degree_lick, multiplicative_degree_lick, tied_balmer_lick, stellar_library_lick, dust_correction_stars_lick, dust_correction_gas_lick, ppxf_pop_noise_lick, ppxf_pop_age_range_lick, ppxf_pop_met_range_lick, custom_emiles_lick, custom_emiles_folder_lick, custom_npz_lick, custom_npz_file_lick, mask_emission_lick, custom_temp_suffix_lick, best_param_lick, best_noise_estimate_lick, frac_chi_lick, convolve_temp_lick, have_user_mask_lick, mask_ranges_lick, ppxf_pop_error_nsim_lick, lick_lg_age, lick_lg_met, result_plot_dir)
 
             if lick_correct_emission:
                 lick_wavelength = bestfit_wave_lick
@@ -797,7 +802,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
                     lick_wavelength, lick_flux, npoint_resampled = spman.resample(lick_wavelength, lick_flux, lick_step) #Rebinning linear
                 lick_doppler_vel = (kinematics_lick[0])
                 dop_vel = lick_doppler_vel[0]
-                lick_wavelength, lick_flux = spman.dopcor(lick_wavelength, lick_flux, dop_vel, True) #doppler correction. The cosmological z correction has been already performed by the span.ppxf_pop function, prior to really run pPXF. Here I correct only for the real velocity component measured by the fit.
+                lick_wavelength, lick_flux = spman.dopcor(lick_wavelength, lick_flux, dop_vel, True) #doppler correction. The cosmological z correction has been already performed. Here I correct only for the real velocity component measured by the fit.
 
             if radio_lick_sigma_auto:
                 sigma_lick_ppxf = (kinematics_lick[0])
@@ -806,7 +811,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
         # 3) degrading the resolution, only if smaller than the lick system
         if lick_constant_fwhm and spec_lick_res_fwhm < 8.4:
             lick_degraded_wavelength, lick_degraded_flux = spman.degrade_to_lick(lick_wavelength, lick_flux, spec_lick_res_fwhm, lick_constant_fwhm)
-        elif not lick_constant_fwhm and spec_lick_res_r > 6000:
+        elif not lick_constant_fwhm and spec_lick_res_r > 600:
             lick_degraded_wavelength, lick_degraded_flux = spman.degrade_to_lick(lick_wavelength, lick_flux, spec_lick_res_r, lick_constant_fwhm)
         else:
             print('WARNING: The resolution of the spectrum is smaller than the one needed for the Lick/IDS system. I will still calculate the Lick/IDS indices but the results might be inaccurate')
@@ -1728,13 +1733,21 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
             #Doppler correction from the velociy calculated by pPXF
             lick_wavelength_ppxf, lick_flux_ppxf = spman.dopcor(lick_wavelength_ppxf, lick_flux_ppxf, dop_vel_pop_ppxf, True) #doppler correction. The cosmological z correction has been already performed by the span.ppxf_pop function, prior to really run pPXF. Here I correct only for the real velocity component measured by the fit.
 
+
             # 3) degrading the resolution, only if smaller than the lick system
-            if res_pop < 8.4:
-                lick_degraded_wavelength_ppxf, lick_degraded_flux_ppxf = spman.degrade_to_lick(lick_wavelength_ppxf, lick_flux_ppxf, res_pop, lick_constant_fwhm_ppxf)
+            # Considering alzo the redshift!
+            if z_pop > 0.01: #arbitrary value of z above which it is wirth to recalculate the resolution.  
+                res_pop_z_corrected = res_pop/ (1 + z_pop)
+            else:
+                res_pop_z_corrected = res_pop
+                
+            if res_pop_z_corrected < 8.4:
+                lick_degraded_wavelength_ppxf, lick_degraded_flux_ppxf = spman.degrade_to_lick(lick_wavelength_ppxf, lick_flux_ppxf, res_pop_z_corrected, lick_constant_fwhm_ppxf)
             else:
                 print('WARNING: The resolution of the spectrum is smaller than the one needed for the Lick/IDS system. I will still calculate the Lick/IDS indices but the results might be inaccurate.')
                 lick_degraded_wavelength_ppxf = lick_wavelength_ppxf
                 lick_degraded_flux_ppxf = lick_flux_ppxf
+
 
             # 4) Measuring the EW and doing plot
             lick_single_index_ppxf = False

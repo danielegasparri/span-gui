@@ -44,11 +44,13 @@ except ModuleNotFoundError: #local import if executed as package
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import matplotlib.backends.backend_tkagg
 from matplotlib.ticker import MultipleLocator
 from matplotlib.backend_bases import MouseButton
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, RadioButtons
+from matplotlib.colors import LogNorm, Normalize
+from matplotlib.gridspec import GridSpec
+
 from skimage.measure import label, regionprops
 import os
 import numpy as np
@@ -707,6 +709,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
     pixel_scale_str = params.pixel_scale_str
     result_data = params.result_data
     result_long_slit_extract = params.result_long_slit_extract
+    result_list_dir = params.result_list_dir
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('DarkBlue3')
@@ -798,7 +801,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
                     result_longslit_extraction = result_data+'/longslit_extracted/'+extracted_filename+'/'
                     os.makedirs(result_longslit_extraction, exist_ok=True)
                     stm.extract_1d_spectrum(corrected_spectrum, extract_y_range, header, x_axis, output_fits_path= (result_longslit_extraction + f"{extracted_filename}_extracted_.fits"))
-                    sg.popup ('1D spectrum saved in the working directory')
+                    sg.popup ('1D spectrum saved in ', result_longslit_extraction)
                 except Exception:
                     sg.popup('Extraction parameters not valid. Spectrum not extracted')
                     continue
@@ -827,9 +830,9 @@ def long_slit_extraction(BASE_DIR, layout, params):
                 result_longslit_extraction_bins = result_data+'/longslit_extracted/'+extracted_filename+'/bins/'
                 os.makedirs(result_longslit_extraction_bins, exist_ok=True)
                 file_list = stm.get_files_in_folder(result_longslit_extraction_bins)
-                output_file = extracted_filename + '_bins_list.txt'
+                output_file = result_list_dir +'/' + extracted_filename +'_bins_list.txt'
                 stm.save_to_text_file(file_list, output_file)
-                sg.Popup('Spectra file list of the bins saved in the working directory', output_file, 'You can now browse and load this list file')
+                sg.Popup('Spectra file list of the bins saved in ', output_file, 'You can now browse and load this list file')
 
             else:
                 sg.popup_error("Please correct the spectrum and find the spectroscopic trace first.")
@@ -864,6 +867,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
 def datacube_extraction(params):
 
     result_data = params.result_data
+    result_list_dir = params.result_list_dir
     ifs_run_id = params.ifs_run_id
     ifs_input = params.ifs_input
     ifs_redshift = params.ifs_redshift
@@ -981,33 +985,84 @@ def datacube_extraction(params):
 
         #routine to view the datacube
         if cube_ifs_event == 'View datacube':
-
             try:
                 # Load the datacube
                 data, wave = stm.read_datacube(ifs_input)
 
-                # Create the figure and axes with adjusted layout
-                fig, ax_img = plt.subplots(figsize=(10, 7))
-                plt.subplots_adjust(bottom=0.15,top=0.95)  # Less space for the slider
+                # Create figure
+                fig = plt.figure(figsize=(12, 7))
+                gs = GridSpec(nrows=6, ncols=6, figure=fig)
 
-                # Display the initial image of the datacube
-                img = ax_img.imshow(data[0], cmap="gray", origin='lower')
-                ax_img.set_title(f"Wavelength Index: {0}", pad=15)
+                # === Image ===
+                ax_img = fig.add_subplot(gs[:, :5])  # columns 0–4
 
-                # Position the slider just below the main plot
-                ax_slider = plt.axes([0.15, 0.05, 0.7, 0.03], facecolor='lightgoldenrodyellow')
-                slider = Slider(ax_slider, 'Wavelength', wave[0], wave[-1], valinit=wave[0], valfmt='%0.0f')
+                # === Initial data and scaling ===
+                index = 0
+                current_slice = data[index]
+                masked_slice = np.ma.masked_invalid(current_slice)
 
-                # Update function for the slider
+                if masked_slice.count() > 0:
+                    finite_values = masked_slice.compressed()
+                    vmin = np.min(finite_values)
+                    vmax = np.max(finite_values)
+                else: #fallback
+                    vmin, vmax = 0, 1
+
+                # Show image
+                img = ax_img.imshow(current_slice, cmap="gray", origin='lower', norm=Normalize(vmin=vmin, vmax=vmax))
+                ax_img.set_title(f'Wavelength: {wave[index]:.2f} Å', pad=15)
+
+                # SLIDERS
+                ax_slider_wave = fig.add_axes([0.84, 0.20, 0.04, 0.75])  # [left, bottom, width, height]
+                ax_slider_vmin = fig.add_axes([0.89, 0.20, 0.04, 0.75])
+                ax_slider_vmax = fig.add_axes([0.94, 0.20, 0.04, 0.75])
+
+                slider_wave = Slider(ax_slider_wave, 'λ', wave[0], wave[-1], valinit=wave[0], valfmt='%0.0f', orientation='vertical')
+                slider_vmin = Slider(ax_slider_vmin, 'Min', vmin, vmax, valinit=vmin, orientation='vertical')
+                slider_vmax = Slider(ax_slider_vmax, 'Max', vmin, vmax * 10, valinit=vmax, orientation='vertical')
+
+                # RADIO BUTTON
+                ax_radio = fig.add_axes([0.84, 0.05, 0.14, 0.08], facecolor='lightgoldenrodyellow')
+                radio = RadioButtons(ax_radio, ('Linear scale', 'Log scale'), active=0)
+
+                # Update function
                 def update(val):
-                    wave_cube = slider.val
-                    closest_index = (np.abs(wave - wave_cube)).argmin()
-                    img.set_data(data[closest_index])
-                    ax_img.set_title(f'Wavelength: {wave_cube:.2f} Å')
+                    wave_val = slider_wave.val
+                    i = (np.abs(wave - wave_val)).argmin()
+                    current_data = data[i]
+                    ax_img.set_title(f'Wavelength: {wave[i]:.2f} Å')
+
+                    vmin_val = slider_vmin.val
+                    vmax_val = slider_vmax.val
+                    scale = radio.value_selected
+
+                    if scale == 'Linear scale':
+                        img.set_data(current_data)
+                        img.set_norm(Normalize(vmin=vmin_val, vmax=vmax_val))
+                    else:
+                        safe_slice = np.array(current_data, copy=True)
+                        safe_slice[~np.isfinite(safe_slice)] = np.nan
+                        min_positive = np.nanmin(safe_slice[safe_slice > 0]) if np.any(safe_slice > 0) else 1e-3
+                        safe_slice[safe_slice <= 0] = min_positive
+                        img.set_data(safe_slice)
+
+                        vmin_safe = max(vmin_val, min_positive)
+                        if vmax_val <= vmin_safe * 1.01:
+                            vmax_safe = vmin_safe * 1.01
+                        else:
+                            vmax_safe = vmax_val
+
+                        img.set_norm(LogNorm(vmin=vmin_safe, vmax=vmax_safe))
+
                     fig.canvas.draw_idle()
 
-                slider.on_changed(update)
+                # === Connect widgets ===
+                slider_wave.on_changed(update)
+                slider_vmin.on_changed(update)
+                slider_vmax.on_changed(update)
+                radio.on_clicked(update)
 
+                plt.subplots_adjust(left=0.05, right=0.8, top=0.95, bottom=0.05)
                 plt.show()
                 plt.close()
 
@@ -1018,209 +1073,140 @@ def datacube_extraction(params):
 
         #routine for generating a mask
         if cube_ifs_event == 'Generate mask':
+            try:
+                data, wave = stm.read_datacube(ifs_input)
+                mask = np.zeros(data.shape[1:], dtype=int)
 
-            # Considering non mobile devices with a keyboard to perform the masking. Using ctrl+click to mask
-            if layout != layouts.layout_android:
+                # Layout
+                fig = plt.figure(figsize=(12, 7))
+                gs = GridSpec(nrows=6, ncols=6, figure=fig)
+                ax_img = fig.add_subplot(gs[:, :5])
 
-                try:
-                    ifs_input_mask = ifs_input
-                    data, wave = stm.read_datacube(ifs_input_mask)
+                current_slice = data[0]
+                masked_slice = np.ma.masked_invalid(current_slice)
+                if masked_slice.count() > 0:
+                    finite_values = masked_slice.compressed()
+                    vmin = np.min(finite_values)
+                    vmax = np.max(finite_values)
+                else:
+                    vmin, vmax = 0, 1
 
-                    # Preparing the mask and show the first slice of the cube
-                    mask = np.zeros(data.shape[1:], dtype=int)
-                    fig, (ax_img, ax_slider) = plt.subplots(
-                        2, 1, gridspec_kw={'height_ratios': [9, 1]}, figsize=(12, 8)
-                    )
-                    plt.subplots_adjust(hspace=0.3)  # Slider-image spacing
+                img = ax_img.imshow(current_slice, cmap="gray", origin='lower', norm=Normalize(vmin=vmin, vmax=vmax))
+                mask_overlay = ax_img.imshow(np.ma.masked_where(mask == 0, mask), cmap='Reds', alpha=0.5, origin='lower')
+                ax_img.set_title(f'Wavelength Index: 0')
 
-                    # # Showing the image of the first wavelength value
-                    img = ax_img.imshow(data[0], cmap="gray", origin='lower')
-                    mask_overlay = ax_img.imshow(
-                        np.ma.masked_where(mask == 0, mask),
-                        cmap='Reds', alpha=0.5, origin='lower'
-                    )
-                    ax_img.set_title(f"Wavelength Index: {0}")
+                # Vertical slider
+                ax_slider_wave = fig.add_axes([0.84, 0.20, 0.04, 0.75])
+                ax_slider_vmin = fig.add_axes([0.89, 0.20, 0.04, 0.75])
+                ax_slider_vmax = fig.add_axes([0.94, 0.20, 0.04, 0.75])
+                slider_wave = Slider(ax_slider_wave, 'λ', 0, data.shape[0]-1, valinit=0, valfmt='%0.0f', orientation='vertical')
+                slider_vmin = Slider(ax_slider_vmin, 'Min', vmin, vmax, valinit=vmin, orientation='vertical')
+                slider_vmax = Slider(ax_slider_vmax, 'Max', vmin, vmax * 10, valinit=vmax, orientation='vertical')
 
-                    # Slider for wavelength selection
-                    slider = plt.Slider(ax_slider, 'Wavelength Index', 0, data.shape[0] - 1, valinit=0, valfmt='%0.0f')
+                # Linear or log scale
+                ax_radio = fig.add_axes([0.84, 0.05, 0.14, 0.08], facecolor='lightgoldenrodyellow')
+                radio = RadioButtons(ax_radio, ('Linear scale', 'Log scale'), active=0)
 
-                    # Instructions on the plot
-                    instructions = (
-                        "Ctrl + left click: mask a pixel\n"
-                        "Ctrl + right click: unmask a pixel\n"
-                        "Ctrl + left click and drag: mask an area\n"
-                        "Ctrl + right click and drag: unmask an area\n"
-                        "Close this window to save the mask"
-                    )
-                    ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes,
-                                fontsize=10, va='center', ha='left', color='blue')
+                # User instructions
+                instructions = (
+                    "Ctrl + left click: mask a pixel\n"
+                    "Ctrl + right click: unmask a pixel\n"
+                    "Ctrl + drag: mask/unmask area\n"
+                    "Close this window to save"
+                    if layout != layouts.layout_android else
+                    "Left click: mask a pixel\n"
+                    "Right click: unmask a pixel\n"
+                    "Drag: mask/unmask area\n"
+                    "Close this window to save"
+                )
+                ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes,
+                            fontsize=10, va='center', ha='left', color='blue')
 
-                    # Variables for tracing the selection
-                    # global start_point, dragging, deselecting
-                    start_point = None
-                    dragging = False
-                    deselecting = False
+                # State of the user interaction
+                state = {'start_point': None, 'dragging': False, 'deselecting': False}
 
-                    # Updating the slider
-                    def update(val):
-                        wavelength_index = int(slider.val)
-                        img.set_data(data[wavelength_index])
-                        ax_img.set_title(f"Wavelength Index: {wavelength_index}")
-                        fig.canvas.draw_idle()
+                # Visual update
+                def update(val):
+                    idx = int(slider_wave.val)
+                    current_data = data[idx]
+                    vmin_val = slider_vmin.val
+                    vmax_val = slider_vmax.val
+                    scale = radio.value_selected
+                    ax_img.set_title(f'Wavelength Index: {idx}')
 
-                    slider.on_changed(update)
+                    if scale == 'Linear scale':
+                        img.set_data(current_data)
+                        img.set_norm(Normalize(vmin=vmin_val, vmax=vmax_val))
+                    else:
+                        safe_slice = np.array(current_data, copy=True)
+                        safe_slice[~np.isfinite(safe_slice)] = np.nan
+                        min_positive = np.nanmin(safe_slice[safe_slice > 0]) if np.any(safe_slice > 0) else 1e-3
+                        safe_slice[safe_slice <= 0] = min_positive
+                        img.set_data(safe_slice)
+                        vmin_safe = max(vmin_val, min_positive)
+                        vmax_safe = max(vmax_val, vmin_safe * 1.01)
+                        img.set_norm(LogNorm(vmin=vmin_safe, vmax=vmax_safe))
 
-                    # Functions for selecting and de-selecting the spaxels to mask
-                    def on_click(event):
-                        global start_point, dragging, deselecting
-                        # Ignoring the mask if using the slider
-                        if event.inaxes != ax_img:
+                    fig.canvas.draw_idle()
+
+                slider_wave.on_changed(update)
+                slider_vmin.on_changed(update)
+                slider_vmax.on_changed(update)
+                radio.on_clicked(update)
+
+                # Mouse click and drag events
+                def on_click(event):
+                    if event.inaxes != ax_img or event.xdata is None or event.ydata is None:
+                        return
+
+                    if layout != layouts.layout_android:
+                        if event.key is None or not any(k in event.key.lower() for k in ['ctrl', 'control']):
                             return
 
-                        # Check if Crtl or Control is pressed
-                        if event.key is None or (('control' not in event.key.lower()) and ('ctrl' not in event.key.lower())):
-                            return
+                    if event.button == 1:
+                        state['start_point'] = (int(event.xdata), int(event.ydata))
+                        state['dragging'] = True
+                        state['deselecting'] = False
+                    elif event.button == 3:
+                        state['start_point'] = (int(event.xdata), int(event.ydata))
+                        state['dragging'] = False
+                        state['deselecting'] = True
 
-                        if event.button == MouseButton.LEFT:  # Ctrl + left click to mask
-                            start_point = (int(event.xdata), int(event.ydata))
-                            dragging = True
-                            deselecting = False
-                        elif event.button == MouseButton.RIGHT:  # Ctrl + right click to unmask
-                            start_point = (int(event.xdata), int(event.ydata))
-                            dragging = False
-                            deselecting = True
+                def on_release(event):
+                    if event.inaxes == ax_img and state['start_point'] and event.xdata and event.ydata:
+                        end_point = (int(event.xdata), int(event.ydata))
+                        x0, y0 = state['start_point']
+                        x1, y1 = end_point
 
-                    # Dragging functions
-                    def on_release(event):
-                        global start_point, dragging, deselecting
-                        if event.inaxes == ax_img and start_point:
-                            end_point = (int(event.xdata), int(event.ydata))
-                            x0, y0 = start_point
-                            x1, y1 = end_point
+                        if state['dragging']:
+                            mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
+                        elif state['deselecting']:
+                            mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
 
-                            if dragging:  # Masking
-                                mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
-                            elif deselecting:  # Unmasking
-                                mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
+                        mask_overlay.set_data(np.ma.masked_where(mask == 0, mask))
+                        fig.canvas.draw()
+                        state['start_point'] = None
+                        state['dragging'] = False
+                        state['deselecting'] = False
 
-                            # Update the figure
-                            mask_overlay.set_data(np.ma.masked_where(mask == 0, mask))
-                            fig.canvas.draw()
-                            start_point = None
-                            dragging = False
-                            deselecting = False
+                fig.canvas.mpl_connect("button_press_event", on_click)
+                fig.canvas.mpl_connect("button_release_event", on_release)
 
-                    fig.canvas.mpl_connect("button_press_event", on_click)
-                    fig.canvas.mpl_connect("button_release_event", on_release)
-                    plt.show()
-                    plt.close()
+                plt.subplots_adjust(left=0.05, right=0.8, top=0.95, bottom=0.05)
+                plt.show()
+                plt.close()
 
-                    mask_name = "mask_" + ifs_run_id + "_.fits"
-                    stm.save_mask_as_fits(mask, result_data + "/" + mask_name)
-                    mask_path = result_data + '/' + mask_name
-                    sg.popup("Mask saved as ", mask_name, "in ", result_data, " folder and loaded.")
+                # Saving and updating the gui
+                mask_name = f"mask_{ifs_run_id}_.fits"
+                mask_path = os.path.join(result_data, mask_name)
+                stm.save_mask_as_fits(mask, mask_path)
 
-                    #Updating the mask path in the GUI
-                    cube_ifs_window['ifs_mask'].update(mask_path)
+                sg.popup("Mask saved as", mask_name, "in", result_data, "folder and loaded.")
+                cube_ifs_window['ifs_mask'].update(mask_path)
 
-                except Exception as e:
-                    sg.popup('Fits datacube not valid.')
-                    continue
-
-
-
-            # Considering mobile devices without a keyboard to perform the masking. Using simple tap and drag to mask
-            if layout == layouts.layout_android:
-                try:
-                    ifs_input_mask = ifs_input
-                    data, wave = stm.read_datacube(ifs_input_mask)
-
-                    # Preparing the mask and show the first slice of the cube
-                    mask = np.zeros(data.shape[1:], dtype=int)
-                    fig, (ax_img, ax_slider) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [9, 1]}, figsize=(12, 8))
-                    plt.subplots_adjust(hspace=0.3)  # Slider-image spacing
-
-                    # Showing the image of the first wavelength value
-                    img = ax_img.imshow(data[0], cmap="gray", origin='lower')
-                    mask_overlay = ax_img.imshow(np.ma.masked_where(mask == 0, mask), cmap='Reds', alpha=0.5, origin='lower')
-                    ax_img.set_title(f"Wavelength Index: {0}")
-
-                    # Slider for wavelength selection
-                    slider = plt.Slider(ax_slider, 'Wavelength Index', 0, data.shape[0] - 1, valinit=0, valfmt='%0.0f')
-
-                    # Instructions on the plot
-                    instructions = (
-                        "Left click: mask a pixel\n"
-                        "Right click: unmask pixel\n"
-                        "Left click and drag: mask an area\n"
-                        "Right click and drag: unmask an area\n"
-                        "Close this window to save the mask"
-                    )
-                    ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes, fontsize=10, va='center', ha='left', color='blue')
-
-                    # Variables for tracing the selection
-                    start_point = None
-                    dragging = False
-                    deselecting = False
-
-                    # Updating the slider
-                    def update(val):
-                        wavelength_index = int(slider.val)
-                        img.set_data(data[wavelength_index])
-                        ax_img.set_title(f"Wavelength Index: {wavelength_index}")
-                        fig.canvas.draw_idle()
-
-                    slider.on_changed(update)
-
-                    # Functions for selecting and de-selecting the spaxels to mask
-                    def on_click(event):
-                        global start_point, dragging, deselecting
-                        # Ignoring the mask if using the slider
-                        if event.inaxes == ax_img:
-                            if event.button == MouseButton.LEFT:  # Left click for masking
-                                start_point = (int(event.xdata), int(event.ydata))
-                                dragging = True
-                                deselecting = False
-                            elif event.button == MouseButton.RIGHT:  # RIght click for unmasking
-                                start_point = (int(event.xdata), int(event.ydata))
-                                dragging = False
-                                deselecting = True
-
-                    # Dragging functions
-                    def on_release(event):
-                        global start_point, dragging, deselecting
-                        if event.inaxes == ax_img and start_point:
-                            end_point = (int(event.xdata), int(event.ydata))
-                            x0, y0 = start_point
-                            x1, y1 = end_point
-
-                            if dragging:  # dragging with the left mouse click
-                                mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
-                            elif deselecting:  # Dragging with the right mouse click
-                                mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
-
-                            # Update mask and plot
-                            mask_overlay.set_data(np.ma.masked_where(mask == 0, mask))
-                            fig.canvas.draw()
-                            start_point = None
-                            dragging = False
-                            deselecting = False
-
-                    fig.canvas.mpl_connect("button_press_event", on_click)
-                    fig.canvas.mpl_connect("button_release_event", on_release)
-                    plt.show()
-                    plt.close()
-
-                    mask_name = "mask_"+ifs_run_id+"_.fits"
-                    stm.save_mask_as_fits(mask, result_data+"/"+mask_name)
-                    mask_path = result_data + '/'+ mask_name
-                    sg.popup("Mask saved as ", mask_name, "in ", result_data, " folder and loaded.")
-
-                    #Updating the mask path in the GUI
-                    cube_ifs_window['ifs_mask'].update(mask_path)
-                except Exception as e:
-                    sg.popup ('Fits datacube not valid.')
-                    continue
+            except Exception as e:
+                sg.popup("Fits datacube not valid.")
+                continue
 
 
         if ifs_existing_bin:
@@ -1250,184 +1236,140 @@ def datacube_extraction(params):
         # Performing manual binning by the user, by selecting one or multiple regions in a matplotlib iterative window
         # Using a modified version of the mask routine above to select the manual binning regions. Then inverting the mask to consider ONLY the selected spaxels.
         if cube_ifs_event == 'Manual binning':
-
-            #activating the Manual bin option, if not activated
             cube_ifs_window['ifs_manual_bin'].update(True)
             ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
 
             try:
+                data, wave = stm.read_datacube(ifs_input)
+                bin_mask = np.zeros(data.shape[1:], dtype=int)
 
+                # Matplotlib layout
+                fig = plt.figure(figsize=(12, 7))
+                gs = GridSpec(nrows=6, ncols=6, figure=fig)
+                ax_img = fig.add_subplot(gs[:, :5])
 
-            # Considering non mobile devices with a keyboard to perform the masking. Using ctrl+click to mask
-                if layout != layouts.layout_android:
+                current_slice = data[0]
+                masked_slice = np.ma.masked_invalid(current_slice)
+                if masked_slice.count() > 0:
+                    finite_values = masked_slice.compressed()
+                    vmin = np.min(finite_values)
+                    vmax = np.max(finite_values)
+                else:
+                    vmin, vmax = 0, 1
 
-                    ifs_input_mask = ifs_input
-                    data, wave = stm.read_datacube(ifs_input_mask)
+                img = ax_img.imshow(current_slice, cmap="gray", origin='lower',
+                                    norm=Normalize(vmin=vmin, vmax=vmax))
+                bin_mask_overlay = ax_img.imshow(np.ma.masked_where(bin_mask == 0, bin_mask),
+                                                cmap='Reds', alpha=0.5, origin='lower')
+                ax_img.set_title(f'Wavelength Index: 0')
 
-                    # Preparing the mask and show the first slice of the cube
-                    bin_mask = np.zeros(data.shape[1:], dtype=int)
-                    fig, (ax_img, ax_slider) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [9, 1]}, figsize=(12, 8))
-                    plt.subplots_adjust(hspace=0.3)  # Slider-image spacing
+                # Sliders for wave and luminosity
+                ax_slider_wave = fig.add_axes([0.84, 0.20, 0.04, 0.75])
+                ax_slider_vmin = fig.add_axes([0.89, 0.20, 0.04, 0.75])
+                ax_slider_vmax = fig.add_axes([0.94, 0.20, 0.04, 0.75])
+                slider_wave = Slider(ax_slider_wave, 'λ', 0, data.shape[0]-1,
+                                    valinit=0, valfmt='%0.0f', orientation='vertical')
+                slider_vmin = Slider(ax_slider_vmin, 'Min', vmin, vmax,
+                                    valinit=vmin, orientation='vertical')
+                slider_vmax = Slider(ax_slider_vmax, 'Max', vmin, vmax * 10,
+                                    valinit=vmax, orientation='vertical')
 
-                    # Showing the image of the first wavelength value
-                    img = ax_img.imshow(data[0], cmap="gray", origin='lower')
-                    bin_mask_overlay = ax_img.imshow(np.ma.masked_where(bin_mask == 0, bin_mask), cmap='Reds', alpha=0.5, origin='lower')
-                    ax_img.set_title(f"Wavelength Index: {0}")
+                # Log or linear scale
+                ax_radio = fig.add_axes([0.84, 0.05, 0.14, 0.08], facecolor='lightgoldenrodyellow')
+                radio = RadioButtons(ax_radio, ('Linear scale', 'Log scale'), active=0)
 
-                    # Slider for wavelength selection
-                    slider = plt.Slider(ax_slider, 'Wavelength Index', 0, data.shape[0] - 1, valinit=0, valfmt='%0.0f')
+                # Screen instructions
+                instructions = (
+                    "Ctrl + Left click: Select a spaxel\n"
+                    "Ctrl + Right click: Deselect a spaxel\n"
+                    "Ctrl + Drag: Select/Deselect area\n"
+                    "Close this window to save"
+                    if layout != layouts.layout_android else
+                    "Left click: Select a spaxel\n"
+                    "Right click: Deselect a spaxel\n"
+                    "Drag: Select/Deselect area\n"
+                    "Close this window to save"
+                )
+                ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes,
+                            fontsize=10, va='center', ha='left', color='blue')
 
-                    # Instructions on the plot
-                    instructions = (
-                        "Ctrl + Left click: Select a spaxel\n"
-                        "Ctrl + Right click: Deselect a spaxel\n"
-                        "Ctrl + Left click and drag: Select an area\n"
-                        "Ctrl + Right click and drag: Deselect an area\n"
-                        "Ctrl + Close this window to save the work"
-                    )
-                    ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes,
-                                fontsize=10, va='center', ha='left', color='blue')
+                # States of the interaction
+                interaction_state = {
+                    'start_point': None,
+                    'dragging': False,
+                    'deselecting': False
+                }
 
+                # Visual update
+                def update(val):
+                    idx = int(slider_wave.val)
+                    current_data = data[idx]
+                    vmin_val = slider_vmin.val
+                    vmax_val = slider_vmax.val
+                    scale = radio.value_selected
+                    ax_img.set_title(f'Wavelength Index: {idx}')
 
-                    # Variables for tracing the selection
-                    start_point = None
-                    dragging = False
-                    deselecting = False
+                    if scale == 'Linear scale':
+                        img.set_data(current_data)
+                        img.set_norm(Normalize(vmin=vmin_val, vmax=vmax_val))
+                    else:
+                        safe_slice = np.array(current_data, copy=True)
+                        safe_slice[~np.isfinite(safe_slice)] = np.nan
+                        min_positive = np.nanmin(safe_slice[safe_slice > 0]) if np.any(safe_slice > 0) else 1e-3
+                        safe_slice[safe_slice <= 0] = min_positive
+                        img.set_data(safe_slice)
+                        vmin_safe = max(vmin_val, min_positive)
+                        vmax_safe = max(vmax_val, vmin_safe * 1.01)
+                        img.set_norm(LogNorm(vmin=vmin_safe, vmax=vmax_safe))
 
-                    # Updating the slider
-                    def update(val):
-                        wavelength_index = int(slider.val)
-                        img.set_data(data[wavelength_index])
-                        ax_img.set_title(f"Wavelength Index: {wavelength_index}")
-                        fig.canvas.draw_idle()
+                    fig.canvas.draw_idle()
 
-                    slider.on_changed(update)
+                slider_wave.on_changed(update)
+                slider_vmin.on_changed(update)
+                slider_vmax.on_changed(update)
+                radio.on_clicked(update)
 
-                    # Functions for selecting and de-selecting the spaxels to mask
-                    def on_click(event):
-                        global start_point, dragging, deselecting
-                        # Ignoring the mask if using the slider
-                        if event.inaxes != ax_img:
+                # Mouse events
+                def on_click(event):
+                    if event.inaxes != ax_img or event.xdata is None or event.ydata is None:
+                        return
+
+                    if layout != layouts.layout_android:
+                        if event.key is None or not any(k in event.key.lower() for k in ['ctrl', 'control']):
                             return
 
-                        # Check if Crtl or Control is pressed
-                        if event.key is None or (('control' not in event.key.lower()) and ('ctrl' not in event.key.lower())):
-                            return
+                    if event.button == 1:
+                        interaction_state['start_point'] = (int(event.xdata), int(event.ydata))
+                        interaction_state['dragging'] = True
+                        interaction_state['deselecting'] = False
+                    elif event.button == 3:
+                        interaction_state['start_point'] = (int(event.xdata), int(event.ydata))
+                        interaction_state['dragging'] = False
+                        interaction_state['deselecting'] = True
 
-                        if event.button == MouseButton.LEFT:  # Ctrl + left click to mask
-                            start_point = (int(event.xdata), int(event.ydata))
-                            dragging = True
-                            deselecting = False
-                        elif event.button == MouseButton.RIGHT:  # Ctrl + right click to unmask
-                            start_point = (int(event.xdata), int(event.ydata))
-                            dragging = False
-                            deselecting = True
+                def on_release(event):
+                    if event.inaxes == ax_img and interaction_state['start_point'] and event.xdata and event.ydata:
+                        end_point = (int(event.xdata), int(event.ydata))
+                        x0, y0 = interaction_state['start_point']
+                        x1, y1 = end_point
 
-                    # Dragging functions
-                    def on_release(event):
-                        global start_point, dragging, deselecting
-                        if event.inaxes == ax_img and start_point:
-                            end_point = (int(event.xdata), int(event.ydata))
-                            x0, y0 = start_point
-                            x1, y1 = end_point
+                        if interaction_state['dragging']:
+                            bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
+                        elif interaction_state['deselecting']:
+                            bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
 
-                            if dragging:  # Masking
-                                bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
-                            elif deselecting:  # Unmasking
-                                bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
+                        bin_mask_overlay.set_data(np.ma.masked_where(bin_mask == 0, bin_mask))
+                        fig.canvas.draw()
+                        interaction_state['start_point'] = None
+                        interaction_state['dragging'] = False
+                        interaction_state['deselecting'] = False
 
-                            # Update mask and plot
-                            bin_mask_overlay.set_data(np.ma.masked_where(bin_mask == 0, bin_mask))
-                            fig.canvas.draw()
-                            start_point = None
-                            dragging = False
-                            deselecting = False
+                fig.canvas.mpl_connect("button_press_event", on_click)
+                fig.canvas.mpl_connect("button_release_event", on_release)
 
-                    fig.canvas.mpl_connect("button_press_event", on_click)
-                    fig.canvas.mpl_connect("button_release_event", on_release)
-                    plt.show()
-                    plt.close()
-
-
-
-                if layout == layouts.layout_android:
-                    ifs_input_mask = ifs_input
-                    data, wave = stm.read_datacube(ifs_input_mask)
-
-                    # Preparing the mask and show the first slice of the cube
-                    bin_mask = np.zeros(data.shape[1:], dtype=int)
-                    fig, (ax_img, ax_slider) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [9, 1]}, figsize=(12, 8))
-                    plt.subplots_adjust(hspace=0.3)  # Slider-image spacing
-
-                    # Showing the image of the first wavelength value
-                    img = ax_img.imshow(data[0], cmap="gray", origin='lower')
-                    bin_mask_overlay = ax_img.imshow(np.ma.masked_where(bin_mask == 0, bin_mask), cmap='Reds', alpha=0.5, origin='lower')
-                    ax_img.set_title(f"Wavelength Index: {0}")
-
-                    # Slider for wavelength selection
-                    slider = plt.Slider(ax_slider, 'Wavelength Index', 0, data.shape[0] - 1, valinit=0, valfmt='%0.0f')
-
-                    # Instructions on the plot
-                    instructions = (
-                        "Left click: Select a spaxel\n"
-                        "Right click: Deselect a spaxel\n"
-                        "Left click and drag: Select an area\n"
-                        "Right click and drag: Deselect an area\n"
-                        "Close this window to save the work"
-                    )
-                    ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes, fontsize=10, va='center', ha='left', color='blue')
-
-                    # Variables for tracing the selection
-                    start_point = None
-                    dragging = False
-                    deselecting = False
-
-                    # Updating the slider
-                    def update(val):
-                        wavelength_index = int(slider.val)
-                        img.set_data(data[wavelength_index])
-                        ax_img.set_title(f"Wavelength Index: {wavelength_index}")
-                        fig.canvas.draw_idle()
-
-                    slider.on_changed(update)
-
-                    # Functions for selecting and de-selecting the spaxels to mask
-                    def on_click(event):
-                        global start_point, dragging, deselecting
-                        # Ignoring the mask if using the slider
-                        if event.inaxes == ax_img:
-                            if event.button == MouseButton.LEFT:  # Left click for masking
-                                start_point = (int(event.xdata), int(event.ydata))
-                                dragging = True
-                                deselecting = False
-                            elif event.button == MouseButton.RIGHT:  # RIght click for unmasking
-                                start_point = (int(event.xdata), int(event.ydata))
-                                dragging = False
-                                deselecting = True
-
-                    def on_release(event):
-                        global start_point, dragging, deselecting
-                        if event.inaxes == ax_img and start_point:
-                            end_point = (int(event.xdata), int(event.ydata))
-                            x0, y0 = start_point
-                            x1, y1 = end_point
-
-                            if dragging:  # dragging with the left mouse click
-                                bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 1
-                            elif deselecting:  # Dragging with the right mouse click
-                                bin_mask[min(y0, y1):max(y0, y1)+1, min(x0, x1):max(x0, x1)+1] = 0
-
-                            # Update mask and plot
-                            bin_mask_overlay.set_data(np.ma.masked_where(bin_mask == 0, bin_mask))
-                            fig.canvas.draw()
-                            start_point = None
-                            dragging = False
-                            deselecting = False
-
-                    fig.canvas.mpl_connect("button_press_event", on_click)
-                    fig.canvas.mpl_connect("button_release_event", on_release)
-                    plt.show()
-                    plt.close()
+                plt.subplots_adjust(left=0.05, right=0.8, top=0.95, bottom=0.05)
+                plt.show()
+                plt.close()
 
 
                 #DOING THE MAGIC: Finding all the contigous selected spaxels, assign an integer flag for each region selected by the user.
@@ -1706,9 +1648,9 @@ def datacube_extraction(params):
             folder_path = single_bins_dir
             if folder_path:
                 file_list = stm.get_files_in_folder(folder_path)
-                output_file = ifs_run_id + '_bins_list.txt'
+                output_file = result_list_dir +'/' + ifs_run_id + '_bins_list.txt'
                 stm.save_to_text_file(file_list, output_file)
-                sg.Popup('Spectra file list of the bins saved in the working directory', output_file, 'You can now browse and load this list file\n\nWARNING: change the name of the run to process again')
+                sg.Popup('Spectra file list of the bins saved in ', output_file, 'You can now browse and load this list file\n\nWARNING: change the name of the run to process again')
 
 
         #showing the help file

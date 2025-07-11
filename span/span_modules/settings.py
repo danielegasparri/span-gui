@@ -73,11 +73,10 @@ def generate_spectra_list(window, params):
             folder_path = list_values['-FOLDER-']
             if folder_path:
                 file_list = stm.get_files_in_folder(folder_path)
-                output_file = os.path.basename(os.path.normpath(folder_path)) + '_spectra_list.txt'
+                output_file = params.result_list_dir +'/' + os.path.basename(os.path.normpath(folder_path)) +'_spectra_list.txt'
                 stm.save_to_text_file(file_list, output_file)
 
-                sg.Popup('Spectra file list saved in the current working directory',
-                         output_file, 'You can now load this list file')
+                sg.Popup('Spectra file list saved in ', output_file, 'You can now load this list file')
 
                 # Updating the spectra list
                 window['spec_list'].update(output_file)

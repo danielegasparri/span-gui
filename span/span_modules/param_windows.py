@@ -802,18 +802,16 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 coeff_all = np.zeros(shape)
                 coeff_err_all = np.zeros(shape)
 
-                err_col_type = np.chararray(num_indices)
-                err_col_type = 'e'
+                err_col_type = np.full_like(id_array, 'e', dtype=str)
                 err_col_names = np.char.add(id_array, err_col_type)
-
-                #merge the column array names
                 col_names = np.concatenate((id_array, err_col_names))
+
                 coeff_id = col_names
                 coeff_data = np.column_stack((coeff_all, coeff_err_all))
 
-                df_coeff = pd.DataFrame(coeff_data, columns = coeff_id)
-                df_coeff.to_csv(coeff_file, index= True, sep=' ')
-
+                df_coeff = pd.DataFrame(coeff_data, columns=coeff_id)
+                df_coeff.to_csv(coeff_file, index=True, sep=' ')
+                    
 
             #1) If I want to measure just one index
             if (sigma_coeff and single_index_corr):
