@@ -771,16 +771,15 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     wave = line_wave
 
     # In case I have High or low redshift
-    redshift = z
+    redshift = z #placeholder to not loose the real redshift
     high_z = 0.01
-    if redshift > high_z: #with high redshift I de-redshift the spectrum to the restframe, correct the FWHM of the galaxy and set the z to zero.
-        lam_range_gal = np.array([np.min(wave), np.max(wave)])/(1 + z)
+    lam_range_gal = np.array([np.min(wave), np.max(wave)])/(1 + z) #de-redshift
+    if z > high_z:
         FWHM_gal /= 1 + z
-        z = 0
         redshift_0 = redshift
-    else: #with low redshift (z<0.01) I just let pPXF to estimate the redshift
-        lam_range_gal = np.array([np.min(wave), np.max(wave)])
-        redshift_0 = 0
+    else:
+        redshift_0 = redshift
+    z = 0
 
     print('Rebinning to log')
     galaxy, ln_lam1, velscale = util.log_rebin(lam_range_gal, galaxy)
