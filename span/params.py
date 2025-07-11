@@ -503,6 +503,7 @@ class SpectraParams:
         self.result_data = misc.create_result_structure(self.result_path)
 
         # Define subdirectories
+        self.result_list_dir = os.path.join(self.result_data, 'spectra_lists')
         self.result_spec_dir = os.path.join(self.result_data, 'processed_spectra')
         self.result_spec = os.path.join(self.result_spec_dir, '')
         self.result_snr_dir = os.path.join(self.result_data, 'SNR')
