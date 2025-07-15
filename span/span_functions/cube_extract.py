@@ -209,6 +209,55 @@ def save_spectra(config, cube, preview, existing_bin):
         return "SKIP"
 
 
+def save_image(config, cube):
+    """
+    Collapse the cube['signal'] along the spectral axis and save a 2D image (ny, nx) in FITS format.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary containing 'INFO' > 'OUTPUT' and 'RUN_NAME'.
+    cube : dict
+        Datacube structure with keys: 'signal', 'x', 'y', 'wave', etc.
+
+    Returns
+    -------
+    str
+        Path to the saved FITS file.
+    """
+    signal = cube['signal']  # shape: (nz, nspax)
+    x = cube['x']  # shape: (nspax,)
+    y = cube['y']  # shape: (nspax,)
+
+    # Collapse along wavelength axis (axis 0) → shape: (nspax,)
+    collapsed_flux = signal #np.nansum(signal, axis=0)
+
+    # Create 2D image grid
+    x_unique = np.sort(np.unique(x))
+    y_unique = np.sort(np.unique(y))
+    nx = len(x_unique)
+    ny = len(y_unique)
+    image_2d = np.full((ny, nx), np.nan)
+
+    # Fill 2D image
+    for i in range(len(x)):
+        xi = np.searchsorted(x_unique, x[i])
+        yi = np.searchsorted(y_unique, y[i])
+        image_2d[yi, xi] = collapsed_flux[i]
+
+    # Prepare output path
+    output_prefix = os.path.join(config['INFO']['OUTPUT'], config['INFO']['RUN_NAME'])
+    output_file = f"{output_prefix}_2dimage.fits"
+
+    # Save to FITS
+    hdu = fits.PrimaryHDU(image_2d)
+    hdu.header['COMMENT'] = "2D image collapsed along spectral axis"
+    hdu.header['HISTORY'] = "Created with SPAN"
+    hdu.writeto(output_file, overwrite=True)
+    print('')
+    print(f"Saved 2D image to: {output_file}")
+    return output_file
+
 
 ###############################################################################
 ################ FUNCTIONS TO PERFORM THE 4 STEPS ABOVE #############
@@ -550,7 +599,7 @@ def prepare_mask_bin(config, cube, preview):
     print("Applied spatial bins.")
 
     if not preview:
-        save_bin_spec(config, bin_data, bin_error, cube['wave'], "lin")
+        save_bin_spec(config, bin_data, bin_error, cube['wave'])
     else:
         # Display Voronoi map
         try:
@@ -624,17 +673,16 @@ def perform_voronoi(bin_num, spec, error):
     return bin_data, bin_error, bin_flux
 
 
-def save_bin_spec(config, log_spec, log_error, wavelength, flag):
+def save_bin_spec(config, spec, error, wavelength):
 
     """
     Saves binned spectra and error spectra to a FITS file.
 
     Parameters:
         config (dict): Configuration dictionary.
-        log_spec (np.ndarray): Array of binned spectra.
-        log_error (np.ndarray): Array of error spectra.
+        spec (np.ndarray): Array of binned spectra.
+        error (np.ndarray): Array of error spectra.
         wavelength (np.ndarray): Wavelength array.
-        flag (str): Data type flag (e.g., 'lin' for linear binning).
 
     Returns:
         None (Writes the FITS file)
@@ -649,8 +697,8 @@ def save_bin_spec(config, log_spec, log_error, wavelength, flag):
     with fits.HDUList([
         fits.PrimaryHDU(),
         fits.BinTableHDU.from_columns([
-            fits.Column(name='SPEC', format=f"{log_spec.shape[0]}D", array=log_spec.T),
-            fits.Column(name='ESPEC', format=f"{log_spec.shape[0]}D", array=log_error.T)
+            fits.Column(name='SPEC', format=f"{spec.shape[0]}D", array=spec.T),
+            fits.Column(name='ESPEC', format=f"{spec.shape[0]}D", array=error.T)
         ], name='BIN_SPECTRA'),
         fits.BinTableHDU.from_columns([
             fits.Column(name='WAVE', format='D', array=wavelength)
@@ -697,31 +745,12 @@ def extract(config, preview, voronoi, manual_bin, existing_bin):
 
     # 4) Extract and save spectra
     save_spectra(config, cube, preview, existing_bin)
+    
+    # 5) Save collapsed image only if I extract the datacube
+    if not preview:
+        save_image(config, cube)
 
     print("\n--- Extraction Process Completed ---\n")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

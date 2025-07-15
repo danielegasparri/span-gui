@@ -54,6 +54,8 @@ from scipy.signal import correlate2d
 from scipy.constants import h,k,c
 from scipy.stats import pearsonr
 import scipy.stats
+from scipy.ndimage import gaussian_filter
+from scipy.interpolate import griddata
 
 import time
 from time import perf_counter as clock
@@ -1172,13 +1174,33 @@ def load_analysis_results(txt_file):
     df = pd.read_csv(txt_file, sep='\s+')
     return df
 
-def plot_voronoi_map(x, y, bin_id, result_df, quantity, save_path=None, cmap="inferno"):
-    """Create 2D Voronoi-style map and optionally save as PNG"""
+def plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap="inferno",
+                     img_path=None, iso_levels=None):
+    """
+    Static Voronoi-like map of a quantity with optional isophote overlay.
+
+    Parameters
+    ----------
+    x, y : array
+        Coordinates [arcsec] of each spaxel.
+    bin_id : array
+        Voronoi bin ID for each spaxel.
+    result_df : pandas.DataFrame
+        Table of results with the quantity to be mapped.
+    quantity : str
+        Column name of the quantity to plot.
+    cmap : str
+        Matplotlib colormap name.
+    img_path : str or None
+        Optional path to FITS image to overlay isophotes.
+    iso_levels : list of float or None
+        Normalised levels (0–100) for the isophotes.
+    """
+
     value_map = {}
     for _, row in result_df.iterrows():
         try:
-            filename = row.iloc[0]
-            bin_str = filename.split('_')[-1].split('.')[0]
+            bin_str = row.iloc[0].split('_')[-1].split('.')[0]
             bin_num = int(bin_str)
             value_map[bin_num] = row[quantity]
         except Exception:
@@ -1189,36 +1211,36 @@ def plot_voronoi_map(x, y, bin_id, result_df, quantity, save_path=None, cmap="in
         b = bin_id[i]
         if b >= 0 and b in value_map:
             signal[i] = value_map[b]
-        else:
-            signal[i] = np.nan
 
-    x_bins, y_bins = np.unique(x), np.unique(y)
+    x_bins = np.sort(np.unique(x))
+    y_bins = np.sort(np.unique(y))
     grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
-
     for i in range(len(x)):
         x_idx = np.searchsorted(x_bins, x[i])
         y_idx = np.searchsorted(y_bins, y[i])
         grid_data[y_idx, x_idx] = signal[i]
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    c = ax.pcolormesh(x_bins, y_bins, grid_data, cmap=cmap, shading='auto')
-    fig.colorbar(c, ax=ax, label=quantity)
-    ax.set_xlabel("R [arcsec]")
-    ax.set_ylabel("R [arcsec]")
-    ax.set_title(f"Voronoi Map: {quantity}")
-    plt.tight_layout()
+    fig, ax = plt.subplots()
+    mesh = ax.pcolormesh(x_bins, y_bins, grid_data, cmap=cmap, shading='auto')
+    plt.colorbar(mesh, ax=ax, label=quantity)
+    ax.set_xlabel("X [arcsec]")
+    ax.set_ylabel("Y [arcsec]")
+    ax.set_title(f"{quantity}")
 
-    if save_path:
-        fig.savefig(save_path, dpi=300)
-        plt.close(fig)
-    else:
-        plt.show()
+    # Isofote se immagine presente
+    if img_path and os.path.isfile(img_path):
+        try:
+            overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+        except Exception as e:
+            print(f"[WARNING] Could not overlay isophotes: {e}")
+
+    # plt.tight_layout()
+    return fig, ax
+
 
 
 def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"):
     """Interactive 2D Voronoi map with bin ID and value popup on click."""
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     # Build value map: bin_id -> quantity
     value_map = {}
@@ -1252,7 +1274,7 @@ def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"
     ax.set_xlabel("R [arcsec]")
     ax.set_ylabel("R [arcsec]")
     ax.set_title(f"Voronoi Map: {quantity}")
-    plt.tight_layout()
+    # plt.tight_layout()
 
     # Internal variables to track annotation and marker
     annotation = None
@@ -1293,7 +1315,263 @@ def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"
         print(f"Clicked BIN {selected_bin}: {quantity} = {value:.3f} at (x={x[idx_min]:.1f}, y={y[idx_min]:.1f})")
 
     fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.show()
+    # plt.show()
+    return fig, ax
+
+
+
+def plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap="inferno",
+                          smoothing=False, sigma=0.0,
+                          img_path=None, iso_levels=None):
+    """
+    Plot or save a reprojected map of a quantity on a regular grid.
+
+    Parameters
+    ----------
+    x, y : array
+        Coordinates of each spaxel [arcsec].
+    bin_id : array
+        Voronoi bin ID per spaxel.
+    result_df : pandas.DataFrame
+        Table with results, including quantity to map.
+    quantity : str
+        Name of the quantity to visualise.
+    cmap : str
+        Name of matplotlib colormap.
+    smoothing : bool
+        If True, apply Gaussian smoothing.
+    sigma : float
+        Sigma of the Gaussian kernel [pixels].
+    img_path : str or None
+        Path to the 2D image FITS file for isophotes.
+    iso_levels : list of float or None
+        Normalised levels (0–100) for the isophotes. If None, default levels used.
+
+    """
+    # Build bin -> quantity map
+    value_map = {}
+    for _, row in result_df.iterrows():
+        try:
+            bin_str = row.iloc[0].split('_')[-1].split('.')[0]
+            bin_num = int(bin_str)
+            value_map[bin_num] = row[quantity]
+        except Exception:
+            continue
+
+    # Setup regular grid
+    x_bins = np.sort(np.unique(x))
+    y_bins = np.sort(np.unique(y))
+    grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
+
+    for i in range(len(x)):
+        b = bin_id[i]
+        if b >= 0 and b in value_map:
+            x_idx = np.searchsorted(x_bins, x[i])
+            y_idx = np.searchsorted(y_bins, y[i])
+            grid_data[y_idx, x_idx] = value_map[b]
+
+    # Apply smoothing
+    if smoothing:
+        mask = ~np.isnan(grid_data)
+        grid_data_filled = np.copy(grid_data)
+        grid_data_filled[~mask] = 0.0
+        smoothed_data = gaussian_filter(grid_data_filled, sigma=sigma)
+        norm_mask = gaussian_filter(mask.astype(float), sigma=sigma)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            smoothed_data /= norm_mask
+            smoothed_data[norm_mask < 1e-3] = np.nan
+    else:
+        smoothed_data = grid_data
+
+    # Plotting
+    fig, ax = plt.subplots()
+    mesh = ax.pcolormesh(x_bins, y_bins, smoothed_data, cmap=cmap, shading='auto')
+    plt.colorbar(mesh, ax=ax, label=quantity)
+    ax.set_xlabel("X [arcsec]")
+    ax.set_ylabel("Y [arcsec]")
+    ax.set_title(f"{quantity}")
+
+    # Overlay isophotes
+    if img_path and os.path.isfile(img_path):
+        try:
+            overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+        except Exception as e:
+            print(f"[WARNING] Could not overlay isophotes: {e}")
+
+    # plt.tight_layout()
+
+    return fig, ax
+
+
+
+def plot_reprojected_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno",
+                          smoothing=False, sigma=0.0,
+                          img_path=None, iso_levels=None):
+    """
+    Plot or save a reprojected map of a quantity on a regular grid.
+
+    Parameters
+    ----------
+    x, y : array
+        Coordinates of each spaxel [arcsec].
+    bin_id : array
+        Voronoi bin ID per spaxel.
+    result_df : pandas.DataFrame
+        Table with results, including quantity to map.
+    quantity : str
+        Name of the quantity to visualise.
+    cmap : str
+        Name of matplotlib colormap.
+    smoothing : bool
+        If True, apply Gaussian smoothing.
+    sigma : float
+        Sigma of the Gaussian kernel [pixels].
+    img_path : str or None
+        Path to the 2D image FITS file for isophotes.
+    iso_levels : list of float or None
+        Normalised levels (0–100) for the isophotes. If None, default levels used.
+
+    Returns
+    -------
+    fig, ax : matplotlib figure and axes with the plotted map.
+    """
+    # Build bin -> quantity map
+    value_map = {}
+    for _, row in result_df.iterrows():
+        try:
+            bin_str = row.iloc[0].split('_')[-1].split('.')[0]
+            bin_num = int(bin_str)
+            value_map[bin_num] = row[quantity]
+        except Exception:
+            continue
+
+    # Setup regular grid
+    x_bins = np.sort(np.unique(x))
+    y_bins = np.sort(np.unique(y))
+    grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
+
+    for i in range(len(x)):
+        b = bin_id[i]
+        if b >= 0 and b in value_map:
+            x_idx = np.searchsorted(x_bins, x[i])
+            y_idx = np.searchsorted(y_bins, y[i])
+            grid_data[y_idx, x_idx] = value_map[b]
+
+    # Apply smoothing
+    if smoothing:
+        mask = ~np.isnan(grid_data)
+        grid_data_filled = np.copy(grid_data)
+        grid_data_filled[~mask] = 0.0
+        smoothed_data = gaussian_filter(grid_data_filled, sigma=sigma)
+        norm_mask = gaussian_filter(mask.astype(float), sigma=sigma)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            smoothed_data /= norm_mask
+            smoothed_data[norm_mask < 1e-3] = np.nan
+    else:
+        smoothed_data = grid_data
+
+    # Plotting
+    fig, ax = plt.subplots()
+    mesh = ax.pcolormesh(x_bins, y_bins, smoothed_data, cmap=cmap, shading='auto')
+    plt.colorbar(mesh, ax=ax, label=quantity)
+    ax.set_xlabel("X [arcsec]")
+    ax.set_ylabel("Y [arcsec]")
+    ax.set_title(f"{quantity}")
+
+    # Overlay isophotes
+    if img_path and os.path.isfile(img_path):
+        try:
+            overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+        except Exception as e:
+            print(f"[WARNING] Could not overlay isophotes: {e}")
+
+    # Add interactivity (clickable)
+    annotation_smooth = None
+    highlight_smooth = None
+
+    def onclick(event):
+        nonlocal annotation_smooth, highlight_smooth
+        if event.inaxes != ax:
+            return
+        x_click, y_click = event.xdata, event.ydata
+        dist = np.sqrt((x - x_click)**2 + (y - y_click)**2)
+        idx_min = np.argmin(dist)
+        selected_bin = bin_id[idx_min]
+        value = value_map.get(selected_bin, np.nan)
+
+        if annotation_smooth:
+            annotation_smooth.remove()
+        if highlight_smooth:
+            highlight_smooth.remove()
+
+        annotation_smooth = ax.annotate(
+            f"BIN {selected_bin} | {quantity} = {value:.3f}",
+            (x[idx_min], y[idx_min]),
+            xytext=(5, 5), textcoords='offset points',
+            fontsize=10, color='white', weight='bold',
+            bbox=dict(boxstyle='round,pad=0.2', fc='black', alpha=0.5)
+        )
+
+        highlight_smooth = ax.plot(
+            x[idx_min], y[idx_min],
+            marker='o', color='red', markersize=8, markeredgecolor='white'
+        )[0]
+
+        fig.canvas.draw()
+        print(f"Clicked BIN {selected_bin}: {quantity} = {value:.3f} at (x={x[idx_min]:.1f}, y={y[idx_min]:.1f})")
+
+    fig.canvas.mpl_connect('button_press_event', onclick)
+    # plt.tight_layout()
+
+    return fig, ax
+
+
+
+
+def overlay_isophotes(ax, image_path, x, y, color='white', levels=None):
+    """
+    Overlay isophotes from a 2D image onto an existing matplotlib axis.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axis on which to draw the isophotes.
+    image_path : str
+        Path to the 2D image FITS file.
+    x, y : array-like
+        Coordinates of the spaxels (same as those used to plot the map).
+    color : str, optional
+        Color of the contour lines.
+    levels : list or None
+        Contour levels. If None, defaults to percentiles [90, 75, 60, 45, 30].
+    """
+    try:
+        image_2d = fits.getdata(image_path)
+
+        x_bins = np.sort(np.unique(x))
+        y_bins = np.sort(np.unique(y))
+        xx, yy = np.meshgrid(x_bins, y_bins)
+
+        # Interpolazione se le forme non combaciano
+        if image_2d.shape != xx.shape:
+            ny, nx = xx.shape
+            image_flat = image_2d.flatten()
+            coords_flat = np.array(np.meshgrid(np.arange(image_2d.shape[1]), np.arange(image_2d.shape[0]))).reshape(2, -1).T
+            target_coords = np.stack([xx.flatten(), yy.flatten()], axis=1)
+            image_interp = griddata(coords_flat, image_flat, target_coords, method='linear')
+            image_2d = image_interp.reshape(xx.shape)
+
+        if levels is None:
+            # levels = np.nanpercentile(image_2d, [90, 75, 60, 45, 30])
+            levels = np.nanpercentile(image_2d, [30, 45, 60, 75, 90])
+        else:
+            levels = np.nanpercentile(image_2d, levels)
+
+        ax.contour(xx, yy, image_2d, levels=levels, colors=color, linewidths=1.5)
+        # ax.contour(xx, yy, image_2d, levels=levels, colors=color, linewidths=1.5)
+
+    except Exception as e:
+        print(f"[WARNING] Could not overlay isophotes:\n{e}")
 
 #***********************************************
 
