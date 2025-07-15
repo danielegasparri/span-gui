@@ -3,7 +3,7 @@ Daniele Gasparri, June 2025
 
 ###Stellar populations and SFH ###
 
-This module is one of the most critical tools within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari) to fit a galaxy's spectrum using a set of Single Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, and Star Formation History (SFH).
+This module is one of the most critical tools within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023) to fit a galaxy's spectrum using a set of Single Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
 
 The provided settings allow for an optimal use of pPXF, though not all of its parameters and functionalities are included in this interface.
 
@@ -44,7 +44,7 @@ Recommended Workflow:
 - Perform an unregularized fit (Regul. error = 0).
 - Adjust the noise level to achieve chi^2 = 1.
 - Set the regularization so that the current delta Chi^2 falls between 20-50% of the desired delta Chi^2.
-- If uncertain, use "Auto Noise Level Estimation", which performs an initial unregularized fit to determine the optimal noise level.
+- If uncertain, use "Auto Noise", which performs an initial unregularized fit to determine the optimal noise level.
 - For small spectral ranges (<1000 A) and limited templates, "Auto Noise and Regul. error" can be used to optimize both parameters. A good starting point for S/N = 50 is setting "Fraction of Dchi2 to reach" to 0.20.
 
 - Polynomial Adjustments:
@@ -74,7 +74,8 @@ For star-forming galaxies, consider FSPS (Conroy et al., 2010).
 
 Fifth Section: Custom Masking and Stellar Constraints
 You can mask out the emission Lines. In this case, you should select the "Fitting without gas" in Section 3.
-Custom masking is available, but not compatible with pPXF's automatic emission-line masking.
+Custom masking is available and can be added also to the automatic masking of the emission lines. 
+There are two masking options available: the manual ones, by inserting the wavelength interval in the text box or a graphical mode activated by pressing the 'Graphical masking' button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking in done, you can close the Matplotlib window and the text box will update with the new ranges selected. 
 
 Age and Metallicity Ranges:
 Limit the maximum template age based on the galaxy's cosmic age. For high-redshift galaxies, reducing the upper age limit is recommended.
