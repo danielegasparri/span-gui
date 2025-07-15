@@ -6,6 +6,7 @@ Daniele Gasparri, July 2025
 
 **Version 6.6 (20250710):**  
 
+- Added new functionalities to the 'Plot maps' sub-program: isophotes overplotting and smoothing. This required also to add the 'save_image' function to the 'cube_extract' module that extract and saves the 2D image by averaging all the wavelengths selected from the datacube. This image is required in the 'Plot maps' sub-program, if isophotal contouring is needed (optional). 
 - Fixed a bug that prevented the Lick/IDS measurements in the 'Line-strength analysis' in high-redshift spectra, since SPAN was checking the wavelength compatibility of the spectra with the Lick wavelength range not considering the rest-frame corrected wavelengths.
 - Replaced the np.chararray function in the code since it has been deprecated with recent Numpy versions (2.X.X). 
 - Added a luminosity slider to the 'View datacube' option of the 'Datacube extraction' sub-program to facilitate reading datacube slices. 
