@@ -167,44 +167,48 @@ def plot_data_window(BASE_DIR, layout):
 
 # 2) PLOT MAPS
 def plot_maps_window(BASE_DIR, layout):
-    layout, scale_win, fontsize, default_size = misc.get_layout()
+    layout, scale_win, fontsize, default_size = misc.get_layout()   
     sg.theme("DarkBlue3")
     map_layout = [
         [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
         [sg.Input(key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
         [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
         [sg.Input(key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+        
+        [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
+        [sg.Input(key="-IMG-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+        [sg.Text("Iso-contour levels:", font=("Helvetica", 12)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
+
         [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
         [sg.HorizontalSeparator()],
-        [sg.Text("Select the quantity to plot:", font=("Helvetica", 14))],
+        [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet"], default_value="jet", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
         [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
-        [sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(
-            values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet"],
-            default_value="jet",
-            key="-CMAP-",
-            readonly=True,
-            font=("Helvetica", 12)
-        )],
-        [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
 
+        [sg.Text("X limits:"), sg.Input(size=(6,1), key="-XMIN-"), sg.Text("to"), sg.Input(size=(6,1), key="-XMAX-"), sg.Push(), sg.Text("Y limits:"), sg.Input(size=(6,1), key="-YMIN-"), sg.Text("to"), sg.Input(size=(6,1), key="-YMAX-")],
+
+        [sg.Checkbox("Enable spaxel re-projection (show value per spaxel)", key="-REPROJECT-", font=("Helvetica", 12), tooltip='If activated, it will consider the single spaxels in the maps. Useful only if smoothing is activated')],
+        [sg.Checkbox("Gaussian smoothing", key="-SMOOTH-", font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(30, 20), key="-SIGMA-", enable_events=True)],
+
+        [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
     ]
 
     map_window = sg.Window("2D Map Viewer", map_layout)
-
     x, y, bin_id = None, None, None
     result_df = None
     selected_quantity = None
+
 
     while True:
         map_event, map_values = map_window.read()
         if map_event in (sg.WIN_CLOSED, "Exit"):
             break
+
         elif map_event == "Load Files":
             try:
                 fits_path = map_values["-FITS-"]
                 txt_path = map_values["-TXT-"]
 
-                # Extract RUN_NAME from the file
+                # Extract RUN_NAME
                 fits_run = fits_path.split("/")[-1].split("_table")[0]
                 txt_run = txt_path.split("/")[-1].split("_bins_list")[0]
 
@@ -221,7 +225,7 @@ def plot_maps_window(BASE_DIR, layout):
 
                 x, y, bin_id = stm.load_fits_data(fits_path)
                 result_df = stm.load_analysis_results(txt_path)
-                col_names = list(result_df.columns)[1:]  # exclude first column (filename)
+                col_names = list(result_df.columns)[1:]
                 map_window["-LIST-"].update(values=col_names)
                 sg.popup("Files loaded successfully.")
 
@@ -231,40 +235,236 @@ def plot_maps_window(BASE_DIR, layout):
         elif map_event == "-LIST-":
             if map_values["-LIST-"]:
                 selected_quantity = map_values["-LIST-"][0]
+
         elif map_event == "Plot Map":
             if x is not None and result_df is not None and selected_quantity:
-                stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"])
+                reproject = map_values["-REPROJECT-"]
+                
+                if reproject:
+                    try:
+                        iso_levels = None
+                        img_path = map_values["-IMG-"]
+
+                        fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+
+                        if img_path and os.path.isfile(img_path):
+                            if img_path and os.path.isfile(img_path):
+                                try:
+                                    level_str = map_values["-ISOLEVELS-"]
+                                    iso_levels = [float(val) for val in level_str.split(",") if val.strip() != ""]
+                                    iso_levels.sort()
+                                except Exception:
+                                    iso_levels = None
+                                stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+                        
+                        # Set X and Y limits if provided
+                        try:
+                            xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                            xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                            ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                            ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                            if xmin is not None and xmax is not None:
+                                ax.set_xlim(xmin, xmax)
+                            if ymin is not None and ymax is not None:
+                                ax.set_ylim(ymin, ymax)
+                        except Exception as e:
+                            print(f"[WARNING] Invalid axis limits: {e}")
+                        
+                        plt.tight_layout()
+                        plt.show()
+                        plt.close()
+                        
+                    except Exception as e:
+                        sg.popup_error(f"Error in re-projection mode:\n{e}")
+
+                else:
+                    fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"])
+                    img_path = map_values["-IMG-"]
+                    if img_path and os.path.isfile(img_path):
+                        try:
+                            level_str = map_values["-ISOLEVELS-"]
+                            iso_levels = [float(val) for val in level_str.split(",") if val.strip() != ""]
+                            iso_levels.sort()
+                        except Exception:
+                            iso_levels = None
+                        stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+                        
+                    # Set X and Y limits if provided
+                    try:
+                        xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                        xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                        ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                        ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                        if xmin is not None and xmax is not None:
+                            ax.set_xlim(xmin, xmax)
+                        if ymin is not None and ymax is not None:
+                            ax.set_ylim(ymin, ymax)
+                    except Exception as e:
+                        print(f"[WARNING] Invalid axis limits: {e}")
+                    plt.tight_layout()
+                    plt.show()
+                    plt.close()
             else:
                 sg.popup("Please load files and select a quantity.")
 
+
         elif map_event == "Save selected":
             if x is not None and result_df is not None and selected_quantity:
-                save_path = sg.popup_get_file(
-                    "Save PNG file",
-                    save_as=True,
-                    no_window=True,
-                    file_types=(("PNG Files", "*.png"),),
-                    default_extension=".png"
-                )
+                save_path = sg.popup_get_file("Save PNG file", save_as=True, no_window=True, file_types=(("PNG Files", "*.png"),), default_extension=".png")
+                
                 if save_path:
-                    stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, save_path=save_path, cmap=map_values["-CMAP-"])
-                    sg.popup("Image saved successfully.")
+                    reproject = map_values["-REPROJECT-"]
+                    if reproject:
+                        img_path = map_values["-IMG-"]
+                        try:
+                            fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+
+                            if img_path and os.path.isfile(img_path):
+                                try:
+                                    level_str = map_values["-ISOLEVELS-"]
+                                    iso_levels = [float(val) for val in level_str.split(",") if val.strip() != ""]
+                                    iso_levels.sort()
+                                except Exception:
+                                    iso_levels = None
+                                stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+                                    
+                            # Set X and Y limits if provided
+                            try:
+                                xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                                xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                                ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                                ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                                if xmin is not None and xmax is not None:
+                                    ax.set_xlim(xmin, xmax)
+                                if ymin is not None and ymax is not None:
+                                    ax.set_ylim(ymin, ymax)
+                            except Exception as e:
+                                print(f"[WARNING] Invalid axis limits: {e}")
+                            
+                            plt.tight_layout()
+                            fig.savefig(save_path, dpi=300)
+                            plt.close(fig)
+                            sg.popup("Image saved successfully.")
+                            
+                        except Exception as e:
+                            sg.popup_error(f"Error saving reprojected image:\n{e}")
+                    else:
+                        
+                        img_path = map_values["-IMG-"]
+                        try:
+                            level_str = map_values["-ISOLEVELS-"]
+                            iso_levels = [float(val.strip()) for val in level_str.split(",") if val.strip()]
+                            iso_levels = sorted(set(iso_levels)) if len(iso_levels) >= 2 else None
+                        except Exception:
+                            iso_levels = None
+
+                        fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels)
+
+                        # Set X and Y limits if provided
+                        try:
+                            xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                            xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                            ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                            ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                            if xmin is not None and xmax is not None:
+                                ax.set_xlim(xmin, xmax)
+                            if ymin is not None and ymax is not None:
+                                ax.set_ylim(ymin, ymax)
+                        except Exception as e:
+                            print(f"[WARNING] Invalid axis limits: {e}")
+                        
+                        plt.tight_layout()
+                        fig.savefig(save_path, dpi=300)
+                        plt.close(fig)
+                        sg.popup("Image saved successfully.")
             else:
                 sg.popup("Please load files and select a quantity before saving.")
+
 
         elif map_event == "Save ALL":
             if x is not None and result_df is not None:
                 folder = sg.popup_get_folder("Select output folder for PNGs", no_window=True)
                 if folder:
-                    for quantity in result_df.columns[1:]:  # skip first col (filename)
+                    reproject = map_values["-REPROJECT-"]
+                    success = True
+                    for quantity in result_df.columns[1:]:
                         filename = f"{folder}/{stm.sanitize_filename(quantity)}.png"
-                        stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, save_path=filename, cmap=map_values["-CMAP-"])
-                    sg.popup("All maps saved successfully.")
+                        try:
+
+                            if reproject:
+                                img_path = map_values["-IMG-"]
+                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+
+                                if img_path and os.path.isfile(img_path):
+                                    try:
+                                        level_str = map_values["-ISOLEVELS-"]
+                                        iso_levels = [float(val) for val in level_str.split(",") if val.strip() != ""]
+                                        iso_levels.sort()
+                                    except Exception:
+                                        iso_levels = None
+                                    stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
+                                    
+                                # Set X and Y limits if provided
+                                try:
+                                    xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                                    xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                                    ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                                    ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                                    if xmin is not None and xmax is not None:
+                                        ax.set_xlim(xmin, xmax)
+                                    if ymin is not None and ymax is not None:
+                                        ax.set_ylim(ymin, ymax)
+                                except Exception as e:
+                                    print(f"[WARNING] Invalid axis limits: {e}")
+                                
+                                plt.tight_layout()
+                                fig.savefig(filename, dpi=300)
+                                plt.close(fig)
+                            
+                            else:
+                                
+                                img_path = map_values["-IMG-"]
+                                try:
+                                    level_str = map_values["-ISOLEVELS-"]
+                                    iso_levels = [float(val.strip()) for val in level_str.split(",") if val.strip()]
+                                    iso_levels = sorted(set(iso_levels)) if len(iso_levels) >= 2 else None
+                                except Exception:
+                                    iso_levels = None
+
+                                fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels)
+
+                                # Set X and Y limits if provided
+                                try:
+                                    xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                                    xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                                    ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                                    ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+
+                                    if xmin is not None and xmax is not None:
+                                        ax.set_xlim(xmin, xmax)
+                                    if ymin is not None and ymax is not None:
+                                        ax.set_ylim(ymin, ymax)
+                                except Exception as e:
+                                    print(f"[WARNING] Invalid axis limits: {e}")
+
+                                plt.tight_layout()
+                                fig.savefig(filename, dpi=300)
+                                plt.close(fig)
+                        except Exception as e:
+                            success = False
+                            sg.popup_error(f"Error saving image {quantity}:\n{e}")
+                    if success:
+                        sg.popup("All maps saved successfully.")
             else:
                 sg.popup("Please load files before saving.")
 
         elif map_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_maps..txt"), 'r')
+            f = open(os.path.join(BASE_DIR, "help_files", "help_maps.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
                 sg.popup_scrolled(file_contents, size=(120, 30))
