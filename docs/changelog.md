@@ -232,5 +232,5 @@ Changed the file names of the result files to include a timestamp, preventing ov
 **Version 1.6 (20200711):**  
 Added the task to measure the resolution of the selected spectra in the Utility tab. Some major changes to layout.
 
-**Version 1.0 (202006015):**  
+**Version 1.0 (20200615):**  
 Improved the read_spec function for the 1dFit spec, excluding PyAstronomy.pyasl since it is not working properly. Now the program is called SPAN and not SPEIM anymore. Welcome SPAN!
