@@ -11,9 +11,9 @@ This module allows you to extract a single 1D spectrum or a series of 1D spectra
 
 Before proceeding with the extraction, load a valid 2D FITS image and follow these steps:
 
-1) Open the spectrum to verify that the data is correctly formatted and displayed.
-2) Fit the trace to identify the maximum photometric values along the dispersion axis. Set the degree of the polynomial curve to be used for fitting the trace and correcting any distortion or tilt in the spectrum.
-3) Apply distortion and slope corrections using the trace model obtained in the previous step.
+1. Open the spectrum to verify that the data is correctly formatted and displayed.
+2. Fit the trace to identify the maximum photometric values along the dispersion axis. Set the degree of the polynomial curve to be used for fitting the trace and correcting any distortion or tilt in the spectrum.
+3. Apply distortion and slope corrections using the trace model obtained in the previous step.
 Afterwards, you can choose to:
 
 - Extract and save a single 1D spectrum within a selected Y-range (useful for point sources).
