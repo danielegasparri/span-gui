@@ -12,21 +12,24 @@ This module allows you to extract a series of n 1D spectra from a 3D FITS image 
 The required parameters are similar to those used in the GIST pipeline (and for any datacube extraction in general). The data product generated (i.e. spectra and bin table) are fully compatible with GIST.
 
 
-## Loading and verifying the datacube
+## Overview
 The essential files and parameters required for this module to function correctly are highlighted in bold. The first step is to load a fully reduced, valid FITS datacube. Given the lack of a standardised convention for FITS keywords and data storage extensions, it is strongly recommended to use the "View datacube" button to verify that the datacube is correctly read.
 
 This module has been tested with MUSE, CALIFA, JWST NIRSpec IFU, and the new WEAVE LIFU data products. Other formats may only be partially supported. If at least the flux values are properly read, the "View datacube" button should display the image, though the wavelength slider in the Matplotlib window may show only a generic "Wavelength index" instead of actual wavelength values.
 
+
+## Basic parameters for extraction
 Once the datacube is correctly loaded, configure the following basic parameters:
 
 - A run name (arbitrary).
 - The source redshift (use zero if no de-redshifting is required).
 - The wavelength range for extraction. **WARNING**: if de-redshif is needed (i.e. inserted redshift value different than 0), the wavelength range to extract is referred to the equivalent rest-frame range. Example: we have observations in the near-infrared from 9200 to 12500 A from a galaxy located at z = 1.17. If redshift value is set to zero (no de-redshift) we can insert this wavelength range (or a subrange) for extraction, but if we want to perform the de-redshift, we must insert the equivalent rest-frame wavelength range for extraction. In this case, it will be roughly 4200-5800 A. 
 - Selecting the extraction routine. In the middle panel, choose the routine for reading and extracting the data. Pre-loaded routines are available for MUSE, CALIFA, WEAVE LIFU, and JWST NIRSpec IFU datacubes. You can write your own extraction routines as .py files following the structure of the available ones and load using the option "using a user defined routine for extraction".
-- Additionally, configure the zero point for spatial coordinates. This is typically the center of the datacube's spatial axes but can also be set to the spaxel coordinates of the galaxy's center. The "View datacube" option is useful for retrieving this information.
+- Configure the zero point for spatial coordinates. This is typically the center of the datacube's spatial axes but can also be set to the spaxel coordinates of the galaxy's center. The "View datacube" option is useful for retrieving this information.
+- Wavelength range to consider for S/N estimation. If left empy, the S/N for the Voronoi rebinning will be estimated using the extraction wavelength range. Otherwise, enter the wavelength range where estimate the S/N. This field has effect only for Voronoi binning mode.
 
 
-## *Applying a spatial mask
+## Applying a spatial mask
 Locate the required "Select a FITS mask" field to browse and load a valid mask FITS file. This mask must have the same spatial dimensions as the datacube. If mask is not needed, simply leave this field empty.
 If no mask is available but you need it, generate one by clicking "Generate mask". A Matplotlib window will open, displaying the datacube with a slider to navigate across wavelength indices (note: these are indices, not actual wavelengths!). 
 To mask specific spaxels (e.g., to exclude contaminated regions and/or bad spaxels), Ctrl+left-click to mask and Ctrl+right-click to unmask. You can also mask/unmask larger areas by clicking and dragging with the ctrl+left or right mouse button. On touchscreen devices (i.e. Android), masking is performed by tapping and dragging. Unmasking is not yet available. Ensure you remain within the plot boundaries while dragging, or the selection may not be applied.
