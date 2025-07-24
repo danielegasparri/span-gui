@@ -26,7 +26,12 @@
 ######################################################################################
 #Version histories
 
-#Version 6.6 (20250708):
+#Version 6.6 (20250710):
+#Added new functionalities to the 'Plot maps' sub-program: isophotes overplotting and smoothing. This required also to add the 'save_image' function to the 'cube_extract' module that extract and saves the 2D image by averaging all the wavelengths selected from the datacube. This image is required in the 'Plot maps' sub-program, if isophotal contouring is needed (optional). 
+#Fixed a bug that prevented the Lick/IDS measurements in the 'Line-strength analysis' in high-redshift spectra, since SPAN was checking the wavelength compatibility of the spectra with the Lick wavelength range not considering the rest-frame corrected wavelengths.  
+# Replaced the np.chararray function in the code since it has been deprecated with recent Numpy versions (2.X.X). 
+#Added a luminosity slider to the 'View datacube' option of the 'Datacube extraction' sub-program to facilitate reading datacube slices. 
+#Added the 'spectra_lists' folder to the 'SPAN_results' path where SPAN saves all the spectra file lists generated with different routines (i.e. 'Generate spectra list containing 1D spectra', 'Long-slit extraction' with the S/N spectral bins option, and 'Datacube extraction' spectral bins. 
 #Added the option 'Fixing stellar kinematics first' to the 'Stars and gas kinematics' task and the option 'Fitting gas and stellar kinematics' to perform a first fit only to the stellar component and then fix the LOSVD values of the stars to perform a second fit including the gas, as suggested by Cappellari 2017. 
 #Added the new function 'build_goodpixels_with_mask' in the 'spec_analysis.py' module in order to use only the 'goodpix' keyword to allow both the emission lines and user mask. The keyword 'mask' is not used anymore for kinematics and sellar populations and SFH since it is not compatible with goodpix, so until now it was not possible to use both the masking of emission lines provided by pPXF and the user mask.
 #Added the option to set multiplicative polynomial to 'Stars and gas kinematics' task, which are needed if a reliable estimation of gas flux is needed besides kinematics.
@@ -227,5 +232,5 @@
 #Version 1.6 (20200711):
 #Added the task to measure the resolution of the selected spectra in the Utility tab. Some major changes to layout.
 
-#Version 1.0 (202006015):
+#Version 1.0 (20200615):
 #Improved the read_spec function for the 1dFit spec, excluding PyAstronomy.pyasl since it is not working properly. Now the program is called SPAN and not SPEIM anymore. Welcome SPAN!

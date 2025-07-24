@@ -423,22 +423,19 @@ class SpectraParams:
     ifs_input: str = ''
     ifs_output: str = field(init=False)  #in __post_init__
     ifs_redshift: float = 0.008764
-    ifs_lfs_data_default: str = 'None'
-    ifs_ow_config: bool = False
     ifs_ow_output: bool = False
     ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU', 'JWST_NIRSPEC'])
     ifs_routine_read_default: str = 'MUSE_WFM'
     ifs_origin: str = '14,14'
     ifs_lmin_tot: int = 4800
     ifs_lmax_tot: int = 5500
-    ifs_lmin_snr_default: int = 4800
-    ifs_lmax_snr_default: int = 5500
+    ifs_lmin_snr: str = ''
+    ifs_lmax_snr: str = ''
     ifs_min_snr_mask: int = 0
     ifs_mask: str = 'none'
     ifs_bin_method: str = 'voronoi'
     ifs_target_snr: int = 50
     ifs_covariance: int = 0
-    ifs_prepare_method: str = 'default'
     ifs_preloaded_routine: bool = True
     ifs_user_routine: bool = False
     ifs_user_routine_file: str = ''
