@@ -351,7 +351,7 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
         df_pop.at[i, 'Sigma(km/s)']= round(sigma_pop_ppxf,2)
         df_pop.at[i, 'H3']= round(h3_pop_ppxf,3)
         df_pop.at[i, 'H4']= round(h4_pop_ppxf,3)
-        df_pop.at[i, 'lum_met(dex)']= round(met,2)
+        df_pop.at[i, 'lum_met(dex)']= round(met,3)
         df_pop.at[i, 'M/L']= round(mass_light,3)
         df_pop.at[i, 'mass_met(dex)']= round(mass_met,3)
         df_pop.at[i, 'Chi2']= round(chi_square,3)
@@ -364,22 +364,22 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
         df_pop.at[i, 'S/N']= round(snr_pop)
 
         if params.ppxf_pop_lg_age:
-            df_pop.at[i, 'lum_lg_age(dex)']= round(age,2)
-            df_pop.at[i, 'mass_lg_age(dex)']= round(mass_age,2)
-            df_pop.at[i, 'err_lum_lg_age(dex)']= round(age_err_abs,2)
-            df_pop.at[i, 'err_mass_lg_age(dex)']= round(mass_age_err_abs,2)
+            df_pop.at[i, 'lum_lg_age(dex)']= round(age,5)
+            df_pop.at[i, 'mass_lg_age(dex)']= round(mass_age,5)
+            df_pop.at[i, 'err_lum_lg_age(dex)']= round(age_err_abs,5)
+            df_pop.at[i, 'err_mass_lg_age(dex)']= round(mass_age_err_abs,5)
         else:
-            df_pop.at[i, 'lum_age(Gyr)']= round(age,1)
-            df_pop.at[i, 'mass_age(Gyr)']= round(mass_age,1)
-            df_pop.at[i, 'err_lum_age(Gyr)']= round(age_err_abs,2)
-            df_pop.at[i, 'err_mass_age(Gyr)']= round(mass_age_err_abs,2)
+            df_pop.at[i, 'lum_age(Gyr)']= round(age,4)
+            df_pop.at[i, 'mass_age(Gyr)']= round(mass_age,4)
+            df_pop.at[i, 'err_lum_age(Gyr)']= round(age_err_abs,4)
+            df_pop.at[i, 'err_mass_age(Gyr)']= round(mass_age_err_abs,4)
 
         #In case I use the sMILES with alpha/Fe
         if params.stellar_library == 'sMILES' and not params.ppxf_pop_custom_lib:
-            df_pop.at[i, 'lum_alpha(dex)']= round(alpha,2)
-            df_pop.at[i, 'mass_alpha(dex)']= round(mass_alpha,2)
-            df_pop.at[i, 'err_lum_alpha(dex)']= round(alpha_err,2)
-            df_pop.at[i, 'err_mass_alpha(dex)']= round(mass_alpha_err,2)
+            df_pop.at[i, 'lum_alpha(dex)']= round(alpha,3)
+            df_pop.at[i, 'mass_alpha(dex)']= round(mass_alpha,3)
+            df_pop.at[i, 'err_lum_alpha(dex)']= round(alpha_err,3)
+            df_pop.at[i, 'err_mass_alpha(dex)']= round(mass_alpha_err,3)
 
         #storing to the file
         df_pop.to_csv(pop_file, index= False, sep=' ')
@@ -390,8 +390,6 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
             #Storing the results to a file
             df_ssp_param_ppxf.at[i, 'Hbeta(A)']= round(ssp_lick_indices_ppxf[0],3)
             df_ssp_param_ppxf.at[i, 'Hbeta_err(A)']= round(ssp_lick_indices_err_ppxf[0],3)
-            # df_ssp_param_ppxf.at[i, 'Mg2(mag)']= round(Mg2_ppxf,3)
-            # df_ssp_param_ppxf.at[i, 'Mg2_err(mag)']= round(Mg2e_ppxf,3)
             df_ssp_param_ppxf.at[i, 'Mgb(A)']= round(ssp_lick_indices_ppxf[3],3)
             df_ssp_param_ppxf.at[i, 'Mgb_err(A)']= round(ssp_lick_indices_err_ppxf[3],3)
             df_ssp_param_ppxf.at[i, 'Fem(A)']= round(ssp_lick_indices_ppxf[2],3)
@@ -400,10 +398,10 @@ def save_population_analysis_to_file(i, params, kinematics, info_pop, info_pop_m
             df_ssp_param_ppxf.at[i, 'MgFe_err(A)']= round(ssp_lick_indices_err_ppxf[1],3)
             df_ssp_param_ppxf.at[i, 'age(Gyr)']= round(ppxf_lick_params[0],3)
             df_ssp_param_ppxf.at[i, 'err_age']= round(ppxf_lick_params[3],3)
-            df_ssp_param_ppxf.at[i, 'met']= round(ppxf_lick_params[1],4)
-            df_ssp_param_ppxf.at[i, 'err_met']= round(ppxf_lick_params[4],4)
-            df_ssp_param_ppxf.at[i, 'alpha']= round(ppxf_lick_params[2],4)
-            df_ssp_param_ppxf.at[i, 'err_alpha']= round(ppxf_lick_params[5],4)
+            df_ssp_param_ppxf.at[i, 'met']= round(ppxf_lick_params[1],3)
+            df_ssp_param_ppxf.at[i, 'err_met']= round(ppxf_lick_params[4],3)
+            df_ssp_param_ppxf.at[i, 'alpha']= round(ppxf_lick_params[2],3)
+            df_ssp_param_ppxf.at[i, 'err_alpha']= round(ppxf_lick_params[5],3)
 
             #putting nans where needed
             df_ssp_param_ppxf.to_csv(ssp_param_file_ppxf, na_rep='NaN', index= False, sep=' ')

@@ -27,6 +27,7 @@ try: #try local import if executed as script
     #SPAN functions import
     from span_functions import system_span as stm
     from span_functions import cube_extract as cubextr
+    from span_functions.sauron_colormap import register_sauron_colormap
     from span_modules import misc
     from span_modules import layouts
     from params import SpectraParams
@@ -37,6 +38,7 @@ except ModuleNotFoundError: #local import if executed as package
     #SPAN functions import
     from span.span_functions import system_span as stm
     from span.span_functions import cube_extract as cubextr
+    from span.span_functions.sauron_colormap import register_sauron_colormap
     from . import misc
     from . import layouts
     from .params import SpectraParams
@@ -168,27 +170,23 @@ def plot_data_window(BASE_DIR, layout):
 # 2) PLOT MAPS
 def plot_maps_window(BASE_DIR, layout):
     layout, scale_win, fontsize, default_size = misc.get_layout()   
+    register_sauron_colormap()
     sg.theme("DarkBlue3")
     map_layout = [
         [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
         [sg.Input(key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
         [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
         [sg.Input(key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
-        
         [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
         [sg.Input(key="-IMG-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
-        [sg.Text("Iso-contour levels:", font=("Helvetica", 12)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
-
+        [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
         [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
         [sg.HorizontalSeparator()],
-        [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet"], default_value="jet", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
+        [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value="sauron", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
         [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
-
-        [sg.Text("X limits:"), sg.Input(size=(6,1), key="-XMIN-"), sg.Text("to"), sg.Input(size=(6,1), key="-XMAX-"), sg.Push(), sg.Text("Y limits:"), sg.Input(size=(6,1), key="-YMIN-"), sg.Text("to"), sg.Input(size=(6,1), key="-YMAX-")],
-
-        [sg.Checkbox("Enable spaxel re-projection (show value per spaxel)", key="-REPROJECT-", font=("Helvetica", 12), tooltip='If activated, it will consider the single spaxels in the maps. Useful only if smoothing is activated')],
-        [sg.Checkbox("Gaussian smoothing", key="-SMOOTH-", font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(30, 20), key="-SIGMA-", enable_events=True)],
-
+        [sg.Text("X lim:"), sg.Input(size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
+        [sg.Checkbox("Offset:", key = 'offset', font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(0, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(20, 20), key="-SIGMA-", enable_events=True)],
+        [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
         [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
     ]
 
@@ -223,7 +221,7 @@ def plot_maps_window(BASE_DIR, layout):
                         sg.popup("File loading aborted.")
                         continue
 
-                x, y, bin_id = stm.load_fits_data(fits_path)
+                x, y, bin_id, xbin, ybin = stm.load_fits_data(fits_path)
                 result_df = stm.load_analysis_results(txt_path)
                 col_names = list(result_df.columns)[1:]
                 map_window["-LIST-"].update(values=col_names)
@@ -236,16 +234,75 @@ def plot_maps_window(BASE_DIR, layout):
             if map_values["-LIST-"]:
                 selected_quantity = map_values["-LIST-"][0]
 
+        # First event: Plotting
         elif map_event == "Plot Map":
+            offset = map_values['offset']
+            plot_radial = map_values.get("-RADIAL-", False)
+            smoothing = map_values['-SMOOTH-']
+            
             if x is not None and result_df is not None and selected_quantity:
-                reproject = map_values["-REPROJECT-"]
                 
-                if reproject:
+                
+                if offset:
+                    result_df_mod = result_df.copy()
                     try:
+                        offset_value = float(map_values['offset_value'])
+                        try:
+                            result_df_mod[selected_quantity] += offset_value
+                        except Exception as e:
+                            sg.popup_error(f"Could not apply offset: {e}")
+                            result_df_mod = result_df
+                    except Exception:
+                        sg.popup('Offset value not valid!')
+                        offset_value = 0                       
+                
+                # Set X and Y limits if provided
+                try:
+                    xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                    xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                    ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                    ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                except Exception as e:
+                    print(f"[WARNING] Invalid axis limits: {e}")
+                    
+                # Optional colormap limits
+                try:
+                    vmin = float(map_values["-VMIN-"]) if map_values["-VMIN-"] else None
+                    vmax = float(map_values["-VMAX-"]) if map_values["-VMAX-"] else None
+                except Exception as e:
+                    print(f"[WARNING] Invalid colormap range: {e}")
+                    vmin, vmax = None, None
+                
+                
+                if plot_radial:
+                    try:
+                        if offset:
+                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                            
+                        else:
+                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
+                        
+                        if xmin is not None and xmax is not None:
+                            ax.set_xlim(xmin, xmax)
+                        if ymin is not None and ymax is not None:
+                            ax.set_ylim(ymin, ymax)
+
+                        plt.tight_layout()
+                        plt.show()
+                        plt.close()
+                    except Exception as e:
+                        sg.popup_error(f"Error in radial profile plot:\n{e}")
+
+
+                elif smoothing:
+                    try:                          
                         iso_levels = None
                         img_path = map_values["-IMG-"]
-
-                        fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+                        
+                        if offset:
+                            fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                        else:
+                            fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
 
                         if img_path and os.path.isfile(img_path):
                             if img_path and os.path.isfile(img_path):
@@ -257,19 +314,10 @@ def plot_maps_window(BASE_DIR, layout):
                                     iso_levels = None
                                 stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
                         
-                        # Set X and Y limits if provided
-                        try:
-                            xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                            xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                            ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                            ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
-
-                            if xmin is not None and xmax is not None:
-                                ax.set_xlim(xmin, xmax)
-                            if ymin is not None and ymax is not None:
-                                ax.set_ylim(ymin, ymax)
-                        except Exception as e:
-                            print(f"[WARNING] Invalid axis limits: {e}")
+                        if xmin is not None and xmax is not None:
+                            ax.set_xlim(xmin, xmax)
+                        if ymin is not None and ymax is not None:
+                            ax.set_ylim(ymin, ymax)
                         
                         plt.tight_layout()
                         plt.show()
@@ -279,7 +327,12 @@ def plot_maps_window(BASE_DIR, layout):
                         sg.popup_error(f"Error in re-projection mode:\n{e}")
 
                 else:
-                    fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"])
+                    
+                    if offset:
+                        fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                    else:
+                        fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                   
                     img_path = map_values["-IMG-"]
                     if img_path and os.path.isfile(img_path):
                         try:
@@ -290,19 +343,11 @@ def plot_maps_window(BASE_DIR, layout):
                             iso_levels = None
                         stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
                         
-                    # Set X and Y limits if provided
-                    try:
-                        xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                        xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                        ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                        ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                    if xmin is not None and xmax is not None:
+                        ax.set_xlim(xmin, xmax)
+                    if ymin is not None and ymax is not None:
+                        ax.set_ylim(ymin, ymax)
 
-                        if xmin is not None and xmax is not None:
-                            ax.set_xlim(xmin, xmax)
-                        if ymin is not None and ymax is not None:
-                            ax.set_ylim(ymin, ymax)
-                    except Exception as e:
-                        print(f"[WARNING] Invalid axis limits: {e}")
                     plt.tight_layout()
                     plt.show()
                     plt.close()
@@ -311,15 +356,74 @@ def plot_maps_window(BASE_DIR, layout):
 
 
         elif map_event == "Save selected":
+            offset = map_values['offset']
+            plot_radial = map_values.get("-RADIAL-", False)
+            smoothing = map_values['-SMOOTH-']
+            
             if x is not None and result_df is not None and selected_quantity:
                 save_path = sg.popup_get_file("Save PNG file", save_as=True, no_window=True, file_types=(("PNG Files", "*.png"),), default_extension=".png")
                 
-                if save_path:
-                    reproject = map_values["-REPROJECT-"]
-                    if reproject:
-                        img_path = map_values["-IMG-"]
+                if save_path:             
+                    
+                    if offset:
+                        result_df_mod = result_df.copy()
                         try:
-                            fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+                            offset_value = float(map_values['offset_value'])
+                            try:
+                                result_df_mod[selected_quantity] += offset_value
+                            except Exception as e:
+                                sg.popup_error(f"Could not apply offset: {e}")
+                                result_df_mod = result_df
+                        except Exception:
+                            sg.popup('Offset value not valid!')
+                            offset_value = 0  
+                        
+                    # Set X and Y limits if provided
+                    try:
+                        xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                        xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                        ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                        ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                    except Exception as e:
+                        print(f"[WARNING] Invalid axis limits: {e}")
+                    
+                    # Optional colormap limits
+                    try:
+                        vmin = float(map_values["-VMIN-"]) if map_values["-VMIN-"] else None
+                        vmax = float(map_values["-VMAX-"]) if map_values["-VMAX-"] else None
+                    except Exception as e:
+                        print(f"[WARNING] Invalid colormap range: {e}")
+                        vmin, vmax = None, None
+                    
+                    if plot_radial:
+                        try:
+                            
+                            if offset:
+                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                            else:
+                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
+                            
+                            if xmin is not None and xmax is not None:
+                                ax.set_xlim(xmin, xmax)
+                            if ymin is not None and ymax is not None:
+                                ax.set_ylim(ymin, ymax)
+
+                            plt.tight_layout()
+                            fig.savefig(save_path, dpi=300)
+                            plt.close(fig)
+                            sg.popup("Image saved successfully.")
+                        except Exception as e:
+                            sg.popup_error(f"Error in radial profile plot:\n{e}")
+                    
+                    elif smoothing:
+                        img_path = map_values["-IMG-"]
+
+                        try:
+                            
+                            if offset:
+                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                            else:
+                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
 
                             if img_path and os.path.isfile(img_path):
                                 try:
@@ -331,19 +435,11 @@ def plot_maps_window(BASE_DIR, layout):
                                 stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
                                     
                             # Set X and Y limits if provided
-                            try:
-                                xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                                xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                                ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                                ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                            if xmin is not None and xmax is not None:
+                                ax.set_xlim(xmin, xmax)
+                            if ymin is not None and ymax is not None:
+                                ax.set_ylim(ymin, ymax)
 
-                                if xmin is not None and xmax is not None:
-                                    ax.set_xlim(xmin, xmax)
-                                if ymin is not None and ymax is not None:
-                                    ax.set_ylim(ymin, ymax)
-                            except Exception as e:
-                                print(f"[WARNING] Invalid axis limits: {e}")
-                            
                             plt.tight_layout()
                             fig.savefig(save_path, dpi=300)
                             plt.close(fig)
@@ -354,6 +450,7 @@ def plot_maps_window(BASE_DIR, layout):
                     else:
                         
                         img_path = map_values["-IMG-"]
+                        
                         try:
                             level_str = map_values["-ISOLEVELS-"]
                             iso_levels = [float(val.strip()) for val in level_str.split(",") if val.strip()]
@@ -361,22 +458,17 @@ def plot_maps_window(BASE_DIR, layout):
                         except Exception:
                             iso_levels = None
 
-                        fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels)
+                        if offset:
+                            fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                        else:
+                            fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
 
                         # Set X and Y limits if provided
-                        try:
-                            xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                            xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                            ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                            ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                        if xmin is not None and xmax is not None:
+                            ax.set_xlim(xmin, xmax)
+                        if ymin is not None and ymax is not None:
+                            ax.set_ylim(ymin, ymax)
 
-                            if xmin is not None and xmax is not None:
-                                ax.set_xlim(xmin, xmax)
-                            if ymin is not None and ymax is not None:
-                                ax.set_ylim(ymin, ymax)
-                        except Exception as e:
-                            print(f"[WARNING] Invalid axis limits: {e}")
-                        
                         plt.tight_layout()
                         fig.savefig(save_path, dpi=300)
                         plt.close(fig)
@@ -386,18 +478,79 @@ def plot_maps_window(BASE_DIR, layout):
 
 
         elif map_event == "Save ALL":
+            offset = map_values['offset']
+            plot_radial = map_values.get("-RADIAL-", False)
+            smoothing = map_values['-SMOOTH-']
+            
             if x is not None and result_df is not None:
                 folder = sg.popup_get_folder("Select output folder for PNGs", no_window=True)
                 if folder:
-                    reproject = map_values["-REPROJECT-"]
+                    
+                    
+                    if offset:
+                        result_df_mod = result_df.copy()
+                        try:
+                            offset_value = float(map_values['offset_value'])
+                            try:
+                                numeric_cols = result_df_mod.select_dtypes(include='number').columns
+                                result_df_mod[numeric_cols] += offset_value
+                            except Exception as e:
+                                sg.popup_error(f"Could not apply offset: {e}")
+                                result_df_mod = result_df
+                        except Exception:
+                            sg.popup('Offset value not valid!')
+                            offset_value = 0  
+                    
+                    
+                    # Set X and Y limits if provided
+                    try:
+                        xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
+                        xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
+                        ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
+                        ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
+                    except Exception as e:
+                        print(f"[WARNING] Invalid axis limits: {e}")
+
+                    # Optional colormap limits
+                    try:
+                        vmin = float(map_values["-VMIN-"]) if map_values["-VMIN-"] else None
+                        vmax = float(map_values["-VMAX-"]) if map_values["-VMAX-"] else None
+                    except Exception as e:
+                        print(f"[WARNING] Invalid colormap range: {e}")
+                        vmin, vmax = None, None
+                            
                     success = True
                     for quantity in result_df.columns[1:]:
                         filename = f"{folder}/{stm.sanitize_filename(quantity)}.png"
+                        filename_radial = f"{folder}/{stm.sanitize_filename(quantity)}_profile.png"
                         try:
 
-                            if reproject:
+                            if plot_radial:
+                                try:
+                                    
+                                    if offset:
+                                        fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, quantity)
+                                    else:
+                                        fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, quantity)
+                                    
+                                    if xmin is not None and xmax is not None:
+                                        ax.set_xlim(xmin, xmax)
+                                    if ymin is not None and ymax is not None:
+                                        ax.set_ylim(ymin, ymax)
+
+                                    plt.tight_layout()
+                                    fig.savefig(filename_radial, dpi=300)
+                                    plt.close(fig)
+                                except Exception as e:
+                                    sg.popup_error(f"Error in radial profile plot:\n{e}")
+                                    
+                            elif smoothing:
                                 img_path = map_values["-IMG-"]
-                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]))
+                                
+                                if offset:
+                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                else:
+                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
 
                                 if img_path and os.path.isfile(img_path):
                                     try:
@@ -409,18 +562,10 @@ def plot_maps_window(BASE_DIR, layout):
                                     stm.overlay_isophotes(ax, img_path, x, y, color='black', levels=iso_levels)
                                     
                                 # Set X and Y limits if provided
-                                try:
-                                    xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                                    xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                                    ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                                    ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
-
-                                    if xmin is not None and xmax is not None:
-                                        ax.set_xlim(xmin, xmax)
-                                    if ymin is not None and ymax is not None:
-                                        ax.set_ylim(ymin, ymax)
-                                except Exception as e:
-                                    print(f"[WARNING] Invalid axis limits: {e}")
+                                if xmin is not None and xmax is not None:
+                                    ax.set_xlim(xmin, xmax)
+                                if ymin is not None and ymax is not None:
+                                    ax.set_ylim(ymin, ymax)
                                 
                                 plt.tight_layout()
                                 fig.savefig(filename, dpi=300)
@@ -436,22 +581,18 @@ def plot_maps_window(BASE_DIR, layout):
                                 except Exception:
                                     iso_levels = None
 
-                                fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels)
+
+                                if offset:
+                                    fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                                else:
+                                    fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
 
                                 # Set X and Y limits if provided
-                                try:
-                                    xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
-                                    xmax = float(map_values["-XMAX-"]) if map_values["-XMAX-"] else None
-                                    ymin = float(map_values["-YMIN-"]) if map_values["-YMIN-"] else None
-                                    ymax = float(map_values["-YMAX-"]) if map_values["-YMAX-"] else None
-
-                                    if xmin is not None and xmax is not None:
-                                        ax.set_xlim(xmin, xmax)
-                                    if ymin is not None and ymax is not None:
-                                        ax.set_ylim(ymin, ymax)
-                                except Exception as e:
-                                    print(f"[WARNING] Invalid axis limits: {e}")
-
+                                if xmin is not None and xmax is not None:
+                                    ax.set_xlim(xmin, xmax)
+                                if ymin is not None and ymax is not None:
+                                    ax.set_ylim(ymin, ymax)
+                                
                                 plt.tight_layout()
                                 fig.savefig(filename, dpi=300)
                                 plt.close(fig)
@@ -464,9 +605,9 @@ def plot_maps_window(BASE_DIR, layout):
                 sg.popup("Please load files before saving.")
 
         elif map_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_maps.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
+            with open('help_files/help_maps.txt', 'r') as f:
+                file_contents = f.read()
+            if layout == layout_android:
                 sg.popup_scrolled(file_contents, size=(120, 30))
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
@@ -1071,8 +1212,6 @@ def datacube_extraction(params):
     ifs_run_id = params.ifs_run_id
     ifs_input = params.ifs_input
     ifs_redshift = params.ifs_redshift
-    ifs_lfs_data_default = params.ifs_lfs_data_default
-    ifs_ow_config = params.ifs_ow_config
     ifs_ow_output = params.ifs_ow_output
     ifs_lmin_tot = params.ifs_lmin_tot
     ifs_lmax_tot = params.ifs_lmax_tot
@@ -1086,15 +1225,14 @@ def datacube_extraction(params):
     ifs_origin = params.ifs_origin
     ifs_mask = params.ifs_mask
     ifs_output = params.ifs_output
-    ifs_lmin_snr_default = params.ifs_lmin_tot #params.ifs_lmin_snr_default
-    ifs_lmax_snr_default = params.ifs_lmax_tot #params.ifs_lmax_snr_default
+    ifs_lmin_snr = params.ifs_lmin_snr
+    ifs_lmax_snr = params.ifs_lmax_snr
     ifs_manual_bin = params.ifs_manual_bin
     ifs_voronoi = params.ifs_voronoi
     ifs_existing_bin = params.ifs_existing_bin
     ifs_existing_bin_folder = params.ifs_existing_bin_folder
     ifs_bin_method = params.ifs_bin_method
     ifs_covariance = params.ifs_covariance
-    ifs_prepare_method = params.ifs_prepare_method
 
 
 
@@ -1109,7 +1247,7 @@ def datacube_extraction(params):
 
         [sg.Radio('Using a pre-loaded routine for extraction:', "RADIOCUBEROUTINE", default = ifs_preloaded_routine, key = 'ifs_preloaded_routine', font = ('', default_size, 'bold'), tooltip='These are pre-loaded routines for reading the most commin datacubes'), sg.InputCombo(ifs_routine_read,key='ifs_routine_read',default_value=ifs_routine_read_default, readonly=True, size = (18,1))],
         [sg.Radio('Using a user defined routine for extraction:', "RADIOCUBEROUTINE", default = ifs_user_routine, key = 'ifs_user_routine', font = ('', default_size, 'bold'), tooltip='If you have your .py datacube read routine, load it here'), sg.InputText(ifs_user_routine_file, size=(15, 1), key = 'ifs_user_routine_file'), sg.FileBrowse(file_types=(('py file', '*.py'),))],
-        [sg.Text('Origin (in pixel) of the coordinate systems:', tooltip='Pixel coordinates of the centre or the object you want to study. Look at the datacube to know it'), sg.InputText(ifs_origin, size = (9,1), key = 'ifs_origin')],
+        [sg.Text('Origin (in pixel) of the coordinates:', tooltip='Pixel coordinates of the centre or the object you want to study. Look at the datacube to know it'), sg.InputText(ifs_origin, size = (9,1), key = 'ifs_origin'), sg.Text('Wavelength range for S/N:', tooltip='Insert the wavelength range (min, max) for S/N measurements. Leave empty to use the whole wave range inserted above'), sg.InputText(ifs_lmin_snr, size = (6,1), key = 'ifs_lmin_snr'), sg.Text('-'), sg.InputText(ifs_lmax_snr, size = (6,1), key = 'ifs_lmax_snr')],
 
         [sg.HorizontalSeparator()],
 
@@ -1164,11 +1302,25 @@ def datacube_extraction(params):
             ifs_lmax_tot = float(cube_ifs_values['ifs_lmax_tot'])
             ifs_min_snr_mask = float(cube_ifs_values['ifs_min_snr_mask'])
             ifs_target_snr = float(cube_ifs_values['ifs_target_snr'])
+        
+            user_lmin_snr = cube_ifs_values['ifs_lmin_snr']
+            user_lmax_snr = cube_ifs_values['ifs_lmax_snr']
 
-            #converting to A
-            ifs_lmin_snr = ifs_lmin_tot
-            ifs_lmax_snr = ifs_lmax_tot
-
+            if user_lmin_snr.strip() == '' or user_lmax_snr.strip() == '':
+                # Using the wavelength range provided
+                ifs_lmin_snr = ifs_lmin_tot
+                ifs_lmax_snr = ifs_lmax_tot
+                print(f"No S/N range specified, using full extraction range: {ifs_lmin_snr} - {ifs_lmax_snr}")
+            else:
+                try:
+                    # Checking the input values
+                    ifs_lmin_snr = float(user_lmin_snr)
+                    ifs_lmax_snr = float(user_lmax_snr)
+                    # print(f"Using the {ifs_lmin_snr} - {ifs_lmax_snr} Å range for S/N")
+                except ValueError:
+                    sg.popup("Invalid wavelength range for S/N. Please enter valid numbers.")
+                    continue
+            
         except Exception:
             sg.popup ('Invalid input parameters!')
             continue
@@ -1420,11 +1572,10 @@ def datacube_extraction(params):
             # Creating the disctionary to be passed to the cube_extract module
             config = cubextr.buildConfigFromGUI(
                 ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
-                ifs_lfs_data_default, ifs_ow_config,
                 ifs_ow_output, ifs_routine_selected, ifs_origin,
                 ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                 ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
-                ifs_covariance, ifs_prepare_method)
+                ifs_covariance)
             try:
                 cubextr.extract(config, preview, voronoi, ifs_manual_bin, ifs_existing_bin)
             except Exception as e:
@@ -1608,11 +1759,10 @@ def datacube_extraction(params):
                 # Creating the dictionary to be passed to the cube_extract module
                 config_manual = cubextr.buildConfigFromGUI(
                     ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
-                    ifs_lfs_data_default, ifs_ow_config,
                     ifs_ow_output, ifs_routine_selected, ifs_origin,
                     ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
-                    ifs_covariance_manual, ifs_prepare_method)
+                    ifs_covariance_manual)
                 try:
                     cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
@@ -1649,11 +1799,10 @@ def datacube_extraction(params):
                 # Creating the dictionary to be passed to the cube_extract module
                 config_manual = cubextr.buildConfigFromGUI(
                     ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
-                    ifs_lfs_data_default, ifs_ow_config,
                     ifs_ow_output, ifs_routine_selected, ifs_origin,
                     ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
-                    ifs_covariance_manual, ifs_prepare_method)
+                    ifs_covariance_manual)
                 try:
                     #running the cubextract module to produce the spaxel and BIN_ID map
                     cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
@@ -1729,11 +1878,10 @@ def datacube_extraction(params):
             # Creating the dictionary to be passed to the cube_extract module
                 config = cubextr.buildConfigFromGUI(
                     ifs_run_id, ifs_input, ifs_output_dir, ifs_redshift,
-                    ifs_lfs_data_default, ifs_ow_config,
                     ifs_ow_output, ifs_routine_selected, ifs_origin,
                     ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
-                    ifs_covariance, ifs_prepare_method
+                    ifs_covariance
     )
 
 
@@ -1869,8 +2017,6 @@ def datacube_extraction(params):
                     ifs_run_id = ifs_run_id,
                     ifs_input = ifs_input,
                     ifs_redshift = ifs_redshift,
-                    ifs_lfs_data_default = ifs_lfs_data_default,
-                    ifs_ow_config = ifs_ow_config,
                     ifs_ow_output = ifs_ow_output,
                     ifs_lmin_tot = ifs_lmin_tot,
                     ifs_lmax_tot = ifs_lmax_tot,
@@ -1883,15 +2029,14 @@ def datacube_extraction(params):
                     ifs_user_routine_file = ifs_user_routine_file,
                     ifs_origin = ifs_origin,
                     ifs_mask = ifs_mask,
-                    ifs_lmin_snr_default = ifs_lmin_snr_default,
-                    ifs_lmax_snr_default = ifs_lmax_snr_default,
+                    ifs_lmin_snr = ifs_lmin_snr,
+                    ifs_lmax_snr = ifs_lmax_snr,
                     ifs_manual_bin = ifs_manual_bin,
                     ifs_voronoi = ifs_voronoi,
                     ifs_existing_bin = ifs_existing_bin,
                     ifs_existing_bin_folder = ifs_existing_bin_folder,
                     ifs_bin_method = ifs_bin_method,
                     ifs_covariance = ifs_covariance,
-                    ifs_prepare_method = ifs_prepare_method
                      )
 
     return params

@@ -525,7 +525,7 @@ def create_stellar_population_files(result_ppxf_pop_data_dir, spectra_list_name,
         ssp_param_file_ppxf = os.path.join(result_ppxf_pop_data_dir, f"{spectra_list_name}_ssp_param_lick_ppxf_{timestamp}.dat")
 
         # Define headers for Lick/IDS stellar parameters
-        ssp_param_id_ppxf = ['#Spectrum', 'Hbeta(A)', 'Hbeta_err(A)', 'Mg2(mag)', 'Mg2_err(mag)', 'Mgb(A)', 'Mgb_err(A)',
+        ssp_param_id_ppxf = ['#Spectrum', 'Hbeta(A)', 'Hbeta_err(A)', 'Mgb(A)', 'Mgb_err(A)',
                              'Fem(A)', 'Fem_err(A)', 'MgFe(A)', 'MgFe_err(A)', 'age(Gyr)', 'err_age', 'met', 'err_met',
                              'alpha', 'err_alpha']
 
