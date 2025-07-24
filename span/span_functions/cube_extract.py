@@ -41,12 +41,10 @@ import matplotlib.pyplot as plt
 
 
 #function to create the dictionary (config) following the GIST standard to be passed to the following functions
-def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift,
-                       ifs_lfs_data, ifs_ow_config, ifs_ow_output,
+def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift, ifs_ow_output,
                        ifs_routine_read, ifs_origin, ifs_lmin_tot, ifs_lmax_tot,
                        ifs_lmin_snr, ifs_lmax_snr, ifs_min_snr_mask,
-                       ifs_mask, ifs_bin_method, ifs_target_snr, ifs_covariance,
-                       ifs_prepare_method):
+                       ifs_mask, ifs_bin_method, ifs_target_snr, ifs_covariance):
 
     """
     Returns a `configs` dictionary to be read from the following functions of the module
@@ -59,8 +57,6 @@ def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift,
             "INPUT": ifs_input,
             "OUTPUT": ifs_output,
             "REDSHIFT": ifs_redshift,
-            "LSF_DATA": ifs_lfs_data,
-            "OW_CONFIG": ifs_ow_config,
             "OW_OUTPUT": ifs_ow_output
         },
         "READ": {
@@ -79,9 +75,6 @@ def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift,
             "VORONOI": ifs_bin_method,
             "TARGET_SNR": ifs_target_snr,
             "COVARIANCE": ifs_covariance
-        },
-        "EXTRACTING": {
-            "MODE": ifs_prepare_method
         }
     }
 
@@ -97,7 +90,7 @@ def reading_data(config):
         config (dict): Configuration dictionary containing method and input details.
 
     Returns:
-        cube (object): The loaded datacube, or "SKIP" in case of failure.
+        cube (object): The loaded datacube, or "Failed" in case of failure.
     """
 
     print("Step 1: Reading the datacube")
@@ -108,7 +101,7 @@ def reading_data(config):
 
     if not method:
         print("No read-in method specified.")
-        return "SKIP"
+        return "Failed"
     try:
         spec = importlib.util.spec_from_file_location("", method)
         module = importlib.util.module_from_spec(spec)
@@ -117,7 +110,7 @@ def reading_data(config):
         return module.read_cube(config)
     except Exception as e:
         print(f"Failed to import or execute the read-in routine {method_nopath}: {e}")
-        return "SKIP"
+        return "Failed"
 
 
 def masking(config, cube, preview, manual_bin, existing_bin):
@@ -157,7 +150,7 @@ def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
         voronoi (bool): If True, uses Voronoi binning.
 
     Returns:
-        None or "SKIP" in case of failure.
+        None or "Failed" in case of failure.
     """
 
     print("\nStep 3: Applying binning")
@@ -176,7 +169,7 @@ def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
         generate_bins(config, cube, voronoi)
     except Exception as e:
         print(f"Spatial binning routine {config.get('BINNING', {}).get('VORONOI', 'UNKNOWN')} failed: {e}")
-        return "SKIP"
+        return "Failed"
 
 
 def save_spectra(config, cube, preview, existing_bin):
@@ -190,7 +183,7 @@ def save_spectra(config, cube, preview, existing_bin):
         preview (bool): If True, performs a preview without saving.
 
     Returns:
-        None or "SKIP" in case of failure.
+        None or "Failed" in case of failure.
     """
 
     print("\nStep 4: Saving the extracted 1D spectra")
@@ -205,8 +198,9 @@ def save_spectra(config, cube, preview, existing_bin):
     try:
         prepare_mask_bin(config, cube, preview)
     except Exception as e:
-        print(f"Spectra preparation routine {config.get('EXTRACTING', {}).get('MODE', 'UNKNOWN')} failed: {e}")
-        return "SKIP"
+        # print(f"Spectra preparation routine {config.get('EXTRACTING', {}).get('MODE', 'UNKNOWN')} failed: {e}")
+        print(f"Spectra preparation routine failed: {e}")
+        return "Failed"
 
 
 def save_image(config, cube):
@@ -432,7 +426,7 @@ def generate_bins(config, cube, voronoi):
 
     if not os.path.isfile(mask_file):
         print(f"Mask file not found: {mask_file}")
-        return "SKIP"
+        return "Failed"
 
     # Open fits
     with fits.open(mask_file, mode="readonly") as hdul:
@@ -472,7 +466,7 @@ def generate_bins(config, cube, voronoi):
                 n_pixels = np.ones(len(idx_unmasked))
             else:
                 print(f"Voronoi-binning error: {e}")
-                return "SKIP"
+                return "Failed"
     if not voronoi:
         print(f"No Voronoi-binning! {len(idx_unmasked)} spaxels will be treated as individual bins.")
         bin_num = np.arange(len(idx_unmasked))
@@ -492,7 +486,6 @@ def generate_bins(config, cube, voronoi):
     # Create extended bin list
     bin_num_long = np.full(len(cube['x']), np.nan)
     bin_num_long[idx_unmasked] = bin_num
-    # bin_num_long[idx_masked] = -1 * bin_num_outside this was used in GIST. I changed as followings:
     bin_num_long[idx_masked] = -1  # Assign negative value to unselected spaxels
 
     # Save binning results
@@ -501,8 +494,7 @@ def generate_bins(config, cube, voronoi):
         config,
         cube['x'], cube['y'], cube['signal'], cube['snr'],
         bin_num_long, np.unique(bin_num), x_node, y_node, sn, n_pixels, cube['pixelsize'])
-    # else:
-    #     print('Using the user provided bin and mask info')
+
 
 
 def save_bin_info(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn, n_pixels, pixelsize):
@@ -593,7 +585,7 @@ def prepare_mask_bin(config, cube, preview):
     with fits.open(table_file, mode="readonly") as hdul:
         bin_num = hdul[1].data['BIN_ID'][unmasked_spaxels]
 
-    # Apply Voronoi binning directly (integrated from apply_bin)
+    # Apply Voronoi binning directly
     print("Applying spatial bins to linear data...")
     bin_data, bin_error, bin_flux = perform_voronoi(bin_num, cube['spec'][:, unmasked_spaxels], cube['error'][:, unmasked_spaxels])
     print("Applied spatial bins.")
@@ -733,7 +725,7 @@ def extract(config, preview, voronoi, manual_bin, existing_bin):
 
     # 1) Read the datacube
     cube = reading_data(config)
-    if cube == "SKIP":
+    if cube == "Failed":
         print("Extraction aborted: Failed to read the datacube.")
         return
 
@@ -741,7 +733,10 @@ def extract(config, preview, voronoi, manual_bin, existing_bin):
     masking(config, cube, preview, manual_bin, existing_bin)
 
     # 3) Apply Voronoi binning
-    binning(config, cube, preview, voronoi, manual_bin, existing_bin)
+    binning_result = binning(config, cube, preview, voronoi, manual_bin, existing_bin)
+    if binning_result == "Failed":
+        print("Extraction aborted: Failed to perform Voronoi binning.")
+        return
 
     # 4) Extract and save spectra
     save_spectra(config, cube, preview, existing_bin)
