@@ -607,7 +607,7 @@ def plot_maps_window(BASE_DIR, layout):
         elif map_event == 'Help':
             with open('help_files/help_maps.txt', 'r') as f:
                 file_contents = f.read()
-            if layout == layout_android:
+            if layout == layouts.layout_android:
                 sg.popup_scrolled(file_contents, size=(120, 30))
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
