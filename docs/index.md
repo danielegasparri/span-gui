@@ -9,7 +9,7 @@
 
 
 ## Overview
-**SPAN is the first cross-platform graphical user interface (GUI) program designed to extract, fully manipulate and analyze professional astronomical science spectra.** It is optimized for the study of galaxy and stellar spectra from the near UV to near-infrared (NIR) atmospheric windows.
+**SPAN is the first cross-platform graphical user interface (GUI) program designed to extract, fully manipulate and analyze professional astronomical science spectra.** It is optimized for the study of galaxy spectra from the near UV to near-infrared (NIR) atmospheric windows.
 
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
 The goal of SPAN is to make spectral manipulation and analysis faster, simpler and fun in one GUI program, fully cross-platform and user friendly.
