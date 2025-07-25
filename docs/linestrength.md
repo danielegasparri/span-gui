@@ -13,7 +13,7 @@ You can perform two types of line-strength analysis. Let’s take a closer look 
 
 
 ## Fully custom analysis using any line-strength index definition
-This mode includes the **"User indices on a list file"** and **"Single index"** options. Your spectra **must already be redshift/Doppler corrected** before using them.
+This mode includes the **"User indices on a list file"** and **"Single index"** options. Your spectra **must already be redshift/Doppler corrected** before using them. The wavelength range and the resolution values should be set to the rest-frame reference. 
 For **"User indices on a list file"**, you must create and load into SPAN a valid ASCII file containing the names and definitions of the indices you want to measure. An example file is included, and additional templates can be found in the "example_files" folder. More information can be found in the user manual. For people in a hurry, here some tips:
 
 - The ASCII file can be in .txt or .dat format, with single spaced values.
@@ -31,7 +31,7 @@ In the custom line-strength analysis you should take care personally of these tw
 
 
 ## Automatic Lick/IDS index analysis
-In this case, SPAN can do the dirty job for you. Activating all the options available, first a fit with pPXF is performed in order to measure the velocity dispersion and the redshift/Doppler velocity of any single spectrum, considering also the gas emission lines and subtracting them from the spectra. For high redshift galaxies, you do NOT need to de-redshift them. If the corresponding rest-frame wavelength range falls within the Lick/IDS index range, SPAN will notice it, if you inserted the right redshift value and activated the "Perform Doppler correction" option. The definitions of the Lick/IDS indices are stored in the "system_files" folder of SPAN and automatically loaded. Also the resolution adjustement to bring your spectra to the Lick/IDS standard is performed by SPAN. 
+In this case, SPAN can do the dirty job for you. Activating all the options available, first a fit with pPXF is performed in order to measure the velocity dispersion and the redshift/Doppler velocity of any single spectrum, considering also the gas emission lines and subtracting them from the spectra. For high redshift galaxies, you do NOT need to de-redshift them. If the corresponding rest-frame wavelength range falls within the Lick/IDS index range, SPAN will notice it, if you inserted the right redshift value and activated the "Perform Doppler correction" option. In this case, the resolution is referred to the wavelength range you are considering. If you are working with high redshift spectra (z > 0.01) SPAN will automatically adjust the resolution (if expressed in terms of FWHM) to the equivalent rest-frame wavelength range of the Lick/IDS indices. The definitions of the Lick/IDS indices are stored in the "system_files" folder of SPAN and automatically loaded. Also the resolution adjustement to bring your spectra to the Lick/IDS standard is performed by SPAN. 
 
 Since some of the Lick/IDS indices are used to constrain the properties of the stellar populations in unresolved spectra, you can activate the "Estimate stellar parameters with SSP models" and select which pre-loaded model use and the algorithm to perform the interpolation between data and models. 
 The interpolation with the model-based Lick/IDS indices is performed considering the Hbeta–MgFe' indices of Thomas et al., 2003 and the Fe–Mgb index-index grids.  

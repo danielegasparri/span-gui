@@ -24,7 +24,7 @@ Let's try modifying a spectrum:
 - To apply the selected task to all loaded spectra, click "Process All". 
 The results will be saved in the "SPAN_results/processed_spectra" folder, located within the path you selected when first opening SPAN for the "SPAN_results" folder.
 
-Tip: The output window provides real-time updates on all tasks performed by the program.
+**Tip:** The output window provides real-time updates on all tasks performed by the program.
 
 
 **Performing a Spectral Analysis Task**   

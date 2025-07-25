@@ -31,7 +31,7 @@ The resolution can be expressed in terms of:
 - FWHM (Full Width at Half Maximum)
 - Resolving Power (R = Lambda/DeltaLambda)
 - MUSE LSF. SPAN contains the parametrization of MUSE Line Spread Function based on the Eq.8 of Bacon et al. (2017). If you have MUSE data, please select this option. 
-If fitting a narrow spectral region (<= 1000 A), the choice between constant FWHM, R or MUSE resolution is not critical. However, for broader wavelength ranges, selecting the appropriate resolution type is crucial. **Important:** For high-redshift galaxies (z > 0.01), SPAN will automatically correct the spectral resolution given in FWHM and MUSE LSF to the corresponding rest-frame wavelength range.
+If fitting a narrow spectral region (<= 1000 A), the choice between constant FWHM, R or MUSE resolution is not critical. However, for broader wavelength ranges, selecting the appropriate resolution type is crucial. **Important:** For high-redshift galaxies (z > 0.01) and spectra which have hot been de-redshifted, SPAN will automatically correct the spectral resolution given in FWHM and MUSE LSF to the corresponding rest-frame wavelength range.
 
 
 ### Third Section: Template Selection

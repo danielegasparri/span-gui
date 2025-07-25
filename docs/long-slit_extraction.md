@@ -18,5 +18,5 @@ Afterwards, you can choose to:
 
 - Extract and save a single 1D spectrum within a selected Y-range (useful for point sources).
 - Extract and save multiple 1D spectra across the entire spatial axis by binning contiguous rows to achieve the desired Signal-to-Noise Ratio (S/N). This option is particularly useful for extended sources (e.g., galaxies), allowing you to sample different regions.
-  The S/N threshold you set is an estimate of the actual S/N. A good starting value for obtaining 1D spectra with bins achieving a realistic S/N ≥ 30 is 35. Adjust the S/N threshold as needed based on the actual S/N of the bins.
+  The S/N threshold you set is an estimate of the actual S/N, based on the sky regions you will select during the extraction routine. Adjust the S/N threshold as needed based on the actual S/N of the bins.
   The pixel scale parameter is optional. If set to zero, it will not be considered.

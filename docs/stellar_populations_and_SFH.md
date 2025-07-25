@@ -27,7 +27,7 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 
 ### First Section: Basic Parameters
 - Wavelength Range: Defines the spectral region to be fitted. A good estimate of stellar population parameters in galaxies is obtained by focusing on the 4800-5500 A (rest-frame) which includes age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe. Il you have near-infrared (NIR) spectra, the 8400-8800 A (rest-frame) range is good, which includes the Ca II triplet.
-- Spectral Resolution FWHM (A): Approximate resolution of your spectrum **in the selected wavelength range**. This is relevant only if including gas emission lines in the fit or if the option "Convolve templates to galaxy resolution" is activated (not mandatory). A precise value is not required, but a good estimate is recommended.
+- Spectral Resolution FWHM (A): Approximate resolution of your spectrum **in the selected wavelength range**. This is relevant only if including gas emission lines in the fit or if the option "Convolve templates to galaxy resolution" is activated (not mandatory). A precise value is not required, but a good estimate is recommended. If working with high redshift spectra which have not been de-redshifted, the resolution value in terms of FWHM is referred to your actual wavelength range. SPAN will scale this value considering the redshift inserted by a factor: FWHM_rest = FWHM/(1+z). 
 - Velocity Dispersion Guess (km/s): An approximate estimate of the actual stellar velocity dispersion.
 - Redshift Guess (z): An initial estimate of the spectrum's redshift. If this value is not within +/- 0.005 the real one, the fit will likely fail.
 
@@ -97,8 +97,9 @@ Bootstrap Uncertainty Estimation (Kacharov et al., 2018) can be enabled to compu
 Suggested simulations: 20-50 (balance between accuracy and speed).
 
 **Lick/IDS Index Analysis:**  
-Uses the pPXF emission-corrected spectrum to estimate the stellar parameters also with the Lick/IDS indices.
-Select model grids and interpolation mode as in the "Line-Strength Analysis" task.
+Uses the pPXF emission-corrected spectrum to estimate stellar population parameters through the measurement of Lick/IDS spectral indices.
+You can select the model grids and interpolation mode in the same way as in the "Line-Strength Analysis" task.
+If your spectra have a significantly different resolution compared to the SSP templates used in pPXF, it is recommended to activate the option "Convolve templates to galaxy resolution". This ensures a more accurate estimate of the velocity dispersion during the fit, which is required to properly correct the Lick/IDS indices for spectral broadening.
 
 
 ## Final Notes ##
