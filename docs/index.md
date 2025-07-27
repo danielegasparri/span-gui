@@ -9,7 +9,7 @@
 
 
 ## Overview
-**SPAN is the first cross-platform graphical user interface (GUI) program designed to extract, fully manipulate and analyze professional astronomical science spectra.** It is optimized for the study of galaxy spectra from the near UV to near-infrared (NIR) atmospheric windows.
+**SPAN is the first cross-platform graphical user interface (GUI) program designed to extract, manipulate and analyze professional astronomical science spectra.** It is optimized for the study of galaxy spectra from the near UV to near-infrared (NIR) atmospheric windows.
 
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
 The goal of SPAN is to make spectral manipulation and analysis faster, simpler and fun in one GUI program, fully cross-platform and user friendly.
@@ -21,12 +21,12 @@ The goal of SPAN is to make spectral manipulation and analysis faster, simpler a
 ## Features
 - **Fully interactive GUI:** No command line required to perform high-level scientific analysis and spectra manipulation  
 - **Compatibility:** Automatically recognizes a wide range of **FITS and ASCII** spectral formats  
-- **Spectra extraction:** From reduced long-slit FITS and datacubes FITS, SPAN allows to extract 1D spectra with automatic (e.g. Voronoi) and manual binning options. Native supports for MUSE, CALIFA, and WEAVE LIFU datacubes is offered. Users can also write and implement their custom routines to support more instruments  
+- **Spectra extraction:** From reduced long-slit FITS and datacubes FITS, SPAN allows to extract 1D spectra with automatic (e.g. Voronoi) and manual binning options. Native supports for MUSE, CALIFA, WEAVE LIFU, and JWST IFU datacubes is offered. Users can also write and implement their custom routines to support more instruments  
 - **Spectral manipulation:** More than 20 tasks to manipulate the spectra (e.g cropping, Doppler/z corretion, rebinning, smoothing, continuum modelling...)  
 - **Spectral analysis:** Using built-in routines and relying on state-of-the-art full spectral fitting code (pPXF), SPAN can perform all the powerful spectral analysis tasks of modern astronomy: kinematics, stellar populations studies, line-strength, cross-correlation, line fitting...  
 - **Batch processing support** for multiple spectra. Optimized to work with a large amount of 1D spectra (e.g. extracted from data cubes)   
 - **Plotting:** Generates high quality publication grade plots  
-- **Customizable:** You can set up many parameters to use SPAN for a wide range of science cases  
+- **Customizable:** Many parameters can be set to use SPAN for a wide range of science cases  
 - **Fully cross-platform:** SPAN is optimized and can run on any device and any operating system, including Android (using for example the Pydroid3 app)
 
 
