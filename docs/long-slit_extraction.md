@@ -7,7 +7,7 @@ Daniele Gasparri, July 2025
 *Long-slit extraction parameters*
 
 
-This module allows you to extract a single 1D spectrum or a series of 1D spectra from a fully reduced 2D FITS image of a long-slit spectrum. The dispersion axis should be aligned with the X-axis, while the spatial axis should be along the Y-axis.
+This sub-program allows you to extract a single 1D spectrum or a series of 1D spectra from a fully reduced 2D FITS image of a long-slit spectrum. The dispersion axis should be aligned with the X-axis, while the spatial axis should be along the Y-axis.
 
 Before proceeding with the extraction, load a valid 2D FITS image and follow these steps:
 
