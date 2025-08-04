@@ -55,7 +55,7 @@ def show_fits_header(prev_spec, layout):
     print('*** Showing header ***')
     header = uti.show_hdr(prev_spec)
 
-    layout_hdr = [[sg.Multiline(header, size=(120, 30) if layout == "android" else (100, 40),
+    layout_hdr = [[sg.Multiline(header, size=(100, 40) if layout == "android" else (120, 30),
                                 disabled=True, autoscroll=True, key='-MULTILINE-')],
                   [sg.Button('Close')]]
 

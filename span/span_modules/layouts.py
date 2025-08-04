@@ -184,7 +184,7 @@ layout_linux = [
             [sg.Button('Generate spectra list containing 1D spectra', key = 'listfile',tooltip='If you do not have a spectra file list, you can generate here')],
             [sg.HorizontalSeparator()],
             [sg.Text('3. Browse the spectra list or one spectrum', font = ('', 11 ,'bold'))],
-            [sg.InputText(default_spectra_list, size=(34, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
+            [sg.InputText(default_spectra_list, size=(36, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
             [sg.Checkbox('I browsed a single spectrum', font = ('Helvetica', 10, 'bold'), key='one_spec',tooltip='Check this if you want to load just one spectrum instead a text file containing the names of the spectra')],
             [sg.Text('Wavelength of the spectra is in:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu')],
             [sg.HorizontalSeparator()],
@@ -396,18 +396,18 @@ layout_android = [
             [sg.Button('Long-slit extraction', tooltip='Stand alone program to extract 1D spectra from 2D fits',button_color= ('black','light blue'), size=(13, 2)), sg.Button('DataCube extraction', tooltip='Stand alone program to extract 1D spectra from data cubes',button_color= ('black','light blue'), size=(11, 2)), sg.Button('Gen. spectra list', key = 'listfile',tooltip='If you do not have a spectra file list, you can generate here', size=(14, 2))],
             [sg.Text('', font = ("Helvetica", 1))],
             [sg.Text('2. Browse the spectra list or just one spectrum', font = ('Helvetica', 11, 'bold'))],
-            [sg.InputText(default_spectra_list, size=(21, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
+            [sg.InputText(default_spectra_list, size=(39, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
             [sg.Checkbox('I browsed a single spectrum', font = ('Helvetica', 10, 'bold'), key='one_spec',tooltip='Check this if you want to load just one spectrum instead a text file containing the names of the spectra')],
             [sg.Text('W. scale:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu'), sg.Push(), sg.Button('Load!', font = ('Helvetica', 11, 'bold'),button_color=('black','light green'), size = (6,1)), sg.Button('Plot',button_color=('black','light gray'), size = (4,1))],
             ], font=("Helvetica", 14, 'bold'), title_color = 'orange'), sg.Listbox(values = listbox1, size=(42, 12), key='-LIST-', horizontal_scroll=True),
 
             #Utility frame
             sg.Frame('Utilities', [
-            [sg.Checkbox('HDR', font = ('Helvetica', 10, 'bold'), key = 'show_hdr',tooltip='Show fits header'), sg.Checkbox('Step', font = ('Helvetica', 10, 'bold'), key = 'show_step',tooltip='Show spectrum wavelength step'), sg.Checkbox('Res.:', font = ('Helvetica', 10, 'bold'), key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText('5500', size = (4,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText('5650', size = (4,1), key = 'lambda_res_right')],
-            [ sg.Checkbox('Convert spectrum to:', font = ('Helvetica', 10, 'bold'), key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = True, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", key = 'convert_to_fits')],
-            [sg.Checkbox('Compare with: ', font = ('Helvetica', 10, 'bold'), key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText('Spec.', size = (7,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
-            [sg.Checkbox('Convert Flux', font = ('Helvetica', 10, 'bold'), key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = True, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')) ],
-            [sg.Checkbox('S/N:', font = ('Helvetica', 10, 'bold'), key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText('6450', size = (4,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(30, size = (3,1), key = 'delta_wave_snr'), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))],
+            [sg.Checkbox('Header', font = ('Helvetica', 11, 'bold'), key = 'show_hdr',tooltip='Show fits header'), sg.Checkbox('Step', font = ('Helvetica', 11, 'bold'), key = 'show_step',tooltip='Show spectrum wavelength step'), sg.Checkbox('Resolution:', font = ('Helvetica', 11, 'bold'), key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText('5500', size = (5,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText('5650', size = (5,1), key = 'lambda_res_right')],
+            [ sg.Checkbox('Convert spectrum or spectra to:', font = ('Helvetica', 11, 'bold'), key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = True, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", key = 'convert_to_fits')],
+            [sg.Checkbox('Compare spec. with: ', font = ('Helvetica', 11, 'bold'), key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText('Spec.', size = (18,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
+            [sg.Checkbox('Convert the flux', font = ('Helvetica', 11, 'bold'), key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = True, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')) ],
+            [sg.Checkbox('S/N:', font = ('Helvetica', 11, 'bold'), key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText('6450', size = (7,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(30, size = (4,1), key = 'delta_wave_snr'), sg.Text(''), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))],
             [sg.HorizontalSeparator()],
             [sg.Button('Text editor', tooltip='Stand alone simple text editor',button_color= ('black','light blue'),size =(8,1)),sg.Button('FITS header editor', tooltip='Stand alone FITS header editor',button_color= ('black','light blue'), size = (13,1)), sg.Button('Plot data', tooltip='Stand alone data plotter. ASCII files with spaced rows',button_color= ('black','light blue'), size = (7,1)), sg.Button('Plot maps', tooltip='Stand alone datacube maps plotter',button_color= ('black','light blue'), size =(8,1))]
             ], font=("Helvetica", 12, 'bold')),
@@ -420,7 +420,7 @@ layout_android = [
             [sg.Button('One',button_color=('black','light gray'), size = (3,1), key ='convert_one'), sg.Button('All',button_color=('black','light gray'), size = (3,1), key = 'convert_all')],
             [sg.Button('Show snr',button_color=('black','light gray'), size = (10,1))],
             [sg.HorizontalSeparator()],
-            [sg.Text('')],
+            [sg.Text('', font=("Helvetica", 18, 'bold'))],
 
             ] ,font=("Helvetica", 10, 'bold'))],
             [sg.HorizontalSeparator()],
