@@ -88,12 +88,10 @@ class SPSLibWrapper:
         if lg_met:
             mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
         else:
-            lin_met_grid = 10**self.metal_grid
-            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
-            mean_metal = np.log10(mean_metal)
-
-
-
+            z_sun = 0.02
+            lin_met_grid = z_sun*10**self.metal_grid
+            mean_z = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_z / z_sun)  # return in [Z/H]
 
         if not quiet:
             if lg_age:
@@ -470,9 +468,10 @@ class miles:
         if lg_met:
             mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
         else:
-            lin_met_grid = 10**self.metal_grid
-            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
-            mean_metal = np.log10(mean_metal)
+            z_sun = 0.02
+            lin_met_grid = z_sun*10**self.metal_grid
+            mean_z = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_z / z_sun)  # return in [Z/H]
 
 
         if not quiet:
@@ -672,13 +671,13 @@ class smiles:
             mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
             mean_afe = np.sum(weights * self.alpha_grid) / np.sum(weights)
         else:
-            lin_met_grid = 10**self.metal_grid
-            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
-            mean_metal = np.log10(mean_metal)
-
-            lin_alpha_grid = 10**self.alpha_grid
-            mean_afe = np.sum(weights * lin_alpha_grid) / np.sum(weights)
-            mean_afe = np.log10(mean_afe)
+            z_sun = 0.02
+            lin_met_grid = z_sun*10**self.metal_grid
+            mean_z = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_z / z_sun)  # return in [Z/H]
+            
+            # Keeping the Alpha/Fe in log scale!
+            mean_afe = np.sum(weights * self.alpha_grid) / np.sum(weights)
 
 
         if not quiet:
@@ -897,9 +896,10 @@ class xshooter:
         if lg_met:
             mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
         else:
-            lin_met_grid = 10**self.metal_grid
-            mean_metal = np.sum(weights * lin_met_grid) / np.sum(weights)
-            mean_metal = np.log10(mean_metal)
+            z_sun = 0.02
+            lin_met_grid = z_sun*10**self.metal_grid
+            mean_z = np.sum(weights * lin_met_grid) / np.sum(weights)
+            mean_metal = np.log10(mean_z / z_sun)  # return in [Z/H]
 
         if not quiet:
             if lg_age:
