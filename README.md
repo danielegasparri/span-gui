@@ -6,6 +6,7 @@
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 [![License](https://img.shields.io/badge/license-Non--Commercial-blue)](./LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/span-gui/badge/?version=latest)](https://span-gui.readthedocs.io/en/latest/)
+[![arXiv](https://img.shields.io/badge/arXiv-2508.01923-B31B1B.svg)](https://arxiv.org/abs/2508.01923)
 
 
 
