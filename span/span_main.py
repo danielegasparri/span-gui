@@ -242,7 +242,7 @@ def main():
 
         # 2D MAPS PLOTTING
         if event == 'Plot maps':
-            sub_programs.plot_maps_window(BASE_DIR, layout)
+            params = sub_programs.plot_maps_window(BASE_DIR, layout, params)
 
 
     #********************************** LOADING AND CHECKING THE SPECTRA *************************

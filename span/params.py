@@ -444,6 +444,26 @@ class SpectraParams:
     ifs_existing_bin: bool = False
     ifs_existing_bin_folder: str = ''
 
+
+    # Plot maps default parameters    
+    fits_path: str = ''
+    txt_path: str = ''
+    plot_maps_fits_image: str = ''
+    plot_maps_contour_percentiles: str = '70,75,80,85,90,95,97,98,99,100'
+    plot_maps_xlim_min: str = ''
+    plot_maps_xlim_max: str = ''
+    plot_maps_ylim_min: str = ''
+    plot_maps_ylim_max: str = ''
+    plot_maps_map_range_min: str = ''
+    plot_maps_map_range_max: str = ''
+    plot_maps_offet: bool = False
+    plot_maps_offset_value: str = ''
+    plot_maps_gaussian_smooth: bool = False 
+    plot_maps_gaussian_smooth_value: float = 1.0 
+    plot_maps_radial_profiles: bool = False
+    plot_maps_colormap: str = 'sauron'
+
+
     # Spectra Pre-processing Default Parameters
     cropping_spectrum: bool = False
     cropping_low_wave: float = 4800
