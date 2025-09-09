@@ -1,5 +1,5 @@
 SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, July 2025
+Daniele Gasparri, September 2025
 
 # Stellar populations and SFH #
 
