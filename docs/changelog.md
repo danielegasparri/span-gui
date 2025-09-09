@@ -4,7 +4,7 @@ Daniele Gasparri, September 2025
 
 # Version histories #
 
-**Version 6.6 (20250710):**  
+**Version 6.6 (20250909):**  
 - Now the 'Plot maps' sub-program stores the parameter values until SPAN is closed.
 - Fixed a bug that prevented to save spectra products (i.e. fit residuals, bestfit template) for the 'Stellar populations and SFH' task when no gas lines where included of not found.
 - Added new functionalities to the 'Plot maps' sub-program: isophotes overplotting and smoothing. This required also to add the 'save_image' function to the 'cube_extract' module that extract and saves the 2D image by averaging all the wavelengths selected from the datacube. This image is required in the 'Plot maps' sub-program, if isophotal contouring is needed (optional). 
