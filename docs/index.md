@@ -12,7 +12,7 @@
 **SPAN is the first cross-platform graphical user interface (GUI) program designed to extract, manipulate and analyze professional astronomical science spectra.** It is optimized for the study of galaxy spectra from the near UV to near-infrared (NIR) atmospheric windows.
 
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
-The goal of SPAN is to make spectral manipulation and analysis faster, simpler and fun in one GUI program, fully cross-platform and user friendly.
+The goal of SPAN is to make spectral manipulation and analysis faster, and simpler in one GUI program, fully cross-platform and user friendly.
 
 ![Main panel of SPAN](img/span_main.png)
 *Main panel of SPAN.*
@@ -24,7 +24,7 @@ The goal of SPAN is to make spectral manipulation and analysis faster, simpler a
 - **Spectra extraction:** From reduced long-slit FITS and datacubes FITS, SPAN allows to extract 1D spectra with automatic (e.g. Voronoi) and manual binning options. Native supports for MUSE, CALIFA, WEAVE LIFU, and JWST IFU datacubes is offered. Users can also write and implement their custom routines to support more instruments  
 - **Spectral manipulation:** More than 20 tasks to manipulate the spectra (e.g cropping, Doppler/z corretion, rebinning, smoothing, continuum modelling...)  
 - **Spectral analysis:** Using built-in routines and relying on state-of-the-art full spectral fitting code (pPXF), SPAN can perform all the powerful spectral analysis tasks of modern astronomy: kinematics, stellar populations studies, line-strength, cross-correlation, line fitting...  
-- **Batch processing support** for multiple spectra. Optimized to work with a large amount of 1D spectra (e.g. extracted from data cubes)   
+- **Batch processing support** for multiple spectra. Optimized to work with a large amount of 1D spectra (e.g. extracted from datacubes)   
 - **Plotting:** Generates high quality publication grade plots  
 - **Customizable:** Many parameters can be set to use SPAN for a wide range of science cases  
 - **Fully cross-platform:** SPAN is optimized and can run on any device and any operating system, including Android (using for example the Pydroid3 app)
@@ -53,7 +53,7 @@ SPAN has been tested with the following spectra:
 - **SAURON spectra**
 - **X-Shooter library spectra**
 - **JWST spectra**
-- **MUSE, CALIFA, WEAVE LIFU, and JWST NIRSpec IFU data cubes**
+- **MUSE, CALIFA, WEAVE LIFU, and JWST NIRSpec IFU datacubes**
 - **(E)MILES, GALAXEV, FSPS SSP templates**
 - **ESO reduced spectra products** for optical and NIR spectra
 
@@ -72,11 +72,11 @@ SPAN has been optimized to work with a series of n 1D spectra. The spectra are p
 
 A spectra list can be created also manually and should include:
 
-- absolute paths of spectra, ore relative path if your spectra are located in a subfolder of SPAN
+- Absolute paths of spectra, or relative path if your spectra are located in a subfolder of SPAN
 - A commented first line (e.g. # Spectrum)
 - It can be stored anywhere in your device
 
-Example file lists are provided in example_files/ folder.
+Example file lists are provided in example_files folder.
 
 
 
@@ -90,11 +90,11 @@ Once launched, select the folder to store the results in your device, then click
 
 
 ## Basic Usage example
-- In the "Prepare and load spectra" frame, browse one of the spectra lists contained in the example_files/ folder (e.g. ngc5806_bins.dat). Set the "Wavelength of the spectra is in:" to "A", then click "Load!"  
+- In the "Prepare and load spectra" frame, browse one of the spectra lists contained in the example_files folder (e.g. ngc5806_bins.dat). Set the "Wavelength of the spectra is in:" to "A", then click "Load!"  
 - Visualize Data: Select a spectrum in the list and click "Plot". A Matplotlib window will appear showing the spectrum. Take a look at it, then close the Matplotlib window and return to the main GUI panel
-- Modify Spectra: Open the "Spectra manipulation" panel located in the Utility frame and activate a task, for example the "Add noise". Confirm the selection (button "Confirm") with the default noise value, then in the main GUI click "Preview Spec." to see the processed selected spectrum. If you are satisfied and want to save this noisy spectrum, click to "Process Selected". To apply the task for all the spectra, click "Process all"
+- Modify Spectra: Open the "Spectra manipulation" panel located in the Utilities frame and activate a task, for example the "Add noise". Confirm the selection (button "Confirm") with the default noise value, then in the main GUI click "Preview Spec." to see the processed selected spectrum. If you are satisfied and want to save this noisy spectrum, click to "Process Selected". To apply the task for all the spectra, click "Process all"
 - The "Spectra manipulation" button in the main GUI now has an annoying red color, meaning that at least one task is activated. Why this is so important? Because if you want to perform any of the Spectral Analysis tasks you should remember that the activated tasks in the "Spectra manipulation" panel are modifying your original spectra and this modified version is passed to the "Spectral analysis" frame. So, open the "Spectra manipulation" frame, deselect the "Add noise" task and confirm this choice  
-- In the main panel, activate the "Line-strength analysis" task and open the parameter window by pressing the button "Line-strength parameters". There, make sure the "Lick/IDS indices" option is selected (it is by default). Enter the redshift of the galaxy (0.00449) and confirm the parameters. Now, select the "line28.fits" spectrum in the listbox and preview the results of the analysis by pressing the "Preview result" button. The available Lick/IDS indices will be shown in the Matplotlib window and a second plot will appear showing the position of the galaxy in the index-index grid built from the SSP models of Thomas et al., 2011. In the output window you will see also the luminosity-weighted age, metallicity and alpha-enhancment calculated for this spectrum. If this is cool, apply the task to all the spectra by pressing the "Process all" button. If you also want the plots of the preview mode to be saved, activate the "Save plots" checkbox at the bottom of the GUI. SPAN now will work for you. Grab a coffee and wait for the task to terminate. The results will be stored in ASCII files in the "SPAN_results/ew/" folder. The plots will be saved as PNG images in the "SPAN_results/plots/" folder.
+- In the main panel, activate the "Line-strength analysis" task and open the parameter window by pressing the button "Line-strength parameters". There, make sure the "Lick/IDS indices" option is selected (it is by default). Enter the redshift of the galaxy (0.00449) and confirm the parameters. Now, select the "line28.fits" spectrum in the listbox and preview the results of the analysis by pressing the "Preview result" button. The available Lick/IDS indices will be shown in the Matplotlib window and a second plot will appear showing the position of the galaxy in the index-index grid built from the SSP models of Thomas et al., 2011. In the output window you will see also the luminosity-weighted age, metallicity and alpha-enhancment calculated for this spectrum. If this is cool, apply the task to all the spectra by pressing the "Process all" button. If you also want the plots of the preview mode to be saved, activate the "Save spectral analysis plots" checkbox at the bottom of the GUI. SPAN now will work for you. Grab a coffee and wait for the task to terminate. The results will be stored in ASCII files in the "SPAN_results/line-strength_analysis/" folder. The plots will be saved as PNG images in the "SPAN_results/plots/" folder.
 
 
 
@@ -112,7 +112,7 @@ If the problem persists, it is possible that your spectra have "fancier" wavelen
 
 
 3. **How do I load just one spectrum?**
-If you want to work with just one spectrum, you DO NOT need a spectra list. SImply browse your spectrum and activate the checkbox "I browsed a single spectrum". Set the correct wavelength units and click "Load!".
+If you want to work with just one spectrum, you DO NOT need a spectra list. Simply browse your spectrum and activate the checkbox "I browsed a single spectrum". Set the correct wavelength units and click "Load!".
 
 
 4. **How do I handle a lot of spectra stored in different folders and within a lot of non spectra files?**

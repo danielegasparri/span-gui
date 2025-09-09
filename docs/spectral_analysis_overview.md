@@ -55,6 +55,6 @@ Important: This is the only way to save spectral analysis results to a file.
 
 
 **Saving Plots**  
-To save plots generated during the analysis in the "Process all" mode, enable the "Save plots" option.
+To save plots generated during the analysis in the "Process all" mode, enable the "Save spectral analysis plots" option.
 The program will automatically save a PNG file for each spectrum and each selected analysis task.
 Saved plots will be stored in the "SPAN_results/plots" folder.
