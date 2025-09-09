@@ -168,7 +168,25 @@ def plot_data_window(BASE_DIR, layout):
 
 
 # 2) PLOT MAPS
-def plot_maps_window(BASE_DIR, layout):
+def plot_maps_window(BASE_DIR, layout, params):
+        
+    fits_path = params.fits_path
+    txt_path = params.txt_path
+    plot_maps_fits_image = params.plot_maps_fits_image
+    plot_maps_contour_percentiles = params.plot_maps_contour_percentiles
+    plot_maps_xlim_min = params.plot_maps_xlim_min
+    plot_maps_xlim_max = params.plot_maps_xlim_max
+    plot_maps_ylim_min = params.plot_maps_ylim_min
+    plot_maps_ylim_max = params.plot_maps_ylim_max
+    plot_maps_map_range_min = params.plot_maps_map_range_min
+    plot_maps_map_range_max = params.plot_maps_map_range_max
+    plot_maps_offet = params.plot_maps_offet
+    plot_maps_offset_value = params.plot_maps_offset_value 
+    plot_maps_gaussian_smooth = params.plot_maps_gaussian_smooth
+    plot_maps_gaussian_smooth_value = params.plot_maps_gaussian_smooth_value 
+    plot_maps_radial_profiles = params.plot_maps_radial_profiles
+    plot_maps_colormap = params.plot_maps_colormap
+    
     layout, scale_win, fontsize, default_size = misc.get_layout()   
     register_sauron_colormap()
     sg.theme("DarkBlue3")
@@ -176,19 +194,19 @@ def plot_maps_window(BASE_DIR, layout):
     if layout == layouts.layout_windows:
         map_layout = [
             [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
-            [sg.Input(key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Input(fits_path, key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
             [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
-            [sg.Input(key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+            [sg.Input(txt_path, key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
             [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
-            [sg.Input(key="-IMG-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
-            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
+            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
             [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
             [sg.HorizontalSeparator()],
-            [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value="sauron", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
+            [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value=plot_maps_colormap, key="-CMAP-", readonly=True, font=("Helvetica", 12))],
             [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
-            [sg.Text("X lim:"), sg.Input(size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
-            [sg.Checkbox("Offset:", key = 'offset', font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(0, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(20, 20), key="-SIGMA-", enable_events=True)],
-            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
+            [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
+            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(20, 20), key="-SIGMA-", enable_events=True)],
+            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
             [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
         ]
 
@@ -196,19 +214,19 @@ def plot_maps_window(BASE_DIR, layout):
     elif layout == layouts.layout_android:
         map_layout = [
             [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 12))],
-            [sg.Input(key="-FITS-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 11))],
+            [sg.Input(fits_path, key="-FITS-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 11))],
             [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 12))],
-            [sg.Input(key="-TXT-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 11))],
+            [sg.Input(txt_path, key="-TXT-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 11))],
             [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 12))],
-            [sg.Input(key="-IMG-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 11))],
-            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 11)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(25, 1), font=("Helvetica", 12))],
+            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(42, 1), font=("Helvetica", 11)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 11))],
+            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 11)), sg.Input(plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(25, 1), font=("Helvetica", 12))],
             [sg.Button("Load Files", font=("Helvetica", 12), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(7, 1), font=("Helvetica", 12), button_color=('black','orange'))],
             [sg.HorizontalSeparator()],
-            [sg.Text("Select the quantity to plot:", font=("Helvetica", 12)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value="sauron", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
+            [sg.Text("Select the quantity to plot:", font=("Helvetica", 12)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value=plot_maps_colormap, key="-CMAP-", readonly=True, font=("Helvetica", 12))],
             [sg.Listbox(values=[], size=(47, 8), key="-LIST-", enable_events=True, font=("Helvetica", 12))],
-            [sg.Text("X lim:"), sg.Input(size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
-            [sg.Checkbox("Offset:", key = 'offset', font=("Helvetica", 11), tooltip='Apply a custom offset value to the data'), sg.Input(0, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", font=("Helvetica", 11), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(19, 20), key="-SIGMA-", enable_events=True)],
-            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
+            [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
+            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 11), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 11), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(19, 20), key="-SIGMA-", enable_events=True)],
+            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
             [sg.Button("Plot Map", size=(8, 1), font=("Helvetica", 12), button_color=('white','orange')), sg.Button("Save selected", size=(11, 1), font=("Helvetica", 12), button_color=('black','light gray')), sg.Button("Save ALL", size=(8, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Exit", size=(8, 1), font=("Helvetica", 12))]
 
         ]
@@ -243,10 +261,32 @@ def plot_maps_window(BASE_DIR, layout):
 
     while True:
         map_event, map_values = map_window.read()
-        if map_event in (sg.WIN_CLOSED, "Exit"):
-            break
+        
 
-        elif map_event == "Load Files":
+        # Setting up the values
+        fits_path = map_values["-FITS-"]
+        txt_path = map_values["-TXT-"]
+        plot_maps_fits_image = map_values["-IMG-"]
+        plot_maps_contour_percentiles = map_values["-ISOLEVELS-"]
+        plot_maps_xlim_min = map_values["-XMIN-"]
+        plot_maps_xlim_max = map_values["-XMAX-"]
+        plot_maps_ylim_min = map_values["-YMIN-"]
+        plot_maps_ylim_max = map_values["-YMAX-"]
+        plot_maps_map_range_min = map_values["-VMIN-"]
+        plot_maps_map_range_max = map_values["-VMAX-"]
+        plot_maps_offet = map_values["offset"]
+        plot_maps_offset_value = map_values["offset_value"]
+        plot_maps_gaussian_smooth = map_values["-SMOOTH-"]
+        plot_maps_gaussian_smooth_value = map_values["-SIGMA-"]
+        plot_maps_radial_profiles = map_values["-RADIAL-"]
+        plot_maps_colormap = map_values["-CMAP-"]
+        
+        if map_event == sg.WIN_CLOSED:
+            break
+        
+
+
+        if map_event == "Load Files":
             try:
                 fits_path = map_values["-FITS-"]
                 txt_path = map_values["-TXT-"]
@@ -657,8 +697,32 @@ def plot_maps_window(BASE_DIR, layout):
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
+        elif map_event == "Exit":
+            break
+
     map_window.close()
 
+    #updating the parameters
+    params = replace(params,
+                    fits_path = fits_path,
+                    txt_path = txt_path,
+                    plot_maps_fits_image = plot_maps_fits_image,
+                    plot_maps_contour_percentiles = plot_maps_contour_percentiles,
+                    plot_maps_xlim_min = plot_maps_xlim_min,
+                    plot_maps_xlim_max = plot_maps_xlim_max,
+                    plot_maps_ylim_min = plot_maps_ylim_min,
+                    plot_maps_ylim_max = plot_maps_ylim_max,
+                    plot_maps_map_range_min = plot_maps_map_range_min,
+                    plot_maps_map_range_max = plot_maps_map_range_max,
+                    plot_maps_offet = plot_maps_offet,
+                    plot_maps_offset_value = plot_maps_offset_value,
+                    plot_maps_gaussian_smooth = plot_maps_gaussian_smooth,
+                    plot_maps_gaussian_smooth_value = plot_maps_gaussian_smooth_value,
+                    plot_maps_radial_profiles = plot_maps_radial_profiles,
+                    plot_maps_colormap = plot_maps_colormap,
+                     )
+    
+    return params
 
 
 #3) TEXT EDITOR

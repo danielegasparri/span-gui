@@ -1797,7 +1797,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
             #Determining the stellar parameters
             age_ssp, met_ssp, alpha_ssp, err_age_ssp, err_met_ssp, err_alpha_ssp = span.lick_pop(ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ssp_model_ppxf, interp_model_ppxf)
 
-            #putting in an array:
+            #plutting in an array:
             ppxf_lick_params = np.array([age_ssp, met_ssp, alpha_ssp, err_age_ssp, err_met_ssp, err_alpha_ssp])
 
             print ('')
@@ -1856,7 +1856,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                     np.savetxt(file_all_mass_weights, mass_weights.reshape(-1, mass_weights.shape[-1]), fmt="%.8e", delimiter=' ', header="Mass weights")
                     print ('File containing the mass weights saved: ', file_all_mass_weights)
 
-                    if bestfit_flux_gas == 0:
+                    if bestfit_flux_gas is None or bestfit_flux_gas == 0:
 
                         #saving the residual file
                         uti.save_fits_2d(bestfit_wave, residual_flux, file_fit_pop) #using the save_fits_2d function because the wavelength sampling is not linear
