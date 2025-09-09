@@ -1,6 +1,6 @@
 # SPAN: Spectral Analysis Software
 📖 **Author:** Daniele Gasparri  
-📅 **Latest Release:** July 2025  
+📅 **Latest Release:** September 2025  
 
 ![PyPI Version](https://img.shields.io/pypi/v/span-gui)
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
