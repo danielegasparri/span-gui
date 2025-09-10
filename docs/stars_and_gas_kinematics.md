@@ -31,7 +31,7 @@ The resolution can be expressed in terms of:
 - FWHM (Full Width at Half Maximum)
 - Resolving Power (R = Lambda/DeltaLambda)
 - MUSE LSF. SPAN contains the parametrization of MUSE Line Spread Function based on the Eq.8 of Bacon et al. (2017). If you have MUSE data, please select this option. 
-If fitting a narrow spectral region (<= 1000 A), the choice between constant FWHM, R or MUSE resolution is not critical. However, for broader wavelength ranges, selecting the appropriate resolution type is crucial. **Important:** For high-redshift galaxies (z > 0.01) and spectra which have hot been de-redshifted, SPAN will automatically correct the spectral resolution given in FWHM and MUSE LSF to the corresponding rest-frame wavelength range.
+If fitting a narrow spectral region (<= 1000 A), the choice between constant FWHM, R or MUSE resolution is not critical. However, for broader wavelength ranges, selecting the appropriate resolution type is crucial. **Important:** For high-redshift galaxies (z > 0.01) and spectra which have not been de-redshifted, SPAN will automatically correct the spectral resolution given in FWHM and MUSE LSF to the corresponding rest-frame wavelength range.
 
 
 ### Third Section: Template Selection
@@ -41,16 +41,20 @@ Here you can select the SSP Model Library to use for the fit. The available pre-
 	3. FSPS (subsample)
 	4. X-shooter Spectral Library (XSL) (complete sample with Salpeter IMF, better suited for higher resolution spectra, R = 10,000)  
 If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectral Processing module.
-You can use any kind of EMILES templates or generic templates. The generig templates should have the wavelength scale in linear units and Angstrom. 
+You can use any kind of EMILES templates or generic templates. The generic templates should have the wavelength scale in linear units and Angstrom. WARNING: Two stellar component fit is not available with a generic template set option (see next section). 
 
 
 ### Fourth Section: Which component to fit
 1. "Fitting only stellar kinematics": You can mask all (potential) emission lines to fit only the stellar component. Here you can also decide whether fitting two stellar components by activating the "Fit two stellar components with the following parameters" checkbox. The two component fit is performed by extracting two SSP templates from the library you have chosen above, with defined age and metallicity, following Rubino et al., 2021. You must insert the age and metallicity values of the two SSP to be retrieved, as well as a GOOD guess of the velocity and velocity dispersion of the two components you think to see in your spectrum. I stress out that a good guess is necessary (according to Cappellari et al., 2023 and the pPXF documentation), so first take an accurate look at your spectrum and make some tries.
-2. "Gas and Stars Kinematics": Considers both stellar and gaseous emission lines. Here only one stellar component is fitted, along with as many gaseous components SPAN will find on your spectrum (Balmer liner, forbidden lines and other lines), based on a modified version of the line emission template provided by pPXF and ambedded in the "spectral_analysis.py" module in the "span_functions" folder. By default, stars and gas are calculated together with one fit. However, often is necessary to fix the stellar kinematics to perform a more accurate gas fit. The option "Fixing stellar kinematics first" will perform a first fit only for the stellar components and will use the kinematics moments derived to fix them in the subsequent fit for the gas component.
+2. "Gas and Stars Kinematics": Considers both stellar and gaseous emission lines. Here only one stellar component is fitted, along with as many gaseous components SPAN will find on your spectrum (Balmer liner, forbidden lines and other lines), based on a modified version of the line emission template provided by pPXF and embedded in the "spectral_analysis.py" module in the "span_functions" folder. By default, stars and gas kinematics are calculated together with one fit. However, often is necessary to fix the stellar kinematics to perform a more accurate gas fit. The option "Fixing stellar kinematics first" will perform a first fit only for the stellar components and will use the kinematics moments derived to fix them in the subsequent fit for the gas component.
 
 
 ### Fifth Section: Dust and masking
-Here you can activate the dust/extinction corrections or decide to mask custom regions of your spectra. This masking will act directly on the "goodpixels" keyword of pPXF and can be used also when the emission line masking is activated.
+Here you can activate the dust/extinction corrections or decide to mask custom regions of your spectra. 
+
+The dust correction uses the Cappellari (2023) 2-parameter attenuation model for the stellar component and the Calzetti (2000) 1-parameter attenuation model for the gas. If you are interested only to kinematics (i.e. no gas flux) you can safely neglect the dust parametrization in most situations.
+
+The masking will act directly on the "goodpixels" keyword of pPXF and can be used also when the emission line masking is activated.
 There are two masking options available: 
 
 - Manual masking, by inserting the wavelength interval(s) to be masked, separated by commas and parenthesis in the text box. If invalid values are inserted, SPAN will warn you.
@@ -61,7 +65,7 @@ There are two masking options available:
 - Gauss-Hermite Moments: Determines the complexity of the Line-of-Sight Velocity Distribution (LOSVD) model. Minimum moments to be fitted: 2 (radial velocity + velocity dispersion). Maximum moments: 6. Typical values: 2 for regular galaxies and/or for the two stellar component fit, 4 for interacting or asymmetric galaxies.
 - Polynomial Degree: Specifies the degree of additive and multiplicative polynomials used by pPXF to adjust the continuum level of spectral templates. Additive polynomials give reliable kinematics results. A degree of 4 is a good starting point. **WARNING:** Additive polynomials are fine for pure kinematic analysis but not for measuring the gas line fluxes. If you are interested also to a correct measurement of gas line fluxes, you should deactivate the additive degree polynomials (set the degree to -1) and use ONLY the multiplicative degree polynomials. 
 - Noise Level: Represents the expected mean noise level in the spectrum (assumed constant across the wavelength range), used to compute the Chi^2 of the fit and derive formal uncertainties.
-As per the pPXF documentation (pPXF Documentation), formal uncertainties are meaningful only if Chi2 = 1.
+As per the pPXF documentation, formal uncertainties are meaningful only if Chi2 = 1.
 If unsure about the noise level, enable "Auto Noise". This feature will:
 	1. Perform an initial fit using the user-provided noise level without regularization (bias keyword set to zero).
 	2. Compute a refined noise estimate.
@@ -71,7 +75,7 @@ If unsure about the noise level, enable "Auto Noise". This feature will:
 ### Seventh Section: Uncertainty Estimation
 To estimate uncertainties in stellar kinematics, you can enable Monte Carlo simulations.
 This option is recommended if you do not fully trust the formal uncertainties computed by pPXF.
-Particularly useful for galaxies with very low velocity dispersion compared to the instrumental resolution. This operation is very time consuming, so try to not insert too many simulations. 
+Particularly useful for galaxies with very low velocity dispersion compared to the instrumental resolution (velscale). This operation is very time consuming, so try to not insert too many simulations. 
 
 
 ## Outputs ##
@@ -80,9 +84,9 @@ In **"Process selected"** mode, if the option "Save processed spectra" is activa
 - bestfit model spectrum
 - bestfit gas model spectrum (if kinematics of stars and gas is activated)
 - emission corrected spectrum (if kinematics of stars and gas is activated)
-- continuum subtracted gas spectrum (if kinematics of stars and gas is activated)
+- continuum subtracted gas spectrum (if kinematics of stars and gas is activated).  
 These spectra are saved in the "processed_spectra" subfolder within the "SPAN_results" folder.
-If you are not interested in these spectra products, you can just disable the option "Save processed spectra" and save some space on the disc.
+If you are not interested in these spectra products, you can just disable the option "Save processed spectra" and save some space on the disk.
 
 In **"Process all"** mode, for each spectrum, if "Save processed spectra" is activated, the task produces all the spectra in the "Process selected" mode, for each spectrum processed.
 

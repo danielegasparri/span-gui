@@ -7,7 +7,7 @@ Daniele Gasparri, September 2025
 *Stellar populations and SFH parameters*
 
 
-This module is one of the most critical tools within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023 and referenes therein) to fit a galaxy's spectrum using a set of Single Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
+This task is one of the most critical within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023 and referenes therein) to fit a galaxy's spectrum using a set of Simple Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
 
 The provided settings allow for an optimal use of pPXF, though not all of its parameters and functionalities are included in this interface.
 
@@ -38,12 +38,13 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 Two additional options allow for dust correction. They should used only for spectra with very good flux calibration:
 - "Correct for dust the stars": Uses the Cappellari (2023) 2-parameter attenuation model.
 - "Correct for dust the gas": Uses the Calzetti (2000) 1-parameter attenuation model.
+Using or not dust correction depends on case-to-case basis. Usually, multiplicative polynomials gives reliable results and the addition of dust correction produces very similar results. For a deeper understanding of dust correction ad it effect on the stellar populations, please see to Lee et al., 2024 (https://arxiv.org/pdf/2406.13924)
 
 
 
 ### Third Section: Noise Estimation, Regularization and polynomials
 Noise and Regularization: These are critical for obtaining accurate results. Refer to the pPXF documentation for an in-depth guide.
-Recommended Workflow for finding the best parameters from pPXF documentation:
+Recommended workflow for finding the best parameters:
 
 - Perform an unregularized fit (Regul. error = 0).
 - Adjust the noise level to achieve chi^2 = 1.
