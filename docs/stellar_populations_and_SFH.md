@@ -35,10 +35,11 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 ### Second Section: Gas Emission Lines and Dust Attenuation
 - If the spectrum contains emission lines, you should select "Fitting with gas" for more accurate results. Alternatively, you can mask out the emission lines with the "Mask emission lines" option and perform a fit without considering the gas ("Fitting only stars")
 - If the spectrum includes multiple Balmer emission lines, you may enable "Tie Balmer" to constrain their ratios. This automatically applies the Calzetti et al. (2000) dust attenuation curve.
-Two additional options allow for dust correction. They should used only for spectra with very good flux calibration:
+Two additional options allow for dust correction. They should be used only for spectra with very good flux calibration:
 - "Correct for dust the stars": Uses the Cappellari (2023) 2-parameter attenuation model.
 - "Correct for dust the gas": Uses the Calzetti (2000) 1-parameter attenuation model.
-Using or not dust correction depends on case-to-case basis. Usually, multiplicative polynomials gives reliable results and the addition of dust correction produces very similar results. For a deeper understanding of dust correction ad it effect on the stellar populations, please see to Lee et al., 2024 (https://arxiv.org/pdf/2406.13924)
+
+Using or not dust correction depends on case-to-case basis. Usually, multiplicative polynomials gives reliable results and the addition of dust correction produces very similar results. For a deeper understanding of dust correction ad its effect on the stellar populations, please see Lee et al., 2024 (https://arxiv.org/pdf/2406.13924)
 
 
 
@@ -75,7 +76,8 @@ If replacing templates, ensure:
 - A regular grid of ages and metallicities.
 - No mixing of different IMF templates.
 
-You can also insert a custom .npz file following the standard of pPXF and containing any set of templates.
+You can use any set of (E)MILES templates that follows the standard MILES
+file naming convention (see http://research.iac.es/proyecto/miles/pages/ssp-models/name-convention.php) and also create and browse a custom .npz file following the standard of pPXF and containing any set of templates.
 
 **Important Notes on Stellar Population Models**  
 E-MILES, sMILES, and X-shooter work best for quiescent and moderately star forming galaxies but lack very young stellar populations (<30-60 Myr).
@@ -84,7 +86,7 @@ For highly star-forming galaxies, consider FSPS (Conroy et al., 2010) or other t
 
 ### Fifth Section: Custom Masking and Stellar Constraints
 
-- You can mask out the emission Lines. In this case, you should select the "Fitting without gas" in Section 3.
+- You can mask out the emission Lines. In this case, you should select the "Fitting without gas" mode (see Section 2).
 - Custom masking is available and can be added also to the automatic masking of the emission lines. There are two custom masking options available: 
     1. Manual masking, by inserting the wavelength interval(s) to be masked, separated by commas and parenthesis in the text box. If invalid values are inserted, SPAN will warn you.
     2. Graphical masking mode, activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking in done, you can close the Matplotlib window and the text box on the left will update with the new ranges selected.
