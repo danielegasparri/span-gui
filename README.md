@@ -60,7 +60,7 @@ archivePrefix = {arXiv},
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
 The goal of SPAN is to make spectral manipulation and analysis faster and simpler in one GUI program, fully cross-platform and user friendly.
 
-![span_main](https://github.com/user-attachments/assets/5f40c1a1-f146-4d03-839b-00264100fc02)
+<img width="1565" height="839" alt="span_main" src="https://github.com/user-attachments/assets/c3183055-ffae-4012-b83f-b617d4461b9b" />
 **Main panel of SPAN as it appears on Windows and Linux systems.*
 
 ## Features
