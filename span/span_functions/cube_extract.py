@@ -1,19 +1,25 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
 
-
 """
     Copyright (C) 2020-2025, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -44,7 +50,7 @@ import matplotlib.pyplot as plt
 def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift, ifs_ow_output,
                        ifs_routine_read, ifs_origin, ifs_lmin_tot, ifs_lmax_tot,
                        ifs_lmin_snr, ifs_lmax_snr, ifs_min_snr_mask,
-                       ifs_mask, ifs_bin_method, ifs_target_snr, ifs_covariance):
+                       ifs_mask, ifs_bin_method, ifs_target_snr, ifs_covariance, ell_pa_astro_deg=None, ell_x0=None, ell_y0=None, ell_q=None, ell_min_dr=0.5, ell_r_max=None):
 
     """
     Returns a `configs` dictionary to be read from the following functions of the module
@@ -72,9 +78,17 @@ def buildConfigFromGUI(ifs_run_id, ifs_input, ifs_output, ifs_redshift, ifs_ow_o
             "MASK": ifs_mask
         },
         "BINNING": {
-            "VORONOI": ifs_bin_method,
+            "VORONOI": ifs_bin_method,         
+            "BIN_METHOD": ifs_bin_method,           
             "TARGET_SNR": ifs_target_snr,
             "COVARIANCE": ifs_covariance
+        },
+        "ELLIPTICAL": {
+            "PA_ASTR_DEG": ell_pa_astro_deg,       
+            "X0": ell_x0, "Y0": ell_y0,            
+            "Q": ell_q,                        
+            "MIN_DR": float(ell_min_dr),
+            "R_MAX": ell_r_max                     
         }
     }
 
@@ -138,7 +152,7 @@ def masking(config, cube, preview, manual_bin, existing_bin):
     generate_and_apply_mask(config, cube)
 
 
-def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
+def binning(config, cube, preview, manual_bin, existing_bin):
 
     """
     Applies spatial binning to the datacube.
@@ -147,7 +161,6 @@ def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
         config (dict): Configuration dictionary.
         cube (object): The loaded datacube.
         preview (bool): If True, performs a preview without saving.
-        voronoi (bool): If True, uses Voronoi binning.
 
     Returns:
         None or "Failed" in case of failure.
@@ -166,7 +179,7 @@ def binning(config, cube, preview, voronoi, manual_bin, existing_bin):
             return
 
     try:
-        generate_bins(config, cube, voronoi)
+        generate_bins(config, cube, False)
     except Exception as e:
         print(f"Spatial binning routine {config.get('BINNING', {}).get('VORONOI', 'UNKNOWN')} failed: {e}")
         return "Failed"
@@ -202,8 +215,7 @@ def save_spectra(config, cube, preview, existing_bin):
         print(f"Spectra preparation routine failed: {e}")
         return "Failed"
 
-
-def save_image(config, cube):
+def save_image(config, cube, preview):
     """
     Collapse the cube['signal'] along the spectral axis and save a 2D image (ny, nx) in FITS format.
 
@@ -239,19 +251,26 @@ def save_image(config, cube):
         yi = np.searchsorted(y_unique, y[i])
         image_2d[yi, xi] = collapsed_flux[i]
 
-    # Prepare output path
-    output_prefix = os.path.join(config['INFO']['OUTPUT'], config['INFO']['RUN_NAME'])
-    output_file = f"{output_prefix}_2dimage.fits"
+    cube['x_unique'] = x_unique 
+    cube['y_unique'] = y_unique 
+    cube['white'] = image_2d       # used by geometry estimators
+    cube['shape'] = (ny, nx) 
+    
+    # Prepare output path, only for the extraction and not the preview
+    if not preview:
+        output_prefix = os.path.join(config['INFO']['OUTPUT'], config['INFO']['RUN_NAME'])
+        output_file = f"{output_prefix}_2dimage.fits"
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    # Save to FITS
-    hdu = fits.PrimaryHDU(image_2d)
-    hdu.header['COMMENT'] = "2D image collapsed along spectral axis"
-    hdu.header['HISTORY'] = "Created with SPAN"
-    hdu.writeto(output_file, overwrite=True)
-    print('')
-    print(f"Saved 2D image to: {output_file}")
-    return output_file
+        # Save to FITS
+        hdu = fits.PrimaryHDU(image_2d)
+        hdu.header['COMMENT'] = "2D image collapsed along spectral axis"
+        hdu.header['HISTORY'] = "Created with SPAN"
+        hdu.writeto(output_file, overwrite=True)
+        print('')
+        print(f"Saved 2D image to: {output_file}")
 
+        return output_file
 
 ###############################################################################
 ################ FUNCTIONS TO PERFORM THE 4 STEPS ABOVE #############
@@ -405,44 +424,41 @@ def sn_func(index, signal=None, noise=None, covar_vor=0.00):
     return sn
 
 
+
+
 def generate_bins(config, cube, voronoi):
-
     """
-    Applies Voronoi-binning or treats each spaxel as an individual bin if Voronoi binning is disabled.
-
-    Parameters:
-        config (dict): Configuration dictionary.
-        cube (dict): Datacube containing spatial and SNR data.
-        voronoi (bool): If True, applies Voronoi binning.
-
-    Returns:
-        None (Saves the binning results to a FITS file)
+    Applies spatial binning according to selected method.
     """
 
-    print("Defining the Voronoi bins")
+    print("Defining spatial bins")
 
-    # Load the mask file safely
     mask_file = os.path.join(config['INFO']['OUTPUT'], f"{config['INFO']['RUN_NAME']}_mask.fits")
-
     if not os.path.isfile(mask_file):
         print(f"Mask file not found: {mask_file}")
         return "Failed"
 
-    # Open fits
     with fits.open(mask_file, mode="readonly") as hdul:
-        mask_data = hdul[1].data  # reading
+        mask_data = hdul[1].data
 
     mask = mask_data['MASK']
     idx_unmasked = np.where(mask == 0)[0]
-    idx_masked = np.where(mask == 1)[0]
+    idx_masked   = np.where(mask == 1)[0]
 
-    # Partial function for SNR calculation
+    # Partial S/N function (you already have this)
     sn_func_covariances = functools.partial(
         sn_func, covar_vor=config['BINNING'].get('COVARIANCE', 0.0))
 
+    # ---- Choose method ----
+    method = config['BINNING'].get('BIN_METHOD', 'VORONOI').upper()
+    # Back-compat: if 'voronoi' bool param is used, override
     if voronoi:
+        method = 'VORONOI'
+    elif method not in ('VORONOI', 'ELLIPTICAL', 'SPAXEL'):
+        method = 'SPAXEL'
+
+    if method == 'VORONOI':
         try:
-            # Perform Voronoi binning
             bin_num, x_node, y_node, x_bar, y_bar, sn, n_pixels, _ = voronoi_2d_binning(
                 cube['x'][idx_unmasked],
                 cube['y'][idx_unmasked],
@@ -452,30 +468,36 @@ def generate_bins(config, cube, voronoi):
                 plot=False,
                 quiet=True,
                 pixelsize=cube['pixelsize'],
-                sn_func=sn_func_covariances
-            )
+                sn_func=sn_func_covariances)
             print(f"{np.max(bin_num) + 1} Voronoi bins generated!")
-
         except ValueError as e:
-            # Handle case where no binning is needed
             if str(e) == 'All pixels have enough S/N and binning is not needed':
                 print("Analysis will continue without Voronoi-binning!")
                 bin_num = np.arange(len(idx_unmasked))
                 x_node, y_node = cube['x'][idx_unmasked], cube['y'][idx_unmasked]
                 sn = cube['snr'][idx_unmasked]
-                n_pixels = np.ones(len(idx_unmasked))
+                n_pixels = np.ones(len(idx_unmasked), dtype=int)
             else:
                 print(f"Voronoi-binning error: {e}")
                 return "Failed"
-    if not voronoi:
-        print(f"No Voronoi-binning! {len(idx_unmasked)} spaxels will be treated as individual bins.")
+
+    elif method == 'ELLIPTICAL':
+        print("Using elliptical annuli binning (adaptive S/N).")
+
+        bin_num, x_node, y_node, sn, n_pixels, R_ellipses = generate_bins_elliptical(
+            config, cube, idx_unmasked, sn_func_covariances)
+        
+        
+    else:  # 'SPAXEL' = each unmasked spaxel is a bin
+        print(f"No binning! {len(idx_unmasked)} spaxels will be treated as individual bins.")
         bin_num = np.arange(len(idx_unmasked))
         x_node, y_node = cube['x'][idx_unmasked], cube['y'][idx_unmasked]
         sn = cube['snr'][idx_unmasked]
-        n_pixels = np.ones(len(idx_unmasked))
+        n_pixels = np.ones(len(idx_unmasked), dtype=int)
 
-    # Assign nearest Voronoi bin for masked pixels
+    # ---- Masked spaxels behaviour (unchanged): keep -1 in BIN_ID ----
     if len(idx_masked) > 0:
+        # You compute nearest Voronoi node; we keep same scaffolding for consistency
         pix_coords = np.column_stack((cube['x'][idx_masked], cube['y'][idx_masked]))
         bin_coords = np.column_stack((x_node, y_node))
         dists = dist.cdist(pix_coords, bin_coords, 'euclidean')
@@ -483,17 +505,332 @@ def generate_bins(config, cube, voronoi):
     else:
         bin_num_outside = np.array([])
 
-    # Create extended bin list
+    # ---- Build long BIN_ID over all spaxels ----
     bin_num_long = np.full(len(cube['x']), np.nan)
     bin_num_long[idx_unmasked] = bin_num
-    bin_num_long[idx_masked] = -1  # Assign negative value to unselected spaxels
+    bin_num_long[idx_masked]   = -1
 
-    # Save binning results
-    # if not existing_bin:
+    # ---- Save (same as before) ----
     save_bin_info(
         config,
         cube['x'], cube['y'], cube['signal'], cube['snr'],
         bin_num_long, np.unique(bin_num), x_node, y_node, sn, n_pixels, cube['pixelsize'])
+
+
+
+def generate_bins_elliptical(config, cube, idx_unmasked, sn_func_covariances):
+    target_snr = float(config['BINNING'].get('TARGET_SNR', 30.0))
+    min_dr     = float(config['ELLIPTICAL'].get('MIN_DR', 1.0))
+
+    geo = config.get('ELLIPTICAL', {})
+    x0_user  = geo.get('X0', None) 
+    y0_user  = geo.get('Y0', None) 
+    q_user   = geo.get('Q', None)
+    pa_img_user  = geo.get('PA_IMAGE_DEG', None)        
+    pa_astro     = geo.get('PA_ASTR_DEG', None)         
+    pa_user = None
+    if pa_img_user is not None:
+        pa_user = float(pa_img_user)                    
+    elif pa_astro is not None:
+        pa_user = _pa_astro_to_image(float(pa_astro)) 
+
+    white = cube.get('white', None) 
+    H, W  = (cube['shape'] if 'shape' in cube else (None, None))
+
+    # --- Grids directly on the stacked image
+    X_unique = cube.get('x_unique', None)
+    Y_unique = cube.get('y_unique', None)
+    if (X_unique is None) or (Y_unique is None):
+        X_unique = np.sort(np.unique(cube['x'])) 
+        Y_unique = np.sort(np.unique(cube['y'])) 
+        # Se vuoi riusarli altrove:
+        cube['x_unique'] = X_unique
+        cube['y_unique'] = Y_unique
+
+    X_grid, Y_grid = np.meshgrid(X_unique, Y_unique, indexing='xy')
+
+    # mask
+    mask_valid_full = np.zeros(H*W, dtype=bool)
+    mask_valid_full[idx_unmasked] = True
+    mask_valid_2d = mask_valid_full.reshape(H, W)
+
+    # --- Geometry
+    if (x0_user is None) or (y0_user is None) or (pa_user is None) or (q_user is None):
+        if white is not None:
+            x0e, y0e, pae_img, qe = _estimate_centre_pa_q_arcsec(
+                white, mask_valid_2d, X_grid, Y_grid,
+                x0_user_arcsec=x0_user, y0_user_arcsec=y0_user)
+        else:
+            # fallback
+            x0e = float(np.median(cube['x'][idx_unmasked]))
+            y0e = float(np.median(cube['y'][idx_unmasked]))
+            pae_img, qe = 0.0, 1.0
+        x0 = float(x0_user) if (x0_user is not None) else x0e
+        y0 = float(y0_user) if (y0_user is not None) else y0e
+        pa = float(pa_user) if (pa_user is not None) else pae_img  
+        q  = float(q_user)  if (q_user  is not None) else qe
+    else:
+        x0 = float(x0_user);  y0 = float(y0_user)
+        pa = float(pa_user);  q  = float(q_user)
+
+    # --- elliptical radius
+    x_u = cube['x'][idx_unmasked]   # arcsec
+    y_u = cube['y'][idx_unmasked]   # arcsec
+    r_u = _elliptical_radius(x_u, y_u, x0, y0, pa, q) 
+
+    # --- r_max (arcsec) ---
+    r_max_cfg = _as_float_or_none(config.get('ELLIPTICAL', {}).get('R_MAX'))
+    if r_max_cfg is not None:
+        r_max = float(r_max_cfg)
+    else:
+        r_max = float(np.nanpercentile(r_u, 99.5))
+
+    # --- Ordering
+    order    = np.argsort(r_u)
+    r_sorted = r_u[order]
+
+    sig_u = cube['signal'][idx_unmasked]
+    noi_u = cube['noise'][idx_unmasked]
+
+    bin_edges = []
+    bin_sels  = []
+
+    i0 = 0
+    r_in = 0.0
+    
+    pixelsize =  cube['pixelsize']
+    min_n_spaxels = 1
+    if min_dr < pixelsize:
+        print ('WARNING: minimum dr smaller than the sampling. Adjusting...')
+        min_dr = pixelsize
+        
+    while r_in < r_max:
+        # First attempt: an annulus at least min_dr_arcsec thick
+        r_out = min(r_in + min_dr, r_max)
+
+        # Expand until at least 1 spaxel is included (handles thin shells vs. sampling)
+        while True:
+            sel = (r_u >= r_in) & (r_u < r_out)
+            if sel.any() or r_out >= r_max:
+                break
+            r_out = min(r_out + pixelsize, r_max)
+
+        sel = (r_u >= r_in) & (r_u < r_out)
+        if not sel.any():
+            break  # nothing left to bin
+
+        # Grow bin
+        idx_sel = np.where(sel)[0]
+
+        def _sn_for_idx(idxs):
+            if sn_func_covariances is not None:
+                return float(sn_func_covariances(np.asarray(idxs, dtype=int), sig_u, noi_u))
+            else:
+                # fallback
+                S = sig_u[idxs].sum()
+                N = np.sqrt((noi_u[idxs]**2).sum())
+                return (S / N) if N > 0 else 0.0
+
+        sn_bin = _sn_for_idx(idx_sel)
+        n_spx  = idx_sel.size
+
+        while (sn_bin < target_snr or n_spx < min_n_spaxels) and r_out < r_max:
+            r_out = min(r_out + min_dr, r_max)
+            sel   = (r_u >= r_in) & (r_u < r_out)
+            idx_sel = np.where(sel)[0]
+            if idx_sel.size == n_spx and r_out >= r_max:
+                break
+            n_spx  = idx_sel.size
+            sn_bin = _sn_for_idx(idx_sel)
+
+        # Record bin
+        if sel.any():
+            bin_edges.append((float(r_in), float(r_out)))
+            bin_sels.append(sel)
+
+        # Advance
+        r_in = r_out
+        if r_out >= r_max:
+            break
+
+    # --- Outputs ---
+    nb = len(bin_sels)
+    bin_num  = np.full(x_u.size, -1, dtype=int)
+    x_node   = np.zeros(nb, dtype=float)
+    y_node   = np.zeros(nb, dtype=float)
+    sn_arr   = np.zeros(nb, dtype=float)
+    n_sp_arr = np.zeros(nb, dtype=int)
+
+    # Elliptical radius and coordinates along the major axis
+    R_flux = np.zeros(nb, dtype=float)
+    X_flux = np.zeros(nb, dtype=float)
+    Y_flux = np.zeros(nb, dtype=float)
+    th = np.deg2rad(pa)
+
+    for b, sel in enumerate(bin_sels):
+        idx = np.where(sel)[0]
+        bin_num[idx] = b
+        n_sp_arr[b]  = idx.size
+        x_node[b]    = float(np.mean(x_u[idx]))
+        y_node[b]    = float(np.mean(y_u[idx]))
+        S = sig_u[idx].sum()
+        N = np.sqrt((noi_u[idx]**2).sum())
+        sn_arr[b] = (S / N) if N > 0 else 0.0
+
+        # --- R_flux
+        r_vals = r_u[idx]
+        w      = sig_u[idx] 
+        w_ok   = np.isfinite(w) & (w >= 0)
+
+        if np.any(w_ok) and np.sum(w[w_ok]) > 0:
+            R_flux[b] = float(np.average(r_vals[w_ok], weights=w[w_ok]))
+        else:
+            R_flux[b] = float(np.mean(r_vals))  # fallback
+
+        # X and Y coordinates of R_flux on semi-major axis
+        X_flux[b] = x0 + R_flux[b] * np.cos(th)
+        Y_flux[b] = y0 + R_flux[b] * np.sin(th)
+
+    print("PA:", float(pa+90), "   q:", float(q))
+    print(f"{nb} Elliptical bins generated!\n")
+
+    return bin_num, X_flux, Y_flux, sn_arr, n_sp_arr, R_flux
+
+ 
+def _pa_astro_to_image(pa_astro_deg):
+    #Convert astronomical PA (E of N, 0..180) to image-frame PA used by the code
+    if pa_astro_deg is None:
+        return None
+    return float(((pa_astro_deg)-90) % 180.0)
+
+
+def _estimate_centre_pa_q_arcsec(white, mask_valid_2d, X_grid, Y_grid,
+                                 x0_user_arcsec=None, y0_user_arcsec=None):
+    """
+    Estimate centre (arcsec), position angle (image convention, degrees 0..180),
+    and axis ratio q directly in physical coordinates using second-order
+    moments of the white-light image.
+
+    Parameters
+    ----------
+    white : (ny, nx) float
+        Collapsed (white-light) image.
+    mask_valid_2d : (ny, nx) bool
+        True where the pixel is valid.
+    X_grid, Y_grid : (ny, nx) float
+        2D grids of coordinates in arcsec for each pixel of the white image.
+    x0_user_arcsec, y0_user_arcsec : float | None
+        User-provided centre in arcsec (same convention as X_grid/Y_grid).
+
+    Returns
+    -------
+    x0_arc, y0_arc : float
+        Adopted centre in arcsec.
+    pa_image_deg : float
+        Position angle in image convention (0° = +X, counter-clockwise),
+        normalised to [0, 180).
+    q : float
+        Axis ratio b/a, clipped to [0.05, 1.0].
+    """
+    # Use only valid pixels; clip flux to be non-negative
+    flux = np.where(mask_valid_2d, np.clip(white, 0, None), 0.0)
+    tot  = flux.sum()
+    if tot <= 0:
+        # Fallback:
+        ydim, xdim = white.shape
+        x0_arc = float(np.median(X_grid))
+        y0_arc = float(np.median(Y_grid))
+        return x0_arc, y0_arc, 0.0, 1.0
+
+    # Centre: use user value if provided (arcsec), otherwise luminosity-weighted centroid (arcsec)
+    if (x0_user_arcsec is not None) and (y0_user_arcsec is not None):
+        x0_arc = float(x0_user_arcsec)
+        y0_arc = float(y0_user_arcsec)
+    else:
+        x0_arc = float((flux * X_grid).sum() / tot)
+        y0_arc = float((flux * Y_grid).sum() / tot)
+
+    # Second moments about the centre (arcsec)
+    Xc = X_grid - x0_arc
+    Yc = Y_grid - y0_arc
+    Ixx = float((flux * Xc * Xc).sum() / tot)
+    Iyy = float((flux * Yc * Yc).sum() / tot)
+    Ixy = float((flux * Xc * Yc).sum() / tot)
+
+    M = np.array([[Ixx, Ixy], [Ixy, Iyy]], dtype=float)
+    evals, evecs = np.linalg.eigh(M)
+
+    # Major axis = eigenvector associated with the largest eigenvalue
+    i_max = int(np.argmax(evals))
+    vx, vy = evecs[:, i_max]
+
+    # Image PA (0° = +X, CCW), normalised to [0, 180)
+    pa_rad = np.arctan2(vy, vx)
+    pa_image_deg = float((np.degrees(pa_rad) + 180.0) % 180.0)
+
+    # Axis ratio q = sqrt(min/max) with numerical robustness
+    a2 = float(np.max(evals))
+    b2 = float(np.min(evals))
+    a2 = max(a2, 1e-12)
+    b2 = max(b2, 1e-12)
+    q = float(np.sqrt(b2 / a2))
+    q = float(np.clip(q, 0.05, 1.0))
+
+    print (f'\nOffset from the origin (x,y) [arcsec]: {x0_arc, y0_arc}')
+    return x0_arc, y0_arc, pa_image_deg, q
+
+
+def _elliptical_radius(x, y, x0, y0, pa_deg, q):
+    """Elliptical radius for 1D coordinate arrays (x,y)."""
+    pa = np.deg2rad(pa_deg)
+    cos, sin = np.cos(pa), np.sin(pa)
+    xp =  (x - x0) * cos + (y - y0) * sin
+    yp = -(x - x0) * sin + (y - y0) * cos
+    return np.hypot(xp, yp / max(q, 1e-3))
+
+
+def _as_float_or_none(v):
+    if v is None:
+        return None
+    if isinstance(v, str) and v.strip() == "":
+        return None
+    return float(v)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -528,8 +865,17 @@ def save_bin_info(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node,
     sn_new = np.zeros_like(x, dtype=float)
     n_pixels_new = np.zeros_like(x, dtype=int)
 
+    # escludi bin = -1 dall’elenco unico
+    valid_mask = bin_num_new >= 0
+    ubins = np.unique(bin_num_new[valid_mask])
+
+    x_node_new = np.zeros_like(x)
+    y_node_new = np.zeros_like(y)
+    sn_new = np.zeros_like(x, dtype=float)
+    n_pixels_new = np.zeros_like(x, dtype=int)
+
     for i, ubin in enumerate(ubins):
-        idx = np.where(ubin == np.abs(bin_num_new))[0]
+        idx = np.where(bin_num_new == ubin)[0]
         x_node_new[idx] = x_node[i]
         y_node_new[idx] = y_node[i]
         sn_new[idx] = sn[i]
@@ -578,16 +924,36 @@ def prepare_mask_bin(config, cube, preview):
     if not os.path.isfile(mask_file) or not os.path.isfile(table_file):
         print("Error: Mask or binning table file not found.")
         return
-
+ 
     # Load mask and binning table
     mask = fits.getdata(mask_file, ext=1)['MASK']
     unmasked_spaxels = np.where(mask == 0)[0]
     with fits.open(table_file, mode="readonly") as hdul:
         bin_num = hdul[1].data['BIN_ID'][unmasked_spaxels]
 
-    # Apply Voronoi binning directly
+    # ---------- FIX: drop -1 bins and compact IDs ----------
+    valid = (bin_num >= 0)
+    if not np.any(valid):
+        print("Warning: no spaxels inside r_max; nothing to stack.")
+        return
+
+    # Compact bin ids to 0..nb-1 to be Voronoi-like
+    unique_bins = np.sort(np.unique(bin_num[valid]))        # e.g. [0,1,2,...]
+    remap = {b: i for i, b in enumerate(unique_bins)}
+    bin_num_compact = np.array([remap[b] for b in bin_num[valid]], dtype=int)
+
+    # Subselect spectra/errors to the same valid spaxels
+    spec_u = cube['spec'][:, unmasked_spaxels][:, valid]    # shape: (nwave, N_valid)
+    err_u  = cube['error'][:, unmasked_spaxels][:, valid]   # shape: (nwave, N_valid)
+    # -------------------------------------------------------
+
+    # Apply binning to spectra (your stacker)
     print("Applying spatial bins to linear data...")
-    bin_data, bin_error, bin_flux = perform_voronoi(bin_num, cube['spec'][:, unmasked_spaxels], cube['error'][:, unmasked_spaxels])
+    bin_data, bin_error, bin_flux = perform_voronoi(  # <-- unchanged API
+        bin_num_compact, 
+        spec_u, 
+        err_u
+    )
     print("Applied spatial bins.")
 
     if not preview:
@@ -706,7 +1072,7 @@ def save_bin_spec(config, spec, error, wavelength):
     print(f"Wrote: {output_file}")
 
 
-def extract(config, preview, voronoi, manual_bin, existing_bin):
+def extract(config, preview, voronoi, elliptical, manual_bin, existing_bin):
 
     """
     Main function to run the extraction steps in sequence.
@@ -729,22 +1095,21 @@ def extract(config, preview, voronoi, manual_bin, existing_bin):
         print("Extraction aborted: Failed to read the datacube.")
         return
 
-    # 2) Apply spatial mask
+    # 2) Creating the collapsed image
+    save_image(config, cube, preview)
+        
+    # 3) Apply spatial mask
     masking(config, cube, preview, manual_bin, existing_bin)
 
-    # 3) Apply Voronoi binning
-    binning_result = binning(config, cube, preview, voronoi, manual_bin, existing_bin)
+    # 4) Apply Voronoi binning
+    binning_result = binning(config, cube, preview, manual_bin, existing_bin)
     if binning_result == "Failed":
         print("Extraction aborted: Failed to perform Voronoi binning.")
         return
 
-    # 4) Extract and save spectra
+    # 5) Extract and save spectra
     save_spectra(config, cube, preview, existing_bin)
     
-    # 5) Save collapsed image only if I extract the datacube
-    if not preview:
-        save_image(config, cube)
-
     print("\n--- Extraction Process Completed ---\n")
 
 
@@ -799,3 +1164,30 @@ def handle_existing_bin_files(input_folder, output_dir, ifs_run_id):
     shutil.copyfile(mask_path, new_mask_path)
 
     print(f"Files copied and renamed to:\n{new_table_name}\n{new_mask_name}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

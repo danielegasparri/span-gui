@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -93,6 +100,25 @@ class SpectraParams:
     task_spec2: int = 0
     task_analysis: int = 0
 
+
+    # Utility panel
+    utilities_show_header: bool = False
+    utilities_step: bool = False
+    utilities_resolution: bool = False
+    utilities_resolution_wmin: float = 5500
+    utilities_resolution_wmax: float = 5650
+    utilities_convert: bool = False
+    utilities_convert_tofit: bool = True
+    utilities_convert_totxt: bool = False
+    utilities_compare: bool = False
+    utilities_compare_spec: str = 'Spec.'
+    utilities_convert_flux: bool = False
+    utilities_convert_flux_fnu: bool = True
+    utilities_convert_flux_flambda: bool = False
+    utilities_snr: bool = False
+    utilities_snr_wave: float = 6450
+    utilities_snr_wave_epsilon: float = 30
+
    # Task-related parameters of the spectra manipulation panel
     current_order: list = None
     reorder_op: bool = False
@@ -100,8 +126,8 @@ class SpectraParams:
     active_operations: list = None
 
 
-    save_intermediate_spectra: bool = True
-    save_final_spectra: bool = False
+    save_intermediate_spectra: bool = False
+    save_final_spectra: bool = True
     not_save_spectra: bool = False
 
     # Dynamic Cleaning Parameters
@@ -208,14 +234,16 @@ class SpectraParams:
     band_h: bool = False
     band_k: bool = False
     band_custom: bool = False
+    resolution_mode_spec_sigma_R: bool = True
+    resolution_mode_spec_sigma_FWHM: bool = False
+    resolution_mode_temp_sigma_R: bool = False
+    resolution_mode_temp_sigma_FWHM: bool = True
+    
     resolution_spec: int = 5000
-    resolution_template: int = 0
+    resolution_template: int = 2.51
     low_wave_sigma: float = 8400
     high_wave_sigma: float = 8900
-    low_wave_cont: float = 8560
-    high_wave_cont: float = 8640
     band_sigma: np.ndarray = field(default_factory=lambda: np.array([8440, 8720])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
-    cont_sigma: np.ndarray = field(default_factory=lambda: np.array([8560, 8640]))
 
     template_sigma: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "emiles_template_extended_younger.dat"))
 
@@ -249,7 +277,7 @@ class SpectraParams:
     z_guess_lick_emission: float = 0.0
     lick_ssp_models: list = field(default_factory=lambda: ['Thomas2010', 'xshooter', 'miles', 'smiles'])
     ssp_model: str = 'Thomas2010'  # Impostato in __post_init__
-    interp_modes: list = field(default_factory=lambda: ['griddata', 'GPR'])
+    interp_modes: list = field(default_factory=lambda: ['griddata', 'GPR', 'MCMC'])
     interp_model: str = 'GPR'  # Impostato in __post_init__
     stellar_parameters_lick: bool = True
     dop_correction_lick: bool = True
@@ -282,6 +310,9 @@ class SpectraParams:
     kin_lam_temp: list = None
     kin_velscale_templates: float = None
     kin_FWHM_gal_cached: Union[float, np.ndarray, None] = None
+    ppxf_kin_user_bias: bool = False
+    ppxf_kin_bias: float = None
+
 
     wave1_kin: float = 4800
     wave2_kin: float = 5500
@@ -381,8 +412,9 @@ class SpectraParams:
     stellar_parameters_lick_ppxf: bool = False
     lick_ssp_models_ppxf: list = field(default_factory=lambda: ['Thomas2010', 'xshooter', 'miles', 'smiles'])
     ssp_model_ppxf: str = 'Thomas2010'
-    interp_modes_ppxf: list = field(default_factory=lambda: ['griddata', 'GPR'])
+    interp_modes_ppxf: list = field(default_factory=lambda: ['griddata', 'GPR', 'MCMC'])
     interp_model_ppxf: str = 'GPR'
+    ppxf_pop_save_spectra: bool = True
 
     # Sigma Coeff Parameters
     sigma_coeff: bool = False
@@ -434,7 +466,8 @@ class SpectraParams:
     ifs_min_snr_mask: int = 0
     ifs_mask: str = 'none'
     ifs_bin_method: str = 'voronoi'
-    ifs_target_snr: int = 50
+    ifs_target_snr_elliptical: int = 100
+    ifs_target_snr_voronoi: int = 50
     ifs_covariance: int = 0
     ifs_preloaded_routine: bool = True
     ifs_user_routine: bool = False
@@ -443,6 +476,13 @@ class SpectraParams:
     ifs_voronoi: bool = True
     ifs_existing_bin: bool = False
     ifs_existing_bin_folder: str = ''
+    ifs_elliptical: bool = False
+    ifs_pa_user: float = 0.0
+    ifs_q_user: float = 1
+    ifs_ell_r_max: float = 30
+    ifs_ell_min_dr: float = 0.5
+    isf_auto_pa_q: bool = False
+    isf_auto_center: bool = False
 
 
     # Plot maps default parameters    

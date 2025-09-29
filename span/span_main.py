@@ -1,5 +1,3 @@
-# span_main.py
-
 #SPectral ANalysis software (SPAN).
 #Written by Daniele Gasparri#
 
@@ -8,22 +6,29 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
 
+import numpy as np
 import sys
 import os
-import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use('TkAgg')
@@ -36,31 +41,63 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))) #adding the folde
 
 #SPAN import
 from span_imports import *
-from params import SpectraParams
 
 #Define the base dir of SPAN in your device
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
+        
 ################ LET'S START #######################################################
 def main():
-
     # Loading the GUI theme and the layout for the operating system in use
-    sg.theme('DarkBlue3')
     layout, scale_win, fontsize, default_size = misc.get_layout()
-
+    
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 6.6 --- Daniele Gasparri ---', layout,finalize=True, scaling = scale_win)
+    window1 = sg.Window('SPAN - SPectral ANalysis - 7.0 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
 
-    # Loading the SpectraParams dataclass to handle parameters
+    #Allowing elements in the listbox to be deleted
+    listbox_widget = window1['-LIST-'].Widget
+    listbox_widget.bind("<Delete>", lambda event: window1.write_event_value('-LIST-DELETE-', None))
+    listbox_widget.bind("<Double-1>", lambda event: window1.write_event_value('-LIST-DOUBLECLICK-', None))
+    last_state = None #placeholder to store the listbox state for undo operations
+
+    #Calling zooming function and use ti
+    zm = zoom.ZoomManager.get()
+    zm.attach_window(window1)
+
+    # Creating an initial mock preview, to be updated later
+    if layout == layouts.layout_windows:
+        layout_name = 'windows'
+    elif layout == layouts.layout_linux:
+        layout_name = 'linux'
+    elif layout == layouts.layout_macos:
+        layout_name = 'macos'
+    elif layout == layouts.layout_android:
+        layout_name = 'android'
+    else:
+        layout_name = 'default'
+    fig, ax, _plot_line, hud_text, _preview_canvas = preview_tools.create_preview(layout_name, window1, preview_key='-CANVAS-')
+    (_plot_line2,) = ax.plot([], [], lw=0.8, color="red") #creeate second plot for comparison
+    
+    # wrapping to the provider SNR function which will show the S/N on the preview
+    def _snr_provider(lam_x: float):
+        return preview_tools.snr_provider(lam_x, ax, preview_interactor)
+
+    # --- Make the preview interactive
+    preview_interactor = preview_tools.PreviewInteractor(ax, status_setter=None, get_snr=_snr_provider, hud_text=hud_text, snr_mode="points", snr_halfwin_A=50.0, snr_halfwin_pts=50)
+    
+    # Redshift estimator overlay
+    redshift_shifter = preview_tools.SpectrumShifterInteractor(ax, _plot_line, hud_text=hud_text)
+    
+    #Loading parameters from the dataclass
     params = SpectraParams()
 
     # Force centrering the window on the screen
     window1.move(sg.Window.get_screen_size()[0]//2 - window1.size[0]//2, sg.Window.get_screen_size()[1]//2 - window1.size[1]//2)
 
+    # Initializing events, values and keys of the GUI
     keys, events, values = [], [], {}
 
-    # calling the function to check the existence of the SpectralTemplates folder
+    # calling the function to check the existence of the SpectralTemplates folder. If not exist, ask the user to download
     misc.check_and_download_spectral_templates()
 
     #Checking the existence of the default_settings.json file. If not, create it when the GUI opens
@@ -70,12 +107,10 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 6.6 *********')
+    print ('********* Welcome to SPAN version 7.0 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
-    print ('This is the output where the infos are showed.')
-    print ('If you prefer the external output, just comment the proper lines in the layouts.py module\n')
     print ('If you just click the Load! button, the example files are loaded and you can make some practise.\n')
     print ('NOTE: all the SPAN wavelength units are expressed in Angstrom')
     print ('***********************************************')
@@ -90,9 +125,43 @@ def main():
         #starting all the GUI windows with their values from the SpectraParams dataclass
         window, event, values = sg.read_all_windows()
 
+        # handle Zooming events
+        if event == 'Zoom In':
+            zm.zoom_in()
+            continue
+        elif event == 'Zoom Out':
+            zm.zoom_out()
+            continue
+        elif event == 'Reset Zoom':
+            zm.set_scale(1.0)
+            continue
+        
+        #---- Listbox related events, only if I load a list of spectra ----
+        if event == "-LIST-" and not values['one_spec']:
+            params = listbox_events.handle_list_select(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter, stm)
+            _plot_line2.set_data([], []) #reset second plot, if any
+            
+        elif event == "-LIST-DELETE-" and not values['one_spec']:
+            params, last_state = listbox_events.handle_list_delete(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter)
+
+        elif event in ('↑ Move Up', '↓ Move Down', 'Remove') and not values['one_spec']:
+            params, last_state = listbox_events.handle_list_menu(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter, last_state)
+
+        elif event == "Undo" and not values['one_spec']:
+            params = listbox_events.handle_undo(event, values, window, params, last_state)
+
+        elif event == "Save current spectra list...":
+            listbox_events.handle_save_list(event, values, window, params)
+
+        elif event == "Compare spectra" and not values['one_spec']:
+            params = listbox_events.handle_compare_spectra(event, values, window, params, _plot_line, _plot_line2, ax, fig, preview_interactor, redshift_shifter, stm)
+
+        elif event == "-LIST-DOUBLECLICK-" and not values['one_spec']:
+            listbox_events.handle_list_doubleclick(values, window, params, stm)
+
         #Automatic event to save the default_settings.json file if does not exist.
         if not os.path.exists(DEFAULT_PARAMS_FILE):
-            if event == '-INIT-': # automatically starts the event and saves the default parameters file
+            if event == '-INIT-':
                 try:
                     settings.save_settings(DEFAULT_PARAMS_FILE, keys, events, values, params)
                     print(f"\nAutomatically stored the default parameters in {DEFAULT_PARAMS_FILE}")
@@ -108,102 +177,80 @@ def main():
             sg.popup(f"The SPAN_result folder is in: {params.result_data}")
 
         # If the user wants to change the SPAN_results directory
-        if event == 'Change result folder...':
+        elif event == 'Change result folder...':
             config_file = os.path.join(BASE_DIR, "system_files", "config.json")
             config_folder = misc.load_config(config_file)
             misc.change_result_path(config_folder, config_file)
-            # Updating the new result_path param
             params = replace(params, result_path = config_folder["result_path"])
             print ('\nSPAN will now save the results in ', params.result_data)
 
         # to clean the Output, only if integrated in the GUI
         if event == 'Clean output' and '-OUTPUT-' in window.key_dict:
             window['-OUTPUT-'].update('')
-        if event == 'Clean output' and not '-OUTPUT-' in window.key_dict:
+        elif event == 'Clean output' and not '-OUTPUT-' in window.key_dict:
             print("You have external output, cannot clean it!")
 
         # assign the spectra list value to dataclass parameters
-        params = replace(params, spectra_list = values['spec_list'])
-        params = replace(params, spectra_list_name = os.path.splitext(os.path.basename(params.spectra_list))[0])
-
-        #create a spectra list file
+        params = replace(params, spectra_list=values['spec_list'], spectra_list_name=os.path.splitext(os.path.basename(values['spec_list']))[0])
+       
+       #create a spectra list file
         if event == 'listfile':
             params = settings.generate_spectra_list(window, params)
 
         #assigning lambda units of the spectra
         if (values['wave_units_nm']):
             params.lambda_units = 'nm'
-        if (values['wave_units_a']):
+        elif (values['wave_units_a']):
             params.lambda_units = 'a'
-        if (values['wave_units_mu']):
+        elif (values['wave_units_mu']):
             params.lambda_units = 'mu'
 
         # About and Version sections:
         if event == 'About SPAN':
-            sg.popup ('SPAN is a Python 3.X 1D spectra analysis tool. It can modify the spectra and perform measurements, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
-        if event == 'Version':
-            sg.popup ('This is version 6.6 with improved and semplified layout')
+            sg.popup ('SPAN is a Python 3.X software. It can modify the spectra and perform analyses, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
+        elif event == 'Version':
+            sg.popup ('This is version 7.0 with improved, dynamical, and responsive layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
-        if event == 'Clear all tasks':
+        elif event == 'Clear all tasks':
             params = settings.clear_all_tasks(window, params)
 
 
-    #******************* INITIALISING AND CHECKING THE VARIABLES OF THE UTILITIES FRAME *****************
-        #1) show the header
-        show_hdr = values['show_hdr']
-
-        #2) show the sampling
-        show_sample = values['show_step']
-
-        #3) show resolution and check on the input values
-        show_resolution = values['show_res']
-        if show_resolution:
+        # --- Preview frame buttons: Header/Sampling buttons ---
+        elif event == '-SHOWHDR-':
+            if params.prev_spec == '' or params.spectra_number == 0:
+                sg.popup('No spectrum selected. Please, select one in the list.')
+            else:
+                try:
+                    utility_tasks.show_fits_header(params.prev_spec)
+                except Exception as e:
+                    sg.popup(f'Failed to show header: {e}')
+        elif event == '-SHOWSTEP-':
+            if params.prev_spec == '' or params.spectra_number == 0:
+                sg.popup('No spectrum selected. Please, select one in the list.')
+            else:
+                try:
+                    wl, _, *_ = stm.read_spec(params.prev_spec, params.lambda_units)
+                    utility_tasks.show_sampling(wl)
+                except Exception as e:
+                    sg.popup(f'Failed to show sampling: {e}')
+    
+    
+    #******************* INITIALIZING AND CHECKING THE VARIABLES OF THE UTILITIES FRAME *****************
+        # Utilities window
+        elif event == 'Utilities':
+            if params.spectra_number == 0:
+                sg.popup('No spectrum loaded. Please, load one first.')
+                continue
+            one_spec_flag = values.get('one_spec', False)
             try:
-                res_wave1 = float(values['lambda_res_left'])
-            except ValueError:
-                sg.popup('Wave is not a number!')
-                continue
-            try:
-                res_wave2 = float(values['lambda_res_right'])
-            except ValueError:
-                sg.popup('Wave is not a number!')
-                continue
-            if res_wave1 >= res_wave2:
-                sg.popup('Wave1 must be SMALLER than Wave2')
-                continue
+                params = sub_programs.utilities_window(params, one_spec_flag)
+            except Exception as e:
+                sg.popup(f'Utilities window error: {e}')
+            continue
 
-        #4) convert to ASCII or FITS
-        convert = values['convert_spec']
-        convert_ascii = values['convert_to_txt']
-        convert_fits = values['convert_to_fits']
-
-        #5) compare the spectrum with another
-        compare_spec = values['compare_spec']
-        spec_compare_file = values['spec_to_compare']
-
-        #6) convert the flux units
-        convert_flux = values['convert_flux']
-        convert_to_fnu = values['convert_to_fnu']
-        convert_to_flambda = values['convert_to_fl']
-
-        #7) show the snr and check on the input values
-        show_snr = values['show_snr']
-        if show_snr:
-            try:
-                snr_wave = float(values['wave_snr'])
-            except ValueError:
-                sg.popup('Wave interval is not a number!')
-                continue
-            try:
-                epsilon_wave_snr = float(values['delta_wave_snr'])
-            except ValueError:
-                sg.popup('Epsilon wave is not a number!')
-                continue
-
-
-    #********** INITIALISING AND CHECKING THE SPECTRA MANIPULATION PANEL **********
-        if event == 'Spectra manipulation':
+    #********** INITIALIZING AND CHECKING THE SPECTRA MANIPULATION PANEL **********
+        elif event == 'Spectra manipulation':
             params = spec_manipulation.spectra_manipulation(params)
 
         # detecting if at least one task has been activated in the Spectra Manipulation panel and if True change the color of the button
@@ -225,23 +272,23 @@ def main():
             params = sub_programs.long_slit_extraction(BASE_DIR, layout, params)
 
         # CUBE EXTRACTION
-        if event == 'DataCube extraction':
+        elif event == 'DataCube extraction':
             params = sub_programs.datacube_extraction(params)
 
         # TEXT EDITOR
-        if event == 'Text editor':
+        elif event == 'Text editor':
             sub_programs.text_editor_window(layout)
 
         # FITS HEADER EDITOR
-        if event == 'FITS header editor':
+        elif event == 'FITS header editor':
             sub_programs.fits_header_window()
 
         # DATA PLOTTING
-        if event == 'Plot data':
+        elif event == 'Plot data':
             sub_programs.plot_data_window(BASE_DIR, layout)
 
         # 2D MAPS PLOTTING
-        if event == 'Plot maps':
+        elif event == 'Plot maps':
             params = sub_programs.plot_maps_window(BASE_DIR, layout, params)
 
 
@@ -263,27 +310,43 @@ def main():
             if (params.spec_names[0] == 0 and (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Process all' or event == 'Plot' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr' or event == 'See plot' or event == 'Save one' or event == 'Save all')):
                 sg.popup('Please, load some spectra!')
                 continue
+
             #Define the names to show in the GUI, without the path. Only for visualisation purposes!
-            params = replace(params, prev_spec=params.prev_spec.join(values['-LIST-']))
-            params = replace(params, prev_spec= next((s for s in params.spec_names if isinstance(s, str) and os.path.basename(s) == str(params.prev_spec)), ""))
-            params = replace(params, prev_spec_nopath = os.path.splitext(os.path.basename(params.prev_spec))[0]) #no path for showing and saving things
+            if values['-LIST-']:
+                selected_display = values['-LIST-'][0]
+                if hasattr(window, "metadata") and window.metadata:
+                    sel_full = window.metadata.get(selected_display, "")
+                else:
+                    sel_full = next((s for s in params.spec_names if isinstance(s, str) and os.path.basename(s) == str(selected_display)),"")
+                params = replace(params, prev_spec=sel_full, prev_spec_nopath=os.path.splitext(os.path.basename(sel_full))[0] if sel_full else "")
 
         # If I load a single spectrum, SPAN needs to check it before loading
-        if values['one_spec']:
+        elif values['one_spec']:
             if event == 'Load!':
                 # Validate and load spectrum
                 params, valid_spec = check_spec.validate_and_load_spectrum(params, window)
+
+                try:
+                    single_path = values.get('spec_list', '')
+                    if single_path:
+                        params = replace(params, prev_spec=single_path)
+                    params = replace(params, prev_spec_nopath=os.path.splitext(os.path.basename(params.prev_spec))[0])
+                    params = listbox_events.handle_list_select(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter, stm, sel_full_override=single_path)
+                    
+                except Exception as e:
+                    print(f"[Preview one_spec] draw failed: {e}")
+
                 if not valid_spec:
-                    sg.popup ('The format of the spectrum is not correct or you did not load it')
+                    sg.popup('The format of the spectrum is not correct or you did not load it')
                     continue
             try:
                 if not valid_spec:
                     sg.popup("Your spectrum is not valid. Can't do anything")
                     continue
             except Exception:
-                sg.popup('You should load you spectrum if you want to use it')
+                sg.popup('You should load your spectrum if you want to use it')
                 continue
-
+    
         # Concatenating events to prevent the GUI to crash when no (valid) spectrum is selected or loaded and you want to do something anyway.
         if ( (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Plot' or event == 'See plot' or event == 'Save one' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr') and params.prev_spec == ''):
             sg.popup('No spectrum selected. Please, select one spectrum in the list. Doing nothing')
@@ -332,22 +395,23 @@ def main():
         if event == 'Plot':
             wavelength, flux, step, name = stm.read_spec(params.prev_spec, params.lambda_units)
             plt.plot(wavelength, flux)
-            plt.xlabel('Wavelength ($\AA$)', fontsize = 9)
+            plt.xlabel('Wavelength (Å)', fontsize = 9)
             plt.title(params.prev_spec_nopath)
             plt.ylabel('Flux')
             plt.show()
             plt.close()
 
      #********************************** LOADING AND CHECKING THE SPECTRAHELP FILES *************************
+        sg.theme('Lightblue1')
         if event == 'Read me':
-            f = open(os.path.join(BASE_DIR, "help_files", "readme_span.txt"), 'r')
+            f = open(os.path.join(BASE_DIR, "help_files", "readme_span.txt"), 'r', encoding="utf-8")
             file_contents = f.read()
             if layout == layouts.layout_android:
                 sg.popup_scrolled(file_contents, size=(120, 30))
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
-        if event == 'I need help':
+        elif event == 'I need help':
             f = open(os.path.join(BASE_DIR, "help_files", "need_help_spec_proc.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
@@ -355,8 +419,7 @@ def main():
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
-        if event == 'Help me':
-            sg.theme('DarkBlue3')
+        elif event == 'Help me':
             f = open(os.path.join(BASE_DIR, "help_files", "help_me_spec_analysis.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
@@ -364,7 +427,7 @@ def main():
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
-        if event == 'Quick start':
+        elif event == 'Quick start':
             f = open(os.path.join(BASE_DIR, "help_files", "quick_start.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
@@ -372,118 +435,28 @@ def main():
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
 
-        if event == 'Tips and tricks':
+        elif event == 'Tips and tricks':
             f = open(os.path.join(BASE_DIR, "help_files", "tips_and_tricks.txt"), 'r')
             file_contents = f.read()
             if layout == layouts.layout_android:
                 sg.popup_scrolled(file_contents, size=(120, 30))
             else:
                 sg.popup_scrolled(file_contents, size=(100, 40))
+        
+        elif event == 'SPAN Manual':
+            stm.open_manual()
 
         # the following lines are just to ensure that if you do not load any spectra but opens the sub-programs, SPAN will not crash
         try:
             original_flux = flux
             original_wavelength = wavelength
         except Exception:
-            print ('')
+            pass
 
-
-    #*********************************** UTILITIES TASKS  *******************************************
-        if (event == 'Show info'):
-            util_task = 0
-            params = replace(params, **dict(zip(["wavelength", "flux"], stm.read_spec(params.prev_spec, params.lambda_units)[:2]))) #read spectrum
-
-            #show header
-            if show_hdr:
-                util_task = 1
-                utility_tasks.show_fits_header(params.prev_spec, layout)
-
-            #show sampling
-            if show_sample:
-                util_task = 1
-                utility_tasks.show_sampling(params.wavelength)
-
-            #show resolution
-            if show_resolution:
-                util_task = 1
-                try:
-                    utility_tasks.show_resolution(params.wavelength, params.flux, res_wave1, res_wave2)
-                except Exception as e:
-                    sg.popup(f'Failed! Maybe W1 and W2 are too close?{e}')
-
-            # warning
-            if util_task == 0:
-                sg.popup('You need to select an option before click Show info')
-                continue
-
-        ############################ Convert to ASCII or FITS ##############################
-        convert_task = 0
-        if (convert and event == 'One'):
-            #reading the spectrum selected
-            params = replace(params, **dict(zip(["wavelength", "flux"], stm.read_spec(params.prev_spec, params.lambda_units)[:2])))
-            convert_task = 1
-            utility_tasks.convert_spectrum(params.wavelength, params.flux, params.prev_spec, convert_ascii, params.lambda_units)
-
-        #checking if the task is activated
-        if convert_task == 0 and not convert and event == 'One':
-            sg.popup('You need to activate the option if you expect something!')
-            continue
-
-        if (convert and event == 'All'):
-            convert_task = 1
-            for i in range(params.spectra_number):
-                utility_tasks.convert_spectrum(params.wavelength, params.flux, params.spec_names[i], convert_ascii, params.lambda_units)
-
-        #checking if the task is activated
-        if convert_task == 0 and not convert and event == 'All':
-            sg.popup('You need to activate the option if you expect something!')
-            continue
-        if event == 'All' and values['one_spec'] and convert:
-            sg.popup ('You have just one spectrum. The button all does not work!')
-            continue
-
-        ############################ Compare spec ###################################
-        if (event == 'Compare'):
-            compare_task = 0
-            if compare_spec:
-                compare_task = 1
-                utility_tasks.compare_spectra(params.prev_spec, spec_compare_file, params.lambda_units)
-            if compare_task == 0:
-                sg.popup('You need to select the option if you expect something!')
-                continue
-
-        ############################ Flux convert ##############################
-        if convert_flux and (event == 'convert_one' or event == 'convert_all' or event == 'See plot' ):
-            if event == 'convert_all' and values['one_spec']:
-                sg.popup('"All" does not work anyway with just one spectrum!')
-                continue
-            else:
-                utility_tasks.convert_flux_task(event, params.prev_spec, params.prev_spec_nopath, params.spec_names, params.spec_names_nopath,
-                params.spectra_number, convert_flux, convert_to_flambda, convert_to_fnu,
-                    params.lambda_units, params.result_spec, params.result_data, values['one_spec'])
-        if not convert_flux and (event == 'convert_one' or event == 'convert_all' or event == 'See plot' ):
-            sg.popup('You need to activate the option if you expect something!')
-            continue
-
-        ################################ S/N ##################################
-        if show_snr and (event == 'Show snr' or event == 'Save one' or event == 'Save all'):
-            if event == 'Save All' and values['one_spec']:
-                sg.popup('"Save all" does not work anyway with just one spectrum!')
-                continue
-            try:
-                utility_tasks.snr_analysis(event, params.prev_spec, params.spec_names, params.spec_names_nopath, params.spectra_number, show_snr, snr_wave, epsilon_wave_snr, params.lambda_units, values['one_spec'], params.result_snr_dir, params.spectra_list_name, timestamp)
-            except Exception as e:
-                print(f'Failed! Maybe the wavelength window is too small?{e}')
-
-        if not show_snr and (event == 'Show snr' or event == 'Save one' or event == 'Save all'):
-            sg.popup('You need to activate the option if you expect something!')
-            continue
-
-
+     
     #************** PREPARING THE ASCII FILES FOR SPECTRAL ANALYSIS RESULTS IN PROCESS ALL MODE *************
         if (event == 'Process all' and not values['one_spec']):
 
-            #Setting up the ASCII files with the results of the spectral analysis, only if I selected the task!
             #1) Blackbody
             if (bb_fit):
                 bb_file = files_setup.create_blackbody_file(params.result_bb_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
@@ -560,8 +533,7 @@ def main():
                 df_kin = pd.read_csv(kin_file, sep=' ', index_col=0)
                 df_kin_mc = None
                 df_kin_gas = None
-                #kin_mc is not guaranteed to exist, so I must check
-                if kin_file_mc:
+                if kin_file_mc: #kin_mc is not guaranteed to exist, so I must check
                     df_kin_mc = pd.read_csv(kin_file_mc, sep=' ', index_col=0)
 
             #7) Stellar populations with ppxf
@@ -572,10 +544,8 @@ def main():
                 pop_file = pop_files.get("stellar_population")  # Main stellar population file
                 ssp_param_file_ppxf = pop_files.get("ssp_lick_parameters")
                 df_pop = pd.read_csv(pop_file, sep=' ', index_col=0)
-
-                #Lick/IDS stellar pop file is not guaranteed to exist, so I must check
-                df_ssp_param_ppxf = None
-                if ssp_param_file_ppxf:
+                df_ssp_param_ppxf = None 
+                if ssp_param_file_ppxf: #Lick/IDS stellar pop file is not guaranteed to exist, so I must check
                     df_ssp_param_ppxf = pd.read_csv(ssp_param_file_ppxf, sep=' ', index_col=0)
 
 
@@ -590,7 +560,6 @@ def main():
 
             # If I want to process all spectra:
             if event == 'Process all':
-                # making impossible the "process all" with just one spectrum
                 if values['one_spec']:
                     sg.popup('With one spectrum loaded, you need to use ''Process selected''')
                     continue
@@ -600,7 +569,7 @@ def main():
                     params = replace(params, spec_names_nopath_to_process = [os.path.splitext(name)[0] for name in params.spec_names_nopath_to_process])
                     params = replace(params, spectra_number_to_process = params.spectra_number)
 
-            ###################### Lest's start! --> Cycle to all the spectra #########################
+            ###################### Lest's start! --> Cycle for all the spectra #########################
             for i in range(params.spectra_number_to_process):
                 print (params.spec_names_nopath_to_process[i])
 
@@ -671,7 +640,7 @@ def main():
                                 params = apply_spec_tasks.apply_heliocentric_correction_from_file(event, save_plot, params, i)
 
                         #7) REBIN
-                        elif op_var == "rebining":
+                        elif op_var == "rebinning":
                             i == 0 and print('\n*** Rebinning ***\n')
                             params = apply_spec_tasks.apply_rebinning(event, save_plot, params)
 
@@ -682,7 +651,7 @@ def main():
 
                         # 9) NORMALISE SPECTRUM TO
                         elif op_var == "normalize_wave":
-                            i == 0 and print('\n*** Normalise ***\n')
+                            i == 0 and print('\n*** Normalize ***\n')
                             params = apply_spec_tasks.apply_normalisation(event, save_plot, params)
 
                         # 10) SIGMA BROADENING
@@ -702,7 +671,7 @@ def main():
 
                         # 13) SUBTRACT NORMALISED AVERAGE
                         elif op_var == "subtract_normalized_avg":
-                            i == 0 and print('\n*** Subtract normalised average ***\n')
+                            i == 0 and print('\n*** Subtract normalized average ***\n')
                             if not values['one_spec']:
                                 params = apply_spec_tasks.apply_subtract_normalised_average(event, save_plot, params)
                             if values['one_spec']:
@@ -711,7 +680,7 @@ def main():
 
                         # 14) SUBTRACT NORMALISED SINGLE SPECTRUM
                         elif op_var == "subtract_normalized_spec":
-                            i == 0 and print('\n*** Subtract normalised spectrum ***\n')
+                            i == 0 and print('\n*** Subtract normalized spectrum ***\n')
                             params = apply_spec_tasks.apply_subtract_normalised_spectrum(event, save_plot, params)
 
                         # 15) ADD CONSTANT (PEDESTAL)
@@ -734,7 +703,7 @@ def main():
                         try:
                             plt.plot(params.original_wavelength, params.original_flux, label = 'Original spec.')
                             plt.plot(params.wavelength, params.flux, label = 'Processed')
-                            plt.xlabel('Wavelength ($\AA$)', fontsize = 9)
+                            plt.xlabel('Wavelength (Å)', fontsize = 9)
                             plt.title(params.prev_spec_nopath)
                             plt.ylabel('Flux')
                             plt.legend(fontsize = 10)
@@ -925,13 +894,13 @@ def main():
                             break
 
                 # error messages in preview mode
-                if event == 'Process selected' or event == 'Preview result':
+                elif event == 'Process selected' or event == 'Preview result':
                     if (params.task_analysis == 0 and event == 'Preview result'):
                         sg.popup ('No spectral analysis task selected. Nothing to preview!')
                         continue
 
                     # Save only the final results, without the intermediate files
-                    if (event == 'Process selected' and params.task_done == 0 and params.task_analysis == 0 ):
+                    elif (event == 'Process selected' and params.task_done == 0 and params.task_analysis == 0 ):
                         sg.popup ('Nothing to process!')
                         continue
                     if (params.save_final_spectra and event == 'Process selected' and params.task_spec == 1):
@@ -945,6 +914,7 @@ def main():
                             print ('File saved: ', file_cont)
                         print(f'File saved: {file_final}\n')
             params = replace(params, kin_stars_templates=None, kin_lam_temp=None, kin_velscale_templates=None)
+            
     #************************************** SAVE AND LOAD PARAMETER VALUES *********************************************
         if event == 'Save parameters...':
             # Open a window to select the path to save the file
@@ -958,7 +928,7 @@ def main():
                     sg.popup_error('Content not valid for JSON.')
 
         # listing all the parameters to be loaded
-        if event == 'Load parameters...':
+        elif event == 'Load parameters...':
             try:
                 filename = sg.popup_get_file('Select the file to load...', file_types=(("JSON Files", "*.json"),))
                 keys, events, loaded_values, params = settings.load_settings(filename, params)
@@ -974,7 +944,7 @@ def main():
                 sg.popup('ERROR: Problem loading the parameters')
                 print('Settings NOT loaded')
 
-        if event == 'Restore default parameters':
+        elif event == 'Restore default parameters':
             try:
                 keys, events, loaded_values, params = settings.load_settings(os.path.join(BASE_DIR, "system_files", "default_settings.json"), params)
                 values.update(loaded_values)
@@ -990,5 +960,4 @@ def main():
                 print('ERROR restoring default parameters')
 
     window.close()
-
     ########################### END OF PROGRAM! ####################################

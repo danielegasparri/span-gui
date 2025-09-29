@@ -1,8 +1,30 @@
-########################################################################################
-# MODIFIED VERSION OF THE SPECTRAL ROUTINE OF THE GIST PIPELINE OF BITTNER ET AL., 2019
-######################## A SPECIAL THANKS TO ADRIAN BITTNER ############################
-########################################################################################
+#SPectral ANalysis software (SPAN).
+#Written by Daniele Gasparri#
 
+"""
+    Copyright (C) 2020-2025, Daniele Gasparri
+
+    E-mail: daniele.gasparri@gmail.com
+
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
+
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
+
+    DISCLAIMER:
+    THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"""
 
 from astropy.io import fits
 import numpy as np
@@ -60,7 +82,10 @@ def read_cube(config):
     yaxis = (np.arange(shape[1]) - origin[1]) * scale
     x, y = np.meshgrid(xaxis, yaxis)
     x, y = x.ravel(), y.ravel()
-
+    pixelsize = scale
+    
+    print(f"Spatial coordinates centered at {origin}, pixel size: {pixelsize:.3f}\n")
+    
     # De-redshift
     redshift = config['INFO']['REDSHIFT']
     wave /= (1 + redshift)
@@ -78,7 +103,7 @@ def read_cube(config):
     noise = np.nanmedian(error[idx_snr, :], axis=0)
     snr = np.nan_to_num(signal / noise, nan=0.0, posinf=0.0, neginf=0.0)
 
-    pixelsize = scale
+    
 
     cube = {
         'x': x, 'y': y, 'wave': wave,

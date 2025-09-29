@@ -1,20 +1,25 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
-#SPectral ANalysis software (SPAN).
-#Written by Daniele Gasparri#
 
 """
     Copyright (C) 2020-2025, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -83,6 +88,17 @@ import joblib
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, Matern
 from sklearn.model_selection import GridSearchCV
+
+from scipy.signal import medfilt, correlate, find_peaks
+import emcee
+from scipy.interpolate import LinearNDInterpolator
+from scipy.optimize import minimize
+import multiprocessing as mp
+
+from scipy import optimize, fft as spfft
+from scipy.ndimage import gaussian_filter1d
+
+import warnings
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
@@ -311,7 +327,7 @@ def plot_cross_correlation(grid, cc_values, best_val, wave_obs, flux_obs, wave_t
     # Lower panel: observed vs shifted template
     ax2.plot(wave_obs, flux_obs / np.median(flux_obs), label='Observed', alpha=0.7, color='blue')
     ax2.plot(wave_temp_shifted, flux_temp, label='Template (shifted)', alpha=0.7, color='orange')
-    ax2.set_xlabel('Wavelength ($\AA$)')
+    ax2.set_xlabel('Wavelength (Å)')
     ax2.set_ylabel('Normalized Flux')
     ax2.set_xlim(left=np.min(wave_obs))
     ax2.set_xlim(right=np.max(wave_obs))
@@ -330,314 +346,257 @@ def plot_cross_correlation(grid, cc_values, best_val, wave_obs, flux_obs, wave_t
 
 #*************************************************************************************************
 # 5) Velocity dispersion measurement
-def sigma_measurement(wavelength, flux, spec_test_template, lambda_units_template, resolutionR_spec, resolution_template, banda1, banda1_cont, err_calc):
-    c = 299792.458
+def measure_sigma_simple(wave_obs_A, flux_obs, spec_test_template, lambda_units_template, band_A, spec_res_mode, spec_res_value, tpl_res_mode, tpl_res_value, err_obs=None, mask_obs=None, poly_degree: int = 4, sigma_bounds=(5.0, 450.0), estimate_delta_v: bool = True, bootstrap: int = 100):
+    
+    """Return (sigma_kms, sigma_err, dv_kms, chi2, dof, velscale, upper_limit_flag).
 
-    """
-    This function performs a least square fit of the selected spectrum with a
-    template in order to retrieve a fast estimation of the velocity dispersion.
-    The results are a good estimate of the velocity dispersion, but for science
-    results is is advisable to use the Kinematics tasks that perform the pPXF
-    algorithm.
-    Input: wavelength and flux arrays of the spectrum, path and name of the template,
-            string wavelength units of the template (physical: 'nm', 'A', 'mu'), int spectral
-            resolution of the template (R), spectral resolution of the template (0 for EMILES
-            templates, SPAN will take care of the different resolution between optical and NIR bands),
-            array containing the wavelength range of the spectral band to fit ([min_wave, max_wave])
-            array containing the wavelength range of the continuum level within the band
-            ([min_wave_continuum, max_wave_continuum]), bool value whether to calculate the
-            uncertainties (MonteCarlo simulations) of not.
-    Output: float velocity dispersion value, float uncertainty (if calculated), float
-            chi2 of the fit, wavelength and flux arrays of the spectrum and the template
-            within the fitted band, float mean velscale of the spectrum within the band.
-
+    Notes
+    -----
+    * All wavelengths are Å; input spectra are linear in λ. The routine log-rebins internally.
+    * If the template is broader than the observed spectrum (instrumental), σ is an upper limit.
+    * Errors, if provided, are used as weights (1/err^2). Mask, if provided, is boolean (True=keep).
     """
 
-        #************************************ select the bands/lines ******************************
-    wave_range = banda1
-    snr_range = banda1_cont
-    line_name = 'band1'
-    band_cont = banda1_cont
-    wave_norm = np.mean(banda1_cont)
+    _C = 299_792.458                 # km/s
+    _FWHM_TO_SIG = 1.0 / 2.354820045 # FWHM → σ for Gaussian
 
-    sigma_instrumental = (c/resolutionR_spec)/2.355
-    resolution_lambda_fwhm_spec = (np.mean(wave_range)/resolutionR_spec)
+    # ---- helpers (kept local for a single-file drop-in) ---------------------
+    def _slice_band(w, f, band, e=None, m=None):
+        wmin, wmax = float(band[0]), float(band[1])
+        sel = (w >= wmin) & (w <= wmax)
+        if m is not None:
+            if m.shape != w.shape:
+                raise ValueError("mask shape must match wavelength array")
+            sel &= m.astype(bool)
+        w, f = w[sel], f[sel]
+        e = None if e is None else e[sel]
+        ok = np.isfinite(w) & np.isfinite(f)
+        if e is not None:
+            ok &= np.isfinite(e)
+        return w[ok], f[ok], (None if e is None else e[ok])
 
-    #if the resolution_template variable is zero, I assume they are (E)MILES spectra, otherwise I transform the resolution from R to sigma.
-    if resolution_template != 0:
-        resolution_lambda_fwhm_temp = (np.mean(wave_range)/resolution_template)
-        resolution_temp = (c/resolution_template)/2.355
+    def _log_rebin(w_A, f):
+        # Constant velocity scale from median linear step
+        dlam = np.median(np.diff(w_A))
+        if dlam <= 0:
+            raise ValueError("wavelength must be strictly increasing")
+        dln = np.log(w_A[0] + dlam) - np.log(w_A[0])
+        velscale = _C * dln
+        ln0, ln1 = np.log(w_A[0]), np.log(w_A[-1])
+        n = int(np.floor((ln1 - ln0) / dln)) + 1
+        loglam = ln0 + dln * np.arange(n)
+        lam_log = np.exp(loglam)
+        flog = np.interp(lam_log, w_A, f, left=np.nan, right=np.nan)
+        ok = np.isfinite(flog)
+        return loglam[ok], flog[ok], velscale
 
-    #preparing variables for the determination of sigma
-    initial_sigma = 0.
-    final_sigma = 360. # Maximum meaningful sigma
-    step_sigma = 2. #sigma step (km/s)
-    number_values_sigma = round(final_sigma/step_sigma+1)
-    sigma_values = np.zeros(number_values_sigma)
+    def _res_to_sigma_kms(mode, val, lam_A):
+        mode = str(mode).upper()
+        if mode == 'FWHM_A':
+            fwhm_A = float(val)
+            if fwhm_A <= 0: raise ValueError('FWHM_A must be > 0')
+            sigma_A = fwhm_A * _FWHM_TO_SIG
+            return (sigma_A / lam_A) * _C
+        if mode == 'R':
+            R = float(val)
+            if R <= 0: raise ValueError('R must be > 0')
+            fwhm_A = lam_A / R
+            sigma_A = fwhm_A * _FWHM_TO_SIG
+            return (sigma_A / lam_A) * _C
+        raise ValueError("spec/tpl mode must be 'FWHM_A' or 'R'")
 
-    #filling the sigma vector
-    for i in range(1, number_values_sigma):
-        sigma_values[i] = sigma_values[i-1]+step_sigma
+    def _match_template_resolution(tpl_log, vscale, sig_spec, sig_tpl):
+        # Broaden template to match instrumental resolution of the spectrum
+        if sig_tpl >= sig_spec - 1e-6:
+            return tpl_log.copy(), True  # cannot deconvolve → upper limit
+        sig_match = np.sqrt(max(0.0, sig_spec**2 - sig_tpl**2))
+        sig_pix = sig_match / vscale
+        return gaussian_filter1d(tpl_log, sigma=sig_pix, mode='nearest'), False
 
-    chisquare_fit = [] #vector for the fit chi squared values
+    def _shift_log(flux_log, dv_kms, vscale):
+        if abs(dv_kms) < 1e-9: return flux_log
+        n = flux_log.size
+        shift_pix = dv_kms / vscale
+        freqs = spfft.fftfreq(n)
+        phase = np.exp(2j * np.pi * freqs * shift_pix)
+        return np.real(spfft.ifft(spfft.fft(flux_log) * phase))
 
+    def _legendre_X(x, deg):
+        if deg <= 0:
+            return np.ones((x.size, 1))
+        xs = 2*(x - x.min())/(x.max()-x.min()) - 1
+        P0 = np.ones_like(xs); P1 = xs
+        cols = [P0, P1]
+        for n in range(2, deg+1):
+            Pn = ((2*n-1)*xs*cols[-1] - (n-1)*cols[-2]) / n
+            cols.append(Pn)
+        return np.vstack(cols[:deg+1]).T
 
-
-    #********************************* Let's rock! *********************************
-
-    #read the template
-    wavelength_template, flux_template, step_template, name = stm.read_spec(spec_test_template, lambda_units_template)
-
-
-    #rough continuum subtraction for more stable results
-    flux, cont_flux = spman.sub_cont(wavelength, flux, 'divide')
-    flux_template, cont_flux = spman.sub_cont(wavelength_template, flux_template, 'divide')
-
-    #rebin to smallest # better to rebin all to a constant step, in case it's not
-    optimal_step = 2*np.mean(wave_range)*step_sigma/c # I tested that this sampling is the optimal one: smaller values don't change the result, while greater values start to feel the quantization effect.
-
-    wavelength_template, flux_template, points = spman.resample(wavelength_template, flux_template, optimal_step)
-    wavelength, flux, point_spec = spman.resample(wavelength, flux, optimal_step)
-
-    #uniform the wavelength grid
-    interpfunc = interpolate.interp1d(wavelength_template, flux_template, kind = 'linear', fill_value='extrapolate')
-    flux_template = (interpfunc(wavelength))
-
-    #storing the original template flux
-    flux_template_original = flux_template
-
-    #extract the line flux and wavelength arrays
-    line_wave = wavelength[(wavelength >= wave_range[0]) & (wavelength <= wave_range[1])]
-    line_flux_spec = flux[(wavelength >= wave_range[0]) & (wavelength <= wave_range[1])]
-
-    #resolution for the EMILES models: if lambda < 895, the resolution is constant with wavelength, which means that the resolution in sigma diminishes with the increasing wavelength.
-    if resolution_template == 0:
-        if np.mean(line_wave) < 8950.:
-            resolution_lambda_fwhm_temp = 2.51 #fwhm
-            #converting to sigma
-            resolution_temp = resolution_lambda_fwhm_temp/np.mean(line_wave)*c/2.3548 # in sigma velocity. it's an approximation, since the resolution in sigma changes with the wavelength, but if the band is small, the approximation is good.
-            print (resolution_temp)
+    def _chi2_sigma(sig_kms, dv_kms, tpl_matched, obs_log, loglam, vscale, err_log, deg, scale):
+        # Apply kinematic broadening
+        sig_pix = max(0.0, float(sig_kms)) / vscale
+        model = gaussian_filter1d(tpl_matched, sigma=sig_pix, mode='nearest')
+        if dv_kms:
+            model = _shift_log(model, dv_kms, velscale)
+        # Multiplicative polynomial
+        X = _legendre_X(loglam, deg)
+        A = X * model[:, None]
+        # Rescale data and errors for conditioning
+        y = obs_log / scale
+        if err_log is not None:
+            e = err_log / scale
+            w = 1.0 / np.clip(e, 1e-10, np.inf)
+            Aw, yw = A * w[:, None], y * w
         else:
-            resolution_vel_fwhm_temp = 60. #fwhm, in km/s
-            resolution_lambda_fwhm_temp = (resolution_vel_fwhm_temp*np.mean(wave_range))/c
-            resolution_temp = resolution_vel_fwhm_temp/2.3548
-            print (resolution_temp)
+            Aw, yw = A, y
+        # Linear solve for polynomial coefficients
+        coeffs, *_ = np.linalg.lstsq(Aw, yw, rcond=None)
+        fit = A @ coeffs
+        resid = y - fit
+        if err_log is not None:
+            chi2 = float(np.sum((resid / np.clip(e, 1e-10, np.inf))**2))
+        else:
+            chi2 = float(np.sum(resid**2))
+        dof = y.size - coeffs.size - 1
+        return chi2, max(dof, 1)
 
+    def _xcorr_dv(y, t, vscale, dv_win=450.0):
+        a = y - np.nanmedian(y); b = t - np.nanmedian(t)
+        xcorr = np.real(spfft.ifft(spfft.fft(a) * np.conj(spfft.fft(b))))
+        i = int(np.argmax(xcorr)); n = a.size
+        if i > n//2: i -= n
+        dv = i * vscale
+        return float(np.clip(dv, -dv_win, dv_win))
 
-    #normalise the spectrum
-    epsilon_norm = optimal_step*200
-    line_flux_spec_norm = spman.norm_spec(line_wave, line_flux_spec, wave_norm, epsilon_norm, line_flux_spec)
+    # ---- prepare inputs ------------------------------------------------------
+    wave_obs_A = np.asarray(wave_obs_A, float)
+    flux_obs   = np.asarray(flux_obs,   float)
+    
+    wave_tpl_A, flux_tpl, step_template, name = stm.read_spec(spec_test_template, lambda_units_template)
+    err_obs    = None if err_obs is None else np.asarray(err_obs, float)
+    mask_obs   = None if mask_obs is None else np.asarray(mask_obs, bool)
 
-    #calculating the SNR
-    snr_flux = line_flux_spec_norm[(line_wave >= snr_range[0]) & (line_wave <= snr_range[1])]
-    snr = np.mean(snr_flux)/np.std(snr_flux)
+    # Normalize
+    flux_obs = flux_obs/np.median(flux_obs)
+    flux_tpl = flux_tpl/np.median(flux_tpl)
+    
+    # 1) band cut + mask
+    w_obs, f_obs, e_obs = _slice_band(wave_obs_A, flux_obs, band_A, e=err_obs, m=mask_obs)
+    w_tpl, f_tpl, _ = _slice_band(wave_tpl_A, flux_tpl, band_A)
 
+    # 2) log-rebin both, resample template onto obs log grid
+    loglam_obs, flog_obs, velscale = _log_rebin(w_obs, f_obs)
+    loglam_tpl, flog_tpl, _ = _log_rebin(w_tpl, f_tpl)
+    lam_log_obs = np.exp(loglam_obs)
+    lam_log_tpl = np.exp(loglam_tpl)
+    flog_tpl_on_obs = np.interp(lam_log_obs, lam_log_tpl, flog_tpl, left=np.nan, right=np.nan)
 
-    #TEST FITTING TAMPLATE
-    #The idea is: select the template, broad to 200 km/s, normalise, extract the working band, extract the working continuum, fitting, finding the displacement with respect to the spectrum, then apply to the original, not broadened and normalized template.
-
-    #preparing the template
-    #broadening the template to 200 km/s
-    flux_template_broad = spman.sigma_broad(wavelength, flux_template_original, 200.)
-
-    #extract the line flux template
-    line_flux_template_orig = flux_template_broad[(wavelength >= wave_range[0]) & (wavelength <= wave_range[1])]
-
-    #normalize the template in the wavelength range
-    line_flux_temp_test = spman.norm_spec(line_wave, line_flux_template_orig, wave_norm, epsilon_norm, line_flux_template_orig)
-
-    #normalize the whole, original template
-    flux_temp_test = spman.norm_spec(wavelength, flux_template_original, wave_norm, epsilon_norm, flux_template_original)
-
-    #extract flux and wavelength of the continuum
-    cont_spec_banda = line_flux_spec_norm[(line_wave >= band_cont[0]) & (line_wave <= band_cont[1])]
-    cont_temp_banda = line_flux_temp_test[(line_wave >= band_cont[0]) & (line_wave <= band_cont[1])]
-    wave_banda = line_wave[(line_wave >= band_cont[0]) & (line_wave <= band_cont[1])]
-
-    #calculate the rms of the banda1
-    rms_banda = np.std(cont_spec_banda)
-    #the shift_step will be half or one rms
-    shift_step = rms_banda/2.
-
-    starting_flux_level = 0.95
-    delta_starting_flux = 1-starting_flux_level
-    cont_temp_banda = cont_temp_banda - delta_starting_flux
-    end_flux_level = 1.1
-    actual_level = starting_flux_level
-    chisquare_test = []
-    shift_array = []
-
-    #fitting procedure
-    while actual_level <= end_flux_level:
-        #chi square
-        chisqr_test = 0. #it is a chisquared
-        for i in range(len(wave_banda)):
-            chisqr_test = chisqr_test + (cont_spec_banda[i]-cont_temp_banda[i])**2/cont_temp_banda[i]
-
-        chisquare_test.append(chisqr_test) #chi squared vector!
-        shift_array.append(actual_level)
-    #test to stop the cycle when reached the minimum chi square, without exploring other values
-        actual_level = actual_level + shift_step
-        cont_temp_banda = cont_temp_banda + shift_step
-
-    min_index_test = np.argmin(chisquare_test)
-    best_fit_level_temp = shift_array[min_index_test]
-    print ('Adjusting the template to new level:', best_fit_level_temp)
-
-    #applying the corrections
-    flux_template_shifted = flux_temp_test + (best_fit_level_temp-1)
-    line_flux_temp_test_shifted = line_flux_temp_test + (best_fit_level_temp-1)
-
-    print ('line selected: ', line_name)
-    print ('SNR line:', round(snr))
-    print('Processing...')
-
-
-    #********************** FITTING PROCEDURE, BOTH SPECTRAL REGION AND LINES **************************
-    shape = len(line_wave)
-    line_flux_template_norm = np.zeros(shape)
-
-    for j in range(number_values_sigma):
-
-        previous_line_flux_template_norm = line_flux_template_norm
-
-        #broadening the template
-        flux_template_broad = spman.sigma_broad(wavelength, flux_template_shifted, sigma_values[j])
-
-        #extract the wavelength range for the template. I use it only to know the initial guesses
-        line_flux_template_orig = flux_template_broad[(wavelength >= wave_range[0]) & (wavelength <= wave_range[1])]
-
-        #normalise the template
-        line_flux_template_norm = line_flux_template_orig
-
-
-        #resudials
-        chisqr = 0. #it is a chisquared
-        for i in range(len(line_wave)):
-            chisqr = chisqr + (line_flux_spec_norm[i]-line_flux_template_norm[i])**2/line_flux_template_norm[i]
-
-        chisquare_fit.append(chisqr) #chi squared vector!
-
-        #test to stop the cycle when reached the minimum chi square, without exploring other values
-        min_index = np.argmin(chisquare_fit)
-        if j > 0:
-            if min_index < j:
-                line_flux_template_norm = previous_line_flux_template_norm # if I enter this cycle, I use the previous stored value of the broadened template because its the best
-                break
-
-    if (j == 1): # that means that I found the minumum at 0, with no broadening of the template
-        print ('Warning: the resolution of the template is greater than the sigma you want to measure. The value obtained will be just a superior limit')
-
-    #finding the minimum chi square and the respective value of sigma
-    min_value = np.argmin(chisquare_fit)
-
-    sigma_vel = sigma_values[min_value] # this is the holy grail: the most probable velocity dispersion value
-    min_residual = chisquare_fit[min_value] # this is the chi square of the best fit
-
-
-    #***************************** Uncertainties with MonteCarlo simulations ************
-    # I perturb the line_flux_temp_fit_norm by adding noise equal to the SNR of my line, then I do the Gaussian fit with the same non-noisy template and see how the sigma that I obtain from the Gaussian fit fluctuates.
-    if err_calc:
-        scale_noise = np.mean(snr_flux)/snr
-        number_noisy_cont = 20 #how many syntethics? a lot, but you need to consider also computation time
-
-        sigma_vel_err_tot_ = []
-
-        print ('Calculating the error...')
-        for k in range (number_noisy_cont):
-            #generate the noisy line
-            noise_array = np.random.standard_normal((len(line_wave),))
-            noise_array_scaled = noise_array * scale_noise
-            noisy_template = []
-            for i in range(len(line_wave)):
-                noisy_template.append(line_flux_template_norm[i] + noise_array_scaled[i])
-
-            #maximum error on the sigma estimation
-            max_error_sigma = int(round(700./snr)) #empirical value. Checked and seems ok
-            if max_error_sigma > 70 and k == 0:
-                max_error_sigma = 70
-                print ('Warning: SNR < 10, large error and long processing time!')
-            step_error = 2.
-            initial_sigma_err = sigma_vel - max_error_sigma
-
-            #if I reach negative values in the interval of possible sigma values:
-            if initial_sigma_err < 0:
-                initial_sigma_err = 0
-            final_sigma_err = sigma_vel + max_error_sigma
-
-            number_values_sigma_err = int(round((final_sigma_err-initial_sigma_err)/step_error+1))
-            #filling the sigma vector
-            sigma_values_err = []
-            sigma_value_err = initial_sigma_err
-
-            for i in range(1, number_values_sigma_err):
-                sigma_values_err.append(sigma_value_err)
-                sigma_value_err =  sigma_value_err + step_error
-
-            residuals_err = []
-
-            # fitting procedure
-            for h in range(len(sigma_values_err)):
-                #broadening the template
-                flux_template_new = spman.sigma_broad(wavelength, flux_template_original, sigma_values_err[h])
-
-                #extract the wavelength range for the template. I use it only to know the initial guesses
-                line_flux_template_new = flux_template_new[(wavelength >= wave_range[0]) & (wavelength <= wave_range[1])]
-
-                #normalize the template
-                line_flux_template_new_norm = spman.norm_spec(line_wave, line_flux_template_new, wave_norm, epsilon_norm, line_flux_template_new)
-
-                #resudials
-                residual_err = 0. #it is a chisquared
-                for i in range(len(line_wave)):
-                    residual_err = residual_err + (noisy_template[i]-line_flux_template_new_norm[i])**2/line_flux_template_new_norm[i]
-
-                residuals_err.append(residual_err) #chi squared vector!
-
-                min_index = np.argmin(residuals_err)
-                if h > 1:
-                    if min_index < h:
-                        break
-
-            #finding the minimum
-            min_value_err = np.argmin(residuals_err)
-            sigma_vel_err = sigma_values_err[min_value_err]
-            sigma_vel_err_tot_.append(sigma_vel_err)
-
-        #storing the data
-        sigma_vel_err_tot = np.asarray(sigma_vel_err_tot_, dtype = float)
-        error_sigma_fit = np.std(sigma_vel_err_tot)
-
-        #the total error is the quadratic sum of the error above + the quantization error due to the step of sigma values selected.
-        total_error = mt.sqrt(error_sigma_fit**2+step_error**2 +step_sigma**2)
+    if e_obs is not None:
+        _, err_log, _ = _log_rebin(w_obs, e_obs)
     else:
-        total_error = 0.
+        err_log = None
 
-    ####################################################################################################
+    ok = np.isfinite(flog_obs) & np.isfinite(flog_tpl_on_obs)
+    if err_log is not None: ok &= np.isfinite(err_log)
+    loglam_obs = loglam_obs[ok]
+    flog_obs   = flog_obs[ok]
+    flog_tpl_on_obs = flog_tpl_on_obs[ok]
+    if err_log is not None: err_log = err_log[ok]
+    if flog_obs.size < 20:
+        raise ValueError('Insufficient overlap between spectrum and template in the band')
 
-    sigma_real_broadened = mt.sqrt(sigma_vel**2+resolution_temp**2)
+    # Robust scale for conditioning (kept >0 and finite)
+    scale = np.nanmedian(np.abs(flog_obs))
+    if not np.isfinite(scale) or scale <= 0:
+        scale = 1.0
 
-    if (sigma_real_broadened == resolution_temp):
-        sigma_real = sigma_real_broadened
-    elif (sigma_real_broadened < sigma_instrumental):
-        sigma_real = sigma_instrumental
-        print ('WARNING: The real velocity dispersion is lower than the instrumental sigma of the spectrum. Do not trust the result!')
+    # 3) instrumental resolutions (convert to σ_kms at band centre)
+    lam_c = 0.5*(band_A[0] + band_A[1])
+    sig_spec = _res_to_sigma_kms(spec_res_mode, spec_res_value, lam_c)
+    sig_tpl  = _res_to_sigma_kms(tpl_res_mode,  tpl_res_value,  lam_c)
+
+    # 4) match template resolution to spectrum
+    tpl_matched, upper_limit = _match_template_resolution(flog_tpl_on_obs, velscale, sig_spec, sig_tpl)
+
+    # Print a simple terminal message if template is not sharper than the spectrum
+    if upper_limit:
+        print("WARNING: Template instrumental resolution ≥ spectrum instrumental resolution. "
+        "Kinematic sigma will act as an UPPER LIMIT and may be biased high. Calculation continues.")
+
+    # 5) coarse Δv
+    dv0 = _xcorr_dv(flog_obs, tpl_matched, velscale) if estimate_delta_v else 0.0
+
+    # 6) optimise σ (bounded 1D)
+    def objective(s_kms: float) -> float:
+        chi2, _ = _chi2_sigma(s_kms, dv0, tpl_matched, flog_obs, loglam_obs, velscale, err_log, poly_degree, scale)
+        return chi2
+
+    res = optimize.minimize_scalar(objective, bounds=sigma_bounds, method='bounded', options={'xatol': 1e-2})
+    sigma_best = float(res.x)
+    chi2_best, dof = _chi2_sigma(sigma_best, dv0, tpl_matched, flog_obs, loglam_obs, velscale, err_log, poly_degree, scale)
+
+    # 7) error from curvature + optional bootstrap
+    def chi2_at(s):
+        return _chi2_sigma(s, dv0, tpl_matched, flog_obs, loglam_obs, velscale, err_log, poly_degree, scale)[0]
+
+    eps = max(0.5, 0.01*sigma_best)
+    s_vec = np.array([sigma_best - eps, sigma_best, sigma_best + eps])
+    c_vec = np.array([chi2_at(s_vec[0]), chi2_at(s_vec[1]), chi2_at(s_vec[2])])
+    a = ((c_vec[0] - 2*c_vec[1] + c_vec[2]) / (eps**2)) / 2.0
+    sigma_err = float(np.sqrt(1.0/a)) if a > 0 else None
+
+    if bootstrap and bootstrap > 0:
+        rng = np.random.default_rng(42)
+        # Build best-fit model once (unscaled here to keep returned arrays on original scale)
+        sig_pix_b = sigma_best / velscale
+        model_b = gaussian_filter1d(tpl_matched, sigma=sig_pix_b, mode='nearest')
+        if estimate_delta_v:
+            model_b = _shift_log(model_b, dv0, velscale)
+        Xb = _legendre_X(loglam_obs, poly_degree)
+        Ab = Xb * model_b[:, None]
+        if err_log is not None:
+            w = 1.0 / np.clip(err_log, 1e-10, np.inf)
+            Abw, yw = Ab * w[:, None], flog_obs * w
+        else:
+            Abw, yw = Ab, flog_obs
+        coeffs_b, *_ = np.linalg.lstsq(Abw, yw, rcond=None)
+        fit_b = Ab @ coeffs_b
+        resid = flog_obs - fit_b
+        boots = []
+        for _ in range(int(bootstrap)):
+            yb = fit_b + rng.choice(resid, size=resid.size, replace=True)
+            def obj_b(s):
+                chi2, _ = _chi2_sigma(s, dv0, tpl_matched, yb, loglam_obs, velscale, err_log, poly_degree, scale)
+                return chi2
+            rb = optimize.minimize_scalar(obj_b, bounds=sigma_bounds, method='bounded', options={'xatol': 1e-1})
+            boots.append(float(rb.x))
+        if len(boots):
+            sigma_err = float(np.nanstd(boots, ddof=1))
+
+    # --- build best-fit broadened template and final model on the log grid (unscaled) ---
+    sig_pix = sigma_best / velscale
+    tpl_broadened = gaussian_filter1d(tpl_matched, sigma=sig_pix, mode='nearest')
+    if estimate_delta_v:
+        tpl_broadened = _shift_log(tpl_broadened, dv0, velscale)
+    X = _legendre_X(loglam_obs, poly_degree)
+    A = X * tpl_broadened[:, None]
+    if err_log is not None:
+        w = 1.0 / np.clip(err_log, 1e-10, np.inf)
+        Aw, yw = A * w[:, None], flog_obs * w
     else:
-        sigma_real = mt.sqrt(sigma_real_broadened**2 - sigma_instrumental**2)
+        Aw, yw = A, flog_obs
+    coeffs, *_ = np.linalg.lstsq(Aw, yw, rcond=None)
+    fit_model = A @ coeffs
 
-    print ('Resolution template in A (FWHM): ', resolution_lambda_fwhm_temp)
-    print ('Resolution spectrum in A (FWHM): ', resolution_lambda_fwhm_spec)
-    print ('Resolution sigma template (km/s): ', resolution_temp)
-    print ('Resolution sigma spectrum: (km/s)', sigma_instrumental)
-    print ('Best sigma gaussian broadening: ', sigma_vel)
-    print ('Template best real total broadening: ', sigma_real_broadened , 'km/s')
-    print ('Sigma spectrum = sqrt(best broadening^2- resolution sigma spectrum^2): ', sigma_real , 'km/s')
+    lam_band_A = np.exp(loglam_obs)
 
-    return sigma_real, total_error, min_residual, line_wave, line_flux_spec_norm, line_flux_template_norm, sigma_instrumental
+    print (f'Velocity dispersion = {sigma_best}')
+
+    return sigma_best, sigma_err, dv0 if estimate_delta_v else 0.0, chi2_best, dof, velscale, bool(upper_limit), lam_band_A, flog_obs, tpl_broadened, fit_model
 
 
 #*****************************************************************************************************
-# 6) SIngle line fitting
+# 6) Single line fitting
 def line_fitting (wavelength, flux, wave_interval, guess_param):
 
     """
@@ -727,7 +686,7 @@ def cat_fitting (wavelength, flux):
 
 #*****************************************************************************************************
 # 8) kinematics with ppxf and EMILES SSP models
-def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, kinematics_fixed = None):
+def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, kinematics_fixed = None, bias = None):
 
     """
      This function uses the pPXF algorith to retrieve the n kinematics moments
@@ -1022,7 +981,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             #do the fit!
             pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                 moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
-                lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search)
+                lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search, bias = bias)
 
 
             if not two_stellar_components:
@@ -1112,7 +1071,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                         moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=bestfit_wavelength, lam_temp=lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search)
+                        quiet = True, dust = dust, component = component, global_search = global_search, bias = bias)
 
                         kinematics_mc = pp.sol
 
@@ -1191,7 +1150,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                         moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                         lam=bestfit_wavelength, lam_temp=lam_temp,
-                        quiet = True, dust = dust, component = component, global_search = global_search)
+                        quiet = True, dust = dust, component = component, global_search = global_search, bias = bias)
 
                         kinematics_mc = pp.sol
 
@@ -1454,7 +1413,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if gas: #with gas np.sum(component)==0
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust)
+                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust, bias = bias)
 
                 errors = [array * np.sqrt(pp.chi2) for array in pp.error]
                 gas_flux = pp.gas_flux
@@ -1463,7 +1422,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             else: #without gas
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, dust = dust)
+                    lam=wave, lam_temp=lam_temp,component=component, dust = dust, bias = bias)
 
                 errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
 
@@ -1555,7 +1514,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                     pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                     moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=bestfit_wavelength, lam_temp=lam_temp,
-                    component=0, quiet = True, dust = dust)
+                    component=0, quiet = True, dust = dust,bias = bias)
 
                     kinematics_mc = pp.sol
 
@@ -3290,6 +3249,405 @@ def lick_pop(ssp_lick_indices, ssp_lick_indices_err, ssp_model_name, interp_mode
             err_age = err_age[0]
             err_met = err_met[0]
             err_alpha = err_alpha[0]
+
+
+        if interp_model == 'MCMC':
+            print("Estimating with MCMC (classic: Age,Z from Hβ–[MgFe]' + α from Mgb–<Fe>; diagonal Σ)...")
+            
+            # ------------------------------- Observables (Å) --------------------------------
+            # Order: [Hβ, [MgFe]', <Fe>, Mgb]
+            obs  = np.array([Hbeta,  MgFe,  Fem,  Mgb],  dtype=float)
+            errs = np.array([Hbetae, MgFee, Feme, Mgbe], dtype=float)
+
+            # ---------------------- Fast per-index range gate (skip MCMC) --------------------
+            idx_mins = np.array([
+                float(np.nanmin(hb_teo)),
+                float(np.nanmin(mgfe_teo)),   # [MgFe]'
+                float(np.nanmin(fem_teo)),
+                float(np.nanmin(mgb_teo)),
+            ])
+            idx_maxs = np.array([
+                float(np.nanmax(hb_teo)),
+                float(np.nanmax(mgfe_teo)),
+                float(np.nanmax(fem_teo)),
+                float(np.nanmax(mgb_teo)),
+            ])
+            span = idx_maxs - idx_mins
+
+            k_sigma  = 3.0
+            frac_pad = 0.02
+            pad = np.maximum(k_sigma * errs, frac_pad * np.maximum(span, 1e-12))
+
+            inside_all = np.all((obs >= idx_mins - pad) & (obs <= idx_maxs + pad))
+            if not inside_all:
+                age_interp = met_interp = alpha_interp = np.nan
+                err_age = err_met = err_alpha = np.nan
+                print(f"MCMC: indices outside model ranges (with {k_sigma}σ/{int(frac_pad*100)}% pad) -> NaN; skipping MCMC.")
+            else:
+                # -------------------- FAIL-FAST: convex hull via griddata(linear) --------------------
+                # If griddata(linear) returns NaN, the point is outside the convex hull -> skip MCMC
+                def _safe_isfinite(v):
+                    v = np.asarray(v, dtype=float)
+                    return np.all(np.isfinite(v))
+
+                values  = np.column_stack((age_teo, met_teo, alpha_teo))            # (N,3)
+                points4 = np.column_stack((hb_teo, mgfe_teo, fem_teo, mgb_teo))     # (N,4)
+                qpt     = np.array([[Hbeta, MgFe, Fem, Mgb]], dtype=float)          # (1,4)
+
+                res_gd = None
+                try:
+                    res_gd = griddata(points4, values, qpt, method='linear')
+                except Exception:
+                    res_gd = None
+
+                if (res_gd is None) or (not _safe_isfinite(res_gd)):
+                    # Hard skip: outside convex hull -> return NaNs
+                    age_interp = met_interp = alpha_interp = np.nan
+                    err_age = err_met = err_alpha = np.nan
+                    print("MCMC: griddata(linear) -> NaN (outside convex hull). Returning NaNs; skipping MCMC.")
+                else:
+                    # ---------------------------- Domain & scaling (log age) ----------------------------
+                    age_min_lin, age_max_lin = float(np.nanmin(age_teo)),   float(np.nanmax(age_teo))
+                    zh_min,      zh_max      = float(np.nanmin(met_teo)),   float(np.nanmax(met_teo))
+                    alpha_min,   alpha_max   = float(np.nanmin(alpha_teo)), float(np.nanmax(alpha_teo))
+
+                    log_age_teo = np.log10(np.asarray(age_teo, dtype=float))
+                    age_min_log, age_max_log = float(np.nanmin(log_age_teo)), float(np.nanmax(log_age_teo))
+
+                    def _scale_params(loga, z, al):
+                        """Scale (logAge, Z/H, α/Fe) independently to [0,1]."""
+                        sa  = (loga - age_min_log) / max(age_max_log - age_min_log, 1e-12)
+                        sz  = (z    - zh_min)      / max(zh_max - zh_min,           1e-12)
+                        sal = (al   - alpha_min)   / max(alpha_max - alpha_min,     1e-12)
+                        return sa, sz, sal
+
+                    points_scaled = np.column_stack(_scale_params(log_age_teo, met_teo, alpha_teo))
+
+                    # ---------------------------- Strict interpolators (hull-safe) -----------------------
+                    interp_Hb    = LinearNDInterpolator(points_scaled, np.asarray(hb_teo,    dtype=float))
+                    interp_MgFeP = LinearNDInterpolator(points_scaled, np.asarray(mgfe_teo,  dtype=float))  # [MgFe]'
+                    interp_Fem   = LinearNDInterpolator(points_scaled, np.asarray(fem_teo,   dtype=float))
+                    interp_Mgb   = LinearNDInterpolator(points_scaled, np.asarray(mgb_teo,   dtype=float))
+
+                    def _eval_model_indices_full(age_lin, zh, alpha):
+                        """
+                        Return model vector [Hβ, [MgFe]', <Fe>, Mgb] (Å) at (Age[Gyr], Z/H, α/Fe).
+                        Returns NaNs if outside the convex hull (interpolators are strict).
+                        """
+                        if not np.isfinite(age_lin) or age_lin <= 0:
+                            return np.array([np.nan, np.nan, np.nan, np.nan], dtype=float)
+                        loga = np.log10(age_lin)
+                        sa  = (loga - age_min_log) / (age_max_log - age_min_log + 1e-12)
+                        sz  = (zh   - zh_min)      / (zh_max - zh_min + 1e-12)
+                        sal = (alpha - alpha_min)  / (alpha_max - alpha_min + 1e-12)
+                        Xs = np.array([sa, sz, sal], dtype=float)
+
+                        hb   = interp_Hb(Xs)
+                        mgfp = interp_MgFeP(Xs)   # theoretical [MgFe]' from grid
+                        fem  = interp_Fem(Xs)
+                        mgb  = interp_Mgb(Xs)
+
+                        vals = np.array([hb, mgfp, fem, mgb], dtype=float)
+                        return vals if np.all(np.isfinite(vals)) else np.array([np.nan, np.nan, np.nan, np.nan], dtype=float)
+
+                    # ----------------------------- Observational covariance Σ -----------------------------
+                    # Diagonal Σ with a small calibration floor to absorb Lick zero-point
+                    sigma_cal = np.array([0.00, 0.04, 0.05, 0.05], dtype=float)  # [Hb, [MgFe]', <Fe>, Mgb]
+                    sigma = np.sqrt(errs**2 + sigma_cal**2)
+
+                    # Per-index weights (w>1 => più peso / varianza effettiva minore)
+                    w = np.array([1.00, 1.45, 0.90, 1.15], dtype=float)  # Hb, [MgFe]', <Fe>, Mgb
+                    sigma_eff = sigma / w
+
+                    Sigma = np.diag(sigma_eff**2).astype(float)
+                    tiny = max(3e-6, 1e-6 * float(np.nanmedian(sigma_eff)))**2
+                    for i in range(4):
+                        Sigma[i, i] += tiny
+
+                    var_eps = (1e-6 * float(np.nanmedian(errs)))**2   # minimal numeric floor
+
+                    # ----------------------------- Helpers (robust shapes/dtypes) -------------------------
+                    def _as_vec4(x):
+                        """Return a 1D float vector of length 4 (truncate/pad if needed)."""
+                        v = np.asarray(x, dtype=float).reshape(-1)
+                        if v.size >= 4:
+                            return v[:4]
+                        out = np.full(4, np.nan, dtype=float)
+                        out[:v.size] = v
+                        return out
+
+                    def _mvnorm_loglike(resid_in, Sigma_base):
+                        """
+                        Multivariate normal log-like N(0, Σ) with fixed diagonal Σ (classic chi²).
+                        """
+                        r = _as_vec4(resid_in)
+                        if not np.all(np.isfinite(r)):
+                            return -np.inf
+
+                        S = np.asarray(Sigma_base, dtype=float)
+                        if S.shape != (4, 4):
+                            S = S.reshape(4, 4)
+                        for i in range(4):
+                            S[i, i] += var_eps
+
+                        try:
+                            L = np.linalg.cholesky(S)
+                            Linv = np.linalg.inv(L)
+                            S_inv = Linv.T @ Linv
+                            logdet = 2.0 * np.sum(np.log(np.diag(L)))
+                        except np.linalg.LinAlgError:
+                            S_inv = np.linalg.pinv(S, rcond=1e-10)
+                            sign, logdet = np.linalg.slogdet(S)
+                            if sign <= 0:
+                                det_safe = np.linalg.det(S)
+                                logdet = np.log(max(det_safe, 1e-300))
+
+                        quad = float(np.dot(r, S_inv @ r))
+                        k = 4
+                        return -0.5 * (quad + logdet + k * np.log(2.0 * np.pi))
+
+                    # ========================== STEP 1 (FORZATO): (Age,Z) = GRIDDATA ==========================
+                    # Abbiamo già 'res_gd' valido qui sopra (linear). Usiamolo come seed/àncora:
+                    x0 = res_gd[0]  # [age, Z/H, alpha] dal griddata linear
+
+                    # *********** FORZA L’ÀNCORA = GRIDDATA ***********
+                    loga_hat = np.log10(float(np.clip(x0[0], age_min_lin, age_max_lin)))
+                    zh_hat   = float(np.clip(x0[1], zh_min, zh_max))
+
+                    # incertezze minime (prior widths)
+                    sig_loga = 0.06
+                    sig_zh   = 0.04
+                    sig_loga_eff = max(sig_loga, 0.05)
+                    sig_zh_eff   = max(sig_zh,   0.03)
+
+                    # ================= Alpha prior (1D fit on Mgb & <Fe> at fixed (loga_hat, zh_hat)) =================
+                    USE_ALPHA_PRIOR = True
+                    try:
+                        from scipy.optimize import least_squares
+
+                        def _model_Mgb_Fem(loga, zh, alpha):
+                            sa  = (loga - age_min_log) / (age_max_log - age_min_log + 1e-12)
+                            sz  = (zh   - zh_min)      / (zh_max - zh_min + 1e-12)
+                            sal = (alpha - alpha_min)  / (alpha_max - alpha_min + 1e-12)
+                            Xs = np.array([sa, sz, sal], dtype=float)
+                            return float(interp_Mgb(Xs)), float(interp_Fem(Xs))
+
+                        def _resid_alpha(a):
+                            mgb_m, fem_m = _model_Mgb_Fem(loga_hat, zh_hat, a[0])
+                            r_mgb = (Mgb - mgb_m) / np.sqrt(Sigma[3,3])
+                            r_fem = (Fem - fem_m) / np.sqrt(Sigma[2,2])
+                            return np.array([r_mgb, r_fem], dtype=float)
+
+                        a0 = float(np.clip(x0[2], alpha_min, alpha_max))
+                        ls_a = least_squares(_resid_alpha, x0=np.array([a0], float),
+                                            bounds=([alpha_min],[alpha_max]), method='trf', max_nfev=150)
+                        alpha_hat = float(ls_a.x[0]) if ls_a.success and np.isfinite(ls_a.x[0]) else a0
+
+                        try:
+                            J = ls_a.jac
+                            JTJ = J.T @ J
+                            var_a = float(1.0 / JTJ) if np.isfinite(JTJ).all() else 0.0144  # 0.12^2
+                            sig_alpha = float(np.sqrt(max(var_a, 0.0144)))
+                        except Exception:
+                            sig_alpha = 0.12
+                    except Exception:
+                        alpha_hat = float(np.clip(x0[2], alpha_min, alpha_max))
+                        sig_alpha = 0.12
+
+                    # ========================== STEP 2: MCMC with informative prior ==========================
+
+                    def log_prior(theta):
+                        age, zh, alpha = theta
+                        if not (age_min_lin <= age <= age_max_lin): return -np.inf
+                        if not (zh_min      <= zh  <= zh_max):      return -np.inf
+                        if not (alpha_min   <= alpha <= alpha_max): return -np.inf
+                        loga = np.log10(age)
+                        lp_age = -0.5*((loga - loga_hat)/sig_loga_eff)**2 - np.log(sig_loga_eff*np.sqrt(2*np.pi))
+                        lp_zh  = -0.5*((zh   - zh_hat  )/sig_zh_eff  )**2 - np.log(sig_zh_eff  *np.sqrt(2*np.pi))
+                        lp_alpha = 0.0
+                        if USE_ALPHA_PRIOR:
+                            lp_alpha = -0.5*((alpha - alpha_hat)/sig_alpha)**2 - np.log(sig_alpha*np.sqrt(2*np.pi))
+                        return lp_age + lp_zh + lp_alpha
+
+                    def log_likelihood(theta):
+                        age, zh, alpha = theta
+                        mod = _eval_model_indices_full(age, zh, alpha)
+                        if np.any(~np.isfinite(mod)): return -np.inf
+                        resid = _as_vec4(obs - mod)
+                        return _mvnorm_loglike(resid, Sigma)
+
+                    def log_posterior(theta):
+                        lp = log_prior(theta)
+                        if not np.isfinite(lp): return -np.inf
+                        ll = log_likelihood(theta)
+                        if not np.isfinite(ll): return -np.inf
+                        return lp + ll
+
+                    # MAP initialisation (full 3D, but anchored)
+                    bounds = [(age_min_lin, age_max_lin), (zh_min, zh_max), (alpha_min, alpha_max)]
+                    def _chi2(theta):
+                        ll = log_likelihood(theta)
+                        return 1e9 if not np.isfinite(ll) else -2.0*ll
+
+                    x0_full = np.array([10**loga_hat, zh_hat, float(np.clip(x0[2], alpha_min, alpha_max))], dtype=float)
+                    try:
+                        res = minimize(_chi2, x0=x0_full, bounds=bounds, method='L-BFGS-B')
+                        theta_map = res.x
+                    except Exception:
+                        theta_map = x0_full
+
+                    # Reparameterised MCMC in (logAge, Z/H, α)
+                    def _reflect_in_bounds(val, lo, hi):
+                        rng = hi - lo
+                        if rng <= 0: return lo
+                        t = (val - lo) % (2.0 * rng)
+                        return lo + (t if t <= rng else 2.0 * rng - t)
+
+                    def _jitter_in_bounds(centre, lo, hi, frac=0.05):
+                        sig = frac * max(1e-6, abs(centre))
+                        val = np.random.normal(centre, sig)
+                        return _reflect_in_bounds(val, lo, hi)
+
+                    def _log_prior_prime(theta_prime):
+                        loga, zh, alpha = theta_prime
+                        if not (age_min_log <= loga <= age_max_log): return -np.inf
+                        if not (zh_min <= zh <= zh_max):             return -np.inf
+                        if not (alpha_min <= alpha <= alpha_max):    return -np.inf
+                        lp_age = -0.5*((loga - loga_hat)/sig_loga_eff)**2 - np.log(sig_loga_eff*np.sqrt(2*np.pi))
+                        lp_zh  = -0.5*((zh   - zh_hat  )/sig_zh_eff  )**2 - np.log(sig_zh_eff  *np.sqrt(2*np.pi))
+                        lp_alpha = 0.0
+                        if USE_ALPHA_PRIOR:
+                            lp_alpha = -0.5*((alpha - alpha_hat)/sig_alpha)**2 - np.log(sig_alpha*np.sqrt(2*np.pi))
+                        return lp_age + lp_zh + lp_alpha
+
+                    def _log_likelihood_prime(theta_prime):
+                        loga, zh, alpha = theta_prime
+                        age_lin = 10.0**loga
+                        mod = _eval_model_indices_full(age_lin, zh, alpha)
+                        if np.any(~np.isfinite(mod)): return -np.inf
+                        resid = _as_vec4(obs - mod)
+                        return _mvnorm_loglike(resid, Sigma)
+
+                    def _log_post_prime(theta_prime):
+                        lp = _log_prior_prime(theta_prime)
+                        if not np.isfinite(lp): return -np.inf
+                        ll = _log_likelihood_prime(theta_prime)
+                        if not np.isfinite(ll): return -np.inf
+                        return lp + ll
+
+                    theta_map_prime = np.array([np.log10(theta_map[0]), theta_map[1], theta_map[2]], dtype=float)
+
+                    # Walker init: half around (loga_hat, zh_hat, seed α), half around MAP
+                    n_walkers = 48
+                    ndim = 3
+
+                    centre1 = np.array([loga_hat, zh_hat, np.clip(x0[2], alpha_min, alpha_max)], dtype=float)
+                    centre2 = theta_map_prime.copy()
+
+                    def _jitter_centre(c, lows, highs, frac):
+                        out = np.empty_like(c)
+                        for i in range(3):
+                            sig = frac[i] * max(1e-6, abs(c[i]))
+                            val = np.random.normal(c[i], sig)
+                            out[i] = _reflect_in_bounds(val, lows[i], highs[i])
+                        return out
+
+                    frac1 = np.array([0.03, 0.05, 0.06])  # tighter around age-Z anchor
+                    frac2 = np.array([0.05, 0.07, 0.07])  # a bit wider around MAP
+
+                    half = n_walkers // 2
+                    initial_pos_prime = []
+                    for _ in range(half):
+                        initial_pos_prime.append(_jitter_centre(centre1,
+                                            np.array([age_min_log, zh_min, alpha_min]),
+                                            np.array([age_max_log, zh_max, alpha_max]), frac1))
+                    for _ in range(n_walkers - half):
+                        initial_pos_prime.append(_jitter_centre(centre2,
+                                            np.array([age_min_log, zh_min, alpha_min]),
+                                            np.array([age_max_log, zh_max, alpha_max]), frac2))
+                    initial_pos_prime = np.asarray(initial_pos_prime, dtype=float)
+
+                    move = emcee.moves.StretchMove(a=1.8)
+
+                    # ------------------------------- Chain length control -------------------------------------
+                    use_fixed_steps   = True
+                    fixed_total_steps = 3000
+                    warm_steps        = 600
+                    chunk_steps       = 1000
+                    max_steps         = 30000
+                    conv_tol          = 0.05
+
+                    try:
+                        with mp.get_context("spawn").Pool() as pool:
+                            sampler = emcee.EnsembleSampler(n_walkers, ndim, _log_post_prime, moves=[move], pool=pool)
+                            sampler.run_mcmc(initial_pos_prime, warm_steps, progress=False)
+                    except Exception:
+                        sampler = emcee.EnsembleSampler(n_walkers, ndim, _log_post_prime, moves=[move])
+                        sampler.run_mcmc(initial_pos_prime, warm_steps, progress=False)
+
+                    steps_done = warm_steps
+                    tau = None
+
+                    def _estimate_tau(s):
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", category=AutocorrWarning)
+                            return float(np.max(s.get_autocorr_time(quiet=True)))
+
+                    if use_fixed_steps:
+                        extra = max(0, fixed_total_steps - steps_done)
+                        if extra > 0:
+                            sampler.run_mcmc(None, extra, progress=False)
+                        try:
+                            tau = _estimate_tau(sampler)
+                        except Exception:
+                            tau = None
+                    else:
+                        prev_tau = None
+                        while steps_done < max_steps:
+                            sampler.run_mcmc(None, chunk_steps, progress=False)
+                            steps_done += chunk_steps
+                            try:
+                                tau_curr = _estimate_tau(sampler)
+                            except Exception:
+                                continue
+                            stable = (prev_tau is not None) and (abs(tau_curr - prev_tau) / max(tau_curr, 1e-12) <= conv_tol)
+                            long_enough = (steps_done >= 150.0 * tau_curr)
+                            prev_tau = tau_curr
+                            tau = tau_curr
+                            if stable and long_enough:
+                                break
+
+                    # ------------------------------------- Burn / thin ----------------------------------------
+                    if tau is not None and np.isfinite(tau) and tau > 0:
+                        burn = int(3 * tau)
+                        thin = max(1, int(0.5 * tau))
+                    else:
+                        burn, thin = 300, 2
+
+                    chain_prime = sampler.get_chain(discard=burn, thin=thin, flat=True)
+
+                    # ------------------------------------ Summaries -------------------------------------------
+                    if chain_prime.size == 0 or not np.all(np.isfinite(chain_prime)):
+                        age_interp = met_interp = alpha_interp = np.nan
+                        err_age = err_met = err_alpha = np.nan
+                        print('MCMC: no valid posterior samples after adaptive run -> returning NaN.')
+                    else:
+                        def q16_50_84(a): return np.percentile(a, [16, 50, 84])
+
+                        q_logage = q16_50_84(chain_prime[:, 0])
+                        q_age_lin = 10.0**q_logage
+                        age_med, age_lo, age_hi = q_age_lin[1], q_age_lin[0], q_age_lin[2]
+
+                        q_zh = q16_50_84(chain_prime[:, 1])
+                        q_al = q16_50_84(chain_prime[:, 2])
+
+                        age_interp   = float(age_med)
+                        met_interp   = float(q_zh[1])
+                        alpha_interp = float(q_al[1])
+
+                        err_age   = float(max(age_med - age_lo,  age_hi - age_med, 1e-9))
+                        err_met   = float(max(q_zh[1] - q_zh[0], q_zh[2] - q_zh[1], 1e-9))
+                        err_alpha = float(max(q_al[1] - q_al[0], q_al[2] - q_al[1], 1e-9))
 
 
     #the same thing for xshooter or any model without alpha enhancment

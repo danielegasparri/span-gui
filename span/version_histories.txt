@@ -6,28 +6,43 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-    How to run: just compile the code with Python 3.X and use the pre-loaded example files
-    to play with the GUI.
-    Check the Python packages needed in the "readme_span.txt" to run this source code.
 
 """
 
 ######################################################################################
 #Version histories
 
+# Version 7.0 (20250928):
+# Major changes to the layout: The Utilities frame is now a stand-alone window in the 'Window --> Utilities' menu. The Utilities frame in the main GUI has been replaced with a real-time and interactive preview of the selected spectrum in the listbox which allows panning, zooming (left mouse click) and redshift estimation by shifting the spectrum to match the reference lines masked (right-click and drag). Some minor cosmetic adjustments to the layout (e.g. tittle for the listbox and better alignment of the items) have been performed. The main GUI is now resizable to account the zooming options (see below).
+# Introduced the 'View' menu where you will find zoom options to better adapt the GUI to different screen resolutions. You can zoom-in, zoom-out or reset the zoom to the default level. The zooming acts on all the GUI windows. This feature is still experimental and some glitch are expected, but they do not have impact on the stability of SPAN. 
+# Enforced the preliminary check of the loaded spectra with an estimation of the S/N and flag in the listbox if S/N <=5.
+# Interactive listbox: now you can move and delete the spectra by right-click on the selected spectrum. Deletion works also with the 'Canc' keyboard button (use with care, you cannot undo the operation).
+# Implemented the Markov chain Monte Carlo (MCMC) analysis for the determination of the stellar parameters from the Lick/IDS analysis. This option is available for SSP models with alpha/Fe parametrization (e.g. Thomas, sMILES, MILES) and represents a more accurate alternative to the simple linear interpolation with griddata. 
+#Substituted the 'sigma_measurement' function in the 'spectral_analisis' module with the 'measure_sigma_simple' function, which is used by the 'Velocity dispersion' task. Now it's faster and more accurate.
+# Introduced the custom 'bias' keyword setting of pPXF for the 'Stars and gas kinematics' task. Now you can select the bias (regularization) besides the default value of pPXF. To be used only when you fit at least 4 kinematic moments. 
+# Now in the 'Stellar populations and SFH' task you can decide whether save or not the spectra products generated (best fit template, residuals, emission corrected spectra, if available).
+# Added the elliptical binning mode in the "DataCube extraction" sub-program, to radially rebin the datacube using isphotal ellipses profiles (or any kind of custom circle/ellipses).
+#Compiled a complete manual in PDF format, available in the main folder of SPAN. 
+
 #Version 6.6 (20250909):
-#Now the 'Plot maps' sub-program, stores the parameter values until SPAN is closed.
+#Now the 'Plot maps' sub-program stores the parameter values until SPAN is closed.
 #Fixed a bug that prevented to save spectra products (i.e. fit residuals, bestfit template) for the 'Stellar populations and SFH' task when no gas lines where included of not found.
 #Added new functionalities to the 'Plot maps' sub-program: isophotes overplotting and smoothing. This required also to add the 'save_image' function to the 'cube_extract' module that extract and saves the 2D image by averaging all the wavelengths selected from the datacube. This image is required in the 'Plot maps' sub-program, if isophotal contouring is needed (optional). 
 #Fixed a bug that prevented the Lick/IDS measurements in the 'Line-strength analysis' in high-redshift spectra, since SPAN was checking the wavelength compatibility of the spectra with the Lick wavelength range not considering the rest-frame corrected wavelengths.  

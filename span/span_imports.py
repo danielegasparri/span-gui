@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,8 +36,11 @@ try:
 except ModuleNotFoundError:
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
 
-# List of modules to import dynamically
+# ------------------------------------------------------------------
+# Dynamic imports (with alias)
+# ------------------------------------------------------------------
 modules = {
+    # Core functions
     "stm": "span_functions.system_span",
     "uti": "span_functions.utilities",
     "spman": "span_functions.spec_manipul",
@@ -38,6 +48,8 @@ modules = {
     "ls": "span_functions.linestrength",
     "span": "span_functions.spec_analysis",
     "cubextr": "span_functions.cube_extract",
+
+    # Modules
     "layouts": "span_modules.layouts",
     "misc": "span_modules.misc",
     "sub_programs": "span_modules.sub_programs",
@@ -50,9 +62,13 @@ modules = {
     "check_spec": "span_modules.check_spec",
     "settings": "span_modules.settings",
     "file_writer": "span_modules.file_writer",
+
+    # New imports (with alias for clarity)
+    "zoom": "span_modules.ui_zoom",
+    "preview_tools": "span_modules.preview_tools",
 }
 
-# Try importing modules dynamically
+# Import dynamically with fallback
 for alias, module in modules.items():
     try:
         imported_module = importlib.import_module(module)
@@ -60,3 +76,17 @@ for alias, module in modules.items():
         imported_module = importlib.import_module(f"span.{module}")
 
     globals()[alias] = imported_module
+
+# ------------------------------------------------------------------
+# Direct imports (no alias, use full module name)
+# ------------------------------------------------------------------
+from span_modules import listbox_events
+# from span_modules import preview_tools_extra
+
+# ------------------------------------------------------------------
+# Data classes / definitions
+# ------------------------------------------------------------------
+from params import SpectraParams
+
+
+

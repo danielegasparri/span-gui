@@ -1,19 +1,25 @@
 #SPectral ANalysis software (SPAN)
 #Written by Daniele Gasparri#
 
-
 """
     Copyright (C) 2020-2025, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -62,9 +68,12 @@ from time import perf_counter as clock
 from os import path
 import os
 import re
+import sys
 
 import subprocess
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 #0) Simple function to check if the spectra are linearly sampled in wavelength, as required by SPAN
 def is_spec_linear(wavelength, tol=2e-4):
@@ -110,10 +119,10 @@ def read_spec(spec_name, lambda_units):
         wavelength, flux = np.loadtxt(spec_name, usecols = (0,1)).T
         start_lambda = wavelength[0]
         if (start_lambda < 12. and start_lambda > 5 and lambda_units != 'mu'):
-            print ('I think you have ln lambda, try to convert to lambda...')
+            # print ('I think you have ln lambda, try to convert to lambda...')
             wavelength_log = wavelength
             wavelength = np.exp(wavelength_log)
-        print(spec_type, 'spec with lambda in', lambda_units)
+        # print(spec_type, 'spec with lambda in', lambda_units)
         obj_name = spec_name
 
     # if I have fits files, they can be of different type
@@ -125,7 +134,7 @@ def read_spec(spec_name, lambda_units):
         #if fits table are 1d (IRAF style, with flux and delta lamba)
         if (oned_key):
             spec_type = '1d fits table IRAF style'
-            print (spec_type, 'spec with lambda in', lambda_units)
+            # print (spec_type, 'spec with lambda in', lambda_units)
             points = hdr_fits['NAXIS1']
             start_lambda = hdr_fits['CRVAL1']
             step=hdr_fits['CDELT1']
@@ -135,12 +144,12 @@ def read_spec(spec_name, lambda_units):
 
             #reading 1dfits IRAF style with logaritmic wavelength
             if (start_lambda < 5. and start_lambda > 2.5 and lambda_units != 'mu'):
-                print ('I think you have log lambda, try to convert to lambda...')
+                # print ('I think you have log lambda, try to convert to lambda...')
                 wavelength_log = wavelength
                 ln_wavelength= wavelength_log*np.log(10)         # Convert lg --> ln
                 wavelength = np.exp(ln_wavelength)
             if (start_lambda < 12. and start_lambda > 5 and lambda_units != 'mu'):
-                print ('I think you have ln lambda, try to convert to lambda...')
+                # print ('I think you have ln lambda, try to convert to lambda...')
                 wavelength_log = wavelength
                 wavelength = np.exp(wavelength_log)
 
@@ -151,7 +160,7 @@ def read_spec(spec_name, lambda_units):
             # Define the columns
             flux_tmp = 0
             spec_type = '2d fits table'
-            print (spec_type, 'spec with lambda in', lambda_units)
+            # print (spec_type, 'spec with lambda in', lambda_units)
 
 
             # trying a connon sense fits table with wavelength and flux, like the ESO does
@@ -185,7 +194,7 @@ def read_spec(spec_name, lambda_units):
 
                 if (sdss_new_spec):
                     #the new sdss spectra have the log_wave instead of wave!
-                    print ('with log lambda')
+                    # print ('with log lambda')
 
                     wavelength_log = np.array(wavelength_tmp)
                     flux = np.array(flux_tmp)
@@ -224,7 +233,7 @@ def read_spec(spec_name, lambda_units):
     is_linear, delta, dev = is_spec_linear(wavelength)
     if not is_linear:
         wavelength, flux, points_spec = spman.resample(wavelength, flux, original_step)
-        print('Resampled to linear step')
+        # print('Resampled to linear step')
 
     return wavelength, flux, original_step, obj_name
 
@@ -1119,7 +1128,7 @@ def save_mask_as_fits(mask, output_filename):
 
 """
 The functions below are needed for the 'Plot maps'
-subprogram in order to visualise 2D maps from datacube analysis.
+subprogram in order to visualize 2D maps from datacube analysis.
 
 """
 
@@ -1139,7 +1148,7 @@ def load_fits_data(fits_file):
 
 def load_analysis_results(txt_file):
     """Load analysis results and extract column names"""
-    df = pd.read_csv(txt_file, sep='\s+')
+    df = pd.read_csv(txt_file, sep=r'\s+')
     return df
 
 
@@ -1243,7 +1252,7 @@ def plot_voronoi_map_clickable(x, y, bin_id, result_df, quantity, cmap="inferno"
     fig.colorbar(mesh, ax=ax, label=quantity)
     ax.set_xlabel("R [arcsec]")
     ax.set_ylabel("R [arcsec]")
-    ax.set_title(f"Voronoi Map: {quantity}")
+    ax.set_title(f"{quantity}")
     # plt.tight_layout()
 
     # Internal variables to track annotation and marker
@@ -1591,7 +1600,7 @@ def plot_radial_profile_bins(xbin, ybin, bin_id, result_df, quantity):
     ax.scatter(r_values, q_values, s=5, c='black', alpha=0.8)
     ax.set_xlabel("Distance from center [arcsec]")
     ax.set_ylabel(quantity)
-    ax.set_title(f"Radial Profile: {quantity}")
+    ax.set_title(f"{quantity}")
     ax.grid(True)
 
     return fig, ax
@@ -1732,5 +1741,52 @@ def graphical_masking_1D(wavelength, flux, existing_mask_str, touch_mode=False):
     # Convert result to clean float
     final_regions = sorted([(float(round(a, 2)), float(round(b, 2))) for a, b in mask_regions])
     return '[' + ', '.join(f'({a}, {b})' for a, b in final_regions) + ']'
+
+
+
+# Function for a quick estimate of the S/N during the loading of the spectra
+def quick_snr(wl, fl):
+    """Return a rough global SNR estimate for a spectrum."""
+    wl = np.asarray(wl, dtype=float)
+    fl = np.asarray(fl, dtype=float)
+    ok = np.isfinite(wl) & np.isfinite(fl)
+    if np.count_nonzero(ok) < 30:
+        return None
+
+    wl = wl[ok]
+    fl = fl[ok]
+
+    try:
+        p = np.polyfit(wl, fl, 1)
+        baseline = p[0]*wl + p[1]
+        resid = fl - baseline
+    except Exception:
+        med = np.nanmedian(fl)
+        resid = fl - med
+
+    mad = np.nanmedian(np.abs(resid))
+    sigma = mad * 1.4826 if mad > 0 else np.nanstd(resid)
+    if not np.isfinite(sigma) or sigma <= 0:
+        return None
+
+    signal = np.nanmedian(np.abs(fl))
+    return signal / sigma if sigma > 0 else None
+
+
+# Simple function to open the PDF manual
+def open_manual():
+    try:
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.0.pdf")
+
+        if sys.platform.startswith("darwin"):  # macOS
+            subprocess.run(["open", manual_path])
+        elif os.name == "nt":  # Windows
+            os.startfile(manual_path) 
+        elif os.name == "posix":  # Linux/Unix
+            subprocess.run(["xdg-open", manual_path])
+        else:
+            raise RuntimeError("Unsupported platform")
+    except Exception:
+        sg.popup('SPAN manual not found, sorry.')
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************
