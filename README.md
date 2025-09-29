@@ -60,7 +60,7 @@ archivePrefix = {arXiv},
 SPAN  has been developed to provide users with a simple and clear GUI that integrates the most commonly used tools for manipulation and analysis of stellar and galaxy spectra.
 The goal of SPAN is to make spectral manipulation and analysis faster and simpler in one GUI program, fully cross-platform and user friendly.
 
-<img width="1565" height="839" alt="span_main" src="https://github.com/user-attachments/assets/c3183055-ffae-4012-b83f-b617d4461b9b" />
+![span_main](https://github.com/danielegasparri/span-gui/blob/main/docs/img/span_main.png)
 **Main panel of SPAN as it appears on Windows and Linux systems.*
 
 ## Features
@@ -86,10 +86,10 @@ SPAN has been carefully designed and tested to run across different platforms, m
 
 The images below show the aspect of SPAN on Android and macOS systems.
 
-![Main panel of SPAN](docs/img/span_macos.png)
+![Main panel of SPAN](https://github.com/danielegasparri/span-gui/blob/main/docs/img/span_macos.png)
 *Main panel of SPAN as it appears on macOS systems. The output messages are shown in the external terminal aligned below the GUI.*  
 
-![Main panel of SPAN](docs/img/span_android.png)
+![Main panel of SPAN](https://github.com/danielegasparri/span-gui/blob/main/docs/img/span_android.png)
 *Main panel of SPAN as it appears on Android devices, here displayed on a smartphone screen.*  
 
 ## System Requirements
