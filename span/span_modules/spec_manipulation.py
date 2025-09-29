@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -28,13 +35,16 @@ try: #try local import if executed as script
     from params import SpectraParams
     from span_modules import misc
     from span_modules import layouts
-
+    from span_modules.ui_zoom import open_subwindow, ZoomManager
+    
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
     from . import misc
     from . import layouts
     from .params import SpectraParams
+    from .ui_zoom import open_subwindow, ZoomManager
+    
 
 #python imports
 import numpy as np
@@ -43,11 +53,11 @@ import datetime
 import os
 from dataclasses import replace
 
-# from params import SpectraParams
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
+zm = ZoomManager.get()
 
 
 def spectra_manipulation(params: SpectraParams) -> SpectraParams:
@@ -176,12 +186,10 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     if layout == layouts.layout_macos:
         default_font_size = 14
     else:
-        default_font_size = 10
+        default_font_size = 11
 
     sg.theme('DarkBlue3')
     spec_layout = [
-
-
 
     #Spectra pre-processing
     [sg.Frame('Spectra pre-processing', [
@@ -204,33 +212,32 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     [sg.Checkbox('Rebin', font = ('Helvetica', default_font_size, 'bold'), key = 'rebin', default = rebinning,tooltip='Rebinning the spectrum, to a linear wavelength step (A) or to a linear sigma step (km/s)'), sg.Radio('pix lin.', "RADIO1", default=rebinning_linear, key = 'rebin_pix_lin'), sg.InputText(rebin_step_pix, size = (4,1), key = 'rebin_step_pix'), sg.Radio('sigma lin.', "RADIO1", default = rebinning_log, key = 'rebin_sigma_lin'), sg.InputText(rebin_step_sigma, size = (3,1), key = 'rebin_step_sigma')],
     [sg.Checkbox('Degrade resolution', font = ('Helvetica', default_font_size, 'bold'), key = 'degrade_resolution', default = degrade,tooltip='Degrade resolution to a user defined value'), sg.Push(), sg.Button('Degrade parameters',button_color= ('black','light blue'), size = (20,1))],
 
-    [sg.Checkbox('Normalise spectrum to:', font = ('Helvetica', default_font_size, 'bold'), key = 'norm_spec', default = normalize_wave,tooltip='Normalise the flux to a user defined wavelength'), sg.InputText(norm_wave, size = (6,1), key = 'norm_wave'), sg.Text('A')],
+    [sg.Checkbox('Normalize spectrum to:', font = ('Helvetica', default_font_size, 'bold'), key = 'norm_spec', default = normalize_wave,tooltip='Normalize the flux to a user defined wavelength'), sg.InputText(norm_wave, size = (6,1), key = 'norm_wave'), sg.Text('A')],
 
     [sg.Checkbox('Sigma broadening', font = ('Helvetica', default_font_size, 'bold'), key = 'broadening_spec', default = sigma_broad,tooltip='Broad the spectrum by adding a user defined sigma (km/s). This will NOT be the total sigma broadening of your spectrum!'), sg.Text('Add sigma (km/s): ', font = ('Helvetica', default_font_size)), sg.InputText(sigma_to_add, size = (4,1), key = 'sigma_to_add')],
     [sg.Checkbox('Add noise', font = ('Helvetica', default_font_size, 'bold'), key = 'add_noise', default = add_noise,tooltip='Adding poissonian noise to the spectrum'), sg.Text('Signal to Noise (S/N) to add:'), sg.InputText(noise_to_add, size = (5,1), key = 'noise_to_add')],
 
     [sg.Checkbox('Continuum modelling', font = ('Helvetica', default_font_size, 'bold'), key = 'cont_sub', default = continuum_sub,tooltip='Perform the continuum estimation to subtract or divide to the spectrum'), sg.Push(), sg.Button('Continuum parameters',button_color= ('black','light blue'), size = (20,1))],
-    [sg.Text('', font = ("Helvetica", 1))],
+    # [sg.Text('', font = ("Helvetica", 1))],
 
     ], font=("Helvetica", 12, 'bold'),title_color = 'lightgreen'),
 
     #3) spectra math
     sg.Frame('Spectra math', [
-    [sg.Checkbox('Subtract normalised average', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_avg', default = subtract_normalized_avg,tooltip='Normalise and subtract to the selected spectrum the normalised average of all the spectra')],
-    [sg.Checkbox('Subtract norm. spec.', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_spec', default = subtract_normalized_spec,tooltip='Normalise and subtract to the selected spectrum a user selected spectrum'), sg.InputText(spectra_to_subtract, size = (17,1), key = 'spec_to_subtract'), sg.FileBrowse(tooltip='Load a spectrum (ASCII or fits) to be normalised and subtracted')],
+    [sg.Checkbox('Subtract normalized average', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_avg', default = subtract_normalized_avg,tooltip='Normalize and subtract to the selected spectrum the normalized average of all the spectra')],
+    [sg.Checkbox('Subtract norm. spec.', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_spec', default = subtract_normalized_spec,tooltip='Normalize and subtract to the selected spectrum a user selected spectrum'), sg.InputText(spectra_to_subtract, size = (17,1), key = 'spec_to_subtract'), sg.FileBrowse(tooltip='Load a spectrum (ASCII or fits) to be normalized and subtracted')],
     [sg.Checkbox('Add constant', font = ('Helvetica', default_font_size, 'bold'), key = 'add_pedestal', default = add_pedestal,tooltip='Simply add a constant value to the spectrum'), sg.InputText(pedestal_to_add, size = (7,1), key = 'pedestal_to_add'), sg.Checkbox('Multiply by:', font = ('Helvetica', default_font_size, 'bold'), key = 'multiply', default = multiply,tooltip='Multiply the spectrum by a constant'), sg.InputText(multiply_factor , size = (7,1), key = 'multiply_factor')],
     [sg.Checkbox('Calculate first and second derivatives', default = derivatives, key = 'derivatives', font = ('Helvetica', default_font_size, 'bold'),tooltip='Calculate the derivative of the spectra')],
     [sg.HorizontalSeparator()],
-    [sg.Radio('Average all', "RADIOMATH", key = 'avg_all', default = average_all,tooltip='Average all the loaded spectra'), sg.Radio('Norm. and average all', "RADIOMATH", key = 'norm_avg_all', default = norm_and_average,tooltip='First normalise, then average all the loaded spectra'), sg.Radio('Nothing', "RADIOMATH", key = 'none', default = do_nothing,tooltip='Select this option if you DO NOT want to combine the spectra', font = ('Helvetica', default_font_size, 'bold'))],
-    [sg.Radio('Sum all', "RADIOMATH", key = 'sum_all', default = sum_all,tooltip='Sum all the loaded spectra'), sg.Radio('Norm. and sum all', "RADIOMATH", key = 'norm_sum_all', default = normalize_and_sum_all,tooltip='First normalise, then sum all the loaded spectra'), sg.Checkbox('Use for spec. an.', text_color = 'yellow', key = 'use_for_spec_an', default = use_for_spec_an,tooltip='Select this to use the combined spectrum for the spectral analysis', font = ('Helvetica', default_font_size, 'bold'))],
+    [sg.Radio('Average all', "RADIOMATH", key = 'avg_all', default = average_all,tooltip='Average all the loaded spectra'), sg.Radio('Norm. and average all', "RADIOMATH", key = 'norm_avg_all', default = norm_and_average,tooltip='First normalize, then average all the loaded spectra'), sg.Radio('Nothing', "RADIOMATH", key = 'none', default = do_nothing,tooltip='Select this option if you DO NOT want to combine the spectra', font = ('Helvetica', default_font_size, 'bold'))],
+    [sg.Radio('Sum all', "RADIOMATH", key = 'sum_all', default = sum_all,tooltip='Sum all the loaded spectra'), sg.Radio('Norm. and sum all', "RADIOMATH", key = 'norm_sum_all', default = normalize_and_sum_all,tooltip='First normalize, then sum all the loaded spectra'), sg.Checkbox('Use for spec. an.', text_color = 'yellow', key = 'use_for_spec_an', default = use_for_spec_an,tooltip='Select this to use the combined spectrum for the spectral analysis', font = ('Helvetica', default_font_size, 'bold'))],
     ],font=("Helvetica", 12, 'bold'))],
 
     # Bottom parameters
     [sg.Checkbox('Reorder', key = 'reorder_op', default = reorder_op, tooltip='Activate in case you want to perform the spectra manipulation tasks in different order'), sg.Button('Reorder tasks', tooltip='Change the order of the spectra manipulation tasks'), sg.Radio('Save intermediate spectra', "RADIOSAVE", key = 'save_intermediate_spectra', default = save_intermediate_spectra, tooltip='Save a processed spectrum for EACH activated task'), sg.Radio('Save final spectra', "RADIOSAVE", key = 'save_final_spectra', default = save_final_spectra, tooltip='Save only the final processed spectrum after applying the tasks'), sg.Radio('Do not save processed spectra', "RADIOSAVE", key = 'not_save_spectra', default = not_save_spectra, tooltip='Do not save any processed spectrum to disc'), sg.Push(), sg.Button('I need help',button_color=('black','orange'), size = (11,1)), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
     ]
 
-    spec_window = sg.Window('Spectra manipulation parameters', spec_layout)
-
+    spec_window = open_subwindow('Spectra manipulation parameters', spec_layout, zm=zm)
 
     while True:
         spec_event, spec_values = spec_window.read()
@@ -286,7 +293,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
             ("Filtering and denoise", "filter_denoise", filter_denoise),
             ("Doppler/z correction", "dop_cor", dop_cor),
             ("Heliocentric correction", "helio_corr", helio_corr),
-            ("Rebinning", "rebining", rebinning),
+            ("Rebinning", "rebinning", rebinning),
             ("Degrade resolution", "degrade", degrade),
             ("Normalise spectrum", "normalize_wave", normalize_wave),
             ("Velocity dispersion broadening", "sigma_broad", sigma_broad),
@@ -320,7 +327,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
             ]
 
             # creating thw window
-            window_reorder = sg.Window("Order the tasks", layout_reorder)
+            window_reorder = open_subwindow("Order the tasks", layout_reorder, zm=zm)
 
             sorting_cond = 0
             while True:
@@ -393,7 +400,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                 ]
 
             print ('*** Clean spectra window open. The main panel will be inactive until you close the window ***')
-            clean_window = sg.Window('Clean spectra parameters', clean_layout)
+            clean_window = open_subwindow('Clean spectra parameters', clean_layout, zm=zm)
 
             while True:
                 clean_event, clean_values = clean_window.read()
@@ -456,7 +463,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
             ]
 
             print ('*** Denoise window open. The main panel will be inactive until you close the window ***')
-            denoise_window = sg.Window('Denoise parameters', denoise_layout)
+            denoise_window = open_subwindow('Denoise parameters', denoise_layout, zm=zm)
 
             while True:
                 denoise_event, denoise_values = denoise_window.read()
@@ -540,7 +547,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                 ]
 
             print ('*** Dopcor parameters window open. The main panel will be inactive until you close the window ***')
-            dopcor_window = sg.Window('Dopcor parameters', dopcor_layout)
+            dopcor_window = open_subwindow('Dopcor parameters', dopcor_layout, zm=zm)
 
             while True:
                 dopcor_event, dopcor_values = dopcor_window.read()
@@ -584,7 +591,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                 ]
 
             print ('*** Heliocor parameters window open. The main panel will be inactive until you close the window ***')
-            heliocor_window = sg.Window('Heliocor parameters', heliocor_layout)
+            heliocor_window = open_subwindow('Heliocor parameters', heliocor_layout, zm=zm)
 
             while True:
                 heliocor_event, heliocor_values = heliocor_window.read()
@@ -671,7 +678,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
                 ]
 
             print ('*** Degrade resolution parameters window open. The main panel will be inactive until you close the window ***')
-            degrade_res_window = sg.Window('Degrade resolution parameters', degrade_res_layout)
+            degrade_res_window = open_subwindow('Degrade resolution parameters', degrade_res_layout, zm=zm)
 
             while True:
                 degrade_res_event, degrade_res_values = degrade_res_window.read()
@@ -758,7 +765,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
             ]
 
             print ('*** Continuum subtraction window open. The main panel will be inactive until you close the window ***')
-            continuum_window = sg.Window('Continuum parameters', continuum_layout)
+            continuum_window = open_subwindow('Continuum parameters', continuum_layout, zm=zm)
 
             while True:
                 continuum_event, continuum_values = continuum_window.read()

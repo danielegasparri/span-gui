@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,6 +34,7 @@ try: #try local import if executed as script
     from span_functions import system_span as stm
     from span_functions import spec_manipul as spman
     from span_functions import utilities as uti
+    from span_modules import layouts
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
@@ -34,6 +42,7 @@ except ModuleNotFoundError: #local import if executed as package
     from span.span_functions import system_span as stm
     from span.span_functions import spec_manipul as spman
     from span.span_functions import utilities as uti
+    from . import layouts
 
 import os
 import numpy as np
@@ -43,7 +52,8 @@ import matplotlib.pyplot as plt
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 
-def show_fits_header(prev_spec, layout):
+
+def show_fits_header(prev_spec):
 
     """
     Displays the FITS header of the selected spectrum in a separate window.
@@ -55,8 +65,8 @@ def show_fits_header(prev_spec, layout):
     print('*** Showing header ***')
     header = uti.show_hdr(prev_spec)
 
-    layout_hdr = [[sg.Multiline(header, size=(100, 40) if layout == "android" else (120, 30),
-                                disabled=True, autoscroll=True, key='-MULTILINE-')],
+    sg.theme('DarkBlue3')
+    layout_hdr = [[sg.Multiline(header, size=(120, 30) if layouts.layout_android else (100, 40), disabled=True, autoscroll=True, key='-MULTILINE-')],
                   [sg.Button('Close')]]
 
     window_hdr = sg.Window('FITS Header Viewer', layout_hdr, finalize=True)

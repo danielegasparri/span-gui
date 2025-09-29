@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -286,14 +293,19 @@ def apply_velocity_dispersion(event, save_plot, params):
     resolution_spec = params.resolution_spec
     resolution_template = params.resolution_template
     band_sigma = params.band_sigma
-    cont_sigma = params.cont_sigma
     band_custom = params.band_custom
     prev_spec_nopath = params.prev_spec_nopath
     task_done = params.task_done
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
     result_plot_dir = params.result_plot_dir
+    resolution_mode_spec_sigma_R = params.resolution_mode_spec_sigma_R
+    resolution_mode_spec_sigma_FWHM = params.resolution_mode_spec_sigma_FWHM
+    resolution_mode_temp_sigma_R = params.resolution_mode_temp_sigma_R
+    resolution_mode_temp_sigma_FWHM = params.resolution_mode_temp_sigma_FWHM
 
+    spec_res_mode = 'R' if resolution_mode_spec_sigma_R else 'FWHM_A'
+    tpl_res_mode = 'R' if resolution_mode_temp_sigma_R else 'FWHM_A'
 
     # 1) HEADER
     if event == 'Process all':
@@ -320,10 +332,10 @@ def apply_velocity_dispersion(event, save_plot, params):
         wave_limits_template_sigma = np.array([wave_temp_sigma[0], wave_temp_sigma[-1]])
 
         # Check if the band limits are within both the spectrum and template
-        if ((band_sigma[0] < wavelength[0] or cont_sigma[0] < wavelength[0] or
-            band_sigma[1] > wavelength[-1] or cont_sigma[1] > wavelength[-1] or
-            band_sigma[0] < wave_limits_template_sigma[0] or cont_sigma[0] < wave_limits_template_sigma[0] or
-            band_sigma[1] > wave_limits_template_sigma[-1] or cont_sigma[1] > wave_limits_template_sigma[-1])):
+        if ((band_sigma[0] < wavelength[0] or
+            band_sigma[1] > wavelength[-1] or
+            band_sigma[0] < wave_limits_template_sigma[0] or
+            band_sigma[1] > wave_limits_template_sigma[-1])):
             if event == "Process all":
                 print("Wavelength interval for the band is out of the range of the spectrum or the template!")
             else:
@@ -331,7 +343,7 @@ def apply_velocity_dispersion(event, save_plot, params):
             return None, None, None, params
 
         # Ensure band_sigma and cont_sigma are properly ordered
-        if band_custom and (band_sigma[0] > band_sigma[1] or cont_sigma[0] > cont_sigma[1]):
+        if band_custom and (band_sigma[0] > band_sigma[1]):
             if event == "Process all":
                 print("It seems we have a problem. Did you invert the wavelength range?")
             else:
@@ -346,21 +358,17 @@ def apply_velocity_dispersion(event, save_plot, params):
         else:
             compute_errors = False
 
-        sigma, error, chisqr, band_wave, band_flux, band_flux_template_fitted, sigma_instrumental = span.sigma_measurement(
-            wavelength, flux, template_sigma, lambda_units_template_sigma, resolution_spec, resolution_template,
-            band_sigma, cont_sigma, compute_errors
-        )
-
+        # Calling function
+        sigma, error, dv0, chisqr, dof, velscale, upper_limit, band_wave, band_flux, band_flux_template, band_flux_template_fitted = span.measure_sigma_simple(wavelength, flux, template_sigma, lambda_units_template_sigma, band_sigma, spec_res_mode, resolution_spec, tpl_res_mode, resolution_template)
+        
         print(prev_spec_nopath)
-        print(f"Sigma: {sigma} +/- {round(error,2)} km/s    Chi-Square: {chisqr}\n")
+        print(f"Sigma = {round(sigma,2)} +/- {round(error,2)} km/s   V = {round(dv0,1)}    Chi-Square = {round(chisqr,2)}\n")
         print('')
 
         # 4) PLOTTING
         # If previewing, show the plot
         if event == "Preview result" or (event == 'Process all' and save_plot):
-            if sigma == sigma_instrumental:
-                sg.popup("WARNING: The real velocity dispersion is lower than the instrumental sigma of the spectrum. Do not trust the result!")
-
+            
             # Plot results
             sigma_title = str(round(sigma, 1))
 
@@ -380,14 +388,12 @@ def apply_velocity_dispersion(event, save_plot, params):
             ax2.set_xlabel("Wavelength (A)")
             ax2.set_ylabel("Residuals")
             ax2.legend(fontsize=10)
-
             if event == "Preview result":
                 plt.show()
                 plt.close()
             else:
                 plt.savefig(result_plot_dir + '/'+ 'sigma_vel_' + prev_spec_nopath + '.png', format='png', dpi=300)
                 plt.close()
-
 
         return sigma, error, chisqr, params
 
@@ -1353,6 +1359,8 @@ def apply_ppxf_kinematics(event, save_plot, params):
     ppxf_kin_mask_ranges = params.ppxf_kin_mask_ranges
     ppxf_kin_mc_sim = params.ppxf_kin_mc_sim
     ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
+    ppxf_kin_user_bias = params.ppxf_kin_user_bias
+    ppxf_kin_bias = params.ppxf_kin_bias
     prev_spec_nopath = params.prev_spec_nopath
     result_spec = params.result_spec
     result_plot_dir = params.result_plot_dir
@@ -1386,21 +1394,22 @@ def apply_ppxf_kinematics(event, save_plot, params):
             sg.popup("The window band is out of the spectrum range")
         return None, None, None, None, None, None, None, None, None, None, None, params
 
+        
     try:
         #fitting with ppxf
         if not ppxf_kin_fixed_kin or not gas_kin:
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached)
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, bias = ppxf_kin_bias)
 
         if ppxf_kin_fixed_kin and gas_kin:
 
             # Fitst fit without gas
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, False, True, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, True, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached)
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, False, True, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, True, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, bias = ppxf_kin_bias)
 
             kinematics_fixed = kinematics
             kin_stars_templates_gas = updated_templates #updating the template for the second fit to be like the stellar fit template
 
             # Second fit for the gas
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, False, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates_gas, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, kinematics_fixed = kinematics_fixed)
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, False, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, stars_templates=kin_stars_templates_gas, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, kinematics_fixed = kinematics_fixed, bias = ppxf_kin_bias)
 
 
         if kin_stars_templates is None:
@@ -1621,6 +1630,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     sigma_lick_coeff_file = params.sigma_lick_coeff_file
     ssp_model_ppxf = params.ssp_model_ppxf
     interp_model_ppxf = params.interp_model_ppxf
+    ppxf_pop_save_spectra = params.ppxf_pop_save_spectra
     prev_spec_nopath = params.prev_spec_nopath
     prev_spec = params.prev_spec
     result_spec = params.result_spec
@@ -1856,7 +1866,7 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                     np.savetxt(file_all_mass_weights, mass_weights.reshape(-1, mass_weights.shape[-1]), fmt="%.8e", delimiter=' ', header="Mass weights")
                     print ('File containing the mass weights saved: ', file_all_mass_weights)
 
-                    if bestfit_flux_gas is None or bestfit_flux_gas == 0:
+                    if (bestfit_flux_gas is None or bestfit_flux_gas == 0) and ppxf_pop_save_spectra:
 
                         #saving the residual file
                         uti.save_fits_2d(bestfit_wave, residual_flux, file_fit_pop) #using the save_fits_2d function because the wavelength sampling is not linear
@@ -1869,21 +1879,23 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
                         print('')
 
                 except ValueError: #considering also the gas template if I receive this error
+                    if ppxf_pop_save_spectra:
+                        #saving the residual file
+                        uti.save_fits_2d(bestfit_wave, residual_flux, file_fit_pop)
 
-                    #saving the residual file
-                    uti.save_fits_2d(bestfit_wave, residual_flux, file_fit_pop)
+                        #saving the best template without gas:
+                        stellar_fit_flux = bestfit_flux-bestfit_flux_gas
+                        uti.save_fits_2d(bestfit_wave, stellar_fit_flux, file_fit_stellar_template)
 
-                    #saving the best template without gas:
-                    stellar_fit_flux = bestfit_flux-bestfit_flux_gas
-                    uti.save_fits_2d(bestfit_wave, stellar_fit_flux, file_fit_stellar_template)
+                        #saving the emission corrected spectra in linear step
+                        uti.save_fits_2d(bestfit_wave, emission_corrected_flux, file_spec_emission_corrected)
 
-                    #saving the emission corrected spectra in linear step
-                    uti.save_fits_2d(bestfit_wave, emission_corrected_flux, file_spec_emission_corrected)
-
-                    print ('File containing the residuals of the fit saved: ', file_fit_pop)
-                    print ('File containing the stellar fitted template: ', file_fit_stellar_template)
-                    print ('File containing the emission corrected spectra (empty if no gas selected): ', file_spec_emission_corrected)
-                    print('')
+                        print ('File containing the residuals of the fit saved: ', file_fit_pop)
+                        print ('File containing the stellar fitted template: ', file_fit_stellar_template)
+                        print ('File containing the emission corrected spectra (empty if no gas selected): ', file_spec_emission_corrected)
+                        print('')
+                    else:
+                        pass
             except TypeError:
                 print ('Something went wrong')
 

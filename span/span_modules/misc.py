@@ -6,26 +6,32 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
 
-#Miscellaneous collection of routines used by the GUI
+#Miscellaneous collection of functions used by the GUI
 
 try: #try local import if executed as script
     #GUI import
     from FreeSimpleGUI_local import FreeSimpleGUI as sg
     from span_modules import layouts
-
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
@@ -39,7 +45,7 @@ import urllib.request
 import zipfile
 import ssl
 import certifi
-
+import matplotlib
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
@@ -109,54 +115,67 @@ def change_result_path(config_folder, config_file):
 
 
 def get_layout():
-    """Function to select the layout based on the OS"""
+    """Function to select the layout based on the OS.
+    NOTE: runtime scaling (Tk + fonts + Matplotlib DPI) is handled by ZoomManager.
+    Here we only choose the layout and provide an initial scale hint.
+    """
+    # Set a safe base DPI once; ZoomManager will multiply this by the current scale.
+    matplotlib.rcParams['figure.dpi'] = 100
+
     current_os = os.name  # 'posix' for Linux/Mac, 'nt' for Windows
+
     if current_os == "nt":
-        # Adapting to scaling factors on windows, both for the GUI and Matplotlib
+        # Keep DPI awareness on Windows for crisp rendering
         import ctypes
-        import matplotlib
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
 
-        # DPI awareness for windows
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        ctypes.windll.user32.SetProcessDPIAware()
+        # OS-reported scale used only as initial HINT
+        try:
+            dpi_scale = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100.0
+        except Exception:
+            dpi_scale = 1.0
 
-        # Set the scaling for windows
-        dpi_scale = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100.0
+        # If OS scale < 1.5, start from 1.5 as a comfortable default
+        scale_win = 1.5 if dpi_scale < 1.5 else float(dpi_scale)
 
-        #with scaling <1.5, do not scale automatically
-        if dpi_scale < 1.5:
-            scale_win = 1.5
-            matplotlib.rcParams['figure.dpi'] = 100
-        else:
-            scale_win = dpi_scale
-            matplotlib.rcParams['figure.dpi'] = 100 * dpi_scale
-        fontsize = sg.set_options(font=("Helvetica", 11))
+        sg.set_options(font=("Helvetica", 11))
         default_size = 11
-
-        return layouts.layout_windows, scale_win, fontsize, default_size
+        return layouts.layout_windows, scale_win, None, default_size
 
     elif current_os == "posix":
-        # Further check between Linux e macOS
-        if "ANDROID_BOOTLOGO" in os.environ:  # Check for Android
+        # Android
+        if "ANDROID_BOOTLOGO" in os.environ:
             scale_win = 2.25
-            fontsize = sg.set_options(font=("Helvetica", 10))
+            sg.set_options(font=("Helvetica", 10))
             default_size = 10
-            return layouts.layout_android, scale_win, fontsize, default_size
-        elif os.uname().sysname == "Darwin":  # Check for macOS
-            scale_win = 1 #for macos the scaling does not work, so I set to 1
-            fontsize = sg.set_options(font=("Helvetica", 14))
+            return layouts.layout_android, scale_win, None, default_size
+
+        # macOS
+        elif os.uname().sysname == "Darwin":
+            # Tk widgets will scale; native titlebar/menubar will not.
+            scale_win = 1.0
+            sg.set_options(font=("Helvetica", 14))
             default_size = 14
-            return layouts.layout_macos, scale_win, fontsize, default_size
-        else:  # Linux
+            return layouts.layout_macos, scale_win, None, default_size
+
+        # Linux
+        else:
             scale_win = 1.5
-            fontsize = sg.set_options(font=("Helvetica", 10))
+            sg.set_options(font=("Helvetica", 10))
             default_size = 10
-            return layouts.layout_linux, scale_win, fontsize, default_size
+            return layouts.layout_linux, scale_win, None, default_size
+
     else:
-        print ("Operating system not recognised. Using Linux layout") # In case the system is not recognized, using the Linux layout
+        # Fallback to Linux layout + safe defaults
         scale_win = 1.5
-        fontsize = sg.set_options(font=("Helvetica", 10))
-        return layouts.layout_linux, scale_win, fontsize, default_size
+        sg.set_options(font=("Helvetica", 10))
+        default_size = 10
+        return layouts.layout_linux, scale_win, None, default_size
+
 
 
 #Function to check if the spectralTemplates folder is available

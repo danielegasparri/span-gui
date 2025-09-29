@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -30,7 +37,9 @@ try: #try local import if executed as script
     from span_functions.sauron_colormap import register_sauron_colormap
     from span_modules import misc
     from span_modules import layouts
+    from span_modules import utility_tasks
     from params import SpectraParams
+    from span_modules.ui_zoom import open_subwindow, ZoomManager
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
@@ -41,7 +50,9 @@ except ModuleNotFoundError: #local import if executed as package
     from span.span_functions.sauron_colormap import register_sauron_colormap
     from . import misc
     from . import layouts
+    from . import utility_tasks
     from .params import SpectraParams
+    from .ui_zoom import open_subwindow, ZoomManager
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -60,9 +71,12 @@ from astropy.io import fits
 from astropy.table import Table
 
 from dataclasses import replace
+import time
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
+
+zm = ZoomManager.get()
 
 
 # 1) PLOT DATA
@@ -92,7 +106,7 @@ def plot_data_window(BASE_DIR, layout):
 
     print ('*** Plotting window open. The main panel will be inactive until you close the window ***')
 
-    plot_window = sg.Window('Data Plotter', plot_layout)
+    plot_window = open_subwindow('Data Plotter', plot_layout, zm=zm)
 
     while True:
         plot_event, plot_values = plot_window.read()
@@ -234,35 +248,34 @@ def plot_maps_window(BASE_DIR, layout, params):
     else:
         map_layout = [
             [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
-            [sg.Input(key="-FITS-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Input(fits_path, key="-FITS-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
             [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
-            [sg.Input(key="-TXT-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+            [sg.Input(txt_path, key="-TXT-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
             [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
-            [sg.Input(key="-IMG-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
-            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(default_text="70,75,80,85,90,95,97,98,99,100", key="-ISOLEVELS-", size=(35, 1), font=("Helvetica", 12))],
+            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(default_text=plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(35, 1), font=("Helvetica", 12))],
             [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
             [sg.HorizontalSeparator()],
-            [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value="sauron", key="-CMAP-", readonly=True, font=("Helvetica", 12))],
+            [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value=plot_maps_colormap, key="-CMAP-", readonly=True, font=("Helvetica", 12))],
             [sg.Listbox(values=[], size=(54, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
-            [sg.Text("X lim:"), sg.Input(size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
-            [sg.Checkbox("Offset:", key = 'offset', font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(0, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=1.0, orientation='h', size=(28, 20), key="-SIGMA-", enable_events=True)],
-            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
+            [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
+            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(28, 20), key="-SIGMA-", enable_events=True)],
+            [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
             [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
 
         ]
 
-
-
-    map_window = sg.Window("2D Map Viewer", map_layout)
+    map_window = open_subwindow("2D Map Viewer", map_layout, zm=zm)
     x, y, bin_id = None, None, None
     result_df = None
     selected_quantity = None
 
-
     while True:
         map_event, map_values = map_window.read()
-        
 
+        if map_event == sg.WIN_CLOSED:
+            break
+        
         # Setting up the values
         fits_path = map_values["-FITS-"]
         txt_path = map_values["-TXT-"]
@@ -281,11 +294,6 @@ def plot_maps_window(BASE_DIR, layout, params):
         plot_maps_radial_profiles = map_values["-RADIAL-"]
         plot_maps_colormap = map_values["-CMAP-"]
         
-        if map_event == sg.WIN_CLOSED:
-            break
-        
-
-
         if map_event == "Load Files":
             try:
                 fits_path = map_values["-FITS-"]
@@ -358,12 +366,10 @@ def plot_maps_window(BASE_DIR, layout, params):
                     print(f"[WARNING] Invalid colormap range: {e}")
                     vmin, vmax = None, None
                 
-                
                 if plot_radial:
                     try:
                         if offset:
                             fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
-                            
                         else:
                             fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
                         
@@ -377,7 +383,6 @@ def plot_maps_window(BASE_DIR, layout, params):
                         plt.close()
                     except Exception as e:
                         sg.popup_error(f"Error in radial profile plot:\n{e}")
-
 
                 elif smoothing:
                     try:                          
@@ -438,7 +443,6 @@ def plot_maps_window(BASE_DIR, layout, params):
                     plt.close()
             else:
                 sg.popup("Please load files and select a quantity.")
-
 
         elif map_event == "Save selected":
             offset = map_values['offset']
@@ -561,7 +565,6 @@ def plot_maps_window(BASE_DIR, layout, params):
             else:
                 sg.popup("Please load files and select a quantity before saving.")
 
-
         elif map_event == "Save ALL":
             offset = map_values['offset']
             plot_radial = map_values.get("-RADIAL-", False)
@@ -586,7 +589,6 @@ def plot_maps_window(BASE_DIR, layout, params):
                             sg.popup('Offset value not valid!')
                             offset_value = 0  
                     
-                    
                     # Set X and Y limits if provided
                     try:
                         xmin = float(map_values["-XMIN-"]) if map_values["-XMIN-"] else None
@@ -609,10 +611,8 @@ def plot_maps_window(BASE_DIR, layout, params):
                         filename = f"{folder}/{stm.sanitize_filename(quantity)}.png"
                         filename_radial = f"{folder}/{stm.sanitize_filename(quantity)}_profile.png"
                         try:
-
                             if plot_radial:
                                 try:
-                                    
                                     if offset:
                                         fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, quantity)
                                     else:
@@ -657,7 +657,6 @@ def plot_maps_window(BASE_DIR, layout, params):
                                 plt.close(fig)
                             
                             else:
-                                
                                 img_path = map_values["-IMG-"]
                                 try:
                                     level_str = map_values["-ISOLEVELS-"]
@@ -665,7 +664,6 @@ def plot_maps_window(BASE_DIR, layout, params):
                                     iso_levels = sorted(set(iso_levels)) if len(iso_levels) >= 2 else None
                                 except Exception:
                                     iso_levels = None
-
 
                                 if offset:
                                     fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
@@ -745,7 +743,7 @@ def text_editor_window(layout):
             [sg.Button('Find/Replace', size = (15,1), font=('Helvetica', 12)), sg.Button('Match rows', size = (15,1), font=('Helvetica', 12)), sg.Button('Create New Column', size = (15,1), font=('Helvetica', 12)), sg.Button('Delete Columns', size = (15,1), font=('Helvetica', 12)), sg.Push(), sg.Button('Close', button_color=('white','orange'), size = (15,1), font=('Helvetica', 12, 'bold'))]
         ]
 
-    window_editor = sg.Window('Text editor', editor_layout)
+    window_editor = open_subwindow('Text editor', editor_layout, zm=zm)
     file_modified = False
     text_backup = ""
 
@@ -819,7 +817,7 @@ def text_editor_window(layout):
                 [sg.Button('Merge'), sg.Button('Exit')]
             ]
 
-            match_window = sg.Window('Match and merge rows', match_layout)
+            match_window = open_subwindow('Match and merge rows', match_layout, zm=zm)
 
             while True:
                 match_event, match_values = match_window.read()
@@ -875,13 +873,12 @@ def text_editor_window(layout):
 
 
         elif editor_event == 'Undo':
-            # Ripristina il testo alla sua versione precedente
+            # Undo
             window_editor['-TEXT-'].update(text_backup)
-            file_modified = True  # Imposta il flag di modifica
+            file_modified = True
         elif editor_event == '-TEXT-':
-            # Aggiorna il backup del testo quando viene modificato
             text_backup = editor_values['-TEXT-']
-            file_modified = True  # Imposta il flag di modifica
+            file_modified = True
 
 
     window_editor.close()
@@ -900,7 +897,7 @@ def fits_header_window():
         ]
 
     print ('*** Fits header editor open. The main panel will be inactive until you close the window ***')
-    fitsheader_window = sg.Window('Fits header editor', fitsheader_layout)
+    fitsheader_window = open_subwindow('Fits header editor', fitsheader_layout, zm=zm)
 
     while True:
 
@@ -926,7 +923,7 @@ def fits_header_window():
                 [sg.Button("Save Header"), sg.Button("Exit")]
             ]
 
-            subfitsheader_window = sg.Window("Single FITS header editor", subfitsheader_layout)
+            subfitsheader_window = open_subwindow("Single FITS header editor", subfitsheader_layout, zm=zm)
 
             while True:
                 subfitsheader_event, subfitsheader_values = subfitsheader_window.read()
@@ -989,7 +986,7 @@ def fits_header_window():
                 [sg.Button("Add/Modify"), sg.Button("Delete"), sg.Button("Exit")]
             ]
 
-            hdr_list_window = sg.Window("FITS header editor", hdr_list_layout)
+            hdr_list_window = open_subwindow("FITS header editor", hdr_list_layout, zm=zm)
 
             while True:
                 hdr_list_event, hdr_list_values = hdr_list_window.read()
@@ -1096,7 +1093,7 @@ def fits_header_window():
                 [sg.Button("Extract and Save"), sg.Button("Exit")]
             ]
 
-            ext_key_window = sg.Window("Extract and Save Keyword", ext_key_layout)
+            ext_key_window = open_subwindow("Extract and Save Keyword", ext_key_layout, zm=zm)
 
             while True:
                 ext_key_event, ext_key_values = ext_key_window.read()
@@ -1141,7 +1138,6 @@ def fits_header_window():
                     sg.popup ('File not found!')
                     continue
 
-
             ext_key_window.close()
 
     fitsheader_window.close()
@@ -1178,7 +1174,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
 
     print ('*** 2D spectra extraction open. The main panel will be inactive until you close the window ***')
 
-    spec_extr_window = sg.Window("2D spectra extraction", spec_extr_layout, finalize=True)
+    spec_extr_window = open_subwindow("2D spectra extraction", spec_extr_layout, zm=zm)
     canvas_elem = spec_extr_window["-CANVAS-"]
     canvas = canvas_elem.Widget
 
@@ -1199,7 +1195,6 @@ def long_slit_extraction(BASE_DIR, layout, params):
         extract_y_range_str= spec_extr_values['extract_y_range']
         snr_threshold_str= spec_extr_values['snr']
         pixel_scale_str= spec_extr_values['pix_scale']
-
 
         if spec_extr_event == ('Exit'):
             print('2D spec window closed. This main panel is now active again')
@@ -1297,7 +1292,6 @@ def long_slit_extraction(BASE_DIR, layout, params):
 
     spec_extr_window.close()
 
-
     #updating the params
     params = replace(params,
                     file_path_spec_extr = file_path_spec_extr,
@@ -1307,7 +1301,6 @@ def long_slit_extraction(BASE_DIR, layout, params):
                     snr_threshold_str = snr_threshold_str,
                     pixel_scale_str = pixel_scale_str,
                      )
-
 
     return params
 
@@ -1326,7 +1319,8 @@ def datacube_extraction(params):
     ifs_lmax_tot = params.ifs_lmax_tot
     ifs_preloaded_routine = params.ifs_preloaded_routine
     ifs_min_snr_mask = params.ifs_min_snr_mask
-    ifs_target_snr = params.ifs_target_snr
+    ifs_target_snr_voronoi = params.ifs_target_snr_voronoi
+    ifs_target_snr_elliptical = params.ifs_target_snr_elliptical
     ifs_routine_read = params.ifs_routine_read
     ifs_routine_read_default = params.ifs_routine_read_default
     ifs_user_routine = params.ifs_user_routine
@@ -1342,14 +1336,20 @@ def datacube_extraction(params):
     ifs_existing_bin_folder = params.ifs_existing_bin_folder
     ifs_bin_method = params.ifs_bin_method
     ifs_covariance = params.ifs_covariance
-
+    ifs_elliptical = params.ifs_elliptical
+    ifs_pa_user = params.ifs_pa_user
+    ifs_q_user = params.ifs_q_user
+    ifs_ell_r_max = params.ifs_ell_r_max
+    ifs_ell_min_dr = params.ifs_ell_min_dr
+    isf_auto_pa_q = params.isf_auto_pa_q
+    isf_auto_center = params.isf_auto_center
 
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
 
     cube_ifs_layout = [
-        [sg.Text('Select a fits cube:', font = ('', default_size, 'bold'), tooltip='Select a datacube WITHIN the inputData folder'), sg.InputText(ifs_input, size=(30, 1), key = 'ifs_input'), sg.FileBrowse(file_types=(('fits file', '*.fits *.fit'),)), sg.Button('View datacube', button_color=('black','light blue'), size = (18,1), tooltip='Take a look at the datacube, it may be useful')],
+        [sg.Text('Select a fits cube:', font = ('', default_size, 'bold'), tooltip='Select a datacube WITHIN the inputData folder'), sg.InputText(ifs_input, size=(45, 1), key = 'ifs_input'), sg.FileBrowse(file_types=(('fits file', '*.fits *.fit'),)), sg.Button('View datacube', button_color=('black','light blue'), size = (18,1), tooltip='Take a look at the datacube, it may be useful')],
         [sg.Text('Name of the run:', tooltip='Just give a name for this session'), sg.InputText(ifs_run_id, size = (15,1), key = 'ifs_run_id'), sg.Text('z:', tooltip='Redshift estimation. Put zero to not correct for redshift'), sg.InputText(ifs_redshift, size = (8,1), key = 'ifs_redshift'), sg.Text('Wave to extract (A):', tooltip='Wavelength range you want to extract. Look at the datacube if you do not know'), sg.InputText(ifs_lmin_tot, size = (6,1), key = 'ifs_lmin_tot'), sg.Text('-'), sg.InputText(ifs_lmax_tot, size = (6,1), key = 'ifs_lmax_tot')],
 
         [sg.HorizontalSeparator()],
@@ -1364,7 +1364,12 @@ def datacube_extraction(params):
 
         [sg.HorizontalSeparator()],
 
-        [sg.Radio('Voronoi bin', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Automatic voronoi rebinning'), sg.Text('S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50'), sg.InputText(ifs_target_snr, size = (4,1), key = 'ifs_target_snr'), sg.Radio('Manual bin', "RADIOVOR", default=ifs_manual_bin, key='ifs_manual_bin', tooltip='Select region(s) to bin. Masking is not applied here'), sg.Button('Manual binning'), sg.Radio('Existing bins', "RADIOVOR", default=ifs_existing_bin, key='ifs_existing_bin', tooltip='Use already available mask and bin info'), sg.Input(ifs_existing_bin_folder, key='ifs_existing_bin_folder', size = (11,1)), sg.FolderBrowse(tooltip='Browse the folder where your *_table.fits and *_mask.fits are located')],
+        [sg.Text('Binning modes:', font = ('', default_size, 'bold'))],
+        [sg.Radio('Voronoi binning with the following signal-to-noise:', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Automatic voronoi rebinning'), sg.Text('S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50'), sg.InputText(ifs_target_snr_voronoi, size = (4,1), key = 'ifs_target_snr_voronoi')], 
+        [sg.Radio('Elliptical binning:', "RADIOVOR", default=ifs_elliptical, key='ifs_elliptical', tooltip='Automatic elliptical rebinning'), sg.Text('PA:', tooltip='PA of the galaxy'), sg.InputText(ifs_pa_user, size = (4,1), key = 'ifs_pa_user'), sg.Text('q:', tooltip='Insert the ellipticity of the bins. 1 is for circular annuli'), sg.InputText(ifs_q_user, size = (3,1), key = 'ifs_q_user'), sg.Checkbox('Auto ellipses', default = isf_auto_pa_q, key = 'isf_auto_pa_q', tooltip='If activated, SPAN will find the PA and q for you'), sg.Checkbox('Auto center', default = isf_auto_center, key = 'isf_auto_center', tooltip='If activated, SPAN will find the photometric center instead using the origin of the coordinates'), sg.Push(),  sg.Text('S/N:', tooltip='Select the minimum S/N of the bins. Set low to let dR decide the bin radiii'), sg.InputText(ifs_target_snr_elliptical, size = (3,1), key = 'ifs_target_snr_elliptical'), sg.Text('R max:', tooltip='Maximum radius in arcsec to consider for binning'), sg.InputText(ifs_ell_r_max, size = (4,1), key = 'ifs_ell_r_max'), sg.Text('dR:', tooltip='Minimum R thickness of the bins, in arcsec. Must be >= of the spaxel sampling'), sg.InputText(ifs_ell_min_dr, size = (4,1), key = 'ifs_ell_min_dr')], 
+        [sg.Radio('Manual binning by selecting custom regions or spaxels:', "RADIOVOR", default=ifs_manual_bin, key='ifs_manual_bin', tooltip='Select region(s) to bin. Masking is not applied here'), sg.Button('Perform manual binning')], 
+        [sg.Radio('Use already generated bin scheme stored in your pc', "RADIOVOR", default=ifs_existing_bin, key='ifs_existing_bin', tooltip='Use already available mask and bin info'), sg.Input(ifs_existing_bin_folder, key='ifs_existing_bin_folder', size = (21,1)), sg.FolderBrowse(tooltip='Browse the folder where your *_table.fits and *_mask.fits are located')],
+
 
         [sg.HorizontalSeparator()],
 
@@ -1372,7 +1377,7 @@ def datacube_extraction(params):
     ]
 
     print ('*** Cube extraction routine open. The main panel will be inactive until you close the window ***')
-    cube_ifs_window = sg.Window('Cube extraction using GIST standard', cube_ifs_layout)
+    cube_ifs_window = open_subwindow('Cube extraction using GIST standard', cube_ifs_layout, zm=zm)
 
     while True:
 
@@ -1382,6 +1387,8 @@ def datacube_extraction(params):
             print ('Cube extraction routine closed. This main panel is now active again')
             print ('')
             break
+
+
 
         #assigning user values
         ifs_run_id = cube_ifs_values['ifs_run_id']
@@ -1393,14 +1400,25 @@ def datacube_extraction(params):
         ifs_mask = cube_ifs_values['ifs_mask']
         ifs_output_dir = ifs_output + ifs_run_id
 
-
         ifs_preloaded_routine = cube_ifs_values['ifs_preloaded_routine']
         ifs_user_routine = cube_ifs_values['ifs_user_routine']
         ifs_user_routine_file = cube_ifs_values['ifs_user_routine_file']
 
         ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
         ifs_voronoi = cube_ifs_values['ifs_voronoi']
+        ifs_elliptical = cube_ifs_values['ifs_elliptical']
+        elliptical = ifs_elliptical
+        
+        isf_auto_pa_q = cube_ifs_values['isf_auto_pa_q']
+        isf_auto_center = cube_ifs_values['isf_auto_center']
 
+        if ifs_voronoi:
+            ifs_bin_method = 'VORONOI'
+        elif ifs_manual_bin:
+            ifs_bin_method = 'SPAXEL'
+        elif ifs_elliptical:
+            ifs_bin_method = 'ELLIPTICAL'
+            
         ifs_existing_bin = cube_ifs_values['ifs_existing_bin']
         if ifs_existing_bin:
             ifs_existing_bin_folder = cube_ifs_values['ifs_existing_bin_folder']
@@ -1410,8 +1428,31 @@ def datacube_extraction(params):
             ifs_lmin_tot = float(cube_ifs_values['ifs_lmin_tot'])
             ifs_lmax_tot = float(cube_ifs_values['ifs_lmax_tot'])
             ifs_min_snr_mask = float(cube_ifs_values['ifs_min_snr_mask'])
-            ifs_target_snr = float(cube_ifs_values['ifs_target_snr'])
-        
+            
+            ifs_target_snr_voronoi = float(cube_ifs_values['ifs_target_snr_voronoi'])
+            ifs_target_snr_elliptical = float(cube_ifs_values['ifs_target_snr_elliptical'])
+            
+            ifs_target_snr = ifs_target_snr_elliptical if ifs_bin_method == 'ELLIPTICAL'  else ifs_target_snr_voronoi
+            ifs_pa_user = float(cube_ifs_values['ifs_pa_user'])
+            ifs_q_user = float(cube_ifs_values['ifs_q_user'])
+            ifs_ell_r_max = float(cube_ifs_values['ifs_ell_r_max'])
+            ifs_ell_min_dr = float(cube_ifs_values['ifs_ell_min_dr'])
+            
+            #Assumung the center of the new coordinate system is zero
+            ell_x0=0
+            ell_y0=0
+            
+            if isf_auto_pa_q and ifs_bin_method == 'ELLIPTICAL':
+                ifs_pa = None
+                ifs_q = None
+            else: 
+                ifs_pa = ifs_pa_user
+                ifs_q = ifs_q_user
+            if isf_auto_center and ifs_bin_method == 'ELLIPTICAL':
+                ell_x0=None
+                ell_y0=None
+                
+            
             user_lmin_snr = cube_ifs_values['ifs_lmin_snr']
             user_lmax_snr = cube_ifs_values['ifs_lmax_snr']
 
@@ -1425,7 +1466,6 @@ def datacube_extraction(params):
                     # Checking the input values
                     ifs_lmin_snr = float(user_lmin_snr)
                     ifs_lmax_snr = float(user_lmax_snr)
-                    # print(f"Using the {ifs_lmin_snr} - {ifs_lmax_snr} Å range for S/N")
                 except ValueError:
                     sg.popup("Invalid wavelength range for S/N. Please enter valid numbers.")
                     continue
@@ -1437,12 +1477,6 @@ def datacube_extraction(params):
 
         if ifs_user_routine:
             ifs_routine_selected = ifs_user_routine_file
-
-
-        if cube_ifs_event == ('Exit'):
-            print ('Cube extraction routine closed. This main panel is now active again')
-            print ('')
-            break
 
         #routine to view the datacube
         if cube_ifs_event == 'View datacube':
@@ -1580,8 +1614,7 @@ def datacube_extraction(params):
                     "Drag: mask/unmask area\n"
                     "Close this window to save"
                 )
-                ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes,
-                            fontsize=10, va='center', ha='left', color='blue')
+                ax_img.text(1.05, 0.5, instructions, transform=ax_img.transAxes, fontsize=10, va='center', ha='left', color='blue')
 
                 # State of the user interaction
                 state = {'start_point': None, 'dragging': False, 'deselecting': False}
@@ -1669,13 +1702,13 @@ def datacube_extraction(params):
                 sg.popup("Fits datacube not valid.")
                 continue
 
-
         if ifs_existing_bin:
             cubextr.handle_existing_bin_files(ifs_existing_bin_folder, ifs_output_dir, ifs_run_id)
 
-        # preview mode for voronoi binning
+        # preview mode for voronoi or elliptical binning
         if cube_ifs_event == 'Preview bins' and not ifs_manual_bin:
-            voronoi = True
+            voronoi = ifs_voronoi
+            # elliptical = ifs_elliptical
             preview = True
 
             # Creating the disctionary to be passed to the cube_extract module
@@ -1684,18 +1717,19 @@ def datacube_extraction(params):
                 ifs_ow_output, ifs_routine_selected, ifs_origin,
                 ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                 ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
-                ifs_covariance)
+                ifs_covariance, ell_pa_astro_deg=ifs_pa, ell_x0=ell_x0, ell_y0=ell_y0, ell_q=ifs_q,
+                       ell_min_dr=ifs_ell_min_dr, ell_r_max=ifs_ell_r_max)
+            
+                                                                                
             try:
-                cubextr.extract(config, preview, voronoi, ifs_manual_bin, ifs_existing_bin)
+                cubextr.extract(config, preview, voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
             except Exception as e:
                 sg.popup("Error showing the bins:", str(e))
                 continue
 
-
-
         # Performing manual binning by the user, by selecting one or multiple regions in a matplotlib iterative window
         # Using a modified version of the mask routine above to select the manual binning regions. Then inverting the mask to consider ONLY the selected spaxels.
-        if cube_ifs_event == 'Manual binning':
+        if cube_ifs_event == 'Perform manual binning':
             cube_ifs_window['ifs_manual_bin'].update(True)
             ifs_manual_bin = cube_ifs_values['ifs_manual_bin']
 
@@ -1831,7 +1865,6 @@ def datacube_extraction(params):
                 plt.show()
                 plt.close()
 
-
                 #DOING THE MAGIC: Finding all the contigous selected spaxels, assign an integer flag for each region selected by the user.
                 labeled_mask = label(bin_mask, connectivity=1)
 
@@ -1873,7 +1906,7 @@ def datacube_extraction(params):
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
                     ifs_covariance_manual)
                 try:
-                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Sorry, Error.", str(e))
                     continue
@@ -1881,7 +1914,6 @@ def datacube_extraction(params):
             except Exception as e:
                 sg.Popup('You first need to define the regions to be binned!\nOtherwise Select the Voronoi rebinning to automatically rebin the data')
                 continue
-
 
         # NOW WE HAVE THE MAP WITH THE LABELED SPAXELS. Negative labels means spaxels not selected, therefore not considered. Positive labels identify the spaxels to consider for binning. Contiguous regions are marked with the same identifier (e.g. 1). This map has been stretched to 1D following the same order that the cubextr stores the spaxel infos in the _table.fit file. Now we need to generate the _table.fit file without any rebinning in order to have the BIN_ID of each spaxel, then we replace the BIN_ID array of the file with the bin info stored in the third component of the mask_labels array.
 
@@ -1914,11 +1946,10 @@ def datacube_extraction(params):
                     ifs_covariance_manual)
                 try:
                     #running the cubextract module to produce the spaxel and BIN_ID map
-                    cubextr.extract(config_manual, True, voronoi_bin, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Error! Cannot show the bins", str(e))
                     continue
-
 
                 # #3) REPLACE THE BIN_INFO IN THE _TABLE.FITS WITH THE LABELLED VALUES STORED IN region_labels
                 fits_table_path = result_data + '/' + ifs_run_id + '/' + ifs_run_id + '_table.fits'
@@ -1976,12 +2007,12 @@ def datacube_extraction(params):
                 # 5) Run cubextract again with the new bin configuration
                 try:
                     mock_voronoi = True # Fake voronoi bin required
-                    cubextr.extract(config_manual, False, mock_voronoi, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, False, mock_voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.Popup("ERROR performing the extraction")
 
 
-            # With voronoi rebinning things are easier:
+            # With voronoi or elliptical rebinning things are easier:
             if not ifs_manual_bin:
 
             # Creating the dictionary to be passed to the cube_extract module
@@ -1990,21 +2021,19 @@ def datacube_extraction(params):
                     ifs_ow_output, ifs_routine_selected, ifs_origin,
                     ifs_lmin_tot, ifs_lmax_tot, ifs_lmin_snr, ifs_lmax_snr,
                     ifs_min_snr_mask, ifs_mask, ifs_bin_method, ifs_target_snr,
-                    ifs_covariance
-    )
-
+                    ifs_covariance, ell_pa_astro_deg=ifs_pa, ell_x0=ell_x0, ell_y0=ell_y0, ell_q=ifs_q,
+                        ell_min_dr=ifs_ell_min_dr, ell_r_max=ifs_ell_r_max)
 
                 print ('This might take a while. Please, relax...')
 
-                try:
-                    voronoi = True
-                    preview = False
-                    #calling the cube_extraction routine
-                    cubextr.extract(config, preview, voronoi, ifs_manual_bin, ifs_existing_bin)
-                except Exception as e:
-                    sg.Popup ('ERROR performing the extraction')
-                    continue
-
+                # try:
+                voronoi = True
+                preview = False
+                #calling the cube_extraction routine
+                cubextr.extract(config, preview, voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
+                # except Exception as e:
+                #     sg.Popup ('ERROR performing the extraction')
+                #     continue
 
             #extracting the bin positions infos and saving in a txt file and in lists
             root_spectra_file_bin_info = result_data+'/'+ifs_run_id+'/'+ifs_run_id+'_table.fits'
@@ -2054,7 +2083,6 @@ def datacube_extraction(params):
                     f.write(f"{bin_id} {bin_number} {bin_x} {bin_y} {bin_snr} {bin_nspx}\n")
 
             print("Text file written with BIN info:", output_file_bin_data)
-
 
             #saving the extracted spectra also in single fits files SPAN-ready
             try:
@@ -2109,6 +2137,10 @@ def datacube_extraction(params):
                 stm.save_to_text_file(file_list, output_file)
                 sg.Popup('Spectra file list of the bins saved in ', output_file, 'You can now browse and load this list file\n\nWARNING: change the name of the run to process again')
 
+        if cube_ifs_event == ('Exit'):
+            print ('Cube extraction routine closed. This main panel is now active again')
+            print ('')
+            break
 
         #showing the help file
         if cube_ifs_event == 'I need help':
@@ -2131,7 +2163,8 @@ def datacube_extraction(params):
                     ifs_lmax_tot = ifs_lmax_tot,
                     ifs_preloaded_routine = ifs_preloaded_routine,
                     ifs_min_snr_mask = ifs_min_snr_mask,
-                    ifs_target_snr = ifs_target_snr,
+                    ifs_target_snr_voronoi = ifs_target_snr_voronoi,
+                    ifs_target_snr_elliptical = ifs_target_snr_elliptical,
                     ifs_routine_read = ifs_routine_read,
                     ifs_routine_read_default = ifs_routine_read_default,
                     ifs_user_routine = ifs_user_routine,
@@ -2146,6 +2179,15 @@ def datacube_extraction(params):
                     ifs_existing_bin_folder = ifs_existing_bin_folder,
                     ifs_bin_method = ifs_bin_method,
                     ifs_covariance = ifs_covariance,
+                    ifs_elliptical = ifs_elliptical,
+                    ifs_pa_user = ifs_pa_user,
+                    ifs_q_user = ifs_q_user,
+                    # ifs_ell_min = ifs_ell_min,
+                    ifs_ell_r_max = ifs_ell_r_max,
+                    ifs_ell_min_dr = ifs_ell_min_dr,
+                    isf_auto_pa_q = isf_auto_pa_q,
+                    isf_auto_center = isf_auto_center
+                    
                      )
 
     return params
@@ -2176,3 +2218,338 @@ def save_mask_regions_txt(labeled_mask, output_filename):
     # Converting the list to numpy and return it
     mask_labels = np.array(mask_labels_list, dtype=int)
     return mask_labels
+
+
+#7) UTILITIES WINDOW
+def utilities_window(params, one_spec_flag: bool):
+    
+    utilities_show_header = params.utilities_show_header
+    utilities_step = params.utilities_step
+    utilities_resolution = params.utilities_resolution
+    utilities_resolution_wmin = params.utilities_resolution_wmin
+    utilities_resolution_wmax = params.utilities_resolution_wmax
+    utilities_convert = params.utilities_convert
+    utilities_convert_tofit = params.utilities_convert_tofit
+    utilities_convert_totxt = params.utilities_convert_totxt
+    utilities_compare = params.utilities_compare
+    utilities_compare_spec = params.utilities_compare_spec
+    utilities_convert_flux = params.utilities_convert_flux
+    utilities_convert_flux_fnu = params.utilities_convert_flux_fnu
+    utilities_convert_flux_flambda = params.utilities_convert_flux_flambda
+    utilities_snr = params.utilities_snr
+    utilities_snr_wave = params.utilities_snr_wave
+    utilities_snr_wave_epsilon = params.utilities_snr_wave_epsilon
+
+    layout, scale_win, fontsize, default_size = misc.get_layout()
+    if layout == layouts.layout_windows:
+        sg.theme('DarkBlue3')
+        utilities_layout = [
+
+                [sg.Frame('Utilities', [
+                [sg.Checkbox('Show the header of the selected spectrum', default = utilities_show_header, font = ('Helvetica', 11, 'bold'), key = 'show_hdr',tooltip='Show fits header')],
+                [sg.Checkbox('Show the wavelength step of the spectrum', default = utilities_step, font = ('Helvetica', 11, 'bold'), key = 'show_step',tooltip='Show spectrum wavelength step')],
+                [sg.Checkbox('Estimate the resolution:', default = utilities_resolution, font = ('Helvetica', 11, 'bold'), key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText(utilities_resolution_wmin, size = (5,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText(utilities_resolution_wmax, size = (5,1), key = 'lambda_res_right')],
+                [sg.HorizontalSeparator()],
+                [sg.Checkbox('Convert the spectrum to:', default = utilities_convert, font = ('Helvetica', 11, 'bold'), key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = utilities_convert_totxt, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", default = utilities_convert_tofit, key = 'convert_to_fits')],
+                [sg.Checkbox('Compare spectrum with: ', default = utilities_compare, font = ('Helvetica', 11, 'bold'), key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText(utilities_compare_spec, size = (11,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
+                [sg.Checkbox('Convert Flux', default = utilities_convert_flux, font = ('Helvetica', 11, 'bold'), key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = utilities_convert_flux_fnu, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", default = utilities_convert_flux_flambda, key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')), sg.Text(' ', font = ('Helvetica', 1)) ],
+                [sg.Checkbox('S/N:', default = utilities_snr, font = ('Helvetica', 11, 'bold'), key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText(utilities_snr_wave, size = (4,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(utilities_snr_wave_epsilon, size = (3,1), key = 'delta_wave_snr'), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))],
+                ], font=("Helvetica", 12, 'bold')),
+
+                #Buttons to perform the utility actions
+                sg.Frame('Utility Actions',[
+                [sg.Text('')],
+                [sg.Button('Show info',button_color=('black','light gray'), size = (11,1))],
+                [sg.Text('',font=("Helvetica", 5))],
+                [sg.Text('')],
+                [sg.HorizontalSeparator()],
+                [sg.Button('One',button_color=('black','light gray'), size = (5,1)), sg.Button('All',button_color=('black','light gray'), size = (4,1))],
+                [sg.Button('Compare',button_color=('black','light gray'), size = (11,1))],
+                [sg.Button('One',button_color=('black','light gray'), size = (5,1), key = ('convert_one')), sg.Button('All',button_color=('black','light gray'), size = (4,1), key = 'convert_all')],
+                [sg.Button('Show snr',button_color=('black','light gray'), size = (11,1))],
+                ] ,font=("Helvetica", 10, 'bold'))],
+                [sg.Exit(size=(18, 1))]
+
+        ]
+
+    if layout == layouts.layout_linux:
+        sg.theme('DarkBlue3')
+        utilities_layout = [
+            #Utility frame
+            [sg.Frame('Utilities', [
+            [sg.Checkbox('Show the header of the selected spectrum', default = utilities_show_header, font = ('Helvetica', 11, 'bold'), key = 'show_hdr',tooltip='Show fits header')],
+            [sg.Checkbox('Show the wavelength step of the spectrum', default = utilities_step, font = ('Helvetica', 11, 'bold'), key = 'show_step',tooltip='Show spectrum wavelength step')],
+            [sg.Checkbox('Estimate the resolution:', default = utilities_resolution, font = ('Helvetica', 11, 'bold'), key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText(utilities_resolution_wmin, size = (4,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText(utilities_resolution_wmax, size = (4,1), key = 'lambda_res_right')],
+            [sg.HorizontalSeparator()],
+            [sg.Checkbox('Convert the spectrum to:', default = utilities_convert, font = ('Helvetica', 11, 'bold'), key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = utilities_convert_totxt, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", default = utilities_convert_tofit, key = 'convert_to_fits')],
+            [sg.Checkbox('Compare with: ', default = utilities_compare, font = ('Helvetica', 11, 'bold'), key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText(utilities_compare_spec, size = (7,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
+            [sg.Checkbox('Convert Flux', default = utilities_convert_flux, font = ('Helvetica', 11, 'bold'), key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = utilities_convert_flux_fnu, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", default = utilities_convert_flux_flambda, key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')), sg.Text(' ', font = ('Helvetica', 1)) ],
+            [sg.Checkbox('S/N:', default = utilities_snr, font = ('Helvetica', 11, 'bold'), key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText(utilities_snr_wave, size = (4,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(utilities_snr_wave_epsilon, size = (3,1), key = 'delta_wave_snr'), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))],
+            ], font=("Helvetica", 12, 'bold')),
+
+            #Buttons to perform the utility actions
+            sg.Frame('Utility Actions',[
+            [sg.Text('')],
+            [sg.Button('Show info',button_color=('black','light gray'), size = (11,1))],
+            [sg.Text('')],
+            [sg.HorizontalSeparator()],
+            [sg.Button('One',button_color=('black','light gray'), size = (3,1)), sg.Button('All',button_color=('black','light gray'), size = (2,1))],
+            [sg.Button('Compare',button_color=('black','light gray'), size = (11,1))],
+            [sg.Button('One',button_color=('black','light gray'), size = (3,1), key ='convert_one'), sg.Button('All',button_color=('black','light gray'), size = (2,1), key = 'convert_all')],
+            [sg.Button('Show snr',button_color=('black','light gray'), size = (11,1))],
+            ] ,font=("Helvetica", 10, 'bold'))],
+            [sg.Exit(size=(18, 1))]
+
+        ]
+
+    if layout == layouts.layout_android:
+
+        sg.theme('DarkBlue3')
+        utilities_layout = [
+
+                    #Utility frame
+            [sg.Frame('Utilities', [
+            [sg.Checkbox('Header', default = utilities_show_header, font = ('Helvetica', 11, 'bold'), key = 'show_hdr',tooltip='Show fits header'), sg.Checkbox('Step', default = utilities_step, font = ('Helvetica', 11, 'bold'), key = 'show_step',tooltip='Show spectrum wavelength step'), sg.Checkbox('Resolution:', default = utilities_resolution, font = ('Helvetica', 11, 'bold'), key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText(utilities_resolution_wmin, size = (5,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText(utilities_resolution_wmax, size = (5,1), key = 'lambda_res_right')],
+            [sg.Checkbox('Convert spectrum or spectra to:', default = utilities_convert, font = ('Helvetica', 11, 'bold'), key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = utilities_convert_totxt, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", default = utilities_convert_tofit, key = 'convert_to_fits')],
+            [sg.Checkbox('Compare spec. with: ', default = utilities_compare, font = ('Helvetica', 11, 'bold'), key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText(utilities_compare_spec, size = (18,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
+            [sg.Checkbox('Convert the flux', default = utilities_convert_flux, font = ('Helvetica', 11, 'bold'), key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = utilities_convert_flux_fnu, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", default = utilities_convert_flux_flambda, key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')) ],
+            [sg.Checkbox('S/N:', default = utilities_snr, font = ('Helvetica', 11, 'bold'), key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText(utilities_snr_wave, size = (7,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(utilities_snr_wave_epsilon, size = (4,1), key = 'delta_wave_snr'), sg.Text(''), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))]
+            ], font=("Helvetica", 12, 'bold')),
+
+            #Buttons to perform the utility actions
+            sg.Frame('Utility Actions',[
+            [sg.Button('Show info',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('One',button_color=('black','light gray'), size = (3,1)), sg.Button('All',button_color=('black','light gray'), size = (3,1))],
+            [sg.Button('Compare',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('One',button_color=('black','light gray'), size = (3,1), key ='convert_one'), sg.Button('All',button_color=('black','light gray'), size = (3,1), key = 'convert_all')],
+            [sg.Button('Show snr',button_color=('black','light gray'), size = (10,1))]
+            ] ,font=("Helvetica", 8, 'bold'))],
+            [sg.Exit(size=(18, 1))]
+        ]
+           
+           
+    if layout == layouts.layout_macos:
+
+        sg.theme('DarkBlue3')
+        utilities_layout = [
+
+                    #Utility frame
+            [sg.Frame('Utilities', [
+            [sg.Checkbox('Show the header of the selected spectrum',key = 'show_hdr',tooltip='Show fits header')],
+            [sg.Checkbox('Show the wavelength step of the spectrum', key = 'show_step',tooltip='Show spectrum wavelength step')],
+            [sg.Checkbox('Estimate the resolution:', key = 'show_res',tooltip='Show resolution, by fitting a sky emission line within the wavelength 1(W1) and wavelength 2(W2) values'),sg.Text('W1'), sg.InputText('5500', size = (4,1), key = 'lambda_res_left'), sg.Text('W2'), sg.InputText('5650', size = (4,1), key = 'lambda_res_right')],
+            [sg.HorizontalSeparator()],
+            [sg.Checkbox('Convert the spectrum to:', key = 'convert_spec',tooltip='Convert one or all the spectra from fits to ASCII and viceversa'), sg.Radio('Text', "RADIOCONV", default = True, key = 'convert_to_txt'), sg.Radio('FITS', "RADIOCONV", key = 'convert_to_fits')],
+            [sg.Checkbox('Compare with: ', key = 'compare_spec',tooltip='Compare the selected spectrum with any other loaded spectrum'), sg.InputText('Spec.', size = (7,1), key = 'spec_to_compare'), sg.FileBrowse(tooltip='Load the 1D spectrum (ASCII or fits)to use as comparison')],
+            [sg.Checkbox('Convert Flux', key = 'convert_flux',tooltip='Convert the flux from Jansky to F_lambda and viceversa'), sg.Radio('Jy-->F_nu', "FLUX", default = True, key = 'convert_to_fnu'), sg.Radio('Jy-->F_l', "FLUX", key = 'convert_to_fl'),sg.Button('See plot',button_color=('black','light gray')) ],
+            [sg.Checkbox('S/N:', key = 'show_snr',tooltip='Show the S/N of the selected spectrum centered on an user defined wavelength(W)'), sg.Text(' W.'), sg.InputText('6450', size = (4,1), key = 'wave_snr'), sg.Text('+/-'), sg.InputText(30, size = (3,1), key = 'delta_wave_snr'), sg.Button('Save one',button_color=('black','light gray')), sg.Button('Save all',button_color=('black','light gray'))]
+            ], font=("Helvetica", 18, 'bold')),
+            
+            
+            #Buttons to perform the utility actions
+            sg.Frame('Utility Actions',[
+            [sg.Text('')],
+            [sg.Button('Show info',button_color=('black','light gray'), size = (11,1))],
+            [sg.Text('', font = ('Helvetica', 16))],
+            [sg.HorizontalSeparator()],
+            [sg.Button('One',button_color=('black','light gray'), size = (4,1)), sg.Button('All',button_color=('black','light gray'), size = (4,1))],
+            [sg.Button('Compare',button_color=('black','light gray'), size = (11,1))],
+            [sg.Button('One',button_color=('black','light gray'), size = (4,1), key ='convert_one'), sg.Button('All',button_color=('black','light gray'), size = (4,1), key = 'convert_all')],
+            [sg.Button('Show snr',button_color=('black','light gray'), size = (11,1))]
+            ] ,font=("Helvetica", 10, 'bold'))],
+            [sg.Exit(size=(18, 1))]
+        ]
+        
+    win = sg.Window('SPAN Utilities', utilities_layout, modal=False, finalize=True, resizable=False)
+
+    # event loop della sottofinestra
+    while True:
+        ev, vals = win.read()
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+        if ev  == sg.WIN_CLOSED:
+            break
+
+        # Parameter definition and first check. Later I will perform a better check
+        utilities_show_header = vals['show_hdr']
+        utilities_step = vals['show_step']
+        utilities_resolution = vals['show_res']
+        utilities_convert = vals['convert_spec']
+        utilities_convert_tofit = vals['convert_to_fits']
+        utilities_convert_totxt = vals['convert_to_txt']
+        utilities_compare = vals['compare_spec']
+        utilities_convert_flux = vals['convert_flux']
+        utilities_convert_flux_fnu = vals['convert_to_fnu']
+        utilities_convert_flux_flambda = vals['convert_to_fl']
+        utilities_snr = vals['show_snr']
+        utilities_compare_spec = vals['spec_to_compare']
+
+        try:
+            utilities_resolution_wmin = float(vals['lambda_res_left'])
+            utilities_resolution_wmax = float(vals['lambda_res_right'])
+            utilities_snr_wave = float(vals['wave_snr'])
+            utilities_snr_wave_epsilon  = float(vals['delta_wave_snr'])
+        except Exception:
+            sg.popup('Parameters not valid')
+
+        # Check function
+        def need_selection():
+            if getattr(params, 'prev_spec', '') == '':
+                sg.popup('No spectrum selected. Please, select one spectrum in the main list.')
+                return True
+            return False
+
+        # === SHOW INFO ===
+        if ev == 'Show info':
+            if need_selection():
+                continue
+
+            # 1) header
+            if utilities_show_header:
+                try:
+                    utility_tasks.show_fits_header(params.prev_spec)
+                except Exception as e:
+                    sg.popup(f'Header failed: {e}')
+
+            # 2) sampling
+            if utilities_step:
+                try:
+                    wl, _, *_ = stm.read_spec(params.prev_spec, params.lambda_units)
+                    utility_tasks.show_sampling(wl)
+                except Exception as e:
+                    sg.popup(f'Sampling failed: {e}')
+
+            # 3) resolution
+            if utilities_resolution:
+                try:
+                    utilities_resolution_wmin = float(vals['lambda_res_left'])
+                    utilities_resolution_wmax = float(vals['lambda_res_right'])
+                    if utilities_resolution_wmin >= utilities_resolution_wmax:
+                        sg.popup('Wave1 must be SMALLER than Wave2')
+                        continue
+                    wl, fl, *_ = stm.read_spec(params.prev_spec, params.lambda_units)
+                    utility_tasks.show_resolution(wl, fl, utilities_resolution_wmin, utilities_resolution_wmax)
+                except ValueError:
+                    sg.popup('Wave is not a number!')
+                except Exception as e:
+                    sg.popup(f'Resolution failed: {e}')
+
+            if not (utilities_show_header or utilities_step or utilities_resolution):
+                sg.popup('You need to select an option before click Show info')
+
+        # === CONVERT (One / All) ===
+        if ev in ('One', 'All'):
+            if not utilities_convert:
+                sg.popup('You need to activate the option if you expect something!')
+                continue
+            if need_selection():
+                continue
+            try:
+                wl, fl, *_ = stm.read_spec(params.prev_spec, params.lambda_units)
+                to_txt = utilities_convert_totxt
+                if ev == 'One':
+                    utility_tasks.convert_spectrum(wl, fl, params.prev_spec, to_txt, params.lambda_units)
+                else:  # All
+                    if one_spec_flag:
+                        sg.popup('You have just one spectrum. The button ALL does not work!')
+                        continue
+                    for i in range(params.spectra_number):
+                        utility_tasks.convert_spectrum(wl, fl, params.spec_names[i], to_txt, params.lambda_units)
+            except Exception as e:
+                sg.popup(f'Convert failed: {e}')
+
+        # === COMPARE ===
+        if ev == 'Compare':
+            if not utilities_compare:
+                sg.popup('You need to select the option if you expect something!')
+                continue
+            if need_selection():
+                continue
+            try:
+                utility_tasks.compare_spectra(params.prev_spec, utilities_compare_spec, params.lambda_units)
+            except Exception as e:
+                sg.popup(f'Compare failed: {e}')
+
+        # === FLUX CONVERT / PLOT ===
+        if ev in ('convert_one', 'convert_all', 'See plot'):
+            if not utilities_convert_flux:
+                sg.popup('You need to activate the option if you expect something!')
+                continue
+            if ev == 'convert_all' and one_spec_flag:
+                sg.popup('"All" does not work anyway with just one spectrum!')
+                continue
+            try:
+                utility_tasks.convert_flux_task(
+                    ev,
+                    params.prev_spec,
+                    params.prev_spec_nopath,
+                    params.spec_names,
+                    params.spec_names_nopath,
+                    params.spectra_number,
+                    vals.get('convert_flux', False),
+                    vals.get('convert_to_fl', False),
+                    vals.get('convert_to_fnu', True),
+                    params.lambda_units,
+                    params.result_spec,
+                    params.result_data,
+                    one_spec_flag
+                )
+            except Exception as e:
+                sg.popup(f'Flux convert failed: {e}')
+
+        # === SNR ===
+        if ev in ('Show snr', 'Save one', 'Save all'):
+            if not vals.get('show_snr', False):
+                sg.popup('You need to activate the option if you expect something!')
+                continue
+            if ev == 'Save all' and one_spec_flag:
+                sg.popup('"Save all" does not work anyway with just one spectrum!')
+                continue
+            try:
+                utilities_snr_wave = float(vals['wave_snr'])
+                utilities_snr_wave_epsilon = float(vals['delta_wave_snr'])
+                utility_tasks.snr_analysis(
+                    ev,
+                    params.prev_spec,
+                    params.spec_names,
+                    params.spec_names_nopath,
+                    params.spectra_number,
+                    True,
+                    utilities_snr_wave,
+                    utilities_snr_wave_epsilon,
+                    params.lambda_units,
+                    one_spec_flag,
+                    params.result_snr_dir,
+                    params.spectra_list_name,
+                    timestamp
+                )
+            except ValueError:
+                sg.popup('Wave interval / epsilon is not a number!')
+            except Exception as e:
+                sg.popup(f'SNR failed: {e}')
+
+        if ev == ('Exit'):
+            break
+
+    win.close()
+
+    params = replace(params,
+                    utilities_show_header = utilities_show_header,
+                    utilities_step = utilities_step,
+                    utilities_resolution = utilities_resolution,
+                    utilities_resolution_wmin = utilities_resolution_wmin,
+                    utilities_resolution_wmax = utilities_resolution_wmax,
+                    utilities_convert = utilities_convert,
+                    utilities_convert_tofit = utilities_convert_tofit,
+                    utilities_convert_totxt = utilities_convert_totxt,
+                    utilities_compare = utilities_compare,
+                    utilities_compare_spec = utilities_compare_spec,
+                    utilities_convert_flux = utilities_convert_flux,
+                    utilities_convert_flux_fnu = utilities_convert_flux_fnu,
+                    utilities_convert_flux_flambda = utilities_convert_flux_flambda,
+                    utilities_snr = utilities_snr,
+                    utilities_snr_wave = utilities_snr_wave,
+                    utilities_snr_wave_epsilon = utilities_snr_wave_epsilon,
+                     )
+
+    return params

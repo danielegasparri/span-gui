@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -71,7 +78,7 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
     print(f"You want to load {spectra_number} spectra")
     print("Now checking if they really exist and are valid...")
     print("")
-
+    window.metadata = {}
     # Resolve absolute/relative paths
     spec_names = []
     for line in lines:
@@ -105,7 +112,8 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
     # Validate the spectra content
     spec_not_readable = []
     spec_not_valid = []
-
+    low_quality = []   # NEW: to collect low-SNR spectra
+    
     for i, spectrum in enumerate(spec_names):
         # Show a progress meter if more than 5 spectra
         if len(spec_names) > 5:
@@ -113,20 +121,29 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
                                            orientation="h", button_color=("white", "red")):
                 print("*** CANCELLED ***\n")
                 break
-
-        # Check FITS files
+    
         if spectrum.lower().endswith(".fits"):
             valid, message = stm.is_valid_spectrum(spectrum)
             if not valid:
                 spec_not_valid.append(spectrum)
+            else:
+                try:
+                    wl, fl, *_ = stm.read_spec(spectrum, lambda_units)
+                    snr_val = stm.quick_snr(wl, fl)
+                    if snr_val is None or snr_val < 5.0:   # soglia configurabile
+                        low_quality.append((spectrum, snr_val))
+                except Exception:
+                    spec_not_readable.append(spectrum)
         else:
-            # Attempt to read non-FITS spectra
             try:
-                stm.read_spec(spectrum, lambda_units)
+                wl, fl, *_ = stm.read_spec(spectrum, lambda_units)
+                snr_val = stm.quick_snr(wl, fl)
+                if snr_val is None or snr_val < 5.0:
+                    low_quality.append((spectrum, snr_val))
             except Exception as e:
                 print(f"Error reading spectrum: {spectrum} | {e}")
                 spec_not_readable.append(spectrum)
-
+                
     # Handle unreadable spectra
     if spec_not_readable:
         if len(spec_not_readable) == len(spec_names):
@@ -155,10 +172,41 @@ def load_and_validate_spectra(spectra_list, lambda_units, window):
             window["-LIST-"].Update(spec_names_nopath)
             spectra_number = len(spec_names)
 
+
+    # # Report low-quality spectra
+    if low_quality:
+        print("⚠️  Low SNR spectra detected:")
+        for spec, snr_val in low_quality:
+            snr_txt = "n/a" if snr_val is None else f"{snr_val:.1f}"
+            print(f"   {os.path.basename(spec)} → SNR ≈ {snr_txt}")
+    
+        # Optional: mark in GUI listbox
+        spec_names_nopath = [
+            (os.path.basename(s) + "  [LOW SNR]" if any(s == q[0] for q in low_quality) else os.path.basename(s))
+            for s in spec_names
+        ]
+        # window["-LIST-"].Update(spec_names_nopath)
+        display_names = []
+        for s in spec_names:
+            base = os.path.basename(s)
+            if any(s == q[0] for q in low_quality):
+                display_names.append(base + "  [LOW SNR]")
+            else:
+                display_names.append(base)
+
+        window["-LIST-"].Update(display_names)
+
+        # Saving mapping
+        window.metadata = {dn: s for dn, s in zip(display_names, spec_names)}
+
+    else:
+        # No LOW SNR: build trivial mapping just in case
+        window.metadata = {os.path.basename(s): s for s in spec_names}
+
     print("")
     print(f"Successfully loaded {spectra_number} valid spectra.")
     print("")
-    print("*** Please check the wavelength range using the plot button before proceeding ***")
+    print("*** Please check the wavelength range in the Preview before proceeding ***")
     print("")
 
     return spectra_number, spec_names, spec_names_nopath, fatal_condition

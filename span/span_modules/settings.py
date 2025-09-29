@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -103,13 +110,13 @@ def clear_all_tasks(window, params):
     """
 
     # Reset checkboxes in the GUI
-    window['show_hdr'].Update(value=False)
-    window['show_step'].Update(value=False)
-    window['show_res'].Update(value=False)
-    window['convert_spec'].Update(value=False)
-    window['compare_spec'].Update(value=False)
-    window['convert_flux'].Update(value=False)
-    window['show_snr'].Update(value=False)
+    #window['show_hdr'].Update(value=False)
+    #window['show_step'].Update(value=False)
+    #window['show_res'].Update(value=False)
+    #window['convert_spec'].Update(value=False)
+    #window['compare_spec'].Update(value=False)
+    #window['convert_flux'].Update(value=False)
+    #window['show_snr'].Update(value=False)
 
     # Reset Spectra Manipulation Panel
     params = replace(params,
@@ -172,22 +179,22 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'wave_units_nm': values.get('wave_units_nm', False),
             'wave_units_a': values.get('wave_units_a', False),
             'wave_units_mu': values.get('wave_units_mu', False),
-            'show_hdr': values.get('show_hdr', False),
-            'show_step': values.get('show_step', False),
-            'show_res': values.get('show_res', False),
-            'lambda_res_left': values.get('lambda_res_left', 0.0),
-            'lambda_res_right': values.get('lambda_res_right', 0.0),
-            'convert_spec': values.get('convert_spec', False),
-            'convert_to_txt': values.get('convert_to_txt', False),
-            'convert_to_fits': values.get('convert_to_fits', False),
-            'compare_spec': values.get('compare_spec', False),
-            'spec_to_compare': values.get('spec_to_compare', ""),
-            'convert_flux': values.get('convert_flux', False),
-            'convert_to_fnu': values.get('convert_to_fnu', False),
-            'convert_to_fl': values.get('convert_to_fl', False),
-            'show_snr': values.get('show_snr', False),
-            'wave_snr': values.get('wave_snr', 0.0),
-            'delta_wave_snr': values.get('delta_wave_snr', 0.0),
+            #'show_hdr': values.get('show_hdr', False),
+            #'show_step': values.get('show_step', False),
+            #'show_res': values.get('show_res', False),
+            #'lambda_res_left': values.get('lambda_res_left', 0.0),
+            #'lambda_res_right': values.get('lambda_res_right', 0.0),
+            #'convert_spec': values.get('convert_spec', False),
+            #'convert_to_txt': values.get('convert_to_txt', False),
+            #'convert_to_fits': values.get('convert_to_fits', False),
+            #'compare_spec': values.get('compare_spec', False),
+            #'spec_to_compare': values.get('spec_to_compare', ""),
+            #'convert_flux': values.get('convert_flux', False),
+            #'convert_to_fnu': values.get('convert_to_fnu', False),
+            #'convert_to_fl': values.get('convert_to_fl', False),
+            #'show_snr': values.get('show_snr', False),
+            #'wave_snr': values.get('wave_snr', 0.0),
+            #'delta_wave_snr': values.get('delta_wave_snr', 0.0),
 
             'bb_fitting': values['bb_fitting'],
             'xcorr': values['xcorr'],
@@ -347,8 +354,10 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'band_custom': params.band_custom,
             'low_wave_sigma': params.low_wave_sigma,
             'high_wave_sigma': params.high_wave_sigma,
-            'low_wave_cont': params.low_wave_cont,
-            'high_wave_cont': params.high_wave_cont,
+            'resolution_mode_spec_sigma_R': params.resolution_mode_spec_sigma_R,
+            'resolution_mode_spec_sigma_FWHM': params.resolution_mode_spec_sigma_FWHM,
+            'resolution_mode_temp_sigma_R': params.resolution_mode_temp_sigma_R,
+            'resolution_mode_temp_sigma_FWHM': params.resolution_mode_temp_sigma_FWHM,
 
             #Line-strength parameters
             'ew_idx_file': params.have_index_file,
@@ -446,8 +455,9 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_kin_mask_emission': params.ppxf_kin_mask_emission,
             'ppxf_kin_have_user_mask': params.ppxf_kin_have_user_mask,
             'ppxf_kin_mask_ranges_str': params.ppxf_kin_mask_ranges_str,
-
             'ppxf_kin_mc_sim': params.ppxf_kin_mc_sim,
+            'ppxf_kin_user_bias': params.ppxf_kin_user_bias,
+            'ppxf_kin_bias': params.ppxf_kin_bias,
             'ppxf_kin_save_spectra': params.ppxf_kin_save_spectra,
 
             #Stellar populations and SFH parameters
@@ -490,6 +500,7 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'stellar_parameters_lick_ppxf': params.stellar_parameters_lick_ppxf,
             'ssp_model_ppxf': params.ssp_model_ppxf,
             'interp_model_ppxf': params.interp_model_ppxf,
+            'ppxf_pop_save_spectra': params.ppxf_pop_save_spectra,
 
             # Long-slit (2D) extraction parameters
             'file_path': params.file_path_spec_extr,
@@ -511,7 +522,7 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ifs_lmax_snr': params.ifs_lmax_snr,
             'ifs_min_snr_mask': params.ifs_min_snr_mask,
             'ifs_mask': params.ifs_mask,
-            'ifs_target_snr': params.ifs_target_snr,
+            # 'ifs_target_snr': params.ifs_target_snr,
             'ifs_preloaded_routine': params.ifs_preloaded_routine,
             'ifs_user_routine': params.ifs_user_routine,
             'ifs_user_routine_file': params.ifs_user_routine_file,
@@ -519,6 +530,15 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ifs_voronoi': params.ifs_voronoi,
             'ifs_existing_bin': params.ifs_existing_bin,
             'ifs_existing_bin_folder': params.ifs_existing_bin_folder,
+            'ifs_target_snr_voronoi': ifs_target_snr_voronoi,
+            'ifs_target_snr_elliptical': ifs_target_snr_elliptical,
+            'ifs_elliptical': ifs_elliptical,
+            'ifs_pa_user': ifs_pa_user,
+            'ifs_q_user': ifs_q_user,
+            'ifs_ell_r_max': ifs_ell_r_max,
+            'ifs_ell_min_dr': ifs_ell_min_dr,
+            'isf_auto_pa_q': isf_auto_pa_q,
+            'isf_auto_center': isf_auto_center,
         }
     }
     with open(filename, 'w') as file:
@@ -686,11 +706,13 @@ def load_settings(filename, params):
                 band_custom=params_data.get('band_custom', params.band_custom),
                 low_wave_sigma=params_data.get('low_wave_sigma', params.low_wave_sigma),
                 high_wave_sigma=params_data.get('high_wave_sigma', params.high_wave_sigma),
-                low_wave_cont=params_data.get('low_wave_cont', params.low_wave_cont),
-                high_wave_cont=params_data.get('high_wave_cont', params.high_wave_cont),
+                resolution_mode_spec_sigma_R = params_data.get('resolution_mode_spec_sigma_R', params.resolution_mode_spec_sigma_R),
+                resolution_mode_spec_sigma_FWHM = params_data.get('resolution_mode_spec_sigma_FWHM', params.resolution_mode_spec_sigma_FWHM),
+                resolution_mode_temp_sigma_R = params_data.get('resolution_mode_temp_sigma_R', params.resolution_mode_temp_sigma_R),
+                resolution_mode_temp_sigma_FWHM = params_data.get('resolution_mode_temp_sigma_FWHM', params.resolution_mode_temp_sigma_FWHM),
 
                 band_sigma = np.array([params.low_wave_sigma, params.high_wave_sigma]),
-                cont_sigma = np.array([params.low_wave_cont, params.high_wave_cont]),
+                # cont_sigma = np.array([params.low_wave_cont, params.high_wave_cont]),
 
                 # Line-strength parameters
                 have_index_file=params_data.get('ew_idx_file', params.have_index_file),
@@ -791,6 +813,8 @@ def load_settings(filename, params):
                 ppxf_kin_have_user_mask=params_data.get('ppxf_kin_have_user_mask', params.ppxf_kin_have_user_mask),
                 ppxf_kin_mask_ranges_str=params_data.get('ppxf_kin_mask_ranges_str', params.ppxf_kin_mask_ranges_str),
                 ppxf_kin_mc_sim=params_data.get('ppxf_kin_mc_sim', params.ppxf_kin_mc_sim),
+                ppxf_kin_user_bias=params_data.get('ppxf_kin_user_bias', params.ppxf_kin_user_bias),
+                ppxf_kin_bias=params_data.get('ppxf_kin_bias', params.ppxf_kin_bias),
                 ppxf_kin_save_spectra=params_data.get('ppxf_kin_save_spectra', params.ppxf_kin_save_spectra),
 
                 # Stellar populations and SFH parameters
@@ -831,8 +855,9 @@ def load_settings(filename, params):
                 ppxf_pop_lg_age=params_data.get('ppxf_pop_lg_age', params.ppxf_pop_lg_age),
                 ppxf_pop_lg_met=params_data.get('ppxf_pop_lg_met', params.ppxf_pop_lg_met),
                 stellar_parameters_lick_ppxf=params_data.get('stellar_parameters_lick_ppxf', params.stellar_parameters_lick_ppxf),
-                ssp_model_ppxf=params_data.get('params.ssp_model_ppxf', params.ssp_model_ppxf),
+                ssp_model_ppxf=params_data.get('ssp_model_ppxf', params.ssp_model_ppxf),
                 interp_model_ppxf=params_data.get('interp_model_ppxf', params.interp_model_ppxf),
+                ppxf_pop_save_spectra=params_data.get('ppxf_pop_save_spectra', params.ppxf_pop_save_spectra),
 
                 # Long-slit (2D) extraction parameters
                 file_path_spec_extr=params_data.get('file_path', params.file_path_spec_extr),
@@ -854,7 +879,7 @@ def load_settings(filename, params):
                 ifs_lmax_snr=params_data.get('ifs_lmax_snr', params.ifs_lmax_snr),
                 ifs_min_snr_mask=params_data.get('ifs_min_snr_mask', params.ifs_min_snr_mask),
                 ifs_mask=params_data.get('ifs_mask', params.ifs_mask),
-                ifs_target_snr=params_data.get('ifs_target_snr', params.ifs_target_snr),
+                # ifs_target_snr=params_data.get('ifs_target_snr', params.ifs_target_snr),
                 ifs_preloaded_routine=params_data.get('ifs_preloaded_routine', params.ifs_preloaded_routine),
                 ifs_user_routine=params_data.get('ifs_user_routine', params.ifs_user_routine),
                 ifs_user_routine_file=params_data.get('ifs_user_routine_file', params.ifs_user_routine_file),
@@ -862,6 +887,16 @@ def load_settings(filename, params):
                 ifs_voronoi=params_data.get('ifs_voronoi', params.ifs_voronoi),
                 ifs_existing_bin = params_data.get('ifs_existing_bin', params.ifs_existing_bin),
                 ifs_existing_bin_folder = params_data.get('ifs_existing_bin_folder', params.ifs_existing_bin_folder),
+                
+                ifs_target_snr_voronoi = params_data.get('ifs_target_snr_voronoi', params.ifs_target_snr_voronoi),
+                ifs_target_snr_elliptical = params_data.get('ifs_target_snr_elliptical', params.ifs_target_snr_elliptical),
+                ifs_elliptical = params_data.get('ifs_elliptical', params.ifs_elliptical),
+                ifs_pa_user = params_data.get('ifs_pa_user', params.ifs_pa_user),
+                ifs_q_user = params_data.get('ifs_q_user', params.ifs_q_user),
+                ifs_ell_r_max = params_data.get('ifs_ell_r_max', params.ifs_ell_r_max),
+                ifs_ell_min_dr = params_data.get('ifs_ell_min_dr', params.ifs_ell_min_dr),
+                isf_auto_pa_q = params_data.get('isf_auto_pa_q', params.isf_auto_pa_q),
+                isf_auto_center = params_data.get('isf_auto_center', params.isf_auto_center),
 
 
         )

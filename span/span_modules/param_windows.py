@@ -6,13 +6,20 @@
 
     E-mail: daniele.gasparri@gmail.com
 
-    SPAN is a GUI interface that allows to modify and analyse 1D astronomical spectra.
+    SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
 
-    1. This software is licensed **for non-commercial use only**.
-    2. The source code may be **freely redistributed**, but this license notice must always be included.
-    3. Any user who redistributes or uses this software **must properly attribute the original author**.
-    4. The source code **may be modified** for non-commercial purposes, but any modifications must be clearly documented.
-    5. **Commercial use is strictly prohibited** without prior written permission from the author.
+    1. This software is licensed for non-commercial, academic and personal use only.
+    2. The source code may be used and modified for research and educational purposes, 
+    but any modifications must remain for private use unless explicitly authorized 
+    in writing by the original author.
+    3. Redistribution of the software in its original, unmodified form is permitted 
+    for non-commercial purposes, provided that this license notice is always included.
+    4. Redistribution or public release of modified versions of the source code 
+    is prohibited without prior written permission from the author.
+    5. Any user of this software must properly attribute the original author 
+    in any academic work, research, or derivative project.
+    6. Commercial use of this software is strictly prohibited without prior 
+    written permission from the author.
 
     DISCLAIMER:
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -34,7 +41,8 @@ try: #try local import if executed as script
     from span_modules import layouts
     from span_modules import misc
     from params import SpectraParams
-
+    from span_modules.ui_zoom import open_subwindow, ZoomManager
+    
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
@@ -48,6 +56,7 @@ except ModuleNotFoundError: #local import if executed as package
     from . import layouts
     from . import misc
     from .params import SpectraParams
+    from .ui_zoom import open_subwindow, ZoomManager
 
 #python imports
 import numpy as np
@@ -67,7 +76,7 @@ BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 fontsize = sg.set_options(font=("Helvetica", 11)) # defaul fontsize
 
-
+zm = ZoomManager.get()
 
 def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     """Handles blackbody fitting parameter input via GUI."""
@@ -93,7 +102,7 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
 
     print('*** Blackbody fitting parameters window open. The main panel will be inactive until you close the window ***')
 
-    bb_window = sg.Window('Blackbody fitting parameters', bb_layout)
+    bb_window = open_subwindow('Blackbody fitting parameters', bb_layout, zm=zm)
 
     while True:
         bb_event, bb_values = bb_window.read()
@@ -161,7 +170,7 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
     sg.theme('LightBlue1')
 
     xcorr_layout = [
-        [sg.Text('Select a template:', font=('Helvetica', 10, 'bold')),
+        [sg.Text('Select a template:', font=('', default_size, 'bold')),
          sg.InputText(template_crosscorr, size=(32,1), key='xcorr_template'),
          sg.FileBrowse(tooltip='Load a template')],
         [sg.Text('Template wavelength is in:'),
@@ -183,8 +192,8 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
 
     print('*** Cross-corr parameters window open. The main panel will be inactive until you close the window ***')
 
-    xcorr_window = sg.Window('Cross-correlation parameters', xcorr_layout)
-
+    xcorr_window = open_subwindow('Cross-correlation parameters', xcorr_layout, zm=zm)
+    
     while True:
         xcorr_event, xcorr_values = xcorr_window.read()
 
@@ -209,18 +218,6 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
             sg.popup('Smooth template value not valid!')
             continue
 
-
-
-
-        # try:
-        #     low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
-        #     high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
-        #     wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
-        # except ValueError:
-        #     sg.popup('Limit wave values not valid!')
-        #     continue
-
-
         #cheching the input wavelength range
         xcorr_limit_wave_range = xcorr_values['xcorr_limit_wave_range']
         if xcorr_limit_wave_range:
@@ -228,15 +225,9 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
                 low_wave_corr = float(xcorr_values['xcorr_left_lambda'])
                 high_wave_corr = float(xcorr_values['xcorr_right_lambda'])
                 wave_interval_corr = np.array([low_wave_corr,high_wave_corr])
-                # real_low_wave_corr = np.min(wave_interval_corr)
-                # real_high_wave_corr = np.max(wave_interval_corr)
             except Exception:
                 sg.popup('Limit wave values not valid!')
                 continue
-
-
-
-
 
         if is_vel_xcorr:
             try:
@@ -336,27 +327,28 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
     band_custom = params.band_custom
     low_wave_sigma = params.low_wave_sigma
     high_wave_sigma = params.high_wave_sigma
-    low_wave_cont = params.low_wave_cont
-    high_wave_cont = params.high_wave_cont
     band_sigma = params.band_sigma
-    cont_sigma = params.cont_sigma
-
+    resolution_mode_spec_sigma_R = params.resolution_mode_spec_sigma_R
+    resolution_mode_spec_sigma_FWHM = params.resolution_mode_spec_sigma_FWHM
+    resolution_mode_temp_sigma_R = params.resolution_mode_temp_sigma_R
+    resolution_mode_temp_sigma_FWHM = params.resolution_mode_temp_sigma_FWHM
+    
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
 
     sigma_layout = [
-        [sg.Text('Select a template:', font=('Helvetica', 10, 'bold')),
+        [sg.Text('Select a template:', font=('', default_size, 'bold')),
          sg.InputText(template_sigma, size=(55, 1), key='template_sigma'),
          sg.FileBrowse(tooltip='Load a template')],
         [sg.Text('Template wavelength is in:'),
          sg.Radio('nm', "RADIOSIGMA", default=params.lambda_units_template_sigma_nm, key='sigma_template_wave_nm'),
          sg.Radio('a', "RADIOSIGMA", default=params.lambda_units_template_sigma_a, key='sigma_template_wave_a'),
          sg.Radio('mu', "RADIOSIGMA", default=params.lambda_units_template_sigma_mu, key='sigma_template_wave_mu')],
-        [sg.Text('Resolution (R) of the template (0 if (E)MILES)'),
+        [sg.Text('Resolution of the template:'), sg.Radio('R', "RADIORESTEMP", default=resolution_mode_temp_sigma_R, key='resolution_mode_temp_sigma_R'), sg.Radio('FWHM (A)', "RADIORESTEMP", default=resolution_mode_temp_sigma_FWHM, key='resolution_mode_temp_sigma_FWHM'), sg.Text('Value:'), 
          sg.InputText(resolution_template, size=(5, 1), key='sigma_res_template'),
          sg.Push(), sg.Button('View template', button_color=('black', 'light blue'))],
         [sg.HorizontalSeparator()],
-        [sg.Text('Pre-loaded bands to fit for sigma:', font=('Helvetica', 10, 'bold')),
+        [sg.Text('Pre-loaded bands to fit for sigma:', font=('', default_size, 'bold')),
          sg.Radio('CaT', "RADIOBAND", default=band_cat, key='sigma_band_cat'),
          sg.Radio('Ha', "RADIOBAND", default=band_halpha, key='sigma_band_ha'),
          sg.Radio('Nad', "RADIOBAND", default=band_nad, key='sigma_band_nad'),
@@ -366,20 +358,16 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
          sg.Text('Wave interval (A)'),
          sg.InputText(low_wave_sigma, size=(5, 1), key='sigma_left_lambda'),
          sg.Text('-'),
-         sg.InputText(high_wave_sigma, size=(5, 1), key='sigma_right_lambda'),
-         sg.Text('Cont. interval'),
-         sg.InputText(low_wave_cont, size=(5, 1), key='sigma_cont_left_lambda'),
-         sg.Text('-'),
-         sg.InputText(high_wave_cont, size=(5, 1), key='sigma_cont_right_lambda')],
-        [sg.HorizontalSeparator()],
-        [sg.Text('Resolution of the spectrum (R)'),
-         sg.InputText(resolution_spec, size=(5, 1), key='sigma_spec_res')],
+         sg.InputText(high_wave_sigma, size=(5, 1), key='sigma_right_lambda')],
+        [sg.HorizontalSeparator()],        
+        [sg.Text('Resolution of the spectrum:'), sg.Radio('R', "RADIORESSPEC", default=resolution_mode_spec_sigma_R, key='resolution_mode_spec_sigma_R'), sg.Radio('FWHM (A)', "RADIORESSPEC", default=resolution_mode_spec_sigma_FWHM, key='resolution_mode_spec_sigma_FWHM'), sg.Text('Value:'),  sg.InputText(resolution_spec, size=(5, 1), key='sigma_spec_res')],
         [sg.Push(), sg.Button('Confirm', button_color=('white', 'black'), size=(18, 1))]
     ]
 
     print('*** Sigma parameters window open. The main panel will be inactive until you close the window ***')
 
-    sigma_window = sg.Window('Sigma parameters', sigma_layout)
+    sigma_window = open_subwindow('Sigma parameters', sigma_layout, zm=zm)
+    
 
     while True:
         sigma_event, sigma_values = sigma_window.read()
@@ -399,6 +387,11 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
         band_k = sigma_values['sigma_band_k']
         band_custom = sigma_values['sigma_custom_band']
 
+        resolution_mode_spec_sigma_R = sigma_values['resolution_mode_spec_sigma_R']
+        resolution_mode_spec_sigma_FWHM = sigma_values['resolution_mode_spec_sigma_FWHM']
+        resolution_mode_temp_sigma_R = sigma_values['resolution_mode_temp_sigma_R']
+        resolution_mode_temp_sigma_FWHM = sigma_values['resolution_mode_temp_sigma_FWHM']
+        
         # Assign predefined bands
         predefined_bands = {
             "cat": ([8440., 8702.], [8560., 8604.]),
@@ -409,17 +402,13 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
         }
         for band, (sigma, cont) in predefined_bands.items():
             if locals()[f"band_{band}"]:
-                band_sigma, cont_sigma = np.array(sigma), np.array(cont)
+                band_sigma = np.array(sigma)
 
         if band_custom:
             try:
                 low_wave_sigma = float(sigma_values['sigma_left_lambda'])
                 high_wave_sigma = float(sigma_values['sigma_right_lambda'])
-                low_wave_cont = float(sigma_values['sigma_cont_left_lambda'])
-                high_wave_cont = float(sigma_values['sigma_cont_right_lambda'])
-
                 band_sigma = np.array([low_wave_sigma, high_wave_sigma])
-                cont_sigma = np.array([low_wave_cont, high_wave_cont])
             except ValueError:
                 sg.popup('Band values for sigma not valid!')
                 continue
@@ -427,7 +416,7 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
         try:
             resolution_spec = float(sigma_values['sigma_spec_res'])
             resolution_template = float(sigma_values['sigma_res_template'])
-            if resolution_spec <= 0 or resolution_template < 0:
+            if resolution_spec <= 0 or resolution_template <= 0:
                 sg.popup('Invalid resolution values for the spectrum or the template')
                 continue
         except ValueError:
@@ -475,11 +464,16 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
                    band_k=band_k,
                    band_custom=band_custom,
                    band_sigma=band_sigma,
-                   cont_sigma=cont_sigma,
+                   # cont_sigma=cont_sigma,
                    low_wave_sigma=low_wave_sigma,
                    high_wave_sigma=high_wave_sigma,
-                   low_wave_cont=low_wave_cont,
-                   high_wave_cont=high_wave_cont)
+                   # low_wave_cont=low_wave_cont,
+                   # high_wave_cont=high_wave_cont, 
+                   resolution_mode_spec_sigma_R = resolution_mode_spec_sigma_R,
+                   resolution_mode_spec_sigma_FWHM = resolution_mode_spec_sigma_FWHM,
+                   resolution_mode_temp_sigma_R = resolution_mode_temp_sigma_R,
+                   resolution_mode_temp_sigma_FWHM = resolution_mode_temp_sigma_FWHM,
+                )
 
 
 
@@ -574,7 +568,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
         ]
 
     print ('*** Line-strength parameters window open. The main panel will be inactive until you close the window ***')
-    ew_window = sg.Window('Line-strength parameters', ew_layout)
+    ew_window = open_subwindow('Line-strength parameters', ew_layout, zm=zm)
 
     while True:
         ew_event, ew_values = ew_window.read()
@@ -659,7 +653,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 [sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
                 ]
 
-            sigmacorr_window = sg.Window('Sigma coeff parameters', sigmacorr_layout)
+            sigmacorr_window = open_subwindow('Sigma coeff parameters', sigmacorr_layout, zm=zm)
 
             print (single_index_corr)
             while True:
@@ -722,7 +716,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 ]
 
             print ('*** Sigma corr parameters window open. The main panel will be inactive until you close the window ***')
-            correw_window = sg.Window('Sigma correction parameters', correw_layout)
+            correw_window = open_subwindow('Sigma correction parameters', correw_layout, zm=zm)
 
             while True:
 
@@ -1085,7 +1079,7 @@ def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
     ]
 
     print('*** Line fitting parameters window open. The main panel will be inactive until you close the window ***')
-    linefit_window = sg.Window('Line(s) fitting parameters', linefit_layout)
+    linefit_window = open_subwindow('Line(s) fitting parameters', linefit_layout, zm=zm)
 
     while True:
         linefit_event, linefit_values = linefit_window.read()
@@ -1192,6 +1186,8 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_kin_tie_balmer = params.ppxf_kin_tie_balmer
     ppxf_kin_dust_stars = params.ppxf_kin_dust_stars
     ppxf_kin_dust_gas = params.ppxf_kin_dust_gas
+    ppxf_kin_user_bias = params.ppxf_kin_user_bias
+    ppxf_kin_bias = params.ppxf_kin_bias
     ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
     # prev_spec = params.prev_spec_nopath
 
@@ -1223,6 +1219,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         [sg.HorizontalSeparator()],
 
         [sg.Text('Moments to fit:', font = ('', default_size, 'bold'), tooltip='Moments of the LOSVD. Minimum 2 (V and sigma), maximum 6. Proposed value = 4'), sg.InputText(kin_moments, size = (3,1), key = 'kin_moments'), sg.Text('Add. degree:', font = ('', default_size, 'bold'), tooltip='Additive degree to the fit. Deactivate (-1) if you are interested to gas flux'), sg.InputText(additive_degree_kin, size = (3,1), key = 'additive_degree_kin'), sg.Text('Mult. degree:', font = ('', default_size, 'bold'), tooltip='Multiplicative degree to the fit. Use if you want to use gas flux'), sg.InputText(multiplicative_degree_kin, size = (3,1), key = 'multiplicative_degree_kin'), sg.Text('Noise:', font = ('', default_size, 'bold'), tooltip='Mean noise per pixel of the spectrum'), sg.InputText(ppxf_kin_noise, size = (6,1), key = 'ppxf_kin_noise'), sg.Checkbox('Auto noise', default = kin_best_noise, key = ('kin_best_noise'), tooltip='Auto calculate the noise level of the spectrum for the best formal error estimation')],
+        [sg.Checkbox('Set custom bias (regularization), IF moments >= 4:', default = ppxf_kin_user_bias, key = ('ppxf_kin_user_bias'), tooltip='Change the regularization from the default value of pPXF. Only if you fit at least 4 moments. Must be between 0 and 1'), sg.InputText(ppxf_kin_bias, size = (6,1), key = 'ppxf_kin_bias')],
         [sg.HorizontalSeparator()],
 
         [sg.Checkbox('Estimate the uncertainties with MonteCarlo simulations', font = ('', default_size, 'bold'), key = 'with_errors_kin', default = with_errors_kin, tooltip='Calculate the uncertainties in the LOSVD with MonteCarlo simulations'), sg.Text('N. simulations:'), sg.InputText(ppxf_kin_mc_sim, size = (7,1), key = 'ppxf_kin_mc_sim')],
@@ -1231,7 +1228,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         ]
 
     print ('*** Kinematics parameters window open. The main panel will be inactive until you close the window ***')
-    ppxf_kin_window = sg.Window('pPXF Kinematics parameters', ppxf_kin_layout)
+    ppxf_kin_window = open_subwindow('pPXF Kinematics parameters', ppxf_kin_layout, zm=zm)
 
 
     while True:
@@ -1315,7 +1312,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
                 continue
 
         ppxf_kin_mask_emission = ppxf_kin_values['ppxf_kin_mask_emission']
-        ppxf_kin_two_stellar_components = ppxf_kin_values['ppxf_kin_two_stellar_components']
+        ppxf_kin_two_stellar_components = ppxf_kin_values['ppxf_kin_two_stellar_components'] if no_gas_kin else False
 
         # checking the compatibility with the generic template option
         if ppxf_kin_two_stellar_components and ppxf_kin_generic_lib:
@@ -1357,6 +1354,25 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             kin_moments = 4
             continue
 
+        # Bias
+        ppxf_kin_user_bias = ppxf_kin_values['ppxf_kin_user_bias']
+        if ppxf_kin_user_bias:
+            try:
+                ppxf_kin_bias = float(ppxf_kin_values['ppxf_kin_bias'])
+                if ppxf_kin_bias <=0 or ppxf_kin_bias > 1:
+                    sg.popup('Bias must be between 0 (no regularization) and 1. ')
+                    ppxf_kin_bias = params.ppxf_kin_bias
+                    continue
+                if kin_moments < 4:
+                    sg.popup('WARNING: Bias keyword is used only for moments >=4. I will neglet this value.')
+                    ppxf_kin_bias = None
+            except Exception:
+                sg.popup('Invalid bias value: must be a number')
+                ppxf_kin_bias = params.ppxf_kin_bias
+                continue
+        else:
+            ppxf_kin_bias = None
+            
         if ppxf_kin_event == 'Confirm':
             print ('Kinematics parameters confirmed. This main panel is now active again')
             print ('')
@@ -1414,6 +1430,8 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             ppxf_kin_tie_balmer = ppxf_kin_tie_balmer,
             ppxf_kin_dust_stars = ppxf_kin_dust_stars,
             ppxf_kin_dust_gas = ppxf_kin_dust_gas,
+            ppxf_kin_user_bias = ppxf_kin_user_bias,
+            ppxf_kin_bias = ppxf_kin_bias,
             ppxf_kin_save_spectra = ppxf_kin_save_spectra
             )
 
@@ -1472,7 +1490,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     interp_model_ppxf = params.interp_model_ppxf
     lick_ssp_models_ppxf = params.lick_ssp_models_ppxf
     interp_modes_ppxf = params.interp_modes_ppxf
-
+    ppxf_pop_save_spectra = params.ppxf_pop_save_spectra
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
@@ -1506,12 +1524,13 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         [sg.HorizontalSeparator()],
 
         [sg.Checkbox('Lick/IDS analysis with SSP models:', default = stellar_parameters_lick_ppxf, key = 'stellar_parameters_lick_ppxf',tooltip='Use the pPXF results to estimate the stellar parameters also with the Lick/IDS indices', font = ('', default_size, 'bold')), sg.InputCombo(lick_ssp_models_ppxf, key='ssp_model_ppxf',default_value=ssp_model_ppxf, readonly=True, size = (11,1)), sg.Text('Interpolation:',tooltip='Interpolate linearly with griddata function or with machine learning Gaussian Process Regression (GPR)'), sg.InputCombo(interp_modes_ppxf, key='interp_model_ppxf',default_value=interp_model_ppxf, readonly=True, size = (7,1))],
+        [sg.Checkbox('Save processed spectra', key = 'ppxf_pop_save_spectra', default = ppxf_pop_save_spectra, tooltip='For each spectrum, save the bestfit model, residuals, and gas corrected spectra, if available')],
 
         [sg.Button("Help", size=(12, 1),button_color=('black','orange')), sg.Push(), sg.Button('Confirm',button_color= ('white','black'), size = (18,1))]
         ]
 
     print ('*** Population parameters window open. The main panel will be inactive until you close the window ***')
-    ppxf_pop_window = sg.Window('pPXF Population parameters', ppxf_pop_layout)
+    ppxf_pop_window = open_subwindow('pPXF Population parameters', ppxf_pop_layout, zm=zm)
 
     while True:
 
@@ -1529,6 +1548,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         stellar_parameters_lick_ppxf = ppxf_pop_values['stellar_parameters_lick_ppxf']
         ssp_model_ppxf = ppxf_pop_values['ssp_model_ppxf']
         interp_model_ppxf = ppxf_pop_values['interp_model_ppxf']
+        ppxf_pop_save_spectra = ppxf_pop_values['ppxf_pop_save_spectra']
 
         if ppxf_pop_want_to_mask:
             try:
@@ -1685,7 +1705,8 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 ssp_model_ppxf = ssp_model_ppxf,
                 interp_model_ppxf = interp_model_ppxf,
                 lick_ssp_models_ppxf = lick_ssp_models_ppxf,
-                interp_modes_ppxf = interp_modes_ppxf
+                interp_modes_ppxf = interp_modes_ppxf,
+                ppxf_pop_save_spectra = ppxf_pop_save_spectra
                 )
 
     return params
