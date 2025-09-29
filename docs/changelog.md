@@ -1,8 +1,21 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 
-# Version histories #
+## Changelog
+
+**Version 7.0 (20250928):**  
+- Major changes to the layout: The Utilities frame is now a stand-alone window in the 'Window --> Utilities' menu. This frame has been replaced with a real-time and interactive preview of the selected spectrum in the listbox which allows panning, zooming (left mouse click) and redshift estimation by shifting the spectrum to match the reference lines marked (right-click and drag). Some minor cosmetic adjustments to the layout (e.g. tittle for the listbox and better alignment of the items) have been performed. The main GUI is now resizable to account the zooming options (see below).
+- Introduced the 'View' menu where you will find zoom options to better adapt the GUI to different screen resolutions. You can zoom-in, zoom-out or reset the zoom to the default level. The zooming acts on all the GUI windows. This feature is still experimental and some glitch are expected, especially for Windows systems, but they do not have impact on the stability of SPAN. 
+- Enforced the preliminary check of the loaded spectra with an estimation of a global S/N and flag in the listbox if S/N <=5.
+- Interactive listbox: now you can move and delete the spectra by right-click on the selected spectrum. Deletion works also with the 'Canc' keyboard button (use with care, you cannot undo the operation).
+- Implemented the Markov chain Monte Carlo (MCMC) simulations for the determination of the stellar parameters from the Lick/IDS analysis. This option is available for SSP models with alpha/Fe parametrization (e.g. Thomas, sMILES, MILES) and represents a more accurate alternative to the simple linear interpolation with griddata. 
+- Substituted the 'sigma_measurement' function in the 'spectral_analysis' module with the 'measure_sigma_simple' function, which is used by the 'Velocity dispersion' task. Now it's faster and more accurate.
+- Introduced the customs 'bias' keyword setting of pPXF for the 'Stars and gas kinematics' task. Now you can select the bias (regularization) besides the default value of pPXF. To be used only when you fit at least 4 kinematic moments. 
+- Now in the 'Stellar populations and SFH' task you can decide whether save or not the spectra products generated (best fit template, residuals, emission corrected spectra, if available).
+- Added the elliptical binning mode in the "DataCube extraction" sub-program, to radially rebin the datacube using isphotal ellipses profiles (or any kind of custom circle/ellipses).
+- Compiled a complete manual in PDF format, available in the main folder of SPAN. 
+
 
 **Version 6.6 (20250909):**  
 - Now the 'Plot maps' sub-program stores the parameter values until SPAN is closed.

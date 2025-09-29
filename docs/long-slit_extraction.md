@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis Software V6.6
+SPAN: SPectral ANalysis Software V7.0
 Daniele Gasparri, September 2025
 
 # Long-slit extraction #

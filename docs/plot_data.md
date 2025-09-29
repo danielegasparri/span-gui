@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 # Plot data window #

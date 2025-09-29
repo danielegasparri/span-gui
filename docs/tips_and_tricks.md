@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 # Tips and Tricks #
@@ -9,7 +9,7 @@ Here are some useful tips to help you master SPAN.
 Due to the variety of 1D spectral formats, SPAN requires you to manually set the wavelength units before loading the spectra.
 It does not matter whether the spectra use linear or logarithmic wavelength values: you must specify if the units are in Angstrom (A), nanometers (nm), or micrometers (mu).
 If the wavelength units are incorrect, SPAN will display the spectrum with the wrong scale.
-Example: If your optical spectra are in A but you set nm, clicking "Plot" will show a range from 48000 to 55000 A, which is incorrect.
+Example: If your optical spectra are in A but you set nm, the Preview frame will show a range from 48000 to 55000 A, which is incorrect.
 To fix this, select the correct wavelength units and plot one selected spectrum again.
 
 
@@ -24,7 +24,7 @@ If your spectra folder contains subdirectories, SPAN will scan all subfolders fo
 
 
 4. **Managing SPAN Results and Directories**  
-SPAN stores results in the "SPAN_results" directory. The location of this directory must be decided by you the first time SPAN is run. You can move or delete its contents at any time, but it is recommended to do so only when SPAN is not running.
+SPAN stores results in the "SPAN_results" directory. The location of this directory must be decided by you the first time SPAN is run. You can move or delete its content at any time, but it is recommended to do so only when SPAN is not running.
 If SPAN detects missing directories upon startup, it will automatically recreate them.
 
 
@@ -33,8 +33,8 @@ The "Emission Line(s) Correction" option in the Lick/IDS line-strength analysis 
 Solution: Activate the "Cropping" task in the Spectra manipulation panel and crop the spectra to remove problematic regions. If you want to analyze only the 4800-5500 A range for stellar populations, crop the spectra accordingly.
 
 
-6. **Lick/IDS analysys within the "Stellar populations and SFH" task**
-You can perform the Lick/IDS line-strength analysis also within the "Stellar populations and SFH" task by leveraging the results of the fit from pPXF. You just need to activate the option "Lick/IDS analysis with SSP models". Here, you can fit the spectra with any template, on the contrary of the Lick/IDS analysis in the "Line-strength analysis" task and fully adjust the parameters of the fit. In this case, it is strongly recommended to fit also the stellar and gas component and to activate the "Convolve templates to galaxy resolution" option, which allows pPXF to perform a reliable estimation of the velocity dispersion. This is needed to correct the equivalent widths of the Lick/IDS indices for the velocity dispersion broadening and give more accurate results. 
+6. **Lick/IDS analysis within the "Stellar populations and SFH" task**
+You can perform the Lick/IDS line-strength analysis also within the "Stellar populations and SFH" task by leveraging the results of the fit from pPXF. You just need to activate the option "Lick/IDS analysis with SSP models". Here, you can fit the spectra with any template, on the contrary of the Lick/IDS analysis in the "Line-strength analysis" task, and fully adjust the parameters of the fit. In this case, it is strongly recommended to fit also the stellar and gas component and to activate the "Convolve templates to galaxy resolution" option, which allows pPXF to perform a reliable estimation of the velocity dispersion. This is needed to correct the equivalent widths of the Lick/IDS indices for the velocity dispersion broadening and give more accurate results. 
 
 
 7. **Using "Stellar Populations and SFH" for Kinematics**  
@@ -57,7 +57,7 @@ When de-redshifting spectra, the corrected spectral resolution, if expressed in 
 9. **Key Considerations for pPXF and Lick/IDS Analysis**  
 When performing kinematics or line-strength index analysis with pPXF, the resolution of the templates must be higher (i.e., lower FWHM) than the resolution of the spectra.
 If this is not the case, degrade the resolution using "Degrade Resolution" in the "Spectra Manipulation" panel.
-The Lick/IDS index analysis uses a pre-loaded subset of E-MILES templates (Padova isochrones, FWHM = 2.51 A).
+The Lick/IDS index analysis uses a pre-loaded subset of E-MILES templates (Padova isochrones, FWHM = 2.51 A) to estimate the velocty dispersion and subtract the gas emission lines from the stellar flux.
 If your spectra have higher resolution (FWHM_spec < 2.51 A), degrade the spectra to at least 2.51 A before fitting.
 
 
@@ -68,7 +68,7 @@ You can replace the content of the "sMILES_afeh" folder with a different sMILES 
 
 
 11. **Processing Spectra with Different Redshifts**  
-If your dataset contains spectra with different redshifts (Delta(z) > 0.002) and you wish to use "Process All", you must first de-redshift them.
+If your dataset contains spectra with different redshifts (Delta(z) > 0.002) and you wish to use the "Process All" mode, you must first de-redshift them, since you can insert only one z value in the analysis tasks that require a redshift guess (i.e. Lick/IDS indices, Stars and gas kinematics, Stellar populations and SFH).
 Use "Doppler/z Correction" --> "I have a file" In the Spectra manipulation panel to apply individual redshifts.
 This ensures that all spectra are in the rest frame before spectral analysis.
 
@@ -82,5 +82,5 @@ If this occurs, use the FSPS library, which includes SSPs as young as 1 Myr (com
 Cropping spectra to include only the wavelength regions of interest can significantly speed up spectral analysis.
 
 
-14. **Stellar populations with Lick/IDS indices**  
+14. **Stellar populations with Lick/IDS indices and machine learning GPR**  
 The determination of the stellar parameters with the Lick/IDS indices and the GPR method uses predictive machine-learning models and the scikit-learn module. The default models stored in the system_files folder have been trained with the scikit-learn 1.4.2 version. If you are using different version for this library, the predictions may be inaccurate and a warning is issued in the output window. In this case you should delete the trained models stored in the "system_files" folder (the files have the .pkl extension) and run again SPAN. If the Lick/IDS task with GPR stellar parameters determination does not find the trained models, it will create again the first time is executed, using the scikit-learn version you have installed. This will require a little time, but then you can use these new trained models until you change the version of the scikit-learn module.

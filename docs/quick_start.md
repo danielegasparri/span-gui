@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 
@@ -6,11 +6,11 @@ Daniele Gasparri, September 2025
 
 To get started, press the "Load!" button in the "Prepare and Load Spectra" frame to load the example files.
 
-The loaded spectra will appear in the central frame on the right (the white window). They are the optical and near-infrared (NIR) spectra of the central regions of local galaxies observed with the ESO X-shooter instrument at resolving power R = 5000. Simply select a spectrum with the mouse, then click "Plot" to display it. Close the plot window to re-enable the main panel.
+The loaded spectra will appear in the central frame on the right (the white window). They are the optical and near-infrared (NIR) spectra of the central regions of local galaxies observed with the ESO X-shooter instrument at resolving power R = 5000. Simply select a spectrum with the mouse and look at the preview on the right. Here you can zoom, pan and read some info in real-time, such as the wavelength, the flux and an estimation of the S/N in a +-25 points window centered on the mouse cursor. If you want more control on the graphical panel, you can also click "Plot" to open an interactive Matplotlib window. Close the plot window to re-enable the main panel.
 You can now:
 
-- Modify the spectrum by opening the "Spectra Manipulation" panel, located in the "Utilities" frame on the right.
-- Analyze the selected spectrum by activating any spectral analysis tasks.
+- Modify the spectrum by opening the "Spectra Manipulation" panel, located in the "Preview" frame on the right.
+- Analyze the selected spectrum by activating any spectral analysis tasks. 
 
 
 **Applying a Spectral Manipulation Task**  
@@ -19,8 +19,8 @@ Let's try modifying a spectrum:
 - Open the "Spectra Manipulation" panel.
 - Activate one of the available tasks, e.g., "Add noise".
 - Confirm the selection by pressing "Confirm".
-- Press "Preview Spec." in the main panel to view the result.
-- If satisfied, save the modified spectrum by clicking "Process Selected" (ensure the plot window is closed first!).
+- Press "Preview Spec." in the main panel to view the result. WARNING: The preview spectrum in the main GUI will not change: it will always display the original selected spectrum. To see the results of spectral manipulation task(s), you must always click on "Preview Spec."
+- If satisfied, save the modified spectrum by clicking "Process Selected" (ensure the plot window is closed first, if you opened!).
 - To apply the selected task to all loaded spectra, click "Process All". 
 The results will be saved in the "SPAN_results/processed_spectra" folder, located within the path you selected when first opening SPAN for the "SPAN_results" folder.
 
@@ -37,7 +37,7 @@ Now, let's try a spectral analysis task:
 
 **Important:**
 If the spectrum looks strange, check whether the "Add Noise" task is still active.
-The Spectral Analysis frame processes spectra after applying any selected Spectra Manipulation tasks.
+The Spectral Analysis frame processes spectra after applying any selected Spectra Manipulation task.
 If multiple tasks are active, the processed spectrum will reflect all applied modifications.
 If no tasks are selected, the original spectrum is used.
 
@@ -55,7 +55,7 @@ If too many tasks are activated and the program becomes difficult to manage, don
 You can experiment with other preloaded 1D spectra lists provided with SPAN.
 For example:
 
-- In "3. Browse the spectra list or just one spectrum", load the spectra list "ngc5806_bins.dat" in the "example_files" folder. This file contains 39 optical spectra of the spiral galaxy NGC 5806.
-- Set the Wavelength units to "A" in the "Wavelength of the spectra is in:" option
+- In "3. Browse the spectra list or just one spectrum", load the spectra list "ngc5806_bins.dat" located in the "example_files" folder. This file contains 39 optical spectra of the spiral galaxy NGC 5806.
+- Set the Wavelength units to "A" in the "Wavelength units:" option
 - Press the "Load!" button to load the 39 1D spectra in the listbox. 
 - Have fun!

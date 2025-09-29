@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 # Stars and gas kinematics #
@@ -21,7 +21,7 @@ The parameters are grouped into seven sections, separated by horizontal dividers
 ### First Section: Basic Parameters
 - Wavelength Range: Defines the spectral range to be fitted. If your spectra are not rest-frame corrected, the wavelength range to insert is the one displayed by your spectra. A robust estimation of both stellar and gaseous components is achieved by selecting the visible band region 4800-5500 A (or its equivalent range for high-redshift galaxies), which includes key absorption and emission lines. This is a commonly used standard range. In the NIR, the most prominent spectral features for stellar kinematics are the Ca II triplet (CaT) lines in the 8400-8800 A rest-frame range.
 - Sigma (km/s): An initial estimate of the expected velocity dispersion of your galaxy spectrum.
-- Redshift (z): An approximate redshift value of the spectrum. **Important:** Avoid loading spectra with significantly different redshifts. If necessary, de-redshift your data before performing kinematic analysis. This can be done using the "Doppler/z correction" task in SPAN's Spectra manipulation panel.
+- Redshift (z): An approximate redshift value of the spectrum. **Important:** Avoid loading spectra with significantly different redshifts. If necessary, de-redshift your data before performing kinematic analysis. This can be done using the "Doppler/z correction" task in the Spectra manipulation panel.
 
 
 ### Second Section: Spectral Resolution 
@@ -40,8 +40,8 @@ Here you can select the SSP Model Library to use for the fit. The available pre-
 	2. Galaxev (subsample) 
 	3. FSPS (subsample)
 	4. X-shooter Spectral Library (XSL) (complete sample with Salpeter IMF, better suited for higher resolution spectra, R = 10,000)  
-If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectral Processing module.
-You can use any kind of EMILES templates or generic templates. The generic templates should have the wavelength scale in linear units and Angstrom. WARNING: Two stellar component fit is not available with a generic template set option (see next section). 
+If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectra manipulation panel.
+You can use any kind of EMILES templates or generic ones. The generic templates should have the wavelength scale in linear units and Angstrom. WARNING: Two stellar component fit is not available with a generic template set option (see next section). 
 
 
 ### Fourth Section: Which component to fit
@@ -70,7 +70,7 @@ If unsure about the noise level, enable "Auto Noise". This feature will:
 	1. Perform an initial fit using the user-provided noise level without regularization (bias keyword set to zero).
 	2. Compute a refined noise estimate.
 	3. Re-run the fit using the updated noise value to obtain more accurate LOSVD parameters.
-
+- Custom bias keyword: To be used only when you fit at least 4 moments. This lets you to change the default bias value that pPXF uses (bias = 0.7*np.sqrt(500./goodpixels.size), from Cappellari & Emsellem 2004) and try to adjust the fit to a better estimate of H3 and H4 moments.
 
 ### Seventh Section: Uncertainty Estimation
 To estimate uncertainties in stellar kinematics, you can enable Monte Carlo simulations.

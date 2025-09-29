@@ -1,9 +1,9 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
-# The Spectral analysis panel#
+# The Spectral analysis frame
 
-This panel consists of a single frame containing both basic and advanced spectral analysis tools:
+This frame contains both basic and advanced spectral analysis tools:
 
 1. Blackbody fitting
 2. Cross-correlation
@@ -15,12 +15,11 @@ This panel consists of a single frame containing both basic and advanced spectra
 
 Each task operates independently and does not modify the input spectrum.
 
-
 Here is a brief description of the basic spectral analysis task. For line-strength analysis, Stars and gas kinematics and Stellar populations and SFH, see the dedicated documentation. 
 
 
 **Planck blackbody fitting**  
-Fits the spectral continuum with a Planck blackbody function and returns the best estimation of the effective temperature. The fit is accurate for stellar spectra spanning a wide wavelength range (∼ 3000 Å) and works at best if the peak of the Plank function is included in the spectral region to fit. The results are the best estimation of the effective temperature of the considered stellar spectrum and the best fit Planck function model.
+Fits the spectral continuum with a Planck blackbody function and returns the best estimation of the effective temperature. The fit is accurate for stellar spectra spanning a wide wavelength range (>= 3000 Å) and works at best if the peak of the Plank function is included in the spectral region to fit. The results are the best estimation of the effective temperature of the considered stellar spectrum and the best fit Planck function model.
 
 **Cross-Correlation**  
 Measures the wavelength shift of the spectra, both in terms of radial velocity and redshift values. 
@@ -28,7 +27,7 @@ The result is the radial velocity or z of the spectrum, and the uncertainties es
 Carlo simulations.
 
 **Velocity dispersion**  
-Performs a brute force least square fit of a selected region of a spectrum with a selected template spectrum and calculates the velocity dispersion. This task produces faster results than the pPXF algorithm and it is suitable in situations where speed is essential. It can be used for an estimation of the velocity dispersion for any situation where an accurate kinematic analysis is not necessary. Spectra needs to de de-redshifter and Doppler corrected.
+Performs a brute force least square fit of a selected region of a spectrum with a selected template spectrum and calculates the velocity dispersion. This task produces faster results than the pPXF algorithm and it is suitable in situations where speed is essential. It can be used for an estimation of the velocity dispersion for any situation where an accurate kinematic analysis is not necessary. WARNING: your spectra need to de de-redshifter and/or Doppler corrected.
 
 
 **Line(s) fitting**  
@@ -36,8 +35,8 @@ Fits an absorption or an emission line with a convolution of a straight line for
 
 
 **Working with the Input Spectrum**  
-WARNING: The input spectrum may be affected by the tasks activated in the Spectra manipulation panel.
-If you wish to analyze the original spectrum, ensure that all the Spectra manipulation tasks are deactivated (they are disabled by default).
+WARNING: The input spectra may be affected by the tasks activated in the Spectra manipulation panel.
+If you wish to analyze the original spectra, ensure that all the Spectra manipulation tasks are deactivated (they are disabled by default).
 
 
 **Previewing Results**  

@@ -1,4 +1,4 @@
-SPAN: SPectral ANalysis software V6.6
+SPAN: SPectral ANalysis software V7.0
 Daniele Gasparri, September 2025
 
 # Spectra manipulation panel #
@@ -22,7 +22,7 @@ If you need to change the execution order, first activate the desired tasks, the
 
 Multiple tasks can be selected simultaneously (e.g., rebinning, Doppler correction, adding noise) without restrictions.
 The "Preview Spec." button in the main panel allows you to visualize the spectrum after you activated the task(s) and CLOSED the Spectra Manipulation panel.
-The preview displays the final processed spectrum, combining all activated tasks.
+You will see the final processed spectrum, combining all activated tasks.
 Intermediate previews are not available. If you apply three tasks, the preview reflects their cumulative effect.
 If no task is selected, the original spectrum is shown.
 
@@ -35,9 +35,9 @@ The four operations in the "Spectra Math" frame:
 - Sum All
 - Norm. and Sum All 
 
-operate on all original spectra, regardless of any individual task selected. If "Use for Spec. Analysis" is enabled, the program will prioritize the combined result for spectral analysis, overriding any single-spectrum tasks. Use this option carefully: A terminal message will confirm when combined spectra are set for analysis.
+operate on all original spectra, regardless of any individual task selected. If "Use for Spec. Analysis" is enabled, the program will prioritize the combined result for spectral analysis, overriding any single-spectrum tasks. Use this option carefully: A terminal message will tell you when combined spectra are set for analysis.
 
 
 **Impact on Spectral Analysis**  
-Any task performed in these frames modifies the selected spectrum and will affect the results in the "Spectral Analysis" panel if you intend to use it.
+Any task performed in these frames modifies the selected spectrum and will affect the results in the "Spectral Analysis" frame, if you intend to use it.
 If at least one task has been activated in the Spectra Manipulation panel, the button color in the main GUI will change to a very annoying red hue. This will remember you that you have active tasks in the Spectra Manipulation panel that are modifying your spectra.
