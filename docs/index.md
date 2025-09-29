@@ -104,7 +104,6 @@ You can install **SPAN** using `pip`:
 pip3 install span-gui
 ```
 
-Otherwise, if you prefer the stand-alone app for Windows, you can [download the Windows installer of SPAN here]([SPAN_setup.exe](https://1drv.ms/u/c/49228024d7df0d98/EUb0-WDYnxtJlUNyy62Fy6cBLMcGN0upmxHoRVBmhrxURA?e=KUSALd))
 
 ## Tested Compatibility
 
