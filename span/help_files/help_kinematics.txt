@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V6.6
-Daniele Gasparri, July 2025
+SPAN: SPectral ANalysis software V7.0
+Daniele Gasparri, September 2025
 
 # Stars and gas kinematics #
 
@@ -66,6 +66,7 @@ If unsure about the noise level, enable "Auto Noise". This feature will:
 	1. Perform an initial fit using the user-provided noise level without regularization (bias keyword set to zero).
 	2. Compute a refined noise estimate.
 	3. Re-run the fit using the updated noise value to obtain more accurate LOSVD parameters.
+- Custom bias keyword: To be used only when you fit at least 4 moments. This lets you to change the default bias value that pPXF uses (bias = 0.7*np.sqrt(500./goodpixels.size), from Cappellari & Emsellem 2004) and try to adjust the fit to a better estimate of H3 and H4 moments.
 
 
 ### Seventh Section: Uncertainty Estimation
