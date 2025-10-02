@@ -60,7 +60,7 @@ from scipy.signal import correlate2d
 from scipy.constants import h,k,c
 from scipy.stats import pearsonr
 import scipy.stats
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter, binary_dilation
 from scipy.interpolate import griddata
 
 import time
@@ -1337,7 +1337,7 @@ def plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap="inferno",
         except Exception:
             continue
 
-    # Setup regular grid
+    # --- Build the regular grid  ---
     x_bins = np.sort(np.unique(x))
     y_bins = np.sort(np.unique(y))
     grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
@@ -1347,24 +1347,35 @@ def plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap="inferno",
         if b >= 0 and b in value_map:
             x_idx = np.searchsorted(x_bins, x[i])
             y_idx = np.searchsorted(y_bins, y[i])
+            # NB: searchsorted returns insertion index; if x[i] equals the last bin,
+            #     it may point one past the end. Clamp safely:
+            x_idx = np.clip(x_idx, 0, len(x_bins)-1)
+            y_idx = np.clip(y_idx, 0, len(y_bins)-1)
             grid_data[y_idx, x_idx] = value_map[b]
 
-    # Apply smoothing
-    if smoothing:
+    # --- Apply smoothing robustly (prevent area growth) ---
+    if smoothing and sigma > 0:
         mask = ~np.isnan(grid_data)
-        grid_data_filled = np.copy(grid_data)
-        grid_data_filled[~mask] = 0.0
-        smoothed_data = gaussian_filter(grid_data_filled, sigma=sigma)
-        norm_mask = gaussian_filter(mask.astype(float), sigma=sigma)
-        with np.errstate(invalid='ignore', divide='ignore'):
-            smoothed_data /= norm_mask
-            smoothed_data[norm_mask < 1e-3] = np.nan
+        smoothed_data = gaussian_smooth_masked(
+            grid=grid_data,
+            mask=mask,
+            sigma=float(sigma),       # must be in *pixels*
+            threshold=0.5,            # more conservative than 1e-3
+            dilate_mult=2.5,
+            enforce_support=True,
+            mode='constant',
+            cval=0.0
+        )
     else:
         smoothed_data = grid_data
 
-    # Plotting
+    # --- Use edges to avoid visual enlargement at plot time ---
+    x_edges = edges_from_centres(x_bins)
+    y_edges = edges_from_centres(y_bins)
+
     fig, ax = plt.subplots(figsize=(8, 6))
-    mesh = ax.pcolormesh(x_bins, y_bins, smoothed_data, cmap=cmap, shading='auto', vmin=vmin, vmax=vmax)
+    mesh = ax.pcolormesh(x_edges, y_edges, smoothed_data, cmap=cmap,
+                        shading='auto', vmin=vmin, vmax=vmax)
     plt.colorbar(mesh, ax=ax, label=quantity)
     ax.set_xlabel("R [arcsec]")
     ax.set_ylabel("R [arcsec]")
@@ -1423,7 +1434,7 @@ def plot_reprojected_map_clickable(x, y, bin_id, result_df, quantity, cmap="infe
         except Exception:
             continue
 
-    # Setup regular grid
+    # --- Build the regular grid  ---
     x_bins = np.sort(np.unique(x))
     y_bins = np.sort(np.unique(y))
     grid_data = np.full((len(y_bins), len(x_bins)), np.nan)
@@ -1433,24 +1444,35 @@ def plot_reprojected_map_clickable(x, y, bin_id, result_df, quantity, cmap="infe
         if b >= 0 and b in value_map:
             x_idx = np.searchsorted(x_bins, x[i])
             y_idx = np.searchsorted(y_bins, y[i])
+            # NB: searchsorted returns insertion index; if x[i] equals the last bin,
+            #     it may point one past the end. Clamp safely:
+            x_idx = np.clip(x_idx, 0, len(x_bins)-1)
+            y_idx = np.clip(y_idx, 0, len(y_bins)-1)
             grid_data[y_idx, x_idx] = value_map[b]
 
-    # Apply smoothing
-    if smoothing:
+    # --- Apply smoothing robustly (prevent area growth) ---
+    if smoothing and sigma > 0:
         mask = ~np.isnan(grid_data)
-        grid_data_filled = np.copy(grid_data)
-        grid_data_filled[~mask] = 0.0
-        smoothed_data = gaussian_filter(grid_data_filled, sigma=sigma)
-        norm_mask = gaussian_filter(mask.astype(float), sigma=sigma)
-        with np.errstate(invalid='ignore', divide='ignore'):
-            smoothed_data /= norm_mask
-            smoothed_data[norm_mask < 1e-3] = np.nan
+        smoothed_data = gaussian_smooth_masked(
+            grid=grid_data,
+            mask=mask,
+            sigma=float(sigma),       # must be in *pixels*
+            threshold=0.5,            # more conservative than 1e-3
+            dilate_mult=2.5,
+            enforce_support=True,
+            mode='constant',
+            cval=0.0
+        )
     else:
         smoothed_data = grid_data
 
-    # Plotting
+    # --- Use edges to avoid visual enlargement at plot time ---
+    x_edges = edges_from_centres(x_bins)
+    y_edges = edges_from_centres(y_bins)
+
     fig, ax = plt.subplots(figsize=(8, 6))
-    mesh = ax.pcolormesh(x_bins, y_bins, smoothed_data, cmap=cmap, shading='auto', vmin=vmin, vmax=vmax)
+    mesh = ax.pcolormesh(x_edges, y_edges, smoothed_data, cmap=cmap,
+                        shading='auto', vmin=vmin, vmax=vmax)
     plt.colorbar(mesh, ax=ax, label=quantity)
     ax.set_xlabel("R [arcsec]")
     ax.set_ylabel("R [arcsec]")
@@ -1788,5 +1810,77 @@ def open_manual():
             raise RuntimeError("Unsupported platform")
     except Exception:
         sg.popup('SPAN manual not found, sorry.')
+
+
+# Additional functions to properly handle the smoothing for the Plot Maps subprogram
+def gaussian_smooth_masked(grid: np.ndarray,
+                           mask: np.ndarray,
+                           sigma: float,
+                           threshold: float = 0.5,
+                           dilate_mult: float = 2.5,
+                           enforce_support: bool = True,
+                           mode: str = 'constant',
+                           cval: float = 0.0) -> np.ndarray:
+    """
+    Gaussian smoothing on a masked grid, preventing 'area growth' beyond the mask.
+
+    Parameters
+    ----------
+    grid : 2D array
+        Input image with NaNs where data are missing.
+    mask : 2D boolean array
+        True where data are valid (non-NaN), False elsewhere.
+    sigma : float
+        Gaussian sigma in *pixels*.
+    threshold : float, optional
+        Minimum normalised weight (0..1) to keep output; below -> NaN.
+        Use 0.3–0.7 depending on how conservative you want the support.
+    dilate_mult : float, optional
+        Multiple of sigma to dilate the mask for a hard support clamp.
+        Roughly, 2–3 * sigma gives visually pleasant boundaries.
+    enforce_support : bool, optional
+        If True, apply an additional binary dilation clamp on the final support.
+    mode, cval : passed to gaussian_filter
+        Use mode='constant', cval=0.0 to avoid reflective edge artefacts.
+
+    Returns
+    -------
+    smoothed : 2D array
+        Smoothed grid with NaNs outside the chosen support.
+    """
+    # Replace NaNs by 0 only for the convolution
+    num = np.nan_to_num(grid, nan=0.0)
+
+    # Convolve numerator (data) and denominator (weights)
+    sm_num = gaussian_filter(num, sigma=sigma, mode=mode, cval=cval)
+    sm_den = gaussian_filter(mask.astype(float), sigma=sigma, mode=mode, cval=cval)
+
+    # Normalise; keep only sufficiently supported pixels
+    with np.errstate(invalid='ignore', divide='ignore'):
+        out = sm_num / sm_den
+        out[sm_den <= float(threshold)] = np.nan
+
+    if enforce_support:
+        # Hard support clamp by dilating the original mask by ~k*sigma
+        dilate_iter = max(1, int(np.ceil(dilate_mult * max(1.0, float(sigma)))))
+        support = binary_dilation(mask, iterations=dilate_iter)
+        out[~support] = np.nan
+
+    return out
+
+
+def _midpoints(arr: np.ndarray) -> np.ndarray:
+    return 0.5 * (arr[1:] + arr[:-1])
+
+def edges_from_centres(centres: np.ndarray) -> np.ndarray:
+    centres = np.asarray(centres)
+    if centres.size == 1:
+        step = 1.0
+        return np.array([centres[0] - 0.5*step, centres[0] + 0.5*step])
+    mids = _midpoints(centres)
+    first_edge = centres[0] - (mids[0] - centres[0])
+    last_edge  = centres[-1] + (centres[-1] - mids[-1])
+    return np.concatenate([[first_edge], mids, [last_edge]])
+
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************
