@@ -159,9 +159,11 @@ def handle_list_delete(event, values, window, params,
                         break
             display_names.append(base)
 
+        new_spec_names_nopath = [os.path.basename(spectrum) for spectrum in new_spec_names]
+        
         params = replace(params, spec_names=new_spec_names,
                          spectra_number=len(new_spec_names),
-                         prev_spec="", prev_spec_nopath="")
+                         prev_spec="", prev_spec_nopath="", spec_names_nopath = new_spec_names_nopath)
         window['-LIST-'].update(values=display_names)
         window.metadata = {dn: s for dn, s in zip(display_names, new_spec_names)}
 
@@ -196,12 +198,17 @@ def handle_list_menu(event, values, window, params,
             for i in sorted(indices):
                 params.spec_names[i-1], params.spec_names[i] = params.spec_names[i], params.spec_names[i-1]
 
+            params.spec_names_nopath = [os.path.basename(spectrum) for spectrum in params.spec_names]
+            
     # --- MOVE DOWN ---
     elif event == '↓ Move Down':
         indices = [params.spec_names.index(p) for p in selected_paths]
         if max(indices) < len(params.spec_names) - 1:
             for i in sorted(indices, reverse=True):
                 params.spec_names[i+1], params.spec_names[i] = params.spec_names[i], params.spec_names[i+1]
+                
+            params.spec_names_nopath = [os.path.basename(spectrum) for spectrum in params.spec_names]
+             
 
     # --- REMOVE ---
     elif event == 'Remove':
@@ -226,9 +233,10 @@ def handle_list_menu(event, values, window, params,
             preview_interactor.update_home()
             return params, last_state
         else:
+            new_spec_names_nopath = [os.path.basename(spectrum) for spectrum in new_spec_names]
             params = replace(params, spec_names=new_spec_names,
                              spectra_number=len(new_spec_names),
-                             prev_spec="", prev_spec_nopath="")
+                             prev_spec="", prev_spec_nopath="", spec_names_nopath = new_spec_names_nopath)
 
     # Update listbox names
     display_names = []
@@ -264,9 +272,11 @@ def handle_undo(event, values, window, params, last_state):
         return params
 
     old_spec_names, old_metadata = last_state
+    old_spec_names_nopath = [os.path.basename(spectrum) for spectrum in old_spec_names]
+    
     params = replace(params, spec_names=list(old_spec_names),
                      spectra_number=len(old_spec_names),
-                     prev_spec="", prev_spec_nopath="")
+                     prev_spec="", prev_spec_nopath="", spec_names_nopath = old_spec_names_nopath)
 
     display_names = list(old_metadata.keys())
     window['-LIST-'].update(values=display_names)
