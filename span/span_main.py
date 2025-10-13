@@ -52,7 +52,7 @@ def main():
     layout, scale_win, fontsize, default_size = misc.get_layout()
     
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 7.0 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
+    window1 = sg.Window('SPAN - SPectral ANalysis - 7.1 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
 
     #Allowing elements in the listbox to be deleted
     listbox_widget = window1['-LIST-'].Widget
@@ -86,7 +86,7 @@ def main():
     preview_interactor = preview_tools.PreviewInteractor(ax, status_setter=None, get_snr=_snr_provider, hud_text=hud_text, snr_mode="points", snr_halfwin_A=50.0, snr_halfwin_pts=50)
     
     # Redshift estimator overlay
-    redshift_shifter = preview_tools.SpectrumShifterInteractor(ax, _plot_line, hud_text=hud_text)
+    redshift_shifter = preview_tools.SpectrumShifterInteractor(ax, _plot_line, hud_text=hud_text, parent=preview_interactor)
     
     #Loading parameters from the dataclass
     params = SpectraParams()
@@ -107,7 +107,7 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 7.0 *********')
+    print ('********* Welcome to SPAN version 7.1 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
@@ -140,6 +140,8 @@ def main():
         if event == "-LIST-" and not values['one_spec']:
             params = listbox_events.handle_list_select(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter, stm)
             _plot_line2.set_data([], []) #reset second plot, if any
+            preview_interactor.spec_name = params.prev_spec_nopath
+            preview_interactor.results_dir = params.result_data
             
         elif event == "-LIST-DELETE-" and not values['one_spec']:
             params, last_state = listbox_events.handle_list_delete(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter)
@@ -156,8 +158,8 @@ def main():
         elif event == "Compare spectra" and not values['one_spec']:
             params = listbox_events.handle_compare_spectra(event, values, window, params, _plot_line, _plot_line2, ax, fig, preview_interactor, redshift_shifter, stm)
 
-        elif event == "-LIST-DOUBLECLICK-" and not values['one_spec']:
-            listbox_events.handle_list_doubleclick(values, window, params, stm)
+        elif event == "-LIST-DOUBLECLICK-":
+            listbox_events.handle_list_doubleclick(values, window, params, stm, values['one_spec'], params.prev_spec)
 
         #Automatic event to save the default_settings.json file if does not exist.
         if not os.path.exists(DEFAULT_PARAMS_FILE):
@@ -209,7 +211,7 @@ def main():
         if event == 'About SPAN':
             sg.popup ('SPAN is a Python 3.X software. It can modify the spectra and perform analyses, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         elif event == 'Version':
-            sg.popup ('This is version 7.0 with improved, dynamical, and responsive layout')
+            sg.popup ('This is version 7.1 with improved, dynamical, and responsive layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         elif event == 'Clear all tasks':
@@ -332,6 +334,8 @@ def main():
                         params = replace(params, prev_spec=single_path)
                     params = replace(params, prev_spec_nopath=os.path.splitext(os.path.basename(params.prev_spec))[0])
                     params = listbox_events.handle_list_select(event, values, window, params, _plot_line, ax, fig, preview_interactor, redshift_shifter, stm, sel_full_override=single_path)
+                    preview_interactor.spec_name = params.prev_spec_nopath
+                    preview_interactor.results_dir = params.result_data
                     
                 except Exception as e:
                     print(f"[Preview one_spec] draw failed: {e}")
@@ -877,7 +881,7 @@ def main():
                         print ('***CANCELLED***\n')
                         break
 
-                    if (params.save_final_spectra and params.task_spec2 == 1):
+                    if (params.save_final_spectra and params.task_spec2 == 1 and params.do_nothing):
                         file_final = params.result_spec+'proc_' + params.prev_spec_nopath + '.fits'
                         uti.save_fits(params.wavelength, params.flux, file_final)
                         #considering also the cont sub task which saves the continuum!
@@ -903,7 +907,7 @@ def main():
                     elif (event == 'Process selected' and params.task_done == 0 and params.task_analysis == 0 ):
                         sg.popup ('Nothing to process!')
                         continue
-                    if (params.save_final_spectra and event == 'Process selected' and params.task_spec == 1):
+                    if (params.save_final_spectra and event == 'Process selected' and params.task_spec == 1 and params.do_nothing):
                         file_final = params.result_spec+'proc_' + params.prev_spec_nopath + '.fits'
                         uti.save_fits(params.wavelength, params.flux, file_final)
 

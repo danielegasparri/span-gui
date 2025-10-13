@@ -310,10 +310,9 @@ class SpectraParams:
     kin_lam_temp: list = None
     kin_velscale_templates: float = None
     kin_FWHM_gal_cached: Union[float, np.ndarray, None] = None
+    kin_two_components_cached: Union[float, np.ndarray, None] = None
     ppxf_kin_user_bias: bool = False
     ppxf_kin_bias: float = None
-
-
     wave1_kin: float = 4800
     wave2_kin: float = 5500
     resolution_kin: float = 3.5
@@ -358,9 +357,13 @@ class SpectraParams:
     ppxf_kin_mask_emission: bool = True
     ppxf_kin_have_user_mask: bool = False
     ppxf_kin_mask_ranges_str: str = '[(5180, 5210), (5320, 5380)]'
-
     ppxf_kin_mc_sim: int = 20
     ppxf_kin_save_spectra: bool = True
+    ppxf_kin_old_young: bool = True
+    ppxf_kin_all_temp: bool = False
+    ppxf_kin_metal_rich_poor: bool = False
+    ppxf_kin_two_templates: bool = False
+    ppxf_kin_mode: str = 'old_young'
 
 
     # PPXF Stellar Population Parameters

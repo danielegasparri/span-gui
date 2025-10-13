@@ -29,6 +29,16 @@
 ######################################################################################
 #Version histories
 
+# Version 7.1 (20251020):  
+# Improved and bug corrected the smoothing option in the 'Plot maps' sub-program.
+# Improved and expanded the two component fit in the 'Stars and gas kinematics' task to be more general and with four presents available: old-young components, metal rich-metal poor components, all templates, and two template with fixed age and metallicity mode, following the work of Rubino et a1l., 2021. 
+# Modification of the 'kinematic parameters' layout to be more clear and to allow the new options for the two component fitting. 
+# Added automatic line fitting in the Preview window.
+# Improved the 'correct_distortion_slope' of the 'system_span.py' module used by the 'longslit extraction' sub-program to perform a better correction of the slope of 2D FITS containing the long-slit spectrum to extract. Now the flux is rigorously conserved while correcting for the slope. 
+# Added new interactive functionalities to the Preview: F for the line Fitting mode, E for the equivalent width mode, S for the S/N mode, D for the Differential wavelength and velocity mode, I for the Integrated line flux mode, L for peak finding, P for saving snapshot. C cancels the overlays. 
+# Gas flux in "Stars and gas kinematics" now is calculated and saved in physical units. pPXF requires spectra to be normalized to unity to avoid instabilities, but the gas flux given has not physical meaning, so now SPAN saves the normalization factor (np.median(galaxy) and multiplies by this factor the gas flux calculated by pPXF on normalized spectra. These gas flux values are NOT shown in the pPXF output in the terminal (I cannot modify the pPXF output), but are stored in the ASCII files generated in the 'Process all' mode.
+# Minor bug fixes
+
 # Version 7.0 (20250928):
 # Major changes to the layout: The Utilities frame is now a stand-alone window in the 'Window --> Utilities' menu. The Utilities frame in the main GUI has been replaced with a real-time and interactive preview of the selected spectrum in the listbox which allows panning, zooming (left mouse click) and redshift estimation by shifting the spectrum to match the reference lines masked (right-click and drag). Some minor cosmetic adjustments to the layout (e.g. tittle for the listbox and better alignment of the items) have been performed. The main GUI is now resizable to account the zooming options (see below).
 # Introduced the 'View' menu where you will find zoom options to better adapt the GUI to different screen resolutions. You can zoom-in, zoom-out or reset the zoom to the default level. The zooming acts on all the GUI windows. This feature is still experimental and some glitch are expected, but they do not have impact on the stability of SPAN. 
