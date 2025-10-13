@@ -255,8 +255,8 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     df_kin_gas.at[i, f'Sigma(km/s)_{name}']= round(kinematics[comp][1],3)
                     
                     #gas flux
-                    df_kin_gas.at[i, f'Flux_{name}']= round(gas_flux[t],5)
-                    df_kin_gas.at[i, f'Flux_err_{name}']= round(gas_flux_err[t],5)
+                    df_kin_gas.at[i, f'Flux_{name}'] = f"{gas_flux[t]:.6e}"
+                    df_kin_gas.at[i, f'Flux_err_{name}'] = f"{gas_flux_err[t]:.6e}"
                     df_kin_gas.at[i, f'errRV_{name}']= round(error_kinematics[comp][0],3)
                     df_kin_gas.at[i, f'errSigma_{name}']= round(error_kinematics[comp][1],3)
 
