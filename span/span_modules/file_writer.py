@@ -104,7 +104,8 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')
 
         #saving the two component stellar fit results
-        elif number_kin_component == 0 and params.ppxf_kin_two_stellar_components:
+        # elif number_kin_component == 0 and params.ppxf_kin_two_stellar_components:
+        if params.ppxf_kin_two_stellar_components:
 
             # adding the columns to the file
             if i == 0:
@@ -212,32 +213,16 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')
 
         #Saving the stellar and gas fit results
-        else:
+        if (number_kin_component > 0 and not params.ppxf_kin_two_stellar_components) or (number_kin_component > 1 and params.ppxf_kin_two_stellar_components):
+        # else:
             vel = round(kinematics[0][0],3)
             sigma = round(kinematics[0][1],3)
-            h3 = round(kinematics[0][2],5)
-            h4 = round(kinematics[0][3],5)
-            h5 = round(kinematics[0][4],5)
-            h6 = round(kinematics[0][5],5)
             err_vel = round(error_kinematics[0][0],3)
             err_sigma = round(error_kinematics[0][1],3)
-            err_h3 = round(error_kinematics[0][2],5)
-            err_h4 = round(error_kinematics[0][3],5)
-            err_h5 = round(error_kinematics[0][4],5)
-            err_h6 = round(error_kinematics[0][5],5)
-
             df_kin.at[i, 'RV(km/s)']= vel
             df_kin.at[i, 'Sigma(km/s)']= sigma
-            df_kin.at[i, 'H3']= h3
-            df_kin.at[i, 'H4']= h4
-            df_kin.at[i, 'H5']= h5
-            df_kin.at[i, 'H6']= h6
             df_kin.at[i, 'errRV']= err_vel
             df_kin.at[i, 'errSigma']= err_sigma
-            df_kin.at[i, 'errH3']= err_h3
-            df_kin.at[i, 'errH4']= err_h4
-            df_kin.at[i, 'errH5']= err_h5
-            df_kin.at[i, 'errH6']= err_h6
             df_kin.at[i, 'S/N']= int(snr_kin)
 
             df_kin.to_csv(kin_file, index= False, sep=' ')
@@ -252,10 +237,9 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     for name in gas_names:
                         kin_id_gas += [
                             f'RV(km/s)_{name}', f'Sigma(km/s)_{name}',
-                            f'H3_{name}', f'H4_{name}', f'H5_{name}', f'H6_{name}',
                             f'Flux_{name}', f'Flux_err_{name}',
-                            f'errRV_{name}', f'errSigma_{name}',
-                            f'errH3_{name}', f'errH4_{name}', f'errH5_{name}', f'errH6_{name}'
+                            f'errRV_{name}', f'errSigma_{name}'
+                            
                         ]
 
                     spectra_number = len(params.spec_names_nopath)
@@ -269,19 +253,12 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     name = gas_names[t]
                     df_kin_gas.at[i, f'RV(km/s)_{name}']= round(kinematics[comp][0],3)
                     df_kin_gas.at[i, f'Sigma(km/s)_{name}']= round(kinematics[comp][1],3)
-                    df_kin_gas.at[i, f'H3_{name}']= round(kinematics[comp][2],5)
-                    df_kin_gas.at[i, f'H4_{name}']= round(kinematics[comp][3],5)
-                    df_kin_gas.at[i, f'H5_{name}']= round(kinematics[comp][4],5)
-                    df_kin_gas.at[i, f'H6_{name}']= round(kinematics[comp][5],5)
+                    
                     #gas flux
                     df_kin_gas.at[i, f'Flux_{name}']= round(gas_flux[t],5)
                     df_kin_gas.at[i, f'Flux_err_{name}']= round(gas_flux_err[t],5)
                     df_kin_gas.at[i, f'errRV_{name}']= round(error_kinematics[comp][0],3)
                     df_kin_gas.at[i, f'errSigma_{name}']= round(error_kinematics[comp][1],3)
-                    df_kin_gas.at[i, f'errH3_{name}']= round(error_kinematics[comp][2],5)
-                    df_kin_gas.at[i, f'errH4_{name}']= round(error_kinematics[comp][3],5)
-                    df_kin_gas.at[i, f'errH5_{name}']= round(error_kinematics[comp][4],5)
-                    df_kin_gas.at[i, f'errH6_{name}']= round(error_kinematics[comp][5],5)
 
                     # df_kin_gas.to_csv(kin_file_gas, index= False, sep=' ')
                 if df_kin_gas is not None and kin_file_gas is not None:

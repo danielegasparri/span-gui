@@ -459,6 +459,10 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ppxf_kin_user_bias': params.ppxf_kin_user_bias,
             'ppxf_kin_bias': params.ppxf_kin_bias,
             'ppxf_kin_save_spectra': params.ppxf_kin_save_spectra,
+            'ppxf_kin_old_young': params.ppxf_kin_old_young,
+            'ppxf_kin_all_temp': params.ppxf_kin_all_temp,
+            'ppxf_kin_metal_rich_poor': params.ppxf_kin_metal_rich_poor,
+            'ppxf_kin_two_templates': params.ppxf_kin_two_templates,
 
             #Stellar populations and SFH parameters
             'left_wave_ppxf_pop': params.wave1_pop,
@@ -816,6 +820,11 @@ def load_settings(filename, params):
                 ppxf_kin_user_bias=params_data.get('ppxf_kin_user_bias', params.ppxf_kin_user_bias),
                 ppxf_kin_bias=params_data.get('ppxf_kin_bias', params.ppxf_kin_bias),
                 ppxf_kin_save_spectra=params_data.get('ppxf_kin_save_spectra', params.ppxf_kin_save_spectra),
+                
+                ppxf_kin_old_young=params_data.get('ppxf_kin_old_young', params.ppxf_kin_old_young),
+                ppxf_kin_metal_rich_poor=params_data.get('ppxf_kin_metal_rich_poor', params.ppxf_kin_metal_rich_poor),
+                ppxf_kin_two_templates=params_data.get('ppxf_kin_two_templates', params.ppxf_kin_two_templates),
+                ppxf_kin_all_temp=params_data.get('ppxf_kin_all_temp', params.ppxf_kin_all_temp),
 
                 # Stellar populations and SFH parameters
                 wave1_pop=params_data.get('left_wave_ppxf_pop', params.wave1_pop),

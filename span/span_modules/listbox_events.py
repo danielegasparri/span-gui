@@ -400,23 +400,26 @@ def handle_compare_spectra(event, values, window, params,
     return params
 
 
-def handle_list_doubleclick(values, window, params, stm):
-    selected_items = values['-LIST-']
-    if not selected_items:
-        return
+def handle_list_doubleclick(values, window, params, stm, one_spec, prev_spec):
+    if not one_spec:
+        selected_items = values['-LIST-']
+        if not selected_items:
+            return
 
-    selected_base = selected_items[0]
-    if hasattr(window, "metadata") and window.metadata:
-        sel_full = window.metadata.get(selected_base, "")
-    else:
-        sel_full = next(
-            (s for s in params.spec_names
-             if isinstance(s, str) and os.path.basename(s) == str(selected_base)),
-            ""
-        )
+        selected_base = selected_items[0]
 
-    if not sel_full:
-        return
+        if hasattr(window, "metadata") and window.metadata:
+            sel_full = window.metadata.get(selected_base, "")
+        else:
+            sel_full = next(
+                (s for s in params.spec_names
+                if isinstance(s, str) and os.path.basename(s) == str(selected_base)),"")
+
+        if not sel_full:
+            return
+    else: 
+        selected_base = prev_spec
+        sel_full = selected_base
 
     try:
         wl, fl, *_ = stm.read_spec(sel_full, params.lambda_units)

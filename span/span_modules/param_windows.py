@@ -1189,6 +1189,11 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_kin_user_bias = params.ppxf_kin_user_bias
     ppxf_kin_bias = params.ppxf_kin_bias
     ppxf_kin_save_spectra = params.ppxf_kin_save_spectra
+    ppxf_kin_old_young = params.ppxf_kin_old_young
+    ppxf_kin_all_temp = params.ppxf_kin_all_temp
+    ppxf_kin_metal_rich_poor = params.ppxf_kin_metal_rich_poor
+    ppxf_kin_two_templates = params.ppxf_kin_two_templates
+    ppxf_kin_mode = params.ppxf_kin_mode
     # prev_spec = params.prev_spec_nopath
 
 
@@ -1206,12 +1211,13 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Fitting only stellar kinematics',"RADIOKIN", key = 'no_gas_kin', default = no_gas_kin, font = ('', default_size, 'bold'),tooltip='Considering only the kinematics of stars'), sg.Checkbox('Masking the gas emission lines', default = ppxf_kin_mask_emission, key = 'ppxf_kin_mask_emission', tooltip = ('Activate the masking if gas emission is present!'))],
-        [sg.Text(''), sg.Checkbox('Fit two stellar components with the following parameters:', default = ppxf_kin_two_stellar_components, key = 'ppxf_kin_two_stellar_components', tooltip='Enable to fit TWO stellar SSPs with different V and sigma. Only for preset and EMILES SSP', font = ('', default_size, 'bold'))],
-        [sg.Text(''), sg.Text('Select SSP model 1:'), sg.Text('Age(Gyr):'), sg.InputText(ppxf_kin_age_model1, size = (4,1), key = 'ppxf_kin_age_model1'), sg.Text('[M/H]:'), sg.InputText(ppxf_kin_met_model1, size = (4,1), key = 'ppxf_kin_met_model1'), sg.Text('Vel.(km/s):'),sg.InputText(ppxf_kin_vel_model1, size = (4,1), key = 'ppxf_kin_vel_model1'), sg.Text('Sigma(km/s):'), sg.InputText(ppxf_kin_sigma_model1, size = (4,1), key = 'ppxf_kin_sigma_model1')],
-
-        [sg.Text(''), sg.Text('Select SSP model 2:'), sg.Text('Age(Gyr):'), sg.InputText(ppxf_kin_age_model2, size = (4,1), key = 'ppxf_kin_age_model2'), sg.Text('[M/H]:'), sg.InputText(ppxf_kin_met_model2, size = (4,1), key = 'ppxf_kin_met_model2'), sg.Text('Vel.(km/s):'),sg.InputText(ppxf_kin_vel_model2, size = (4,1), key = 'ppxf_kin_vel_model2'), sg.Text('Sigma(km/s):'), sg.InputText(ppxf_kin_sigma_model2, size = (4,1), key = 'ppxf_kin_sigma_model2')],
-        [sg.Text('', font = ('', 1))],
         [sg.Radio('Fitting gas and stellar kinematics', "RADIOKIN", key = 'gas_kin', default = gas_kin, font = ('', default_size, 'bold'),tooltip='Fitting the kinematics of ONE stellar component and the gas emission'), sg.Checkbox('Fixing stellar kinematics first', default = ppxf_kin_fixed_kin, key = 'ppxf_kin_fixed_kin', tooltip = ('Perform a first fit with stellar kinematics and fix the moments for the gas fitting'))],
+        
+        [sg.Checkbox('Fit two stellar components with:', default = ppxf_kin_two_stellar_components, key = 'ppxf_kin_two_stellar_components', tooltip='Enable to fit TWO stellar components with different V and sigma. Only for preset and EMILES SSP', font = ('', default_size, 'bold')), sg.Text('V1:'), sg.InputText(ppxf_kin_vel_model1, size = (4,1), key = 'ppxf_kin_vel_model1'), sg.Text('Sigma1:'), sg.InputText(ppxf_kin_sigma_model1, size = (4,1), key = 'ppxf_kin_sigma_model1'), sg.Text('V2:'),sg.InputText(ppxf_kin_vel_model2, size = (4,1), key = 'ppxf_kin_vel_model2'), sg.Text('Sigma2:'), sg.InputText(ppxf_kin_sigma_model2, size = (4,1), key = 'ppxf_kin_sigma_model2')],
+        [sg.Text('', font = ('', 1)), sg.Radio('Old-young components',"RADIOKINMODE", key = 'ppxf_kin_old_young', default = ppxf_kin_old_young,tooltip='Two components, the first old (> 5 Gyr) and second young (< 5 Gyr)'), sg.Radio('Metal rich-metal poor components',"RADIOKINMODE", key = 'ppxf_kin_metal_rich_poor', default = ppxf_kin_metal_rich_poor,tooltip='Two components, the first metal rich ([M/H] > 0]) and second metal poor ([M/H < 0)])'), sg.Radio('All templates',"RADIOKINMODE", key = 'ppxf_kin_all_temp', default = ppxf_kin_all_temp, tooltip='Two components, using all the templates')],
+        [sg.Text('', font = ('', 1)), sg.Radio('Two templates mode',"RADIOKINMODE", key = 'ppxf_kin_two_templates', default = ppxf_kin_two_templates,tooltip='Select two templates with age and [M/H]'), sg.Text('Age1(Gyr):'), sg.InputText(ppxf_kin_age_model1, size = (4,1), key = 'ppxf_kin_age_model1'), sg.Text('[M/H]1:'), sg.InputText(ppxf_kin_met_model1, size = (4,1), key = 'ppxf_kin_met_model1'), sg.Text('Age2(Gyr):'), sg.InputText(ppxf_kin_age_model2, size = (4,1), key = 'ppxf_kin_age_model2'), sg.Text('[M/H]2:'), sg.InputText(ppxf_kin_met_model2, size = (4,1), key = 'ppxf_kin_met_model2')],
+
+        [sg.Text('', font = ('', 1))],
 
         [sg.HorizontalSeparator()],
         [sg.Checkbox('Correct for dust the stars', key = 'ppxf_kin_dust_stars', default = ppxf_kin_dust_stars, tooltip='Applying the default 2-params attenuation curve for stars of Cappellari 2023'), sg.Checkbox('Correct for dust the gas', key = 'ppxf_kin_dust_gas', default = ppxf_kin_dust_gas, tooltip='Applying the Calzetti extinction curve for gas'), sg.Checkbox('Tie Balmer lines', key = 'ppxf_kin_tie_balmer', default = ppxf_kin_tie_balmer)],
@@ -1312,12 +1318,26 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
                 continue
 
         ppxf_kin_mask_emission = ppxf_kin_values['ppxf_kin_mask_emission']
-        ppxf_kin_two_stellar_components = ppxf_kin_values['ppxf_kin_two_stellar_components'] if no_gas_kin else False
+        ppxf_kin_two_stellar_components = ppxf_kin_values['ppxf_kin_two_stellar_components']
 
         # checking the compatibility with the generic template option
         if ppxf_kin_two_stellar_components and ppxf_kin_generic_lib:
             sg.popup('WARNING: fit with two stellar components is NOT compatible with the generic templates option')
             continue
+        else:
+            ppxf_kin_metal_rich_poor = ppxf_kin_values['ppxf_kin_metal_rich_poor']
+            ppxf_kin_old_young = ppxf_kin_values['ppxf_kin_old_young']
+            ppxf_kin_two_templates = ppxf_kin_values['ppxf_kin_two_templates']
+            ppxf_kin_all_temp = ppxf_kin_values['ppxf_kin_all_temp']
+            
+            if ppxf_kin_old_young:
+                ppxf_kin_mode = 'old_young' 
+            if ppxf_kin_metal_rich_poor: 
+                ppxf_kin_mode = 'metal_rich_poor'
+            if ppxf_kin_two_templates:
+                ppxf_kin_mode = 'two_templates'
+            if ppxf_kin_all_temp:
+                ppxf_kin_mode = 'all'
 
         #check on the wavelength band
         try:
@@ -1359,7 +1379,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         if ppxf_kin_user_bias:
             try:
                 ppxf_kin_bias = float(ppxf_kin_values['ppxf_kin_bias'])
-                if ppxf_kin_bias <=0 or ppxf_kin_bias > 1:
+                if ppxf_kin_bias < 0 or ppxf_kin_bias > 1:
                     sg.popup('Bias must be between 0 (no regularization) and 1. ')
                     ppxf_kin_bias = params.ppxf_kin_bias
                     continue
@@ -1432,7 +1452,12 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             ppxf_kin_dust_gas = ppxf_kin_dust_gas,
             ppxf_kin_user_bias = ppxf_kin_user_bias,
             ppxf_kin_bias = ppxf_kin_bias,
-            ppxf_kin_save_spectra = ppxf_kin_save_spectra
+            ppxf_kin_save_spectra = ppxf_kin_save_spectra,
+            ppxf_kin_mode = ppxf_kin_mode,
+            ppxf_kin_all_temp = ppxf_kin_all_temp,
+            ppxf_kin_metal_rich_poor = ppxf_kin_metal_rich_poor,
+            ppxf_kin_old_young = ppxf_kin_old_young,
+            ppxf_kin_two_templates = ppxf_kin_two_templates
             )
 
     return params

@@ -1270,18 +1270,18 @@ def combine_spectra(event, save_plot, params):
             average_spec = spmt.average(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = average_spec[:, 0], average_spec[:, 1]
 
-            if event == 'Process selected' and params.save_intermediate_spectra:
+            if event == 'Process selected' and not params.not_save_spectra:
                 file_avg = os.path.join(params.result_spec, 'avg_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_avg)
                 print(f'File saved: {file_avg}')
 
         # Normalise and average
         if params.norm_and_average:
-            print('*** Normalising and averaging all spectra ***')
+            print('*** Normalizing and averaging all spectra ***')
             average_norm_spec = spmt.average_norm(params.lambda_units, params.wavelength, params.flux, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = average_norm_spec[:, 0], average_norm_spec[:, 1]
 
-            if event == 'Process selected' and params.save_intermediate_spectra:
+            if event == 'Process selected' and not params.not_save_spectra:
                 file_avg_norm = os.path.join(params.result_spec, 'norm_avg_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_avg_norm)
                 print(f'File saved: {file_avg_norm}')
@@ -1292,7 +1292,7 @@ def combine_spectra(event, save_plot, params):
             sum_spec = spmt.sum_spec(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = sum_spec[:, 0], sum_spec[:, 1]
 
-            if event == 'Process selected' and params.save_intermediate_spectra:
+            if event == 'Process selected' and not params.not_save_spectra:
                 file_sum = os.path.join(params.result_spec, 'sum_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_sum)
                 print(f'File saved: {file_sum}')
@@ -1303,7 +1303,7 @@ def combine_spectra(event, save_plot, params):
             sum_norm_spec = spmt.sum_norm_spec(params.lambda_units, params.spectra_number, params.spec_names)
             proc_wavelength, proc_flux = sum_norm_spec[:, 0], sum_norm_spec[:, 1]
 
-            if event == 'Process selected' and params.save_intermediate_spectra:
+            if event == 'Process selected' and not params.not_save_spectra:
                 file_sum_norm = os.path.join(params.result_spec, 'norm_sum_spectra.fits')
                 uti.save_fits(proc_wavelength, proc_flux, file_sum_norm)
                 print(f'File saved: {file_sum_norm}')

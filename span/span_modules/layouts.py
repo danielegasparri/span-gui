@@ -73,21 +73,21 @@ layout_windows = [
             [sg.Button('Generate spectra list containing 1D spectra', key = 'listfile',tooltip='If you do not have a spectra file list, you can generate here',size = (37,2))],
             [sg.HorizontalSeparator(pad=(0, 8))],
             [sg.Text('3. Browse the spectra list or just one spectrum', font = ('', 11 ,'bold'))],
-            [sg.InputText(default_spectra_list, size=(34, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
+            [sg.InputText(default_spectra_list, size=(32, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
             [sg.Checkbox('I browsed a single spectrum', font = ('Helvetica', 11, 'bold'), key='one_spec',tooltip='Check this if you want to load just one spectrum instead a text file containing the names of the spectra')],
             [sg.Text('Wavelength units:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu', font = ('', 12)), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu')],
             [sg.HorizontalSeparator(pad=(0, 8))],
             [sg.Text('4. Finally load the browsed spectra to SPAN', font = ('', 11 ,'bold'))],
-            [sg.Button('Load!', font = ("Helvetica", 11, 'bold'),button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('Load!', font = ("Helvetica", 11, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN',button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
             ], font=("Helvetica", 14, 'bold'), title_color = 'orange'),
 
             sg.Frame('Loaded spectra', [[
-            sg.Listbox(values=listbox1,size=(46, 20),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
+            sg.Listbox(values=listbox1,size=(42, 20),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
             
             sg.Frame('Preview', [
-            [sg.Canvas(key='-CANVAS-', size=(580, 320))],
-            [sg.Button('Header',   key='-SHOWHDR-',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), button_color=('black','light blue')),
-            sg.Button('Preview spec.', button_color=('black','light gray'), size=(13,1))],
+            [sg.Canvas(key='-CANVAS-', size=(665, 320))],
+            [sg.Button('Header', key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color=('black','light blue')),
+            sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size=(13,1))],
             ], font=("Helvetica", 12, 'bold'))],
 
             #Spectral analysis frame
@@ -100,7 +100,7 @@ layout_windows = [
             [sg.Checkbox('Cross-correlation', font = ('Helvetica', 12, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #3) Velocity disperion measurement
-            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #4) Line fitting
             [sg.Checkbox('Line(s) fitting', font = ('Helvetica', 12, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
@@ -129,7 +129,7 @@ layout_windows = [
 
             #COMMENT THE FOLLOWING THREE LINES TO HAVE THE EXTERNAL OUTPUT
             sg.Frame('Output', [
-            [sg.Output(size=(94, 14), key='-OUTPUT-', font = ('Helvetica', 11))],
+            [sg.Output(size=(98, 14), key='-OUTPUT-', font = ('Helvetica', 11))],
             ] ,font=("Helvetica", 12, 'bold')),
 
             ],
@@ -171,16 +171,16 @@ layout_linux = [
             [sg.Text('Wavelength units:', font = ('', 11),tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu')],
             [sg.HorizontalSeparator(pad=(0, 10))],
             [sg.Text('4. Finally load the spectra to SPAN', font = ('', 11 ,'bold'))],
-            [sg.Button('Load!', font = ("Helvetica", 11, 'bold'),button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('Load!', font = ("Helvetica", 11, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN', button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
             ], font=("Helvetica", 14, 'bold'), title_color = 'orange'),
 
             sg.Frame('Loaded spectra', [[
-            sg.Listbox(values=listbox1,size=(50, 24),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
+            sg.Listbox(values=listbox1,size=(46, 24),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
 
             sg.Frame('Preview', [
-            [sg.Canvas(key='-CANVAS-', size=(680, 345))],
-            [sg.Button('Header',   key='-SHOWHDR-',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), button_color=('black','light blue')),
-            sg.Button('Preview spec.', button_color=('black','light gray'), size=(13,1))],
+            [sg.Canvas(key='-CANVAS-', size=(713, 345))],
+            [sg.Button('Header',   key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color=('black','light blue')),
+            sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size=(13,1))],
             ], font=("Helvetica", 12, 'bold'))],
             
             #Spectral analysis frame
@@ -193,7 +193,7 @@ layout_linux = [
             [sg.Checkbox('Cross-correlation', font = ('Helvetica', 12, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #3) Velocity disperion measurement
-            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #4) Line fitting
             [sg.Checkbox('Line(s) fitting', font = ('Helvetica', 12, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
@@ -264,7 +264,7 @@ layout_macos = [
             [sg.Text('Wavelength of the spectra is in:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu', font = ('Helvetica', 14)), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu')],
             [sg.HorizontalSeparator()],
             [sg.Text('4. Finally load the spectra to SPAN', font = ('', 14 ,'bold'))],
-            [sg.Button('Load!', font = ("Helvetica", 14, 'bold'),button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('Load!', font = ("Helvetica", 14, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN',button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
             ], font=("Helvetica", 18, 'bold'), title_color = 'orange'),
 
             sg.Frame('Loaded spectra', [[
@@ -272,8 +272,8 @@ layout_macos = [
 
             sg.Frame('Preview', [
             [sg.Canvas(key='-CANVAS-', size=(660, 310))],
-            [sg.Button('Header',   key='-SHOWHDR-',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), button_color=('black','light blue')),
-            sg.Button('Preview spec.', button_color=('black','light gray'), size=(13,1))],
+            [sg.Button('Header',   key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color=('black','light blue')),
+            sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size=(13,1))],
             ], font=("Helvetica", 14, 'bold'))],
             
             #Spectral analysis frame
@@ -283,7 +283,7 @@ layout_macos = [
             [sg.Checkbox('Planck Blackbody fitting ', font = ('Helvetica', 16, 'bold'), key = 'bb_fitting',tooltip='Blackdoby Planck function fitting. Works fine for stellar spectra and wide wavelength range'), sg.Text('    '), sg.Button('Blackbody parameters',button_color= ('black','light blue'), size = (22,1)), sg.Text('          '), sg.Checkbox('Cross-correlation', font = ('Helvetica', 16, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #2) Velocity dispersion measurement
-            [sg.Checkbox('Velocity dispersion   ', font = ('Helvetica', 16, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Kinematics for accurate science results'),sg.Text('              '), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1)), sg.Text('          '), sg.Checkbox('Line(s) fitting', font = ('Helvetica', 16, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Velocity dispersion   ', font = ('Helvetica', 16, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Text('              '), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1)), sg.Text('          '), sg.Checkbox('Line(s) fitting', font = ('Helvetica', 16, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #3) Line-strength
             [sg.Checkbox('Line-strength analysis  ', font = ('Helvetica', 16, 'bold'), key = 'ew_measurement',tooltip='Equivalent width measurement for a list of indices, a single user defined index and Lick/IDS indices'), sg.Text('        '), sg.Button('Line-strength parameters',button_color= ('black','light blue'), size = (22,1)), sg.Text('          '),sg.Checkbox('Kinematics', font = ('Helvetica', 16, 'bold'), key = 'ppxf_kin',tooltip='Perform the fitting of a spectral region and gives the kinematics'),sg.Push(), sg.Button('Kinematics parameters',button_color= ('black','light blue'), size = (22,1))  ],
@@ -323,7 +323,7 @@ layout_android = [
             [sg.Text('2. Browse the spectra list or just one spectrum', font = ('Helvetica', 11, 'bold'))],
             [sg.InputText(default_spectra_list, size=(39, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
             [sg.Checkbox('I browsed a single spectrum', font = ('Helvetica', 10, 'bold'), key='one_spec',tooltip='Check this if you want to load just one spectrum instead a text file containing the names of the spectra')],
-            [sg.Text('W. scale:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu'), sg.Push(), sg.Button('Load!', font = ('Helvetica', 11, 'bold'),button_color=('black','light green'), size = (6,1)), sg.Button('Plot',button_color=('black','light gray'), size = (4,1))],
+            [sg.Text('W. scale:',tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu'), sg.Push(), sg.Button('Load!', font = ('Helvetica', 11, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN', button_color=('black','light green'), size = (6,1)), sg.Button('Plot',button_color=('black','light gray'), size = (4,1))],
             ], font=("Helvetica", 14, 'bold'), title_color = 'orange'),
 
             sg.Frame('Loaded spectra', [[
@@ -331,7 +331,7 @@ layout_android = [
 
             sg.Frame('Preview', [
             [sg.Canvas(key='-CANVAS-', size=(840, 275))],
-            [sg.Button('Header',   key='-SHOWHDR-',  button_color=('black','light gray'), size=(8,1)), sg.Button('Sampling', key='-SHOWSTEP-', button_color=('black','light gray'), size=(8,1)), sg.Button('Utilities', button_color=('black','light gray'), size=(8,1))],
+            [sg.Button('Header',   key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(8,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(8,1)), sg.Button('Utilities', button_color=('black','light gray'), size=(8,1))],
             ], font=("Helvetica", 12, 'bold'))],
 
             [sg.Frame('Spectral analysis', [
@@ -343,7 +343,7 @@ layout_android = [
             [sg.Checkbox('Cross-correlation', font = ('Helvetica', 12, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #3) Velocity disperion measurement
-            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
 
             #4) Line fitting
             [sg.Checkbox('Line(s) fitting', font = ('Helvetica', 12, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
@@ -360,8 +360,8 @@ layout_android = [
 
             # Buttons to open the spectral manipulation panel and perform the spectral analysis actions
             sg.Frame('Actions',[
-            [sg.Button('Spectra manipulation', size = (12,2),button_color= ('black','light blue'), font=("Helvetica", 10, 'bold'), tooltip='Open the spectra manipulation panel to modify the spectra', key = 'Spectra manipulation')],
-            [sg.Button('Preview spec.',button_color=('black','light gray'), size = (12,2), font=("Helvetica", 10, 'bold'),tooltip='View the modified version of the selected spectrum')],
+            [sg.Button('Spectra manipulation', size = (12,2), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color= ('black','light blue'), font=("Helvetica", 10, 'bold'), key = 'Spectra manipulation')],
+            [sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size = (12,2), font=("Helvetica", 10, 'bold'))],
             [sg.Text('', font = ('Helvetica',1))],
             [sg.HorizontalSeparator()],
             [sg.Text('', font = ('Helvetica',1))],
