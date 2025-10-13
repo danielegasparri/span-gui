@@ -1,7 +1,7 @@
 # SPAN: Spectral Analysis Software
 
 📖 **Author:** Daniele Gasparri  
-📅 **Latest Release:** September 2025  
+📅 **Latest Release:** October 2025  
 
 ![PyPI Version](https://img.shields.io/pypi/v/span-gui)
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -10,7 +10,17 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2508.01923-B31B1B.svg)](https://arxiv.org/abs/2508.01923)
 [![DOI](https://zenodo.org/badge/929418623.svg)](https://doi.org/10.5281/zenodo.17226930)
 
-## What’s New in SPAN 7.0
+
+**SPAN is a cross-platform Python GUI software for the extraction, manipulation, and advanced analysis of 1D astronomical spectra in the optical and near-infrared (NIR) ranges, optimized for galaxy studies.**
+
+
+## What’s New in SPAN 7.1
+
+- Expanded and improved the two component fit of the "Stellar and gas kinematics" task, which is now available both for the stellar and gas kinematics, with four presets: old-young components, metal rich-metal poor components, all templates, and two templates mode, with custom selection of age and metallicity following the work of Rubino et al. 2021. 
+- Added interactive analysis modes to the Preview. You can press the key F, E, S, D, I, L, P to enter the Fitting mode, Equivalent width mode, Signal-to-noise mode, Differential wavelength and velocity mode, Integrated line flux mode, Line-peak finding, snaPshot. Draw a region for the F, E, S, I modes or click on two points in the D mode to see the results in the HUD, in the terminal window and to automatically save them in logging files in the "SPAN_results" folder. Press again the respective key to exit the selected analysis mode and return back to idle (not applicable to L and P modes, they exit automatically). Press C to cancel all the overlays. Double click resets also zoom and panning.
+- Minor bug fixes
+
+More from the version 7.X:
 
 - Interactive Preview frame that shows the selected spectrum directly in the main GUI. In the preview you can:
   - Zoom, pan, and reset with trackpad touches and/or mouse left click/scroll buttons.
