@@ -1,10 +1,21 @@
-SPAN: SPectral ANalysis software V7.0
-Daniele Gasparri, September 2025
+SPAN: SPectral ANalysis software V7.1
+Daniele Gasparri, October 2025
 
 
 ## Changelog
 
+**Version 7.1 (20251020):**  
+
+- Improved and bug corrected the smoothing option in the 'Plot maps' sub-program.
+- Improved and expanded the two component fit in the 'Stars and gas kinematics' task to be more general and with four presets available: old-young components, metal rich-metal poor components, all templates, and two template with fixed age and metallicity mode, following the work of Rubino et all., 2021. 
+- Modification of the 'kinematic parameters' layout to be more clear and to allow the new options for the two component fitting. 
+- Improved the 'correct_distortion_slope' of the 'system_span.py' module used by the 'longslit extraction' sub-program to perform a better correction of the slope of 2D FITS containing the long-slit spectrum to extract. Now the flux is rigorously conserved while correcting for the slope. 
+- Added new interactive functionalities to the Preview: F for the line Fitting mode, E for the equivalent width mode, S for the S/N mode, D for the Differential wavelength and velocity mode, I for the Integrated line flux mode, L for peak finding, P for saving snapshot. C cancels the overlays. 
+- Gas flux in "Stars and gas kinematics" now is calculated and saved in physical units. pPXF requires spectra to be normalized to unity to avoid instabilities, but the gas flux given has not physical meaning, so now SPAN saves the normalization factor (np.median(galaxy) and multiplies by this factor the gas flux calculated by pPXF on normalized spectra. These gas flux values are NOT shown in the pPXF output in the terminal (I cannot modify the pPXF output), but are stored in the ASCII files generated in the 'Process all' mode.
+- Minor bug fixes
+
 **Version 7.0 (20250928):**  
+
 - Major changes to the layout: The Utilities frame is now a stand-alone window in the 'Window --> Utilities' menu. This frame has been replaced with a real-time and interactive preview of the selected spectrum in the listbox which allows panning, zooming (left mouse click) and redshift estimation by shifting the spectrum to match the reference lines marked (right-click and drag). Some minor cosmetic adjustments to the layout (e.g. tittle for the listbox and better alignment of the items) have been performed. The main GUI is now resizable to account the zooming options (see below).
 - Introduced the 'View' menu where you will find zoom options to better adapt the GUI to different screen resolutions. You can zoom-in, zoom-out or reset the zoom to the default level. The zooming acts on all the GUI windows. This feature is still experimental and some glitch are expected, especially for Windows systems, but they do not have impact on the stability of SPAN. 
 - Enforced the preliminary check of the loaded spectra with an estimation of a global S/N and flag in the listbox if S/N <=5.
@@ -18,6 +29,7 @@ Daniele Gasparri, September 2025
 
 
 **Version 6.6 (20250909):**  
+
 - Now the 'Plot maps' sub-program stores the parameter values until SPAN is closed.
 - Fixed a bug that prevented to save spectra products (i.e. fit residuals, bestfit template) for the 'Stellar populations and SFH' task when no gas lines where included of not found.
 - Added new functionalities to the 'Plot maps' sub-program: isophotes overplotting and smoothing. This required also to add the 'save_image' function to the 'cube_extract' module that extract and saves the 2D image by averaging all the wavelengths selected from the datacube. This image is required in the 'Plot maps' sub-program, if isophotal contouring is needed (optional). 
@@ -73,6 +85,7 @@ Complete refactoring of the code, split in different modules. Use of the DataCla
 - Major changes to the 'cube_extract' module to improve efficiency.
 
 **Version 6.1 (20250107):**  
+
 - Major change to the spectra manipulation frame: re-arranged the spectra math tasks and introduced the possobility for the user to re-order the spectra manipulation tasks.
 - Added the dust parametrization for the 'Stars and gas kinematics' tasks.
 

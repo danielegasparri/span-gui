@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.0
-Daniele Gasparri, September 2025
+SPAN: SPectral ANalysis software V7.1
+Daniele Gasparri, October 2025
 
 # Tips and Tricks #
 
@@ -83,4 +83,4 @@ Cropping spectra to include only the wavelength regions of interest can signific
 
 
 14. **Stellar populations with Lick/IDS indices and machine learning GPR**  
-The determination of the stellar parameters with the Lick/IDS indices and the GPR method uses predictive machine-learning models and the scikit-learn module. The default models stored in the system_files folder have been trained with the scikit-learn 1.4.2 version. If you are using different version for this library, the predictions may be inaccurate and a warning is issued in the output window. In this case you should delete the trained models stored in the "system_files" folder (the files have the .pkl extension) and run again SPAN. If the Lick/IDS task with GPR stellar parameters determination does not find the trained models, it will create again the first time is executed, using the scikit-learn version you have installed. This will require a little time, but then you can use these new trained models until you change the version of the scikit-learn module.
+The determination of the stellar parameters with the Lick/IDS indices and the GPR method uses predictive machine-learning models and the scikit-learn module. The default models stored in the system_files folder have been trained with the scikit-learn 1.7.0 version. If you are using different version for this library, the predictions may be inaccurate and a warning is issued in the output window. In this case you should delete the trained models stored in the "system_files" folder (the files have the .pkl extension) and run again SPAN. If the Lick/IDS task with GPR stellar parameters determination does not find the trained models, it will create again the first time is executed, using the scikit-learn version you have installed. This will require a little time, but then you can use these new trained models until you change the version of the scikit-learn module.
