@@ -62,6 +62,7 @@ from scipy.stats import pearsonr
 import scipy.stats
 from scipy.ndimage import gaussian_filter, binary_dilation
 from scipy.interpolate import griddata
+from scipy.ndimage import map_coordinates
 
 import time
 from time import perf_counter as clock
@@ -649,57 +650,116 @@ def get_wavelength_coordinates(header, x_axis):
     else:
         return x_axis
 
-#16) Correcting the distortion and slope od the 2D spectrum
-def correct_distortion_slope(spectrum, trace_model, y_range):
-    # Function to correct distortion and slope of 2D spectrum using the trace model
-    x_axis = np.arange(len(spectrum[0]))
-    y_axis = np.arange(len(spectrum))
-    corrected_spectrum = np.zeros_like(spectrum)
+#16) Correcting the distortion and slope od the 2D spectrum. IMproved to better conserve the flux
+def correct_distortion_slope(spectrum, trace_model, y_range, max_iter=8, tol_delta=0.5, tol_slope=0.002):
+    """
+    Correct the distortion/slope of a 2D long-slit spectrum using the fitted trace.
 
-    n_iter = 8
-    h = 0
+    Parameters
+    ----------
+    spectrum : 2D np.ndarray  [ny, nx]
+        Original 2D long-slit image.
+    trace_model : callable (np.poly1d)
+        Trace model: y(x).
+    y_range : tuple(int, int)
+        Row interval used for the trace fit (passed to find_and_fit_spectroscopic_trace).
+    max_iter : int
+        Maximum number of refinement iterations.
+    tol_delta : float
+        Tolerance on the residual correction range in pixels.
+    tol_slope : float
+        Tolerance on the residual slope (pixels per column), additional but non-invasive check.
 
-        # Compute correction factor for each column
-    correction_factor = trace_model(x_axis) - np.mean(trace_model(x_axis))
-    correction_delta = abs(np.min(correction_factor)-np.max(correction_factor))
+    Returns
+    -------
+    corrected_spectrum : 2D np.ndarray
+        Rectified 2D spectrum.
+    """
 
-    if correction_delta > 0.5:
-        print ('Iterating the trace fit until the residuals are lower than 0.5 pix')
-        print ('Residuals:')
-        while correction_delta > 0.5 and h < n_iter:
-            for j in range(len(x_axis)):
-                # Use interpolation to shift the y-coordinates
-                shift_amount = correction_factor[j]
-                corrected_spectrum[:, j] = np.interp(y_axis + shift_amount, y_axis, spectrum[:, j], left=np.nan, right=np.nan)
+    # Axes and original image copy (to avoid repeated resampling)
+    ny, nx = spectrum.shape
+    y_axis = np.arange(ny, dtype=float)
+    x_axis = np.arange(nx, dtype=float)
+    original = np.nan_to_num(spectrum, nan=0.0, posinf=0.0, neginf=0.0)
 
-            # Replace NaN values with zeros
-            corrected_spectrum = np.nan_to_num(corrected_spectrum)
+    # Utility: apply a per-column vertical shift with cubic interpolation
+    def _apply_vertical_shift_from_original(corr_factor):
+        out = np.zeros_like(original)
+        y0, y1 = y_range
+        # Slightly wider window for normalisation (mitigates edge losses)
+        y0n = max(0, int(y0 - 3))
+        y1n = min(ny, int(y1 + 3))
 
-            trace_model = find_and_fit_spectroscopic_trace(corrected_spectrum, y_range, 1, False, False)
-            spectrum = corrected_spectrum
-            correction_factor = trace_model(x_axis) - np.mean(trace_model(x_axis))
-            correction_delta = abs(np.min(correction_factor)-np.max(correction_factor))
-            h= h+1
+        for j in range(nx):
+            col_shifted = map_coordinates(
+                original[:, j],
+                [y_axis + corr_factor[j]],
+                order=3,          # cubic spline: good fidelity vs noise
+                mode='nearest'    # avoids artefacts at the borders
+            )
+            # Flux conservation within the reference window ---
+            src = original[y0n:y1n, j].sum()
+            dst = col_shifted[y0n:y1n].sum()
+            if dst > 0 and src > 0:
+                col_shifted *= (src / dst)
+            out[:, j] = col_shifted
+        return out
 
-            print (correction_delta)
+    # Initial correction from the provided trace
+    y_trace = trace_model(x_axis)
+    y_ref = np.median(y_trace)                  # physical centre of the trace
+    corr_factor = y_trace - y_ref               # per-column vertical shift
+    corr_delta = np.ptp(corr_factor)            # range (max - min) in pixels
 
-            if correction_delta < 0.5 and h<= n_iter:
-                print ('Trace fitting convergence reached')
-            if h == n_iter and correction_delta > 0.5:
-                print ('Cannot reach the convergence of the fit after ', h, ' iterations. The spectrum could be distorted')
+    # If already below threshold, perform a single pass
+    if corr_delta <= tol_delta:
+        corrected = _apply_vertical_shift_from_original(corr_factor)
+        plt.imshow(corrected, cmap="gray", norm=LogNorm(), aspect='auto')
+        plt.title("Corrected 2D Spectrum")
+        plt.xlabel("Dispersion axis (pixels)"); plt.ylabel("Spatial axis (pixels)")
+        plt.show(); plt.close()
+        return corrected
 
-    if correction_delta < 0.5:
-        for j in range(len(x_axis)):
-            # Use interpolation to shift the y-coordinates
-            shift_amount = correction_factor[j]
-            corrected_spectrum[:, j] = np.interp(y_axis + shift_amount, y_axis, spectrum[:, j], left=np.nan, right=np.nan)
+    # Refinement iterations: ALWAYS resample from the original
+    corrected = None
+    for h in range(max_iter):
+        corrected = _apply_vertical_shift_from_original(corr_factor)
 
-    # Plot the corrected 2D Spectrum
-    plt.imshow(corrected_spectrum, cmap="gray", norm=LogNorm())
+        # Refit the trace on the corrected image (use your function, unchanged signature)
+        try:
+            new_trace_model = find_and_fit_spectroscopic_trace(
+                corrected, y_range, poly_degree=1, first_iteration=False, with_plots=False
+            )
+        except Exception:
+            print("Warning: unable to refit trace during rectification loop.")
+            break
+
+        y_trace = new_trace_model(x_axis)
+        y_ref = np.median(y_trace)
+        corr_factor = y_trace - y_ref
+        corr_delta = np.ptp(corr_factor)
+
+        # Additional check: residual slope (more physical), but does not alter your flow
+        dy_dx = np.gradient(y_trace)
+        max_slope = np.max(np.abs(dy_dx))
+
+        print(f"Iter {h+1}/{max_iter} | delta={corr_delta:.3f} px | slope={max_slope:.4f} pix/col")
+
+        # Convergence criteria: keep your delta, add a physical slope stop
+        if (corr_delta <= tol_delta) or (max_slope <= tol_slope):
+            print("Trace fitting convergence reached")
+            break
+
+    # Final plot
+    if corrected is None:
+        corrected = _apply_vertical_shift_from_original(corr_factor)
+
+    plt.imshow(corrected, cmap="gray", norm=LogNorm(), aspect='auto')
     plt.title("Corrected 2D Spectrum")
-    plt.show()
-    plt.close()
-    return corrected_spectrum
+    plt.xlabel("Dispersion axis (pixels)"); plt.ylabel("Spatial axis (pixels)")
+    plt.show(); plt.close()
+
+    return corrected
 
 #17) Extracting the single 1D spectrum from user defined range
 def extract_1d_spectrum(corrected_spectrum, y_range, header, x_axis, output_fits_path=None):
@@ -1798,7 +1858,7 @@ def quick_snr(wl, fl):
 # Simple function to open the PDF manual
 def open_manual():
     try:
-        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.0.pdf")
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.1.pdf")
 
         if sys.platform.startswith("darwin"):  # macOS
             subprocess.run(["open", manual_path])

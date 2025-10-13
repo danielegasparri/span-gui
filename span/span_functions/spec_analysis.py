@@ -686,7 +686,7 @@ def cat_fitting (wavelength, flux):
 
 #*****************************************************************************************************
 # 8) kinematics with ppxf and EMILES SSP models
-def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, kinematics_fixed = None, bias = None):
+def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, mode, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, two_components_cached = None, kinematics_fixed = None, bias = None):
 
     """
      This function uses the pPXF algorith to retrieve the n kinematics moments
@@ -743,8 +743,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     print('Rebinning to log')
     galaxy, ln_lam1, velscale = util.log_rebin(lam_range_gal, galaxy)
 
-    #normalise to unity
-    galaxy = galaxy/np.median(galaxy)
+    #normalize to unity but store the original galaxy flux also for measurement of real gas flux, if any
+    galaxy_median_flux = np.median(galaxy)
+    galaxy = galaxy/galaxy_median_flux
 
     wave = np.exp(ln_lam1) #converting the ln wavelength to wavelength, but keeping the ln sampling
     noise = np.full_like(galaxy, kin_noise) #noise per pixel
@@ -754,13 +755,15 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     lam_range_temp = [lam_range_gal[0]/1.02, lam_range_gal[1]*1.02]
 
     use_cached_templates = False
-    if stars_templates is not None and velscale_cached is not None and not two_stellar_components:
+    if stars_templates is not None and velscale_cached is not None: #and not two_stellar_components:
         if np.isclose(velscale, velscale_cached, rtol=1e-5): #using the same precision of pPXF to compare the different velscales (1e-5)
             use_cached_templates = True
 
             print("Using cached stellar templates")
             lam_temp = np.array(lam_temp)
             FWHM_gal = FWHM_gal_cached
+            if two_stellar_components:
+                component = two_components_cached
             pass
         else:
             print("Cached templates invalid (velscale mismatch), will reload.")
@@ -776,6 +779,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
             #requesting the pPXF preloaded templates, if needed
             if stellar_library in ppxf_default_lib:
+                print(stellar_library)
                 ppxf_dir = Path(util.__file__).parent
                 basename = f"spectra_{sps_name}_9.0.npz"
                 filename = ppxf_dir / 'sps_models' / basename
@@ -787,6 +791,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if is_resolution_gal_constant:
                 print('Convolving to fixed FWHM resolution')
                 if stellar_library == 'xshooter':
+                    print(stellar_library)
                     pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
                     sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp)
                 else:
@@ -796,6 +801,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('Convolving to fixed R resolving power')
                 FWHM_gal = wave/R
                 if stellar_library == 'xshooter':
+                    print(stellar_library)
                     pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
                     sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp, R = R)
                 else:
@@ -808,9 +814,9 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             elif muse_resolution:
                 print('Convolving to MUSE resolution')
                 # Muse LSF polynomial equation 8 from Bacon et al., 2017
-                # FWHM_gal = np.zeros_like(wave)
                 FWHM_gal = 5.866e-8*wave**2-9.187e-4*wave+6.040
                 if stellar_library == 'xshooter':
+                    print(stellar_library)
                     pathname_xsl = os.path.join(BASE_DIR, "spectralTemplates", "xsl_mod", "*XSL_SSP*.fits" )
                     sps = template.xshooter(pathname_xsl, velscale, FWHM_gal, wave_range=lam_range_temp)
                 else:
@@ -869,6 +875,47 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
         lam_temp=sps.lam_temp
         FWHM_gal_cached = FWHM_gal
 
+
+        if two_stellar_components:
+            if custom_lib or stellar_library == 'xshooter':
+                #retrieving age and metallicity grids
+                age_grid = sps.get_full_age_grid()
+                met_grid = sps.get_full_metal_grid()
+                age_bins = age_grid[:,0]
+                age_values = age_bins[::-1]
+                met_bins = met_grid[0,:]
+                met_values = met_bins
+            else:
+                #using the wrapper to pPXF
+                sps_data_ppxf = template.SPSLibWrapper(filename, velscale, fwhm_gal= None, lam_range=lam_range_temp)
+                age_values = sps_data_ppxf.get_age_grid()[::-1]
+                met_values = sps_data_ppxf.get_metal_grid()[::-1]
+
+            # Old and young
+            if mode == 'old_young':
+                print ('Using old and young components')
+                blocks, stars_templates, component = build_stellar_blocks_gui(sps.templates, age_values, met_values, mode="old_young", n_components=2)
+            if mode == 'metal_rich_poor':
+                # Metal rich and metal poor
+                print ('Using metal rich and metal poor components')
+                blocks, stars_templates, component = build_stellar_blocks_gui(sps.templates, age_values, met_values, mode="metal_rich_poor", n_components=2)
+            
+            if mode == 'all':
+                print ('Using all templates')
+                blocks, stars_templates, component = build_stellar_blocks_gui(sps.templates, age_values, met_values, mode="all", n_components=2)
+                
+            if mode == 'two_templates':
+                print ('Two templates with fixed age and metallicity')
+                model1, i_closest1, j_closest1 = pick_ssp_template(age_model1, met_model1, age_values, met_values, sps.templates)
+                model2, i_closest2, j_closest2 = pick_ssp_template(age_model2, met_model2, age_values, met_values, sps.templates)
+                model1 /= np.median(model1)
+                model2 /= np.median(model2)
+                stars_templates = np.column_stack([model1, model2, model1, model2])
+                component = [0, 0, 1, 1]
+                component = np.asarray(component, dtype=int)
+                
+            two_components_cached = component
+
     #Detecting when the emission mask is needed
     if kin_fit_stars and mask_lines:
         use_emission_mask = True
@@ -882,42 +929,41 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
     error_kinematics_mc = 0
 
-    #considering one or two stellar components
-    if two_stellar_components:
-
-        if custom_lib or stellar_library == 'xshooter':
-            #retrieving age and metallicity grids
-            age_grid = sps.get_full_age_grid()
-            met_grid = sps.get_full_metal_grid()
-            age_bins = age_grid[:,0]
-            age_values = age_bins[::-1]
-            met_bins = met_grid[0,:]
-            met_values = met_bins
-        else:
-            #using the wrapper to pPXF
-            sps_data_ppxf = template.SPSLibWrapper(
-                filename, velscale, FWHM_gal, lam_range=lam_range_temp
-            )
-
-            age_values = sps_data_ppxf.get_age_grid()[::-1]
-            met_values = sps_data_ppxf.get_metal_grid()[::-1]
-
-        model1, i_closest1, j_closest1 = pick_ssp_template(age_model1, met_model1, age_values, met_values, sps.templates)
-        model2, i_closest2, j_closest2 = pick_ssp_template(age_model2, met_model2, age_values, met_values, sps.templates)
-
-        model1 /= np.median(model1)
-        model2 /= np.median(model2)
-        stars_templates = np.column_stack([model1, model2, model1, model2])
-
-
 
 ###################### Only stellar ##################
     if kin_fit_stars:
         print ('Fitting only the stellar component')
 
         try:
-
-            if not two_stellar_components:
+            
+            if two_stellar_components: # two stellar components
+                if dust_correction_stars:
+                    print('WARNING: skipping star dust correction!')
+                    dust_correction_stars = False
+                    
+                if mode != 'two_templates':
+                    comp_labels = np.unique(component)
+                    n_comp = comp_labels.size
+                    vel_sys = c * np.log(1 + z)
+                    start = []
+                    if n_comp >= 1:
+                        start.append([vel_sys + vel_guess1, sigma_guess1])
+                    if n_comp >= 2:
+                        start.append([vel_sys + vel_guess2, sigma_guess2])
+                    moments = [kin_moments] * n_comp
+                    templates = stars_templates
+                    global_search = True
+                else: # two extracted templates
+                    templates = stars_templates
+                    vel = c*np.log(1 + z)
+                    vel1 = vel + vel_guess1
+                    vel2 = vel + vel_guess2
+                    start = [[vel1, sigma_guess1], [vel2, sigma_guess2]]
+                    component = [0, 0, 1, 1]
+                    n_temps = stars_templates.shape[1]
+                    moments = [kin_moments, kin_moments]
+                    global_search = True #in case of two stellar components, this keyword should be set to true, according to pPXF manual
+            else: # Single component
                 templates = stars_templates
                 vel = c*np.log(1 + z)
                 start = [vel, sigma_guess]
@@ -926,21 +972,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 gas_component = np.array(component) > 0
                 moments = kin_moments
                 global_search = False # No need for single component
-                t = clock()
-            else:
-                if dust_correction_stars:
-                    print('WARNING: skypping star dust correction!')
-                    dust_correction_stars = False
-                templates = stars_templates
-                vel = c*np.log(1 + z)
-                vel1 = vel + vel_guess1
-                vel2 = vel + vel_guess2
-                start = [[vel1, sigma_guess1], [vel2, sigma_guess2]]
-                component = [0, 0, 1, 1]
-                moments = [kin_moments, kin_moments]
-                global_search = True #in case of two stellar components, this keyword should be set to true, according to pPXF manual
-                t = clock()
 
+            t = clock()
 
             #define the dust components, if activated
             if dust_correction_stars or dust_correction_gas:
@@ -982,12 +1015,17 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                 moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
                 lam=wave, lam_temp=lam_temp, dust = dust, component = component, global_search = global_search, bias = bias)
-
-
+                
             if not two_stellar_components:
                 errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
+                stellar_components = None # I do not have two stellar components
             else:
                 errors = [array * np.sqrt(pp.chi2) for array in pp.error]
+                
+                # Generating the two bestfit templates separated
+                spec_comp1, spec_comp2 = extract_stellar_components_from_matrix(pp=pp, component=component, stars_templates=stars_templates, gas_templates=None,         
+                additive_degree=additive_degree)
+                stellar_components = spec_comp1, spec_comp2
 
             # errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
             redshift_fit = (1 + redshift_0)*np.exp(pp.sol[0]/c) - 1  # eq. (5c) C22
@@ -1121,10 +1159,8 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         error_h6 = np.std(h6_dist)
                         error_kinematics_mc = np.column_stack((error_vel, error_sigma, error_h3, error_h4, error_h5, error_h6))
 
-
                     print('Uncertainties with MonteCarlo simulations:')
                     print(error_kinematics_mc)
-
 
                 # if fitting two stellar components
                 else:
@@ -1188,7 +1224,6 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                             h6_mc2 = round(kinematics_mc[1][5],3)
                             h6_dist2.append(h6_mc2)
 
-
                     error_vel1 = np.std(vel_dist1)
                     error_sigma1 = np.std(sigma_dist1)
                     error_h31 = 0
@@ -1226,16 +1261,15 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                         error_h62 = np.std(h6_dist2)
                         error_kinematics_mc = np.column_stack((error_vel1, error_sigma1, error_h31, error_h41, error_h51, error_h61, error_vel2, error_sigma2, error_h32, error_h42, error_h52, error_h62))
 
-
                     print('Uncertainties with MonteCarlo simulations:')
                     print(error_kinematics_mc)
 
             components = component[0] #only to return the number of gas components, that is zero!
-            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, components, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached
+            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, components, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached, two_components_cached, stellar_components
 
         except Exception:
             print ('ERROR')
-            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = velscale = FWHM_gal_cached = 0
+            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = velscale = FWHM_gal_cached = two_components_cached = stellar_components= 0
 
 
 #################### WITH GAS AND STARS #########################
@@ -1243,6 +1277,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
     if kin_fit_gas:
 
         print ('Fitting the stars and at least one gas component')
+       
         try:
             tie_balmer=tied_balmer
             limit_doublets=False
@@ -1252,34 +1287,65 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             np.log(lam_temp), lam_range_gal, FWHM_gal,
             tie_balmer=tie_balmer, limit_doublets=limit_doublets, wave_galaxy = wave)
 
-            if tie_balmer:
+            if tie_balmer and not two_stellar_components:
                 dust_correction_gas = True
                 print ('With tied Balmer lines, I activate the gas dust correction for you')
 
             templates = np.column_stack([stars_templates, gas_templates])
 
-            # If I fix the stellar moments, here I define them
-            if fixed_moments and kinematics_fixed is not None:
-                print('\n*** Fiximg the kinematics of stars ***')
-                kin_moments_stars = -kin_moments # fixing the moments
-                if abs(kin_moments_stars) == 2:
-                    start_stars = [kinematics_fixed[0], kinematics_fixed[1]]
-                if abs(kin_moments_stars) == 3:
-                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2]]
-                if abs(kin_moments_stars) == 4:
-                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3]]
-                if abs(kin_moments_stars) == 5:
-                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3], kinematics_fixed[4]]
-                if abs(kin_moments_stars) == 6:
-                    start_stars = [kinematics_fixed[0], kinematics_fixed[1], kinematics_fixed[2], kinematics_fixed[3], kinematics_fixed[4], kinematics_fixed[5]]
+            if two_stellar_components:
+                if dust_correction_stars or dust_correction_gas:
+                    print(f'\nWARNING: Dust correction not available for two stellar compoent mode!')
+                    dust_correction_stars = False
+                    dust_correction_gas = False
+                global_search = True
+                comp_stars = np.asarray(component, dtype=int).ravel()
+                star_labels = np.unique(comp_stars)
+                n_star_comp = len(star_labels)
 
-                vel = c*np.log(1 + z) # Now this velocity is only for the gas component(s)
-                start = [vel, sigma_guess]
+                vel_sys = c * np.log(1 + z)
+                start_stars = []
+                if 0 in star_labels:
+                    start_stars.append([vel_sys + vel_guess1, sigma_guess1])
+                if 1 in star_labels:
+                    start_stars.append([vel_sys + vel_guess2, sigma_guess2])
+
+                kin_moments_stars = [kin_moments] * n_star_comp
 
             else:
-                kin_moments_stars = kin_moments
+                global_search = False
+                # One stellar component
+                n_temps = stars_templates.shape[1]
+                comp_stars = np.zeros(n_temps, dtype=int)
+                n_star_comp = 1
+                vel_sys = c * np.log(1 + z)
+                start_stars = [vel_sys, sigma_guess]
+                kin_moments_stars = [kin_moments]
+                
+            # If I fix the stellar moments, here I define them
+            if fixed_moments and kinematics_fixed is not None:
+                print('\n*** Fixing the kinematics of stars ***')          
+                if two_stellar_components:
+                    start_stars = []
+                    kin_moments_stars = []
+                    for kin_fix in kinematics_fixed:
+                        arr = np.asarray(kin_fix, float)
+                        vec = arr[:kin_moments].tolist()
+                        n = int(np.count_nonzero(vec))
+                        n = max(2, min(n, kin_moments))
+                        start_stars.append(vec[:n])
+                        kin_moments_stars.append(-n)
+                else:
+                    vec = list(kinematics_fixed[:kin_moments])
+                    start_stars = vec
+                    kin_moments_stars = [-len(vec)]
+
+                # Gas is free
                 vel = c*np.log(1 + z)
-                start_stars = [vel, sigma_guess]
+                start =  [vel, sigma_guess]
+
+            else:
+                vel = c*np.log(1 + z)
                 start = [vel, sigma_guess]
 
             n_temps = stars_templates.shape[1]
@@ -1295,90 +1361,168 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             n_others = np.sum(["-" in a for a in gas_names])
 
             #looking for the existence of at least one line of each group in the selected spectral window
+            gas_moments = 2
             if n_forbidden !=0 and n_balmer !=0 and n_others !=0:
                 ##### THREE GAS COMPONETS
                 gas = True
                 print('Balmer, forbidden and other lines')
-                component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden +[3]*n_others
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments, kin_moments, kin_moments]
-                start = [start_stars, start, start, start]
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_balmer \
+                        + [next_label+1]*n_forbidden \
+                        + [next_label+2]*n_others
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*3
+                
+                if two_stellar_components:
+                    start   = start_stars +[start, start, start]
+                else: 
+                    start   = [start_stars, start, start, start]
 
             if n_forbidden !=0 and n_balmer !=0 and n_others == 0:
                 #####
                 gas = True
                 print ('Forbidden and Balmer lines')
-                component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments, kin_moments]
-                start = [start_stars, start, start]
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_balmer \
+                        + [next_label+1]*n_forbidden
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*2
+                if two_stellar_components:
+                    start   = start_stars +[start, start]
+                else: 
+                    start   = [start_stars, start, start]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others !=0:
                 #####
                 gas = True
-                print ('Forbidden and other lines')
-                component = [0]*n_temps + [1]*n_others + [2]*n_forbidden
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments, kin_moments]
-                start = [start_stars, start, start]
+                print ('Forbidden and other lines')        
+                
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_others \
+                        + [next_label+1]*n_forbidden
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*2
+                if two_stellar_components:
+                    start   = start_stars +[start, start]
+                else: 
+                    start   = [start_stars, start, start]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others ==0:
                 #######
                 gas = True
-                print ('Only forbidden lines')
-                component = [0]*n_temps + [1]*n_forbidden
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments]
-                start = [start_stars, start]
+                print ('Only forbidden lines')            
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_forbidden
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*1
+                if two_stellar_components:
+                    start   = start_stars +[start]
+                else: 
+                    start   = [start_stars, start]
+
 
             if n_forbidden ==0 and n_balmer != 0 and n_others ==0:
                 ######
                 gas = True
                 print('Only balmer lines')
-                component = [0]*n_temps + [1]*n_balmer
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments]
-                start = [start_stars, start]
+                
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_balmer
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*1
+                if two_stellar_components:
+                    start   = start_stars +[start]
+                else: 
+                    start   = [start_stars, start]
 
             if n_forbidden ==0 and n_balmer != 0 and n_others !=0:
                 #######
                 gas = True
                 print ('Balmer and other lines')
-                component = [0]*n_temps + [1]*n_balmer [2]*n_forbidden
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments, kin_moments]
-                start = [start_stars, start, start]
+                
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_balmer \
+                        + [next_label+1]*n_others
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*2
+                if two_stellar_components:
+                    start   = start_stars +[start, start]
+                else: 
+                    start   = [start_stars, start, start]
+
 
             if n_forbidden ==0 and n_balmer == 0 and n_others !=0:
                 ########
                 gas = True
                 print ('Only other lines')
-                component = [0]*n_temps + [1]*n_others
-                gas_component = np.array(component) > 0
-                moments = [kin_moments_stars, kin_moments]
-                start = [start_stars, start]
+
+                next_label = n_star_comp
+                component = comp_stars.tolist() \
+                        + [next_label]*n_balmer
+
+                gas_component = np.array(component) >= n_star_comp
+                moments = kin_moments_stars + [gas_moments]*1
+                
+                if two_stellar_components:
+                    start   = start_stars +[start]
+                else: 
+                    start   = [start_stars, start]
 
             if n_forbidden ==0 and n_balmer == 0 and n_others ==0:
                 ########### NO GAS COMPONENT
                 gas = False
                 print ('No gas lines found. Fitting only the stellar component')
-                component = 0
-                gas_component = np.array(component) > 0
-                moments = kin_moments_stars
-                start = start_stars
+
+                if two_stellar_components:
+                    next_label = n_star_comp
+                    component = comp_stars.tolist()
+                    gas_component = np.array(component) >= n_star_comp
+                    moments = kin_moments_stars + [gas_moments]*0
+                    start   = start_stars
+                else: 
+                    next_label = n_star_comp
+                    
+                    component = comp_stars.tolist()
+                    gas_component = np.array(component) >= n_star_comp
+                    component = 0 # bring to zero to activate the switch in the apply_analysis task. Just a trick 
+                    moments = kin_moments_stars + [gas_moments]*0
+                    start   = start_stars
+                    
             t = clock()
 
             #define the dust components, if activated
             if dust_correction_stars or dust_correction_gas:
                 if (dust_correction_stars and dust_correction_gas):
                     print('Considering dust for stars and gas')
-                    dust_gas = {"start": [0.1], "bounds": [[0, 8]], "component": gas_component}
-                    dust_stars = {"start": [0.1, -0.1], "bounds": [[0, 4], [-1, 0.4]], "component": ~gas_component}
-                    dust = [dust_gas, dust_stars]
+                    if not gas:
+                        print('No gas lines to correct for dust, considering onlty stars')
+                        dust_gas = None
+                        dust_stars = {"start": [0.1, -0.1], "bounds": [[0, 4], [-1, 0.4]], "component": ~gas_component}
+                        dust = [dust_stars]
+                    else:
+                        dust_gas = {"start": [0.1], "bounds": [[0, 8]], "component": gas_component}
+                        dust_stars = {"start": [0.1, -0.1], "bounds": [[0, 4], [-1, 0.4]], "component": ~gas_component}
+                        dust = [dust_gas, dust_stars]
                 if not dust_correction_stars and dust_correction_gas:
                     print ('Considering dust for gas')
-                    dust_gas = {"start": [0.1], "bounds": [[0, 8]], "component": gas_component}
-                    dust = [dust_gas]
+                    if not gas:
+                        print('No gas lines to correct for dust, skipping')
+                        dust_gas = None
+                    else:
+                        dust_gas = {"start": [0.1], "bounds": [[0, 8]], "component": gas_component}
+                        dust = [dust_gas]
                 if dust_correction_stars and not dust_correction_gas:
                     print('Considering dust for the stellar component')
                     dust_stars = {"start": [0.1, -0.1], "bounds": [[0, 4], [-1, 0.4]], "component": ~gas_component}
@@ -1395,11 +1539,11 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 if gas:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                         moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
-                        lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust)
+                        lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, global_search = global_search)
                 else:
                     pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                         moments=moments, degree= additive_degree, mdegree=multiplicative_degree,
-                        lam=wave, lam_temp=lam_temp,component=component, gas_names=gas_names, quiet = True, bias = 0, dust = dust)
+                        lam=wave, lam_temp=lam_temp,component=component, gas_names=gas_names, quiet = True, bias = 0, dust = dust, global_search = global_search)
 
                 nonregul_deltachi_square = round((pp.chi2 - 1)*galaxy.size, 2)
                 best_noise = np.full_like(galaxy, noise*mt.sqrt(pp.chi2))
@@ -1413,19 +1557,38 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             if gas: #with gas np.sum(component)==0
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust, bias = bias)
+                    lam=wave, lam_temp=lam_temp,component=component, gas_component=gas_component, gas_names=gas_names, dust = dust, bias = bias, global_search = global_search)
 
                 errors = [array * np.sqrt(pp.chi2) for array in pp.error]
-                gas_flux = pp.gas_flux
-                gas_flux_err = pp.gas_flux_error
+                gas_flux = pp.gas_flux*galaxy_median_flux #real physical flux per Angstrom
+                gas_flux_err = pp.gas_flux_error*galaxy_median_flux #real physical flux errors per Angstrom
+
+                if not two_stellar_components:
+                    stellar_components = None # I do not have two stellar components
+                else:
+                    # Generating the two bestfit templates separated
+                    spec_comp1, spec_comp2 = extract_stellar_components_from_matrix(pp=pp, component=component, stars_templates=stars_templates, gas_templates=None,         
+                    additive_degree=additive_degree)
+                    stellar_components = spec_comp1, spec_comp2
 
             else: #without gas
                 pp = ppxf(templates, galaxy, noise, velscale, start, goodpixels = goodpix,
                     moments=moments, plot = True, degree= additive_degree, mdegree=multiplicative_degree,
-                    lam=wave, lam_temp=lam_temp,component=component, dust = dust, bias = bias)
+                    lam=wave, lam_temp=lam_temp,component=component, dust = dust, bias = bias, global_search = global_search)
 
-                errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
-
+                try:
+                    errors = pp.error*np.sqrt(pp.chi2)  # Assume the fit is good chi2/DOF=1
+                except Exception:
+                    errors = [array * np.sqrt(pp.chi2) for array in pp.error]
+                
+                if not two_stellar_components:
+                    stellar_components = None # I do not have two stellar components
+                else:
+                    # Generating the two bestfit templates separated
+                    spec_comp1, spec_comp2 = extract_stellar_components_from_matrix(pp=pp, component=component, stars_templates=stars_templates, gas_templates=None,         
+                    additive_degree=additive_degree)
+                    stellar_components = spec_comp1, spec_comp2
+                    
 
             redshift_fit = (1 + redshift_0)*np.exp(pp.sol[0]/c) - 1  # eq. (5c) C22
             redshift_err = (1 + redshift_fit)*errors[0]/c            # eq. (5d) C22
@@ -1433,14 +1596,27 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             print("Formal errors in stellar component:")
             print("     dV    dsigma   dh3      dh4")
             if not gas:
-                print("".join("%8.2g" % f for f in errors))
-                print('Elapsed time in pPXF: %.2f s' % (clock() - t))
-                try:
-                    prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
-                except Exception:
-                    prec = 7
-                print(f"Best-fitting redshift z = {redshift_fit:#.{prec}f} "
-                    f"+/- {redshift_err:#.{prec}f}")
+                if not two_stellar_components:
+                    print("".join("%8.2g" % f for f in errors))
+                    print('Elapsed time in pPXF: %.2f s' % (clock() - t))
+                    try:
+                        prec = int(1 - np.floor(np.log10(redshift_err)))  # two digits of uncertainty
+                    except Exception:
+                        prec = 7
+                    print(f"Best-fitting redshift z = {redshift_fit:#.{prec}f} "
+                        f"+/- {redshift_err:#.{prec}f}")
+                else:
+                    stellar_uncertainties = errors[0]
+                    print("".join("%8.2g" % f for f in stellar_uncertainties))
+                    print('Elapsed time in pPXF: %.2f s' % (clock() - t))
+                    if redshift_err[0] == 0 or not np.isfinite(redshift_err[0]):
+                        prec = 7
+                        print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
+                        f"+/- {redshift_err[0]:#.{prec}f}")
+                    else:
+                        prec = int(1 - np.floor(np.log10(redshift_err[0])))  # two digits of uncertainty
+                        print(f"Best-fitting redshift z = {redshift_fit[0]:#.{prec}f} "
+                            f"+/- {redshift_err[0]:#.{prec}f}")
             else:
                 stellar_uncertainties = errors[0]
                 print("".join("%8.2g" % f for f in stellar_uncertainties))
@@ -1481,8 +1657,15 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 missing_moments = all_moments - kin_moments
                 moments_to_add = np.zeros(missing_moments)
                 if not gas:
-                    kinematics = np.hstack((kinematics, moments_to_add))
-                    error_kinematics = np.hstack((error_kinematics, moments_to_add))
+                    if not two_stellar_components:
+                        kinematics = np.hstack((kinematics, moments_to_add))
+                        error_kinematics = np.hstack((error_kinematics, moments_to_add))
+                    else:
+                        components = np.max(component)
+                        for k in range (components+1):
+
+                            kinematics[k] = np.hstack((kinematics[k], moments_to_add))
+                            error_kinematics[k] = np.hstack((error_kinematics[k], moments_to_add))
                 else:
                     components = np.max(component)
                     for k in range (components+1):
@@ -1514,7 +1697,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                     pp = ppxf(templates, noisy_template, noise, velscale, start, goodpixels = goodpix,
                     moments=kin_moments, degree=additive_degree, mdegree=multiplicative_degree,
                     lam=bestfit_wavelength, lam_temp=lam_temp,
-                    component=0, quiet = True, dust = dust,bias = bias)
+                    component=0, quiet = True, dust = dust,bias = bias, global_search = global_search)
 
                     kinematics_mc = pp.sol
 
@@ -1568,11 +1751,11 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
                 print('Uncertainties with MonteCarlo simulations:')
                 print(error_kinematics_mc)
 
-            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, component, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached
+            return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, component, gas_component, snr, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, stars_templates, lam_temp, velscale, FWHM_gal_cached, two_components_cached, stellar_components
 
         except AssertionError:
             print ('The selected template does not cover the wavelength range you want to fit')
-            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = FWHM_gal_cached = 0
+            kinematics = error_kinematics = bestfit_flux = bestfit_wavelength = bestfit_gas_flux = emission_corrected_flux = gas_without_continuum = component = gas_component =  snr =  error_kinematics_mc = gas_names = gas_flux = gas_flux_err = stars_templates = lam_temp = FWHM_gal_cached= two_components_cached = stellar_components= 0
 
 
 
@@ -4233,5 +4416,191 @@ def build_goodpixels_with_mask(ln_lam1, lam_range_temp, redshift, redshift_0, ma
 
     return final_goodpix
 
+
+def build_stellar_blocks_gui(templates, age_values, met_values, mode="all", n_components=1, custom_selections=None, normalise=True):
+    """
+    Build stellar template blocks for multi-component kinematics, robust to 3D grids.
+
+    Returns
+    -------
+    blocks : list of [n_wave, n_temp_i]
+    stars_templates : [n_wave, sum_i n_temp_i]
+    component_vector : [sum_i n_temp_i]  values in {0,...,n_components-1}
+    """
+    # 1) Coerce to 2D and get age/met aligned with columns
+    T2, age_flat, met_flat, n_met = _coerce_templates_to_2d(templates, age_values, met_values)
+    n_wave, n_temp = T2.shape
+
+    blocks = []
+    comp_vec = []
+
+    def _range_mask(age_range, met_range):
+        m = np.ones(n_temp, dtype=bool)
+        if age_range is not None:
+            amin, amax = age_range
+            m &= (age_flat >= amin) & (age_flat <= amax)
+        if met_range is not None:
+            zmin, zmax = met_range
+            m &= (met_flat >= zmin) & (met_flat <= zmax)
+        return m
+
+    if mode == "all":
+        b0 = T2
+        b1 = T2
+        blocks = [b0, b1]
+        comp_vec = [np.zeros(b0.shape[1], dtype=int), np.ones (b1.shape[1], dtype=int)]
+
+    elif mode == "old_young" and n_components == 2:
+        mask_old   = _range_mask((5.0, np.inf), None)
+        mask_young = _range_mask((0.0, 5.0),     None)
+        b0 = T2[:, mask_old]
+        b1 = T2[:, mask_young]
+        blocks = [b0, b1]
+        comp_vec = [np.zeros(b0.shape[1], dtype=int),
+                    np.ones (b1.shape[1], dtype=int)]
+
+    elif mode == "metal_rich_poor" and n_components == 2:
+        mask_rich = _range_mask(None, (0.0,  np.inf))
+        mask_poor = _range_mask(None, (-np.inf, 0.0))
+        b0 = T2[:, mask_rich]
+        b1 = T2[:, mask_poor]
+        blocks = [b0, b1]
+        comp_vec = [np.zeros(b0.shape[1], dtype=int),
+                    np.ones (b1.shape[1], dtype=int)]
+
+    elif mode == "custom" and custom_selections is not None:
+        for icomp, sel in enumerate(custom_selections):
+            if sel.get("custom_idx") is not None:
+                # custom_idx as list of (i_age, j_met)
+                idx_pairs = sel["custom_idx"]
+                if n_met is None:
+                    raise ValueError("custom_idx requires grid info (n_met).")
+                flat_idx = [i * n_met + j for (i, j) in idx_pairs]
+                mask = np.zeros(n_temp, dtype=bool)
+                mask[flat_idx] = True
+            else:
+                mask = _range_mask(sel.get("age_range"), sel.get("met_range"))
+
+            block = T2[:, mask]
+            blocks.append(block)
+            comp_vec.append(np.full(block.shape[1], icomp, dtype=int))
+
+    else:
+        raise ValueError(f"Unsupported mode='{mode}' / n_components={n_components}")
+
+    # 3) Concatenate and normalize
+    stars_templates = np.hstack(blocks) if len(blocks) > 1 else blocks[0]
+    component_vector = np.hstack(comp_vec) if len(comp_vec) > 1 else comp_vec[0]
+
+    if normalise:
+        med = np.median(stars_templates, axis=0)
+        med[med == 0] = 1.0
+        stars_templates = stars_templates / med
+
+    # 4) Checks
+    assert stars_templates.ndim == 2, "stars_templates must be 2D"
+    assert component_vector.ndim == 1, "component_vector must be 1D"
+    assert stars_templates.shape[1] == component_vector.size, \
+        "component_vector length must match number of template columns"
+
+    return blocks, stars_templates, component_vector
+
+
+def _coerce_templates_to_2d(templates, ages, metals):
+    """
+    Ensure templates is [n_wave, n_temp] and return aligned age/met arrays
+    of length n_temp. Accepts:
+      - 3D [n_wave, n_age, n_met]
+      - 2D [n_wave, n_temp]  (in questo caso cerca di ricostruire age/met flat)
+    """
+    tmpl = np.asarray(templates)
+    if tmpl.ndim == 3:
+        n_wave, n_age, n_met = tmpl.shape
+        # Flatten: col index = i_age * n_met + j_met  (row-major/'C')
+        T2 = tmpl.reshape(n_wave, n_age * n_met)
+        age_flat = np.repeat(ages, n_met)    # [a0,a0,...,a1,a1,...]
+        met_flat = np.tile(metals, n_age)    # [m0,m1,...,m_last, m0, m1,...]
+        return T2, age_flat, met_flat, n_met
+    elif tmpl.ndim == 2:
+        # Best effort: if already 2D, we try to infer age/met per col only if lengths match.
+        # Otherwise, we just return placeholders to avoid breaking; selections by range will fail.
+        n_wave, n_temp = tmpl.shape
+        # Try to guess grid if lengths multiply correctly
+        n_age = len(ages)
+        n_met = len(metals)
+        if n_age * n_met == n_temp:
+            age_flat = np.repeat(ages, n_met)
+            met_flat = np.tile(metals, n_age)
+            return tmpl, age_flat, met_flat, n_met
+        else:
+            # Fallback: no aligned age/met (range selection non funzionerà su 2D non-grid)
+            return tmpl, None, None, None
+    else:
+        raise ValueError("templates must be 2D or 3D")
+
+
+def extract_stellar_components_from_matrix(pp, component, stars_templates, gas_templates=None, additive_degree=0):
+    """
+    Extracts the two stellar components (comp=0 and comp=1) directly from pp.matrix.
+
+    Parameters
+    ----------
+    pp : pPXF object after the fit.
+    component : array of kinematic component labels for ALL templates used in the fit
+                (only the first n_stars, i.e. the stellar ones, are used here).
+    stars_templates : array [n_pix_temp, n_stars] used to build the 'templates'
+                      (only needed to infer n_stars).
+    gas_templates : array [n_pix_temp, n_gas] if gas templates were used, otherwise None.
+    additive_degree : integer, degree used for additive polynomials in the fit.
+                      Number of additive columns = degree + 1 if degree >= 0, else 0.
+
+    Returns
+    -------
+    spec_comp0, spec_comp1 : arrays [n_pix_gal]
+        Best-fit spectra of each stellar component on the same grid as pp.bestfit.
+    """
+
+    # 1) Determine the number of additive polynomial columns
+    # n_add = (additive_degree + 1) if (additive_degree is not None and additive_degree >= 0) else 0 # additive_degree +1 or not???
+    n_add = (additive_degree) if (additive_degree is not None and additive_degree >= 0) else 0
+
+    # 2) Determine how many stellar and gas templates were used
+    n_stars = stars_templates.shape[1]
+    n_gas   = 0 if gas_templates is None else gas_templates.shape[1]
+    n_templ_total = n_stars + n_gas
+
+    # 3) Extract the template block from the pPXF design matrix
+    #    pp.matrix has shape [n_pix_gal, n_add + n_templ_total (+ n_sky if used)]
+    #    Each column already includes LOSVD convolution, multiplicative polynomials,
+    #    and dust effects (if applied in the fit).
+    A_temp = pp.matrix[:, n_add : n_add + n_templ_total]
+
+    # 4) Extract the linear weights of the templates
+    w = np.asarray(pp.weights).ravel()
+    w_stars = w[:n_stars]  # first n_stars correspond to the stellar templates
+    # w_gas   = w[n_stars : n_stars + n_gas]  # uncomment if you need the gas part
+
+    # 5) Select only the stellar template block
+    A_stars = A_temp[:, :n_stars]
+
+    # 6) Identify the two stellar components based on the 'component' vector
+    comp_stars = np.asarray(component[:n_stars], int)
+    idx0 = np.where(comp_stars == 0)[0]
+    idx1 = np.where(comp_stars == 1)[0]
+
+    
+    # 7) Reconstruct the individual stellar components on the galaxy wavelength grid
+    #    If a component is missing, create a zero array of the same length as pp.bestfit.
+    spec_comp0 = A_stars[:, idx0] @ w_stars[idx0] if idx0.size > 0 else np.zeros(pp.bestfit.shape, dtype=float)
+    spec_comp1 = A_stars[:, idx1] @ w_stars[idx1] if idx1.size > 0 else np.zeros(pp.bestfit.shape, dtype=float)
+
+    # I don't know why, but IF using both additive and multiplicative polynomials, I need to divide the extracted two components for the multiplicative polynomials, otherwise thet have a very distorted continuum. Maybe a small bug in pPXF matrix??
+    M = getattr(pp, "mpoly", None)
+    spec_comp0 = spec_comp0 / M if M is not None and n_add >0 else spec_comp0
+    spec_comp1 = spec_comp1 / M if M is not None and n_add >0 else spec_comp1
+
+
+    return spec_comp0, spec_comp1
 #********************** END OF SPECTRA ANALYSIS FUNCTIONS *********************************
 #******************************************************************************************
+
