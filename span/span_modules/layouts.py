@@ -177,11 +177,11 @@ layout_linux = [
             sg.Frame('Loaded spectra', [[
             sg.Listbox(values=listbox1,size=(46, 24),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
 
-            sg.Frame('Preview', [
-            [sg.Canvas(key='-CANVAS-', size=(713, 345))],
-            [sg.Button('Header',   key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color=('black','light blue')),
-            sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size=(13,1))],
-            ], font=("Helvetica", 12, 'bold'))],
+            sg.Frame('Preview',[
+            [sg.Canvas(key='-CANVAS-',expand_x=True,expand_y=True,pad=(0, 0),border_width=0)],
+            [sg.Button('Header', key='-SHOWHDR-',tooltip='Showing the header of the selected spectrum (only FITS)',button_color=('black', 'light gray'), size=(10, 1)),sg.Button('Sampling', key='-SHOWSTEP-',tooltip='Showing wavelength step of the selected spectrum',button_color=('black', 'light gray'), size=(10, 1)),sg.Push(),sg.Button('Spectra manipulation',size=(18, 1),tooltip='Opening the spectra manipulation panel to modify your spectra',button_color=('black', 'light blue')),sg.Button('Preview spec.',key='-PREVIEW-',tooltip='Preview the results of the Spectra manipulation panel tasks',button_color=('black', 'light gray'), size=(13, 1))],],
+            font=('Helvetica', 12, 'bold'),expand_x=True, expand_y=True,pad=(5, 5))],
+
             
             #Spectral analysis frame
             [sg.Frame('Spectral analysis', [

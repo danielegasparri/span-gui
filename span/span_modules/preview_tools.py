@@ -42,6 +42,8 @@ from datetime import datetime
 import math
 import platform
 from scipy.signal import find_peaks
+import tkinter as tk
+
         
 try:
     from matplotlib.backend_bases import MouseButton
@@ -1185,40 +1187,134 @@ class SpectrumShifterInteractor:
 # --------------------------------------------------------------
 # Create preview figure and canvas
 # --------------------------------------------------------------
+
 def create_preview(layout, window, preview_key='-CANVAS-'):
-    if layout == 'windows':
-        fig = Figure(figsize=(6.65, 3.2), dpi=100)
+    """
+    Matplotlib-in-Tk Canvas with:
+      - proper embedding via create_window (no clipping, correct origin),
+      - responsive sizing on <Configure>,
+      - dynamic typography scaling (labels, ticks, HUD, line width).
+    """
+    if layout == 'linux': # Linux systems deserve a special treatment for handling the scaling factor of the screen (if applied)
+        tk_canvas = window[preview_key].TKCanvas  # real tkinter.Canvas
+        try:
+            tk_canvas.configure(highlightthickness=0, bd=0, bg=window.TKroot['bg'])
+        except Exception:
+            try:
+                tk_canvas.configure(highlightthickness=0, bd=0)
+            except Exception:
+                pass
+
+        # --- Base visual parameters (tuned for your plot) ---
+        dpi = 100
+        BASE_W_PX, BASE_H_PX = 900, 420     # reference pixels used for scaling
+        BASE_LABEL = 11                     # axis label font (pt) at reference size
+        BASE_TICK  = 9                      # tick labels font (pt)
+        BASE_HUD   = 10                     # HUD font (pt)
+        BASE_LW    = 0.9                    # plotted line width (points)
+
+        # --- Figure & axes ---
+        fig = Figure(figsize=(6.0, 3.0), dpi=dpi, constrained_layout=False)
         ax = fig.add_subplot(111)
         fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
-    elif layout == 'linux':
-        fig = Figure(figsize=(7.1, 3.05), dpi=100)
-        ax = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
-    elif layout == 'macos':
-        fig = Figure(figsize=(6.6, 3.05), dpi=100)
-        ax = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
-    elif layout == 'android':
-        fig = Figure(figsize=(8.3, 2.9), dpi=100)
-        ax = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.11, right=0.98, top=0.92, bottom=0.16)
+
+        (plot_line,) = ax.plot([], [], lw=BASE_LW)
+        ax.set_xlabel("Wavelength [Å]")
+        ax.set_ylabel("Flux")
+        hud_text = ax.text(
+            0.995, 0.01, "", transform=ax.transAxes,
+            ha='right', va='bottom', fontsize=BASE_HUD,
+            color='black', zorder=50, clip_on=False
+        )
+
+        # --- Embed MPL widget into the Tk Canvas via create_window ---
+        mplt_canvas = FigureCanvasTkAgg(fig, master=tk_canvas)
+        mplt_widget = mplt_canvas.get_tk_widget()
+        window_id = tk_canvas.create_window(0, 0, window=mplt_widget, anchor="nw")
+
+        def _apply_style_scale(scale: float):
+            """Scale fonts and strokes according to the current canvas size."""
+            # clamp to a sensible range to avoid extremes on tiny/huge windows
+            s = max(0.7, min(scale, 2.0))
+
+            ax.xaxis.label.set_size(BASE_LABEL * s)
+            ax.yaxis.label.set_size(BASE_LABEL * s)
+            ax.tick_params(axis='both', labelsize=BASE_TICK * s, width=0.75 * s, length=3.5 * s)
+
+            # scale spines and plotted line
+            for spine in ax.spines.values():
+                spine.set_linewidth(0.8 * s)
+            plot_line.set_linewidth(max(0.5, BASE_LW * s))
+
+            # scale HUD text
+            hud_text.set_fontsize(BASE_HUD * s)
+
+        def _sync_to_canvas(width_px: int, height_px: int):
+            """Resize embedded widget, figure (inches) and style to the Canvas pixel size."""
+            tk_canvas.coords(window_id, 0, 0)
+            tk_canvas.itemconfig(window_id, width=width_px, height=height_px)
+            tk_canvas.configure(scrollregion=(0, 0, width_px, height_px))
+
+            # match figure pixel area
+            fig.set_size_inches(max(width_px, 1) / dpi, max(height_px, 1) / dpi, forward=True)
+
+            # compute scale factor relative to a reference pixel box
+            scale = min(width_px / BASE_W_PX, height_px / BASE_H_PX)
+            _apply_style_scale(scale)
+
+            try:
+                mplt_canvas.draw_idle()
+            except tk.TclError:
+                pass
+
+        def _on_canvas_configure(event):
+            # ignore spurious tiny events during initial layout
+            if event.width < 150 or event.height < 120:
+                return
+            _sync_to_canvas(event.width, event.height)
+
+        tk_canvas.bind("<Configure>", _on_canvas_configure)
+
+        # Initial sync once layout is ready
+        try:
+            window.refresh()
+        except Exception:
+            pass
+        w = max(tk_canvas.winfo_width(), 1)
+        h = max(tk_canvas.winfo_height(), 1)
+        _sync_to_canvas(w, h)
+        return fig, ax, plot_line, hud_text, mplt_canvas
+    
     else:
-        fig = Figure(figsize=(6.0, 3.0), dpi=100)
-        ax = fig.add_subplot(111)
+        if layout == 'windows':
+            fig = Figure(figsize=(6.65, 3.2), dpi=100)
+            ax = fig.add_subplot(111)
+            fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
+        elif layout == 'macos':
+            fig = Figure(figsize=(6.6, 3.05), dpi=100)
+            ax = fig.add_subplot(111)
+            fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
+        elif layout == 'android':
+            fig = Figure(figsize=(8.3, 2.9), dpi=100)
+            ax = fig.add_subplot(111)
+            fig.subplots_adjust(left=0.11, right=0.98, top=0.92, bottom=0.16)
+        else:
+            fig = Figure(figsize=(6.0, 3.0), dpi=100)
+            ax = fig.add_subplot(111)
 
-    (_plot_line,) = ax.plot([], [], lw=0.8)
-    ax.set_xlabel("Wavelength [Å]")
-    ax.set_ylabel("Flux")
-    hud_text = ax.text(0.995, 0.01, "", transform=ax.transAxes,
-                       ha='right', va='bottom', fontsize=9,
-                       color='black', zorder=50, clip_on=False)
+        (_plot_line,) = ax.plot([], [], lw=0.8)
+        ax.set_xlabel("Wavelength [Å]")
+        ax.set_ylabel("Flux")
+        hud_text = ax.text(0.995, 0.01, "", transform=ax.transAxes,
+                        ha='right', va='bottom', fontsize=9,
+                        color='black', zorder=50, clip_on=False)
 
-    _preview_canvas = FigureCanvasTkAgg(fig, window[preview_key].TKCanvas)
-    widget = _preview_canvas.get_tk_widget()
-    widget.pack(side='top', fill='both', expand=0)
-    _preview_canvas.draw()
+        _preview_canvas = FigureCanvasTkAgg(fig, window[preview_key].TKCanvas)
+        widget = _preview_canvas.get_tk_widget()
+        widget.pack(side='top', fill='both', expand=0)
+        _preview_canvas.draw()
 
-    return fig, ax, _plot_line, hud_text, _preview_canvas
+        return fig, ax, _plot_line, hud_text, _preview_canvas
 
 
 # --------------------------------------------------------------
