@@ -89,7 +89,7 @@ SPAN has been carefully designed and tested to run across different platforms, m
 
 - **Windows and Linux**: The interface and functionality are nearly identical. Both platforms provide the full set of tools, including the integrated output frame where progress messages and logs are displayed directly within the GUI.
 - **macOS**: On macOS, the overall layout of SPAN remains consistent with Windows/Linux, but the integrated output frame has been removed. During testing, this component significantly slowed down performance on macOS systems, so messages are instead displayed in the standard system terminal. Apart from this adjustment, all features of SPAN work exactly as on other platforms.
-- **Android** (via Pydroid3 app): SPAN can also be used on Android devices through the Pydroid3 environment (see the README_ANDROID.txt for instructions). The GUI has been adapted for smaller screens: the classic menu bar is replaced by practical buttons placed at the top and bottom of the panel. Some interactive functions of the Preview and Listbox frames, such as right/left mouse click actions, are not available on touch devices. However, the rest of the functionality remains identical to the desktop versions, making Android a fully usable platform for basic analysis tasks.
+- **Android** (via Pydroid3 app): SPAN can also be used on Android devices through the Pydroid3 environment (see the README_ANDROID.txt for instructions). The GUI has been adapted for smaller screens: the classic menu bar is replaced by practical buttons placed at the top and bottom of the panel. Some interactive functions of the Preview and Listbox frames, such as right/left mouse click actions, are not available on touch devices. However, the rest of the functionality remains identical to the desktop versions, making Android a fully usable platform for all the analysis tasks.
 
 The images below show the aspect of SPAN on Android and macOS systems.
 
@@ -114,7 +114,7 @@ You can install **SPAN** using `pip`:
 pip3 install span-gui
 ```
 
-Otherwise, if you prefer the stand-alone app for Windows, you can [download the Windows installer of SPAN here]([SPAN_setup.exe](https://github.com/danielegasparri/span-gui/releases/download/v7.1.1/SPAN-7.1.0-Windows-x64.exe))
+Otherwise, if you prefer the stand-alone app for Windows, you can [download the Windows installer of SPAN here]([SPAN-7.1.0-Windows-x64.exe](https://github.com/danielegasparri/span-gui/releases/download/v7.1.1/SPAN-7.1.0-Windows-x64.exe))
 
 ## Tested Compatibility
 
