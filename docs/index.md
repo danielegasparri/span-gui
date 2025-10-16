@@ -114,7 +114,8 @@ You can install **SPAN** using `pip`:
 pip3 install span-gui
 ```
 
-Otherwise, if you prefer the stand-alone app for Windows, you can [download the Windows installer of SPAN here]([SPAN-7.1.0-Windows-x64.exe](https://github.com/danielegasparri/span-gui/releases/download/v7.1.1/SPAN-7.1.0-Windows-x64.exe))
+Otherwise, if you prefer the stand-alone app for Windows, you can [download the Windows installer of SPAN here](https://github.com/danielegasparri/span-gui/releases/download/v7.1.1/SPAN-7.1.0-Windows-x64.exe).
+
 
 ## Tested Compatibility
 
