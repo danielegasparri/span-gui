@@ -85,10 +85,10 @@ layout_windows = [
             sg.Listbox(values=listbox1,size=(42, 20),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
             
             sg.Frame('Preview', [
-            [sg.Canvas(key='-CANVAS-', size=(665, 320))],
+            [sg.Canvas(key='-CANVAS-',expand_x=True,expand_y=True,pad=(0, 0),border_width=0)],
             [sg.Button('Header', key='-SHOWHDR-', tooltip='Showing the header of the selected spectrum (only FITS)',  button_color=('black','light gray'), size=(10,1)), sg.Button('Sampling', key='-SHOWSTEP-', tooltip='Showing wavelength step of the selected spectrum', button_color=('black','light gray'), size=(10,1)), sg.Push(), sg.Button('Spectra manipulation', size=(18,1), tooltip='Opening the spectra manipulation panel to modify your spectra', button_color=('black','light blue')),
             sg.Button('Preview spec.', tooltip='Preview the results of the Spectra manipulation panel tasks', button_color=('black','light gray'), size=(13,1))],
-            ], font=("Helvetica", 12, 'bold'))],
+            ], font=("Helvetica", 12, 'bold'),expand_x=True, expand_y=True,pad=(5, 5))],
 
             #Spectral analysis frame
             [sg.Frame('Spectral analysis', [
@@ -128,10 +128,14 @@ layout_windows = [
             ],font=("Helvetica", 9, 'bold')),
 
             #COMMENT THE FOLLOWING THREE LINES TO HAVE THE EXTERNAL OUTPUT
-            sg.Frame('Output', [
-            [sg.Output(size=(98, 14), key='-OUTPUT-', font = ('Helvetica', 11))],
-            ] ,font=("Helvetica", 12, 'bold')),
+            # sg.Frame('Output', [
+            # [sg.Output(size=(98, 14), key='-OUTPUT-', font = ('Helvetica', 11))],
+            # ] ,font=("Helvetica", 12, 'bold')),
 
+            sg.Frame('Output', [
+            [sg.Output(size=(98, 14), expand_x=True,expand_y=True, key='-OUTPUT-' , font=('Helvetica', 11))],
+            ] ,font=("Helvetica", 12, 'bold'),expand_x=True, expand_y=True,pad=(5, 5)),
+            
             ],
 
             #General buttons at the end of the panel
@@ -159,77 +163,78 @@ layout_linux = [
 
             [sg.Frame('Prepare and load spectra', [
             [sg.Text('1. Extract spectra from 2D or 3D FITS', font = ('', 11 ,'bold'))],
-            [sg.Button('Long-slit extraction', tooltip='Stand alone program to extract 1D spectra from 2D fits',button_color= ('black','light blue')), sg.Button('DataCube extraction', tooltip='Stand alone program to extract 1D spectra from data cubes',button_color= ('black','light blue'))],
+            [sg.Button('Long-slit extraction', tooltip='Stand alone program to extract 1D spectra from 2D fits',button_color= ('black','light blue'), font = ('Helvetica', 12)), sg.Button('DataCube extraction', tooltip='Stand alone program to extract 1D spectra from data cubes',button_color= ('black','light blue'), font = ('Helvetica', 12))],
             #[sg.Text('', font = ('', 1))],
-            [sg.HorizontalSeparator(pad=(0, 10))],
+            [sg.HorizontalSeparator(pad=(0, 7))],
             [sg.Text('2. Generate a spectra list with 1D spectra', font = ('', 11 ,'bold'))],
-            [sg.Button('Generate spectra list containing 1D spectra', key = 'listfile',tooltip='If you do not have a spectra file list, you can generate here',size = (37,2))],
-            [sg.HorizontalSeparator(pad=(0, 9))],
+            [sg.Button('Generate spectra list containing 1D spectra', key = 'listfile',tooltip='If you do not have a spectra file list, you can generate here',size = (37,2), font = ('Helvetica', 12))],
+            [sg.HorizontalSeparator(pad=(0, 7))],
             [sg.Text('3. Browse the spectra list or one spectrum', font = ('', 11 ,'bold'))],
-            [sg.InputText(default_spectra_list, size=(36, 1), key='spec_list' ), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum')],
+            [sg.InputText(default_spectra_list, size=(30, 1), key='spec_list' , font = ('Helvetica', 12)), sg.FileBrowse(tooltip='Load an ascii file list of spectra or a single (fits, txt) spectrum', font = ('Helvetica', 12))],
             [sg.Checkbox('I browsed a single spectrum', font = ('Helvetica', 11, 'bold'), key='one_spec',tooltip='Check this if you want to load just one spectrum instead a text file containing the names of the spectra')],
             [sg.Text('Wavelength units:', font = ('', 11),tooltip='Set the correct wavelength units of your spectra: Angstrom, nm, mu'), sg.Radio('nm', "RADIO2", default=True, key = 'wave_units_nm' ), sg.Radio('A', "RADIO2", key = 'wave_units_a'), sg.Radio('mu', "RADIO2" , key = 'wave_units_mu')],
-            [sg.HorizontalSeparator(pad=(0, 10))],
+            [sg.HorizontalSeparator(pad=(0, 7))],
             [sg.Text('4. Finally load the spectra to SPAN', font = ('', 11 ,'bold'))],
-            [sg.Button('Load!', font = ("Helvetica", 11, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN', button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1))],
+            [sg.Button('Load!', font = ("Helvetica", 12, 'bold'), tooltip='Load the browsed spectra list or spectrum to SPAN', button_color=('black','light green'), size = (11,1)), sg.Push(), sg.Button('Plot',button_color=('black','light gray'), size = (10,1), font = ('Helvetica', 12))],
             ], font=("Helvetica", 14, 'bold'), title_color = 'orange'),
 
             sg.Frame('Loaded spectra', [[
-            sg.Listbox(values=listbox1,size=(46, 24),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)]], font=("Helvetica", 12, 'bold'), title_color='white'),
+            sg.Listbox(values=listbox1,size=(40, 20),key='-LIST-',horizontal_scroll=True,enable_events=True,right_click_menu=menu_def,select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, font = ('Helvetica', 12))]], font=("Helvetica", 12, 'bold'), title_color='white'),
 
             sg.Frame('Preview',[
             [sg.Canvas(key='-CANVAS-',expand_x=True,expand_y=True,pad=(0, 0),border_width=0)],
-            [sg.Button('Header', key='-SHOWHDR-',tooltip='Showing the header of the selected spectrum (only FITS)',button_color=('black', 'light gray'), size=(10, 1)),sg.Button('Sampling', key='-SHOWSTEP-',tooltip='Showing wavelength step of the selected spectrum',button_color=('black', 'light gray'), size=(10, 1)),sg.Push(),sg.Button('Spectra manipulation',size=(18, 1),tooltip='Opening the spectra manipulation panel to modify your spectra',button_color=('black', 'light blue')),sg.Button('Preview spec.',key='-PREVIEW-',tooltip='Preview the results of the Spectra manipulation panel tasks',button_color=('black', 'light gray'), size=(13, 1))],],
+            [sg.Button('Header', key='-SHOWHDR-',tooltip='Showing the header of the selected spectrum (only FITS)',button_color=('black', 'light gray'), size=(10, 1), font = ('Helvetica', 12)),sg.Button('Sampling', key='-SHOWSTEP-',tooltip='Showing wavelength step of the selected spectrum',button_color=('black', 'light gray'), size=(10, 1), font = ('Helvetica', 12)),sg.Push(),sg.Button('Spectra manipulation',size=(18, 1),tooltip='Opening the spectra manipulation panel to modify your spectra',button_color=('black', 'light blue'), font = ('Helvetica', 12)),sg.Button('Preview spec.',tooltip='Preview the results of the Spectra manipulation panel tasks',button_color=('black', 'light gray'), size=(13, 1), font = ('Helvetica', 12))],],
             font=('Helvetica', 12, 'bold'),expand_x=True, expand_y=True,pad=(5, 5))],
 
-            
+
             #Spectral analysis frame
             [sg.Frame('Spectral analysis', [
 
             #1) Black-body fitting
-            [sg.Checkbox('Planck Blackbody fitting', font = ('Helvetica', 12, 'bold'), key = 'bb_fitting',tooltip='Blackdoby Planck function fitting. Works fine for stellar spectra and wide wavelength range'),sg.Push(), sg.Button('Blackbody parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Planck Blackbody fitting', font = ('Helvetica', 13, 'bold'), key = 'bb_fitting',tooltip='Blackdoby Planck function fitting. Works fine for stellar spectra and wide wavelength range'),sg.Push(), sg.Button('Blackbody parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))],
 
             #2) Cross-correlation
-            [sg.Checkbox('Cross-correlation', font = ('Helvetica', 12, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Cross-correlation', font = ('Helvetica', 13, 'bold'), key = 'xcorr',tooltip='Cross-correlating a band with a template. Use Stars and gas Kinematics to refine the value found'),sg.Push(), sg.Button('Cross-corr parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))],
 
             #3) Velocity disperion measurement
-            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 12, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Velocity dispersion', font = ('Helvetica', 13, 'bold'), key = 'sigma_measurement',tooltip='Fitting a band with a template. Rough but fast. Use Stars and gas kinematics for accurate science results'),sg.Push(), sg.Button('Sigma parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))],
 
             #4) Line fitting
-            [sg.Checkbox('Line(s) fitting', font = ('Helvetica', 12, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Line(s) fitting', font = ('Helvetica', 13, 'bold'), key = 'line_fitting',tooltip='User line or automatic CaT band fitting with gaussian functions'),sg.Push(), sg.Button('Line fitting parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))],
             
             #5) Line-strength
-            [sg.Checkbox('Line-strength analysis', font = ('Helvetica', 12, 'bold'), key = 'ew_measurement',tooltip='Equivalent width measurement for a list of indices, a single user defined index and Lick/IDS indices'),sg.Push(), sg.Button('Line-strength parameters',button_color= ('black','light blue'), size = (22,1))],
+            [sg.Checkbox('Line-strength analysis', font = ('Helvetica', 13, 'bold'), key = 'ew_measurement',tooltip='Equivalent width measurement for a list of indices, a single user defined index and Lick/IDS indices'),sg.Push(), sg.Button('Line-strength parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))],
 
             #6) Kinematics with ppxf
-            [sg.Checkbox('Stars and gas kinematics', font = ('Helvetica', 12, 'bold'), key = 'ppxf_kin',tooltip='Perform the fitting of a spectral region and gives the kinematics'),sg.Push(), sg.Button('Kinematics parameters',button_color= ('black','light blue'), size = (22,1))  ],
+            [sg.Checkbox('Stars and gas kinematics', font = ('Helvetica', 13, 'bold'), key = 'ppxf_kin',tooltip='Perform the fitting of a spectral region and gives the kinematics'),sg.Push(), sg.Button('Kinematics parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))  ],
 
             #7) Stellar populations with ppxf
-            [sg.Checkbox('Stellar populations and SFH', font = ('Helvetica', 12, 'bold'), key = 'ppxf_pop',tooltip='Perform the fitting of a spectral region and gives the properties of the stellar populations'),sg.Push(), sg.Button('Population parameters',button_color= ('black','light blue'), size = (22,1))  ],
+            [sg.Checkbox('Stellar populations and SFH', font = ('Helvetica', 13, 'bold'), key = 'ppxf_pop',tooltip='Perform the fitting of a spectral region and gives the properties of the stellar populations'),sg.Push(), sg.Button('Population parameters',button_color= ('black','light blue'), size = (18,1), font = ('Helvetica', 12))  ],
             ], font=("Helvetica", 14, 'bold'), title_color='yellow'),
 
             # Buttons to perform the spectral analysis actions
             sg.Frame('An. Actions',[
-            [sg.Button('Help me',button_color=('black','orange'), size = (12,1))],
+            [sg.Button('Help me',button_color=('black','orange'), size = (12,1), font = ('Helvetica', 12))],
             [sg.Text('')],
-            [sg.Button('Preview result',button_color=('black','light gray'),tooltip='Preview all the results of the Spectral analysis frame', size = (12,2))],
-            [sg.Text('')],
-            [sg.Text('')],
+            [sg.Button('Preview result',button_color=('black','light gray'),tooltip='Preview all the results of the Spectral analysis frame', size = (12,2), font = ('Helvetica', 12))],
             [sg.Text('')],
             [sg.Text('')],
+            [sg.Text('')],
+            [sg.Text('')],
+            [sg.Text('',font = ('', 1))],
             [sg.Text('', font = ('Helvetica',24))],
 
             ],font=("Helvetica", 9, 'bold')),
 
             #COMMENT THE FOLLOWING THREE LINES TO HAVE THE EXTERNAL OUTPUT
             sg.Frame('Output', [
-            [sg.Output(size=(104, 16), key='-OUTPUT-' , font=('Helvetica', 11))],
-            ] ,font=("Helvetica", 12, 'bold')),
+            [sg.Output(size=(90, 15), expand_x=True,expand_y=True, key='-OUTPUT-' , font=('Helvetica', 12))],
+            ] ,font=("Helvetica", 12, 'bold'),expand_x=True, expand_y=True,pad=(5, 5)),
 
             ],
 
             #General buttons at the end of the panel
-            [sg.Button('Process selected', button_color=('white','orange'), size=(15, 1),tooltip='Process the selected spectrum by performing all the enabled tasks'), sg.Button('Process all', button_color=('white','red'), size=(15, 1), tooltip='Process all the loaded spectra by performing all the enabled tasks'), sg.Checkbox('Save spectral analysis plots', default = False, text_color='yellow', key = 'save_plots', tooltip='To save all the plots generated by the Spectral Analysis tasks activated and the Process All method', font = ("Helvetica", 10, 'bold')), sg.Push(), sg.Exit(size=(15, 1),tooltip='See you soon!')]
+            [sg.Button('Process selected', button_color=('white','orange'), size=(15, 1),tooltip='Process the selected spectrum by performing all the enabled tasks', font = ('Helvetica', 12)), sg.Button('Process all', button_color=('white','red'), size=(15, 1), tooltip='Process all the loaded spectra by performing all the enabled tasks', font = ('Helvetica', 12)), sg.Checkbox('Save spectral analysis plots', default = False, text_color='yellow', key = 'save_plots', tooltip='To save all the plots generated by the Spectral Analysis tasks activated and the Process All method', font = ("Helvetica", 10, 'bold')), sg.Push(), sg.Exit(size=(15, 1),tooltip='See you soon!', font = ('Helvetica', 12))]
 
                 ]
 

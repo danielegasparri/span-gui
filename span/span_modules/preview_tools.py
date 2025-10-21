@@ -226,9 +226,6 @@ class PreviewInteractor:
             self._active_mode = None if self._active_mode == 'dv' else 'dv'
         elif key == 'i':
             self._active_mode = None if self._active_mode == 'intflux' else 'intflux'
-        # elif key == 'l':
-        #     self._active_mode = None if self._active_mode == 'linefinder' else 'linefinder'
-        #     self._compute_linefinder()
         elif key == 'l':
             self._compute_linefinder()
             if self.hud_text:
@@ -1195,7 +1192,7 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
       - responsive sizing on <Configure>,
       - dynamic typography scaling (labels, ticks, HUD, line width).
     """
-    if layout == 'linux': # Linux systems deserve a special treatment for handling the scaling factor of the screen (if applied)
+    if layout == 'linux' or layout =='windows': # Linux and Windows systems deserve a special treatment for handling the scaling factor of the screen (if applied)
         tk_canvas = window[preview_key].TKCanvas  # real tkinter.Canvas
         try:
             tk_canvas.configure(highlightthickness=0, bd=0, bg=window.TKroot['bg'])
@@ -1208,9 +1205,9 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         # --- Base visual parameters (tuned for your plot) ---
         dpi = 100
         BASE_W_PX, BASE_H_PX = 900, 420     # reference pixels used for scaling
-        BASE_LABEL = 11                     # axis label font (pt) at reference size
-        BASE_TICK  = 9                      # tick labels font (pt)
-        BASE_HUD   = 10                     # HUD font (pt)
+        BASE_LABEL = 12                     # axis label font (pt) at reference size
+        BASE_TICK  = 12                      # tick labels font (pt)
+        BASE_HUD   = 11                     # HUD font (pt)
         BASE_LW    = 0.9                    # plotted line width (points)
 
         # --- Figure & axes ---
@@ -1286,11 +1283,7 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         return fig, ax, plot_line, hud_text, mplt_canvas
     
     else:
-        if layout == 'windows':
-            fig = Figure(figsize=(6.65, 3.2), dpi=100)
-            ax = fig.add_subplot(111)
-            fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
-        elif layout == 'macos':
+        if layout == 'macos':
             fig = Figure(figsize=(6.6, 3.05), dpi=100)
             ax = fig.add_subplot(111)
             fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)

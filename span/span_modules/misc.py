@@ -71,9 +71,9 @@ def ask_user_for_result_path():
     layout, scale_win, fontsize, default_size = get_layout()
     sg.theme('LightBlue')
     layout = [
-        [sg.Text("Select the path to store the SPAN_results folder:")],
-        [sg.InputText(), sg.FolderBrowse()],
-        [sg.Button("Confirm"), sg.Button("Cancel")]
+        [sg.Text("Select the path to store the SPAN_results folder:", font = ('', default_size))],
+        [sg.InputText(font = ('', default_size)), sg.FolderBrowse(font = ('', default_size))],
+        [sg.Button("Confirm", font = ('', default_size)), sg.Button("Cancel", font = ('', default_size))]
     ]
     window = sg.Window("Select folder", layout)
 
@@ -85,7 +85,7 @@ def ask_user_for_result_path():
         if event == "Confirm" and values[0]:
             window.close()
             return values[0]
-        sg.popup("Please, select a valid path")
+        sg.popup("Please, select a valid path", font = ('', default_size))
 
 
 def create_result_structure(base_path):
@@ -166,7 +166,7 @@ def get_layout():
         else:
             scale_win = 1.5
             sg.set_options(font=("Helvetica", 10))
-            default_size = 10
+            default_size = 12
             return layouts.layout_linux, scale_win, None, default_size
 
     else:
@@ -261,7 +261,7 @@ def check_and_download_spectral_templates():
         # If spectralTemplates does not exist, I should download it, if the user agrees
         choice = sg.popup_yes_no(
             "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the folder here: https://www.danielegasparri.com/spectralTemplates.zip , unzip the folder and put in the root folder of span",
-            title="SPAN Missing Files",
+            title="SPAN Missing Files", font = ('', default_size),
             keep_on_top=True
         )
 
@@ -270,5 +270,5 @@ def check_and_download_spectral_templates():
         else:
             sg.popup(
                 "Without the required files, SPAN functionalities are limited, but you can still perform some tasks.",
-                title="SPAN Warning",
+                title="SPAN Warning", font = ('', default_size),
                 keep_on_top=True)
