@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "span-gui"
-version = "7.1.1"
+version = "7.1.2"
 description = "GUI program for the manipulation and analysis of astronomical spectra in the optical and NIR wavelength ranges."
 requires-python = ">=3.10"
 readme = "README.md"
