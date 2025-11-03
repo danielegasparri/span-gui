@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.1
-Daniele Gasparri, October 2025
+SPAN: SPectral ANalysis software V7.2
+Daniele Gasparri, November 2025
 
 # SPAN user manual
 
@@ -375,7 +375,7 @@ The two light-blue buttons in the upper left corner of SPAN (in the "Prepare and
      The S/N threshold that you must insert is just a very rough estimation of the real S/N. A good starting value to produce 1D spectra with bins with realistic S/N > 30 is 20. Adjust the SNR Threshold to your preference by looking at the real S/N of the bins.
      The pixel scale parameter is optional. If you set to zero it will not be considered. This option is useful if you have the spectrum of an extended source (e.g. a galaxy) and want to sample different regions.
 
-2. **DataCube extraction:** Following the GIST pipeline standard (Bittner at al., 2019, 2021), this sub-program allows you to extract 1D spectra from MUSE and CALIFA DataCubes using the Voronoi binning (Cappellari et al., 2003) or manual binning. It also allows to visualize the DataCube loaded and dynamically create a mask (if needed).
+2. **DataCube extraction:** Following the GIST pipeline standard (Bittner at al., 2019, 2021), this sub-program allows you to extract 1D spectra from DataCubes using the Voronoi binning (Cappellari et al., 2003), the new PowerBin binning (Cappellari 2025), circular/elliptical binning or manual binning. Pre-loaded extraction routines are available for MUSE, CALIFA, WEAVE LIFU, and JWST NIRSpec IFU datacubes. The sub-program also allows to visualize the DataCube loaded and dynamically create a mask (if needed).
 
 In the menu bar you can find more sub-programs that might help you in the difficult work of analyzing and processing astronomical spectra. They work independently from the main program, so you can also not load any spectra if you don't need to perform tasks on them. Here is how they works:
 
@@ -408,5 +408,5 @@ Please, report any bug or comment to daniele.gasparri@gmail.com
 Have fun!
 
 Daniele Gasparri  
-2025-10-20  
+2025-11-02  
 Greetings from the Atacama desert!

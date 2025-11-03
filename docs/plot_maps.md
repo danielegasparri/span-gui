@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.1
-Daniele Gasparri, October 2025
+SPAN: SPectral ANalysis software V7.2
+Daniele Gasparri, November 2025
 
 
 # Plot maps window #
@@ -30,6 +30,6 @@ You can alternatively plot the radial profiles of the selected quantity by activ
 
 
 **Saving the plots**  
-Once you are satisfied, you can save the current map in high resolution PNG image by clicking the "Save selected" button, or you can automatically save the maps for all the quantities available by clicking the "Save all" button.
+Once you are satisfied, you can save the current map in high resolution PNG image by clicking the "Save selected" button, or you can automatically save the maps for all the quantities available by clicking the "Save all" button. You can also save the current or all the maps in a single multi-extension FITS file, to be used and modified. 
 
 

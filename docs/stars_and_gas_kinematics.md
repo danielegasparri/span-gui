@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.1
-Daniele Gasparri, October 2025
+SPAN: SPectral ANalysis software V7.2
+Daniele Gasparri, November 2025
 
 # Stars and gas kinematics #
 
