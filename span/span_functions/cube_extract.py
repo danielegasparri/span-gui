@@ -40,6 +40,7 @@ import sys
 import importlib.util
 import functools
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
+from powerbin import PowerBin
 import scipy.spatial.distance as dist
 import matplotlib.pyplot as plt
 
@@ -424,8 +425,6 @@ def sn_func(index, signal=None, noise=None, covar_vor=0.00):
     return sn
 
 
-
-
 def generate_bins(config, cube, voronoi):
     """
     Applies spatial binning according to selected method.
@@ -454,7 +453,7 @@ def generate_bins(config, cube, voronoi):
     # Back-compat: if 'voronoi' bool param is used, override
     if voronoi:
         method = 'VORONOI'
-    elif method not in ('VORONOI', 'ELLIPTICAL', 'SPAXEL'):
+    elif method not in ('VORONOI', 'ELLIPTICAL', 'SPAXEL', 'POWERBIN'):
         method = 'SPAXEL'
 
     if method == 'VORONOI':
@@ -480,6 +479,112 @@ def generate_bins(config, cube, voronoi):
             else:
                 print(f"Voronoi-binning error: {e}")
                 return "Failed"
+
+    # Applying the new PowerBin algorithm of Cappellari 2025
+    elif method == 'POWERBIN':
+        try:
+            from powerbin import PowerBin
+        except Exception as e:
+            print("POWERBIN selected but package not available. Install with: pip install powerbin")
+            print(f"Import error: {e}")
+            return "Failed"
+
+        # -------- Input data (mixed precision) --------
+        # Store large arrays as float32 to save RAM; keep reductions in float64 later.
+        x = cube['x'][idx_unmasked].astype(np.float32, copy=False)
+        y = cube['y'][idx_unmasked].astype(np.float32, copy=False)
+        s = cube['signal'][idx_unmasked].astype(np.float32, copy=False)
+        n = cube['noise'][idx_unmasked].astype(np.float32, copy=False)
+
+        # Build XY matrix in float32
+        xy = np.column_stack([x, y]).astype(np.float32, copy=False)
+
+        target_sn = float(config['BINNING']['TARGET_SNR'])
+        covar = float(config['BINNING'].get('COVARIANCE', 0.0))
+
+        # Avoid division by zero / non-finite noise
+        tiny32 = np.finfo(np.float32).tiny
+        n_safe = np.where(np.isfinite(n) & (n > 0), n, tiny32)
+        s_safe = np.where(np.isfinite(s), s, 0.0)
+
+        # Per-pixel S/N in float32
+        sn_pix = s_safe / n_safe
+
+        # ----- No-binning shortcut: every spaxel already meets target -----
+        if np.all(sn_pix >= target_sn):
+            print("Analysis will continue without PowerBin: all pixels already meet target S/N.")
+            n_spax = len(idx_unmasked)
+
+            bin_num = np.arange(n_spax, dtype=int)         # each spaxel is its own bin
+            x_node  = x.copy()                              # node positions = spaxel positions
+            y_node  = y.copy()
+            x_bar   = x.copy()                              # centroids = spaxel positions
+            y_bar   = y.copy()
+            sn      = sn_pix.astype(np.float32, copy=False) # S/N per bin = per-pixel S/N
+            n_pixels = np.ones(n_spax, dtype=int)
+            _ = None
+            print(f"{len(x_node)} PowerBin bins generated!")
+        else:
+            
+            # ====== CAPACITY ======
+            if covar == 0:
+                # For uncorrelated noise
+                capacity_spec = (s_safe / n_safe) ** 2
+                capacity_spec = (sn_pix ** 2).astype(np.float32, copy=False)
+            else:
+                # for correlated noise
+                def capacity_spec(index_array):
+                    idx = np.asarray(index_array, dtype=int)
+                    if idx.size == 0:
+                        return 0.0
+                    sn_val = sn_func_covariances(idx, s_safe, n_safe)
+                    return float(sn_val) ** 2
+                
+            # -------- Capacity (additive path) in float32 --------
+            # capacity_spec = (sn_pix ** 2).astype(np.float32, copy=False)
+
+            # Optional: keep regularisation off for very large problems
+            regul_flag = False if len(xy) > 150_000 else True
+
+            # -------- Run PowerBin (memory friendly) --------
+            powb = PowerBin(
+                xy,
+                capacity_spec,                      # additive 1D capacity (float32)
+                target_capacity=target_sn ** 2,
+                pixelsize=cube.get('pixelsize', None),
+                regul=regul_flag,
+                verbose=0
+            )
+
+            # -------- Retrieve outputs --------
+            bin_num = powb.bin_num.astype(int, copy=False)        # (N_spaxel_unmasked,)
+            # xybin shape is (N_bin, 2); keep node coordinates in float32
+            x_node, y_node = powb.xybin.T.astype(np.float32, copy=False)
+            n_pixels = powb.npix.astype(int, copy=False)
+
+            # Bin S/N = sqrt(bin_capacity); return as float32
+            sn = np.sqrt(np.maximum(powb.bin_capacity, 0.0)).astype(np.float32, copy=False)
+
+            # -------- Light-weighted centroids with float64 reductions --------
+            # Cast to float64 only for the reductions to minimise round-off error.
+            s64 = s_safe.astype(np.float64, copy=False)
+            x64 = x.astype(np.float64, copy=False)
+            y64 = y.astype(np.float64, copy=False)
+
+            # Sum of signal per bin (float64)
+            sig_sum = np.bincount(bin_num, weights=s64, minlength=len(x_node))
+            # Weighted sums (float64)
+            x_num = np.bincount(bin_num, weights=x64 * s64, minlength=len(x_node))
+            y_num = np.bincount(bin_num, weights=y64 * s64, minlength=len(x_node))
+
+            # Safe division; cast back to float32 for output consistency
+            denom = np.maximum(sig_sum, 1e-30)
+            x_bar = (x_num / denom).astype(np.float32, copy=False)
+            y_bar = (y_num / denom).astype(np.float32, copy=False)
+
+            _ = None
+            print(f"{len(x_node)} PowerBin bins generated!")
+            
 
     elif method == 'ELLIPTICAL':
         print("Using elliptical annuli binning (adaptive S/N).")
@@ -797,43 +902,6 @@ def _as_float_or_none(v):
     return float(v)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def save_bin_info(config, x, y, signal, snr, bin_num_new, ubins, x_node, y_node, sn, n_pixels, pixelsize):
 
     """
@@ -985,7 +1053,7 @@ def prepare_mask_bin(config, cube, preview):
             plt.colorbar(label="S/N")
             plt.xlabel("R [arcsec]")
             plt.ylabel("R [arcsec]")
-            plt.title("Voronoi Map")
+            plt.title("Bin Map")
             plt.show()
 
         except Exception as e:
@@ -1072,7 +1140,7 @@ def save_bin_spec(config, spec, error, wavelength):
     print(f"Wrote: {output_file}")
 
 
-def extract(config, preview, voronoi, elliptical, manual_bin, existing_bin):
+def extract(config, preview, voronoi, elliptical, powerbin, manual_bin, existing_bin):
 
     """
     Main function to run the extraction steps in sequence.
@@ -1164,30 +1232,3 @@ def handle_existing_bin_files(input_folder, output_dir, ifs_run_id):
     shutil.copyfile(mask_path, new_mask_path)
 
     print(f"Files copied and renamed to:\n{new_table_name}\n{new_mask_name}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

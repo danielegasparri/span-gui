@@ -72,6 +72,8 @@ import re
 import sys
 
 import subprocess
+from datetime import datetime
+
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
@@ -1858,7 +1860,7 @@ def quick_snr(wl, fl):
 # Simple function to open the PDF manual
 def open_manual():
     try:
-        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.1.pdf")
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.2.pdf")
 
         if sys.platform.startswith("darwin"):  # macOS
             subprocess.run(["open", manual_path])
@@ -1944,3 +1946,190 @@ def edges_from_centres(centres: np.ndarray) -> np.ndarray:
 
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---- Functions for the plot maps subprogram to save the maps in FITS files ----------------------------------------------
+
+def _parse_bin_from_row_firstcol(row0):
+    """
+    Extract integer Voronoi bin ID from the first column string.
+    Expected patterns include suffixes like *_<bin>.fits or names ending with _<bin>.
+    Falls back to None if parsing fails.
+    """
+    try:
+        bin_str = str(row0).split('_')[-1].split('.')[0]
+        return int(bin_str)
+    except Exception:
+        return None
+
+def build_value_map_from_results(result_df, quantity):
+    """
+    Build a dict {bin_id: value} from the results table for the given quantity.
+    Assumes the first column contains a string with the bin ID in its suffix.
+    """
+    value_map = {}
+    for _, row in result_df.iterrows():
+        b = _parse_bin_from_row_firstcol(row.iloc[0])
+        if b is not None:
+            try:
+                value_map[b] = float(row[quantity])
+            except Exception:
+                # Skip rows where the quantity is missing or not numeric
+                continue
+    return value_map
+
+def voronoi_map_grid(x, y, bin_id, result_df, quantity, fill_value=np.nan):
+    """
+    Create a regular 2D grid (y, x) with the quantity values assigned per spaxel,
+    using the Voronoi binning labels and the result table.
+
+    Returns
+    -------
+    grid_data : (ny, nx) float array
+        Map of the quantity on a rectilinear grid aligned with x_bins, y_bins.
+    x_bins, y_bins : 1D arrays
+        Sorted unique coordinates (arcsec) used as pixel edges for pcolormesh-like usage.
+        Note: they need not be uniformly spaced.
+    """
+    value_map = build_value_map_from_results(result_df, quantity)
+
+    # Fill per-spaxel signal from the bin mapping
+    signal = np.full_like(bin_id, fill_value, dtype=float)
+    for i in range(len(bin_id)):
+        b = int(bin_id[i])
+        if b >= 0 and b in value_map:
+            signal[i] = value_map[b]
+
+    # Build rectilinear axes (monotonic but not necessarily uniform)
+    x_bins = np.sort(np.unique(x))
+    y_bins = np.sort(np.unique(y))
+
+    # Rasterise onto the grid index by nearest bin edges (same logic as your plot)
+    grid_data = np.full((len(y_bins), len(x_bins)), np.float32(np.nan), dtype=np.float32)
+    for i in range(len(x)):
+        x_idx = np.searchsorted(x_bins, x[i])
+        y_idx = np.searchsorted(y_bins, y[i])
+        # Guard against boundary equal to len for exact-right-edge hits
+        if x_idx == len(x_bins): 
+            x_idx -= 1
+        if y_idx == len(y_bins):
+            y_idx -= 1
+        grid_data[y_idx, x_idx] = np.float32(signal[i])
+
+    return grid_data, x_bins.astype(np.float32), y_bins.astype(np.float32)
+
+def _new_primary_header():
+    """
+    Create a minimal PrimaryHDU header with provenance information.
+    """
+    hdr = fits.Header()
+    hdr['ORIGIN']  = 'SPAN'
+    hdr['DATE']    = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+    hdr['CREATOR'] = 'SPAN Plot maps'
+    hdr['COMMENT'] = 'FITS map exported by SPAN; axes given in arcsec.'
+    return hdr
+
+def _axes_hdus(x_bins, y_bins):
+    """
+    Create two 1D ImageHDUs carrying the x/y coordinate vectors (arcsec).
+    We store axes explicitly because spacing may be non-uniform.
+    """
+    hx = fits.ImageHDU(data=np.asarray(x_bins, dtype=np.float32), name='X_AXIS')
+    hy = fits.ImageHDU(data=np.asarray(y_bins, dtype=np.float32), name='Y_AXIS')
+    hx.header['BUNIT'] = 'arcsec'
+    hy.header['BUNIT'] = 'arcsec'
+    hx.header['CTYPE1'] = 'LINEAR'
+    hy.header['CTYPE1'] = 'LINEAR'
+    return hx, hy
+
+def make_map_hdu(grid_data, quantity, bunit=None, vmin=None, vmax=None):
+    """
+    Create an ImageHDU for the given map.
+
+    Parameters
+    ----------
+    grid_data : 2D array (ny, nx)
+    quantity  : str, used as EXTNAME
+    bunit     : optional unit string (e.g. 'km/s', 'dex', 'Gyr')
+    vmin, vmax: optional display range stored as header hints
+    """
+    hdu = fits.ImageHDU(data=np.asarray(grid_data, dtype=np.float32),
+                        name=str(quantity)[:20] if quantity else 'MAP')
+    hdu.header['BTYPE'] = (str(quantity), 'Physical quantity')
+    if bunit:
+        hdu.header['BUNIT'] = (str(bunit), 'Unit of the quantity')
+    if vmin is not None:
+        hdu.header['DMIN']  = (float(vmin), 'Suggested display min')
+    if vmax is not None:
+        hdu.header['DMAX']  = (float(vmax), 'Suggested display max')
+    # Orientation note to match matplotlib image (origin lower by default)
+    hdu.header['Y-X-ORD'] = ('ROW=Y, COL=X', 'Data index order: data[y, x]')
+    return hdu
+
+def save_single_map_fits(save_path, x, y, bin_id, result_df, quantity,
+                         bunit=None, vmin=None, vmax=None):
+    """
+    Save a single quantity map to a FITS file with:
+      - PrimaryHDU (metadata)
+      - ImageHDU: X_AXIS (arcsec)
+      - ImageHDU: Y_AXIS (arcsec)
+      - ImageHDU: <quantity> (map)
+    """
+    grid_data, x_bins, y_bins = voronoi_map_grid(x, y, bin_id, result_df, quantity)
+    primary = fits.PrimaryHDU(header=_new_primary_header())
+    hx, hy = _axes_hdus(x_bins, y_bins)
+    hmap = make_map_hdu(grid_data, quantity, bunit=bunit, vmin=vmin, vmax=vmax)
+    hdul = fits.HDUList([primary, hx, hy, hmap])
+    hdul.writeto(save_path, overwrite=True)
+
+def save_multi_maps_fits(save_path, x, y, bin_id, result_df, quantities,
+                         bunit_map=None, vmin=None, vmax=None):
+    """
+    Save multiple quantity maps to a single FITS file with:
+      - PrimaryHDU
+      - X_AXIS, Y_AXIS
+      - One ImageHDU per quantity in 'quantities' list
+
+    Parameters
+    ----------
+    quantities : iterable of str
+        Column names to export (e.g., result_df.columns[1:])
+    bunit_map : dict or None
+        Optional mapping {quantity: unit-string}
+    """
+    # Build common axes once
+    # (We use the first quantity just to trigger the grid build; axes are common)
+    _g, x_bins, y_bins = voronoi_map_grid(x, y, bin_id, result_df, quantities[0])
+
+    primary = fits.PrimaryHDU(header=_new_primary_header())
+    hx, hy = _axes_hdus(x_bins, y_bins)
+    hdus = [primary, hx, hy]
+
+    for q in quantities:
+        grid_q, _, _ = voronoi_map_grid(x, y, bin_id, result_df, q)
+        bunit = bunit_map.get(q) if isinstance(bunit_map, dict) else None
+        hq = make_map_hdu(grid_q, q, bunit=bunit, vmin=vmin, vmax=vmax)
+        hdus.append(hq)
+
+    fits.HDUList(hdus).writeto(save_path, overwrite=True)
