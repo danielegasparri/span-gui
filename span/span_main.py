@@ -52,15 +52,15 @@ def main():
     layout, scale_win, fontsize, default_size = misc.get_layout()
     
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 7.1 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
-
+    window1 = sg.Window('SPAN - SPectral ANalysis - 7.2 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
+    misc.enable_hover_effect(window1) #enabling hover mouse on the buttons
     #Allowing elements in the listbox to be deleted
     listbox_widget = window1['-LIST-'].Widget
     listbox_widget.bind("<Delete>", lambda event: window1.write_event_value('-LIST-DELETE-', None))
     listbox_widget.bind("<Double-1>", lambda event: window1.write_event_value('-LIST-DOUBLECLICK-', None))
     last_state = None #placeholder to store the listbox state for undo operations
 
-    #Calling zooming function and use ti
+    #Calling zooming function and use it
     zm = zoom.ZoomManager.get()
     zm.attach_window(window1)
 
@@ -107,7 +107,7 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 7.1 *********')
+    print ('********* Welcome to SPAN version 7.2 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
@@ -211,7 +211,7 @@ def main():
         if event == 'About SPAN':
             sg.popup ('SPAN is a Python 3.X software. It can modify the spectra and perform analyses, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         elif event == 'Version':
-            sg.popup ('This is version 7.1 with improved, dynamical, and responsive layout')
+            sg.popup ('This is version 7.2 with improved, dynamical, and responsive layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         elif event == 'Clear all tasks':
@@ -219,7 +219,7 @@ def main():
 
 
         # --- Preview frame buttons: Header/Sampling buttons ---
-        elif event == '-SHOWHDR-':
+        elif event == 'Show header':
             if params.prev_spec == '' or params.spectra_number == 0:
                 sg.popup('No spectrum selected. Please, select one in the list.')
             else:
@@ -309,8 +309,12 @@ def main():
                 sg.popup ('You did not load any valid spectra. I can do nothing but show you this message until you will load a valid spectra list')
                 continue
             #showing a message if no spectra are loaded and button are pressed
-            if (params.spec_names[0] == 0 and (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Process all' or event == 'Plot' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr' or event == 'See plot' or event == 'Save one' or event == 'Save all')):
-                sg.popup('Please, load some spectra!')
+            try:
+                if (params.spec_names[0] == 0 and (event == 'Preview spec.' or event == 'Process selected' or event == 'Show info' or event == 'Preview result' or event == 'Process all' or event == 'Plot' or event == 'One' or event == 'All' or event == 'Compare' or event == 'convert_one' or event == 'convert_all' or event == 'Show snr' or event == 'See plot' or event == 'Save one' or event == 'Save all')):
+                    sg.popup('Please, load some spectra!')
+                    continue
+            except Exception:
+                sg.popup('Your spectra list is likely empty!')
                 continue
 
             #Define the names to show in the GUI, without the path. Only for visualisation purposes!
@@ -502,17 +506,14 @@ def main():
                     df_ew_lick = pd.read_csv(ew_lick_file, sep=' ', index_col=0)
                     df_ew_lick_mag = pd.read_csv(ew_lick_file_mag, sep=' ', index_col=0)
                     df_snr_lick_ew = pd.read_csv(snr_lick_ew_file, sep=' ', index_col=0)
-
                     ssp_lick_param_file = files_setup.create_ssp_lick_param_file(params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
                     df_lick_param = pd.read_csv(ssp_lick_param_file, sep=' ', index_col=0)
+                    ssp_param_file = files_setup.create_lick_ssp_parameters_file(
+                    params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
+                    df_ssp_param = pd.read_csv(ssp_param_file, sep=' ', index_col=0)
                 except Exception:
                     print('The Lick index file in /system_files does not exist. Skipping...')
                     continue
-
-            if (ew_measurement and params.lick_ew and params.stellar_parameters_lick):
-                ssp_param_file = files_setup.create_lick_ssp_parameters_file(
-                    params.result_ew_data_dir, params.spectra_list_name, timestamp, params.spectra_number, params.spec_names_nopath)
-                df_ssp_param = pd.read_csv(ssp_param_file, sep=' ', index_col=0)
 
             #5) Line(s) fitting
             if (line_fitting and params.cat_band_fit):

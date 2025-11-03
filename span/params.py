@@ -480,12 +480,13 @@ class SpectraParams:
     ifs_existing_bin: bool = False
     ifs_existing_bin_folder: str = ''
     ifs_elliptical: bool = False
+    ifs_powerbin: bool = False
     ifs_pa_user: float = 0.0
     ifs_q_user: float = 1
     ifs_ell_r_max: float = 30
     ifs_ell_min_dr: float = 0.5
-    isf_auto_pa_q: bool = False
-    isf_auto_center: bool = False
+    ifs_auto_pa_q: bool = False
+    ifs_auto_center: bool = False
 
 
     # Plot maps default parameters    

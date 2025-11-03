@@ -93,6 +93,25 @@ g_time_end = 0
 g_time_delta = 0
 
 
+# Added by Danniele Gasparri to hanble the homebrew installation of Python>3.12 using the system Tcl/Tk 9.x.
+def _safe_trace(var, mode, callback):
+    """Universal tkinter variable tracer (compatible with Tcl/Tk 8.x and 9.x)."""
+    try:
+        # Old API (Tcl/Tk 8.x)
+        var.trace(mode, callback)
+    except Exception:
+        try:
+            # New API (Tcl/Tk 9.x)
+            if mode == 'w':
+                var.trace_add('write', callback)
+            elif mode == 'r':
+                var.trace_add('read', callback)
+            elif mode == 'u':
+                var.trace_add('unset', callback)
+        except Exception:
+            pass
+
+
 # These timer routines are to help you quickly time portions of code.  Place the timer_start call at the point
 # you want to start timing and the timer_stop at the end point. The delta between the start and stop calls
 # is returned from calling timer_stop
@@ -12081,7 +12100,8 @@ class Window:
 
         if self.thread_strvar is None:
             self.thread_strvar = tk.StringVar()
-            self.thread_strvar.trace('w', self._window_tkvar_changed_callback)
+            # self.thread_strvar.trace('w', self._window_tkvar_changed_callback)
+            _safe_trace(self.thread_strvar, 'w', self._window_tkvar_changed_callback)
 
     def write_event_value(self, key, value):
         """
