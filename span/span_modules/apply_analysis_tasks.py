@@ -1400,7 +1400,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
     try:
         #fitting with ppxf
         if not ppxf_kin_fixed_kin or not gas_kin:
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, bias = ppxf_kin_bias)
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, params.with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, ppxf_kin_mask_emission, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, bias = ppxf_kin_bias)
             
             # storing the two bestfit components separated
             if ppxf_kin_two_stellar_components:
@@ -1409,7 +1409,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
         if ppxf_kin_fixed_kin and gas_kin:
 
             # Fitst fit without gas
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, False, True, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, True, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, bias = ppxf_kin_bias)
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, False, True, kin_best_noise, params.with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, True, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, bias = ppxf_kin_bias)
 
             kinematics_fixed = kinematics
             kin_stars_templates_gas = updated_templates #updating the template for the second fit to be like the stellar fit template
@@ -1419,14 +1419,17 @@ def apply_ppxf_kinematics(event, save_plot, params):
                 spec_comp1, spec_comp2 = stellar_components
 
             # Second fit for the gas
-            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, False, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates_gas, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, kinematics_fixed = kinematics_fixed, bias = ppxf_kin_bias)
+            params = replace(params, with_errors_kin = False)
+            
+            kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, bestfit_gas_flux, emission_corrected_flux, gas_without_continuum, kin_component, gas_component, snr_kin, error_kinematics_mc_mock, gas_names, gas_flux, gas_flux_err, updated_templates, kin_lam_temp, kin_velscale_templates, kin_FWHM_gal_cached, kin_two_components_cached, stellar_components = span.ppxf_kinematics(wavelength, flux, wave1_kin, wave2_kin, resolution_kin, constant_resolution_lambda, resolution_kin_r, resolution_kin_muse, redshift_guess_kin, sigma_guess_kin, stellar_library_kin, additive_degree_kin, multiplicative_degree_kin, kin_moments, ppxf_kin_noise, gas_kin, no_gas_kin, kin_best_noise, params.with_errors_kin, ppxf_kin_custom_lib, ppxf_kin_lib_folder, ppxf_kin_custom_temp_suffix, ppxf_kin_generic_lib, ppxf_kin_generic_lib_folder, ppxf_kin_FWHM_tem_generic, ppxf_kin_dust_gas, ppxf_kin_dust_stars, ppxf_kin_tie_balmer, ppxf_kin_two_stellar_components, ppxf_kin_age_model1, ppxf_kin_met_model1, ppxf_kin_age_model2, ppxf_kin_met_model2, ppxf_kin_vel_model1, ppxf_kin_sigma_model1, ppxf_kin_vel_model2, ppxf_kin_sigma_model2, False, ppxf_kin_have_user_mask, ppxf_kin_mask_ranges, ppxf_kin_mc_sim, ppxf_kin_fixed_kin, ppxf_kin_mode, stars_templates=kin_stars_templates_gas, lam_temp = kin_lam_temp, velscale_cached = kin_velscale_templates, FWHM_gal_cached = kin_FWHM_gal_cached, two_components_cached = kin_two_components_cached, kinematics_fixed = kinematics_fixed, bias = ppxf_kin_bias)
+            params = replace(params, with_errors_kin = with_errors_kin)
 
 
         if kin_stars_templates is None:
             params = replace(params, kin_stars_templates=updated_templates, kin_lam_temp=kin_lam_temp, kin_velscale_templates=kin_velscale_templates, kin_FWHM_gal_cached = kin_FWHM_gal_cached, kin_two_components_cached = kin_two_components_cached )
 
     #Saving the single stellar component fit results
-        if kin_component == 0 and not ppxf_kin_two_stellar_components:
+        if (kin_component == 0 and not ppxf_kin_two_stellar_components):
             vel = round(kinematics[0])
             sigma = round(kinematics[1])
             h3 = round(kinematics[2],3)
@@ -1445,7 +1448,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
             h3_string = str(round(kinematics[2],3))
             h4_string = str(round(kinematics[3],3))
 
-            if with_errors_kin:
+            if params.with_errors_kin:
                 err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
 
 
@@ -1485,7 +1488,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
             h3_string2 = str(round(kinematics[1][2],3))
             h4_string2 = str(round(kinematics[1][3],3))
 
-            if with_errors_kin:
+            if params.with_errors_kin:
                 # extracting the MonteCarlo errors from the error array
                 err_rv_kin_mc1, err_sigma_kin_mc1, err_h3_kin_mc1, err_h4_kin_mc1, err_h5_kin_mc1, err_h6_kin_mc1, err_rv_kin_mc2, err_sigma_kin_mc2, err_h3_kin_mc2, err_h4_kin_mc2, err_h5_kin_mc2, err_h6_kin_mc2  = np.round(error_kinematics_mc[0],3)
 
@@ -1509,7 +1512,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
             h3_string = str(round(kinematics[0][2],3))
             h4_string = str(round(kinematics[0][3],3))
 
-            if with_errors_kin:
+            if params.with_errors_kin:
                 err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
 
 

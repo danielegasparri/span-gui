@@ -46,6 +46,7 @@ import zipfile
 import ssl
 import certifi
 import matplotlib
+import math
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
@@ -75,7 +76,7 @@ def ask_user_for_result_path():
         [sg.InputText(font = ('', default_size)), sg.FolderBrowse(font = ('', default_size))],
         [sg.Button("Confirm", font = ('', default_size)), sg.Button("Cancel", font = ('', default_size))]
     ]
-    window = sg.Window("Select folder", layout)
+    window = sg.Window("Select folder", layout, modal = True, keep_on_top = True)
 
     while True:
         event, values = window.read()
@@ -182,74 +183,93 @@ def get_layout():
 SPECTRAL_TEMPLATES_DIR = os.path.join(BASE_DIR, "spectralTemplates")
 
 # Link to my website to download the spectralTemplates folder
-DOWNLOAD_URL = "https://www.danielegasparri.com/spectralTemplates.zip"
+DOWNLOAD_URL = "https://github.com/danielegasparri/span-gui/releases/download/v7.1.2/spectralTemplates.zip" 
 
 # Temporary path to save the zipped file
 TEMP_ZIP_PATH = os.path.join(BASE_DIR, "spectralTemplates.zip")
 
 def download_with_progress(url, dest):
-    """Download a file with a progress bar"""
+    """Download a large file with a progress bar (optimized for speed and responsiveness)."""
 
     context = ssl.create_default_context(cafile=certifi.where())
 
-    # Get the file size
+    # Open the connection and get the total file size
     response = urllib.request.urlopen(url, context=context)
     total_size = int(response.getheader('Content-Length', 0))
 
-    # Setting up the progress bar
-    layout = [[sg.Text("Downloading spectral templates...")],
-            [sg.ProgressBar(total_size, orientation='h', size=(50, 10), key='PROG_BAR')],
-            [sg.Cancel()]]
+    # Define the progress window layout
+    layout = [
+        [sg.Text("Downloading spectral templates...")],
+        [sg.ProgressBar(total_size, orientation='h', size=(50, 10), key='PROG_BAR')],
+        [sg.Cancel()],
+    ]
     window = sg.Window("SPAN Download", layout, finalize=True, keep_on_top=True)
 
-    # Opening file
+    # Open the destination file in binary write mode
     with open(dest, 'wb') as f:
         downloaded = 0
-        block_size = 8192  # 8 KB for block
+        block_size = 1024 * 1024  # 1 MB per block for optimal performance
+        next_update = 0           # threshold for next progress bar refresh
 
         while True:
             buffer = response.read(block_size)
             if not buffer:
-                break  # end download
+                break  # Download complete
 
             f.write(buffer)
             downloaded += len(buffer)
 
-            # Update the bar
-            window['PROG_BAR'].update(downloaded)
+            # Update the progress bar every 1% of completion
+            if downloaded >= next_update or downloaded == total_size:
+                window['PROG_BAR'].update(downloaded)
+                next_update = downloaded + total_size // 100  # next 1%
 
-            # If 'Cancel' is pressed, I stop the download
-            event, _ = window.read(timeout=10)
-            if event == "Cancel":
+            # Handle Cancel button or window close
+            event, _ = window.read(timeout=0)
+            if event == "Cancel" or event is None:
                 window.close()
-                os.remove(dest)  # and delete the incomplete file downloaded
+                response.close()
+                try:
+                    os.remove(dest)  # Delete incomplete file
+                except Exception:
+                    pass
                 sg.popup("Download cancelled!", title="SPAN Error", keep_on_top=True)
                 return False
 
+    # Cleanup
+    response.close()
     window.close()
     return True
 
 
 def download_and_extract_files():
-    """Download and extract the file"""
+    """Download the spectral templates ZIP file and extract it into the SPAN base directory."""
     try:
-        # starting the download
+        # Start the download process
         success = download_with_progress(DOWNLOAD_URL, TEMP_ZIP_PATH)
         if not success:
-            return  # stop the download if cancelled
+            return  # Stop if the download was cancelled
 
-        # Extract the downloaded zip file
+        # Extract the downloaded ZIP file
         with zipfile.ZipFile(TEMP_ZIP_PATH, "r") as zip_ref:
             zip_ref.extractall(BASE_DIR)
 
-        # delete the zip file
+        # Delete the temporary ZIP file
         os.remove(TEMP_ZIP_PATH)
 
-        # yeeee success!
-        sg.popup("Download completed! SPAN is now ready to use.", title="SPAN Success", keep_on_top=True)
+        # Notify the user
+        sg.popup(
+            "Download completed! SPAN is now ready to use.",
+            title="SPAN Success",
+            keep_on_top=True
+        )
 
     except Exception as e:
-        sg.popup_error(f"Error downloading auxiliary files:\n{str(e)}", title="SPAN Error", keep_on_top=True)
+        sg.popup_error(
+            f"Error downloading auxiliary files:\n{str(e)}",
+            title="SPAN Error",
+            keep_on_top=True
+        )
 
 
 # function to check if the folder 'spectralTemplates' exists in the root folder of SPAN
@@ -260,7 +280,7 @@ def check_and_download_spectral_templates():
     if not os.path.exists(SPECTRAL_TEMPLATES_DIR):
         # If spectralTemplates does not exist, I should download it, if the user agrees
         choice = sg.popup_yes_no(
-            "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the folder here: https://www.danielegasparri.com/spectralTemplates.zip , unzip the folder and put in the root folder of span",
+            "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the file here: https://github.com/danielegasparri/span-gui/releases/download/v7.1.2/spectralTemplates.zip, unzip the folder and put in the root folder of span",
             title="SPAN Missing Files", font = ('', default_size),
             keep_on_top=True
         )
@@ -272,3 +292,30 @@ def check_and_download_spectral_templates():
                 "Without the required files, SPAN functionalities are limited, but you can still perform some tasks.",
                 title="SPAN Warning", font = ('', default_size),
                 keep_on_top=True)
+
+
+
+def enable_hover_effect(window,
+                        hover_color=("white", "#0078d7"),
+                        exclude_keys=None):
+    """
+    Enable hover effect for buttons without breaking tooltips or
+    dynamic colour changes. The button returns to the colour it
+    had before the mouse entered, even if it was modified later.
+    """
+    if exclude_keys is None:
+        exclude_keys = []
+
+    for key, element in window.AllKeysDict.items():
+        if isinstance(element, sg.Button) and key not in exclude_keys:
+            # Define local variable to store the original colour per element
+            def on_enter(event, el=element):
+                el._normal_color_before_hover = el.ButtonColor
+                el.update(button_color=hover_color)
+
+            def on_leave(event, el=element):
+                normal_color = getattr(el, "_normal_color_before_hover", el.ButtonColor)
+                el.update(button_color=normal_color)
+
+            element.Widget.bind("<Enter>", on_enter, add="+")
+            element.Widget.bind("<Leave>", on_leave, add="+")

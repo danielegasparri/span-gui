@@ -70,31 +70,58 @@ def handle_list_select(event, values, window, params,
         wl = np.asarray(wl, dtype=float)
         fl = np.asarray(fl, dtype=float)
 
+        # --- PULIZIA OVERLAY/SELEZIONI PRIMA DI CAMBIARE SPETTRO ---
+        try:
+            preview_interactor.clear_overlays()
+        except Exception:
+            pass
+
+        # --- Aggiorna la stessa Line2D (no nuove linee) ---
         wl_log = np.log10(wl)
         _plot_line.set_data(wl_log, fl)
+
+        # --- Metadati utili (se li usi altrove) ---
         ax._last_xydata = (wl, fl)
         ax._x_increasing = bool(wl_log[0] <= wl_log[-1])
-        ax.set_xlim(np.nanmin(wl_log), np.nanmax(wl_log))
-        ax.set_ylim(np.nanmin(fl), np.nanmax(fl))
-        ax.margins(x=0.02, y=0.05)
-        ax.relim(); ax.autoscale_view()
+
+        # --- Limiti: una sola passata, no autoscale duplicati ---
+        x0, x1 = (wl_log[0], wl_log[-1]) if wl_log.size else (0, 1)
+        ax.set_xlim(x0, x1)
+
+        if np.isfinite(fl).any():
+            fmin, fmax = np.nanmin(fl), np.nanmax(fl)
+            if not np.isfinite(fmin) or not np.isfinite(fmax) or fmin == fmax:
+                fmin, fmax = 0.0, 1.0
+        else:
+            fmin, fmax = 0.0, 1.0
+
+        pad = 0.05 * (fmax - fmin if fmax > fmin else 1.0)
+        ax.set_ylim(fmin - pad, fmax + pad)
+
+        # Niente relim/autoscale_view qui: già impostato esplicitamente
+        # ax.margins(x=0.02, y=0.05)  # opzionale: se vuoi un filo di margine extra
+
         preview_interactor.update_home()
         fig.canvas.draw_idle()
 
+        # --- Redshift shifter: reset pulito (assicurati rimuova vecchie label) ---
         redshift_shifter._xdata_orig = wl_log.copy()
         redshift_shifter._ydata_orig = fl.copy()
+        if hasattr(redshift_shifter, "clear_labels"):
+            # Consigliato: implementa clear_labels() che rimuove eventuali Text/Line vecchi
+            redshift_shifter.clear_labels()
         redshift_shifter.refresh_labels()
         redshift_shifter._cumulative_dx = 0.0
         if redshift_shifter.hud_text:
             redshift_shifter.hud_text.set_text("Estimated z reset")
 
-        def log_to_lin(x, pos):
-            return f"{10**x:.0f}"
-        ax.xaxis.set_major_formatter(mticker.FuncFormatter(log_to_lin))
+        # Formatter x-axis: ora è impostato UNA VOLTA in create_preview()
+        # (niente più ax.xaxis.set_major_formatter(...) qui)
 
         params = replace(params,
-                         prev_spec=sel_full,
-                         prev_spec_nopath=os.path.basename(sel_full))
+                        prev_spec=sel_full,
+                        prev_spec_nopath=os.path.basename(sel_full))
+
 
     # --- Clean comparison labels if present (back to single spectrum) ---
     if hasattr(ax, "_compare_labels"):

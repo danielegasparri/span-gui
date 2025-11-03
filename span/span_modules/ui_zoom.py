@@ -302,8 +302,9 @@ def open_subwindow(title, layout_or_factory, *, zm=None, **window_kwargs):
     # default
     window_kwargs.setdefault("finalize", True)
     window_kwargs.setdefault("resizable", True)
-    window_kwargs.setdefault("modal", False)
-
+    window_kwargs.setdefault("modal", True)
+    # window_kwargs.setdefault("keep_on_top", True)
+    
     win = sg.Window(title, layout, **window_kwargs)
     zm.attach_window(win)           
     return win

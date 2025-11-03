@@ -238,7 +238,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     ]
 
     spec_window = open_subwindow('Spectra manipulation parameters', spec_layout, zm=zm)
-
+    misc.enable_hover_effect(spec_window)
     while True:
         spec_event, spec_values = spec_window.read()
 
@@ -328,7 +328,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             # creating thw window
             window_reorder = open_subwindow("Order the tasks", layout_reorder, zm=zm)
-
+            misc.enable_hover_effect(window_reorder)
             sorting_cond = 0
             while True:
                 event_reorder, values_reorder = window_reorder.read()
@@ -401,7 +401,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Clean spectra window open. The main panel will be inactive until you close the window ***')
             clean_window = open_subwindow('Clean spectra parameters', clean_layout, zm=zm)
-
+            misc.enable_hover_effect(clean_window)
             while True:
                 clean_event, clean_values = clean_window.read()
 
@@ -464,7 +464,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Denoise window open. The main panel will be inactive until you close the window ***')
             denoise_window = open_subwindow('Denoise parameters', denoise_layout, zm=zm)
-
+            misc.enable_hover_effect(denoise_window)
             while True:
                 denoise_event, denoise_values = denoise_window.read()
 
@@ -548,7 +548,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Dopcor parameters window open. The main panel will be inactive until you close the window ***')
             dopcor_window = open_subwindow('Dopcor parameters', dopcor_layout, zm=zm)
-
+            misc.enable_hover_effect(dopcor_window)
             while True:
                 dopcor_event, dopcor_values = dopcor_window.read()
 
@@ -592,7 +592,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Heliocor parameters window open. The main panel will be inactive until you close the window ***')
             heliocor_window = open_subwindow('Heliocor parameters', heliocor_layout, zm=zm)
-
+            misc.enable_hover_effect(heliocor_window)
             while True:
                 heliocor_event, heliocor_values = heliocor_window.read()
 
@@ -679,7 +679,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Degrade resolution parameters window open. The main panel will be inactive until you close the window ***')
             degrade_res_window = open_subwindow('Degrade resolution parameters', degrade_res_layout, zm=zm)
-
+            misc.enable_hover_effect(degrade_res_window)
             while True:
                 degrade_res_event, degrade_res_values = degrade_res_window.read()
 
@@ -766,7 +766,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
             print ('*** Continuum subtraction window open. The main panel will be inactive until you close the window ***')
             continuum_window = open_subwindow('Continuum parameters', continuum_layout, zm=zm)
-
+            misc.enable_hover_effect(continuum_window)
             while True:
                 continuum_event, continuum_values = continuum_window.read()
 

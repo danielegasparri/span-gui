@@ -107,7 +107,7 @@ def plot_data_window(BASE_DIR, layout):
     print ('*** Plotting window open. The main panel will be inactive until you close the window ***')
 
     plot_window = open_subwindow('Data Plotter', plot_layout, zm=zm)
-
+    misc.enable_hover_effect(plot_window)
     while True:
         plot_event, plot_values = plot_window.read()
 
@@ -208,20 +208,20 @@ def plot_maps_window(BASE_DIR, layout, params):
     if layout == layouts.layout_windows:
         map_layout = [
             [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
-            [sg.Input(fits_path, key="-FITS-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Input(fits_path, key="-FITS-", size=(59, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
             [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
-            [sg.Input(txt_path, key="-TXT-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+            [sg.Input(txt_path, key="-TXT-", size=(59, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
             [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
-            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(46, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
-            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(30, 1), font=("Helvetica", 12))],
-            [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
+            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(59, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(35, 1), font=("Helvetica", 12))],
+            [sg.Button("Load Files", font=("Helvetica", 11), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 11), button_color=('black','orange'))],
             [sg.HorizontalSeparator()],
             [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value=plot_maps_colormap, key="-CMAP-", readonly=True, font=("Helvetica", 12))],
-            [sg.Listbox(values=[], size=(44, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
+            [sg.Listbox(values=[], size=(55, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
             [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
-            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(20, 20), key="-SIGMA-", enable_events=True)],
+            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(25, 20), key="-SIGMA-", enable_events=True)],
             [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
-            [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
+            [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 11), button_color=('white','orange')), sg.Button("Save selected", size=(11, 1), font=("Helvetica", 11), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 11), button_color=('black','gray')), sg.Button("Save FITS selected", size=(16, 1), font=("Helvetica", 11)), sg.Button("Save FITS ALL", size=(13, 1), font=("Helvetica", 11), button_color=('black','gray')), sg.Button("Exit", size=(7, 1), font=("Helvetica", 11))]
         ]
 
 
@@ -241,31 +241,31 @@ def plot_maps_window(BASE_DIR, layout, params):
             [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
             [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 11), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 11), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(19, 20), key="-SIGMA-", enable_events=True)],
             [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
-            [sg.Button("Plot Map", size=(8, 1), font=("Helvetica", 12), button_color=('white','orange')), sg.Button("Save selected", size=(11, 1), font=("Helvetica", 12), button_color=('black','light gray')), sg.Button("Save ALL", size=(8, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Exit", size=(8, 1), font=("Helvetica", 12))]
+            [sg.Button("Plot Map", size=(8, 1), font=("Helvetica", 12), button_color=('white','orange')), sg.Button("Save selected", size=(11, 1), font=("Helvetica", 12), button_color=('black','light gray')), sg.Button("Save ALL", size=(8, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Save FITS selected", size=(9, 1), font=("Helvetica", 12)), sg.Button("Save FITS ALL", size=(9, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Exit", size=(8, 1), font=("Helvetica", 12))]
 
         ]
 
     else:
         map_layout = [
             [sg.Text("1. Select the FITS file (*_table.fits) with spaxel and bin info", font=("Helvetica", 14))],
-            [sg.Input(fits_path, key="-FITS-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Input(fits_path, key="-FITS-", size=(80, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
             [sg.Text("2. Select the text file with spectral analysis results", font=("Helvetica", 14))],
-            [sg.Input(txt_path, key="-TXT-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
+            [sg.Input(txt_path, key="-TXT-", size=(80, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("Text files", "*.txt *.dat"),), font=("Helvetica", 12))],
             [sg.Text("3. (Optional) FITS image (*_2dimage.fits) for isophotes", font=("Helvetica", 14))],
-            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(50, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
+            [sg.Input(plot_maps_fits_image, key="-IMG-", size=(80, 1), font=("Helvetica", 12)), sg.FileBrowse(file_types=(("FITS files", "*.fits"),), font=("Helvetica", 12))],
             [sg.Text("Contour levels (percentiles):", font=("Helvetica", 12)), sg.Input(default_text=plot_maps_contour_percentiles, key="-ISOLEVELS-", size=(35, 1), font=("Helvetica", 12))],
             [sg.Button("Load Files", font=("Helvetica", 14), button_color=('black','light green')), sg.Push(), sg.Button('Help', size=(9, 1), font=("Helvetica", 14), button_color=('black','orange'))],
             [sg.HorizontalSeparator()],
             [sg.Text("Select the quantity to plot:", font=("Helvetica", 14)), sg.Push(), sg.Text("Colormap:", font=("Helvetica", 14)), sg.Combo(values=["inferno", "viridis", "plasma", "magma", "cividis", "seismic", "jet","sauron", "sauron_r"], default_value=plot_maps_colormap, key="-CMAP-", readonly=True, font=("Helvetica", 12))],
-            [sg.Listbox(values=[], size=(54, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
+            [sg.Listbox(values=[], size=(80, 10), key="-LIST-", enable_events=True, font=("Helvetica", 14))],
             [sg.Text("X lim:"), sg.Input(plot_maps_xlim_min, size=(4,1), key="-XMIN-"), sg.Text("-"), sg.Input(plot_maps_xlim_max, size=(4,1), key="-XMAX-"), sg.Text("Y lim:"), sg.Input(plot_maps_ylim_min, size=(4,1), key="-YMIN-"), sg.Text("-"), sg.Input(plot_maps_ylim_max, size=(4,1), key="-YMAX-"), sg.Push(), sg.Text("Map range:"), sg.Input(plot_maps_map_range_min, size=(4,1), key="-VMIN-", tooltip="Leave empty for auto-scaling"), sg.Text("-"), sg.Input(plot_maps_map_range_max, size=(4,1), key="-VMAX-", tooltip="Leave empty for auto-scaling")],
-            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(28, 20), key="-SIGMA-", enable_events=True)],
+            [sg.Checkbox("Offset:", key = 'offset', default = plot_maps_offet, font=("Helvetica", 12), tooltip='Apply a custom offset value to the data'), sg.Input(plot_maps_offset_value, size=(4,1), key="offset_value"), sg.Checkbox("Gauss smoothing:", key="-SMOOTH-", default = plot_maps_gaussian_smooth, font=("Helvetica", 12), tooltip='If spaxel re-projection is activated, this will smooth the colours of the maps. You just get cooler plots'), sg.Slider(range=(0.0, 5.0), resolution=0.1, default_value=plot_maps_gaussian_smooth_value, orientation='h', size=(38, 20), key="-SIGMA-", enable_events=True)],
             [sg.Checkbox("Plot radial profile (instead of 2D map)", key="-RADIAL-", default = plot_maps_radial_profiles, font=("Helvetica", 12), tooltip="If selected, plots the quantity as a function of distance from center")],
-            [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 14), button_color=('white','orange')), sg.Button("Save selected", size=(13, 1), font=("Helvetica", 14), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 14), button_color=('black','gray')), sg.Button("Exit", size=(9, 1), font=("Helvetica", 14))]
-
+            [sg.Button("Plot Map", size=(9, 1), font=("Helvetica", 12), button_color=('white','orange')), sg.Button("Save selected", size=(11, 1), font=("Helvetica", 12), button_color=('black','light gray')), sg.Button("Save ALL", size=(9, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Save FITS selected", size=(16, 1), font=("Helvetica", 12)), sg.Button("Save FITS ALL", size=(13, 1), font=("Helvetica", 12), button_color=('black','gray')), sg.Button("Exit", size=(7, 1), font=("Helvetica", 11))]
         ]
 
     map_window = open_subwindow("2D Map Viewer", map_layout, zm=zm)
+    misc.enable_hover_effect(map_window)
     x, y, bin_id = None, None, None
     result_df = None
     selected_quantity = None
@@ -684,6 +684,106 @@ def plot_maps_window(BASE_DIR, layout, params):
                             sg.popup_error(f"Error saving image {quantity}:\n{e}")
                     if success:
                         sg.popup("All maps saved successfully.")
+                        
+            else:
+                sg.popup("Please load files before saving.")          
+
+
+
+        # ---- Saving the maps in FITS files
+
+        elif map_event == "Save FITS selected":
+            offset = map_values['offset']
+            plot_radial = map_values.get("-RADIAL-", False)
+            smoothing = map_values['-SMOOTH-']
+
+            if x is not None and result_df is not None and selected_quantity:
+                save_path = sg.popup_get_file(
+                    "Save FITS file",
+                    save_as=True, no_window=True,
+                    file_types=(("FITS Files", "*.fits"),),
+                    default_extension=".fits"
+                )
+                if save_path:
+                    # Optional offset on-the-fly
+                    if offset:
+                        result_df_mod = result_df.copy()
+                        try:
+                            offset_value = float(map_values['offset_value'])
+                            result_df_mod[selected_quantity] += offset_value
+                        except Exception as e:
+                            sg.popup_error(f"Could not apply offset: {e}")
+                            result_df_mod = result_df
+                    else:
+                        result_df_mod = result_df
+
+                    # Optional display range hints
+                    try:
+                        vmin = float(map_values["-VMIN-"]) if map_values["-VMIN-"] else None
+                        vmax = float(map_values["-VMAX-"]) if map_values["-VMAX-"] else None
+                    except Exception:
+                        vmin, vmax = None, None
+
+                    try:
+                        # NB: here we export the *Voronoi map* as it appears in plot_voronoi_map
+                        stm.save_single_map_fits(
+                            save_path, x, y, bin_id, result_df_mod, selected_quantity,
+                            bunit=None,  # set unit string if known, e.g. 'km/s', 'dex', 'Gyr'
+                            vmin=vmin, vmax=vmax
+                        )
+                        sg.popup("FITS saved successfully.")
+                    except Exception as e:
+                        sg.popup_error(f"Error saving FITS:\n{e}")
+            else:
+                sg.popup("Please load files and select a quantity before saving.")
+
+        elif map_event == "Save FITS ALL":
+            offset = map_values['offset']
+            plot_radial = map_values.get("-RADIAL-", False)
+            smoothing = map_values['-SMOOTH-']
+
+            if x is not None and result_df is not None:
+                save_path = sg.popup_get_file(
+                    "Save multi-extension FITS file",
+                    save_as=True, no_window=True,
+                    file_types=(("FITS Files", "*.fits"),),
+                    default_extension=".fits"
+                )
+                if save_path:
+                    # Prepare possibly offset results
+                    if offset:
+                        result_df_mod = result_df.copy()
+                        try:
+                            offset_value = float(map_values['offset_value'])
+                            numeric_cols = result_df_mod.select_dtypes(include='number').columns
+                            result_df_mod[numeric_cols] += offset_value
+                        except Exception as e:
+                            sg.popup_error(f"Could not apply offset: {e}")
+                            result_df_mod = result_df
+                    else:
+                        result_df_mod = result_df
+
+                    # Optional display range hints
+                    try:
+                        vmin = float(map_values["-VMIN-"]) if map_values["-VMIN-"] else None
+                        vmax = float(map_values["-VMAX-"]) if map_values["-VMAX-"] else None
+                    except Exception:
+                        vmin, vmax = None, None
+
+                    # Decide which columns to export: skip the first if it is the file/bin name
+                    quantities = list(result_df.columns[1:]) if result_df.shape[1] > 1 else list(result_df.columns)
+
+                    try:
+                        # Optional: per-quantity units mapping
+                        bunit_map = {}  # e.g., {'V':'km/s','sigma':'km/s','Age':'Gyr','[M/H]':'dex'}
+                        stm.save_multi_maps_fits(
+                            save_path, x, y, bin_id, result_df_mod, quantities,
+                            bunit_map=bunit_map, vmin=vmin, vmax=vmax
+                        )
+                        sg.popup("Multi-extension FITS saved successfully.")
+                    except Exception as e:
+                        sg.popup_error(f"Error saving multi-extension FITS:\n{e}")
+                        
             else:
                 sg.popup("Please load files before saving.")
 
@@ -744,6 +844,7 @@ def text_editor_window(layout):
         ]
 
     window_editor = open_subwindow('Text editor', editor_layout, zm=zm)
+    misc.enable_hover_effect(window_editor)
     file_modified = False
     text_backup = ""
 
@@ -818,7 +919,7 @@ def text_editor_window(layout):
             ]
 
             match_window = open_subwindow('Match and merge rows', match_layout, zm=zm)
-
+            misc.enable_hover_effect(match_window)
             while True:
                 match_event, match_values = match_window.read()
 
@@ -898,7 +999,7 @@ def fits_header_window():
 
     print ('*** Fits header editor open. The main panel will be inactive until you close the window ***')
     fitsheader_window = open_subwindow('Fits header editor', fitsheader_layout, zm=zm)
-
+    misc.enable_hover_effect(fitsheader_window)
     while True:
 
         fitsheader_event, fitsheader_values = fitsheader_window.read()
@@ -924,7 +1025,7 @@ def fits_header_window():
             ]
 
             subfitsheader_window = open_subwindow("Single FITS header editor", subfitsheader_layout, zm=zm)
-
+            misc.enable_hover_effect(subfitsheader_window)
             while True:
                 subfitsheader_event, subfitsheader_values = subfitsheader_window.read()
 
@@ -987,7 +1088,7 @@ def fits_header_window():
             ]
 
             hdr_list_window = open_subwindow("FITS header editor", hdr_list_layout, zm=zm)
-
+            misc.enable_hover_effect(hdr_list_window)
             while True:
                 hdr_list_event, hdr_list_values = hdr_list_window.read()
 
@@ -1094,7 +1195,7 @@ def fits_header_window():
             ]
 
             ext_key_window = open_subwindow("Extract and Save Keyword", ext_key_layout, zm=zm)
-
+            misc.enable_hover_effect(ext_key_window)
             while True:
                 ext_key_event, ext_key_values = ext_key_window.read()
 
@@ -1175,6 +1276,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
     print ('*** 2D spectra extraction open. The main panel will be inactive until you close the window ***')
 
     spec_extr_window = open_subwindow("2D spectra extraction", spec_extr_layout, zm=zm)
+    misc.enable_hover_effect(spec_extr_window)
     canvas_elem = spec_extr_window["-CANVAS-"]
     canvas = canvas_elem.Widget
 
@@ -1337,12 +1439,16 @@ def datacube_extraction(params):
     ifs_bin_method = params.ifs_bin_method
     ifs_covariance = params.ifs_covariance
     ifs_elliptical = params.ifs_elliptical
+    ifs_powerbin = params.ifs_powerbin
+    
+    
+    
     ifs_pa_user = params.ifs_pa_user
     ifs_q_user = params.ifs_q_user
     ifs_ell_r_max = params.ifs_ell_r_max
     ifs_ell_min_dr = params.ifs_ell_min_dr
-    isf_auto_pa_q = params.isf_auto_pa_q
-    isf_auto_center = params.isf_auto_center
+    ifs_auto_pa_q = params.ifs_auto_pa_q
+    ifs_auto_center = params.ifs_auto_center
 
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
@@ -1365,8 +1471,8 @@ def datacube_extraction(params):
         [sg.HorizontalSeparator()],
 
         [sg.Text('Binning modes:', font = ('', default_size, 'bold'))],
-        [sg.Radio('Voronoi binning with the following signal-to-noise:', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Automatic voronoi rebinning', font = ('', default_size)), sg.Text('S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50', font = ('', default_size)), sg.InputText(ifs_target_snr_voronoi, size = (4,1), key = 'ifs_target_snr_voronoi', font = ('', default_size))],
-        [sg.Radio('Elliptical binning:', "RADIOVOR", default=ifs_elliptical, key='ifs_elliptical', tooltip='Elliptical/radial rebinning using the photometric center and the ellipticity of your galaxy', font = ('', default_size)), sg.Text('PA:', tooltip='PA of the galaxy', font = ('', default_size)), sg.InputText(ifs_pa_user, size = (4,1), key = 'ifs_pa_user', font = ('', default_size)), sg.Text('q:', tooltip='Insert the ellipticity of the bins. 1 is for circular annuli', font = ('', default_size)), sg.InputText(ifs_q_user, size = (3,1), key = 'ifs_q_user', font = ('', default_size)), sg.Checkbox('Auto ellipses', default = isf_auto_pa_q, key = 'isf_auto_pa_q', tooltip='If activated, SPAN will find the PA and q for you', font = ('', default_size)), sg.Checkbox('Auto center', default = isf_auto_center, key = 'isf_auto_center', tooltip='If activated, SPAN will find the photometric center instead using the origin of the coordinates', font = ('', default_size)), sg.Push(),  sg.Text('S/N:', tooltip='Select the minimum S/N of the bins. Set low to let dR decide the bin radiii', font = ('', default_size)), sg.InputText(ifs_target_snr_elliptical, size = (3,1), key = 'ifs_target_snr_elliptical', font = ('', default_size)), sg.Text('R max:', tooltip='Maximum radius in arcsec to consider for binning', font = ('', default_size)), sg.InputText(ifs_ell_r_max, size = (4,1), key = 'ifs_ell_r_max', font = ('', default_size)), sg.Text('dR:', tooltip='Minimum R thickness of the bins, in arcsec. Must be >= of the spaxel sampling', font = ('', default_size)), sg.InputText(ifs_ell_min_dr, size = (4,1), key = 'ifs_ell_min_dr', font = ('', default_size))],
+        [sg.Radio('Voronoi adaptive binning', "RADIOVOR", default=ifs_voronoi, key='ifs_voronoi', tooltip='Using Voronoi tesselation algorithm of Cappellari & Copin (2003)', font = ('', default_size)), sg.Radio('PowerBin adaptive binning', "RADIOVOR", default=ifs_powerbin, key='ifs_powerbin', tooltip='Using the new PowerBin algorithm of Cappellari 2025, much faster than Voronoi', font = ('', default_size)), sg.Text('Target S/N:', tooltip='Select the S/N treshold of the binned spaxels. A good starting value is 30-50', font = ('', default_size)), sg.InputText(ifs_target_snr_voronoi, size = (4,1), key = 'ifs_target_snr_voronoi', font = ('', default_size))],
+        [sg.Radio('Elliptical binning:', "RADIOVOR", default=ifs_elliptical, key='ifs_elliptical', tooltip='Elliptical/radial rebinning using the photometric center and the ellipticity of your galaxy', font = ('', default_size)), sg.Text('PA:', tooltip='PA of the galaxy', font = ('', default_size)), sg.InputText(ifs_pa_user, size = (4,1), key = 'ifs_pa_user', font = ('', default_size)), sg.Text('q:', tooltip='Insert the ellipticity of the bins. 1 is for circular annuli', font = ('', default_size)), sg.InputText(ifs_q_user, size = (3,1), key = 'ifs_q_user', font = ('', default_size)), sg.Checkbox('Auto ellipses', default = ifs_auto_pa_q, key = 'ifs_auto_pa_q', tooltip='If activated, SPAN will find the PA and q for you', font = ('', default_size)), sg.Checkbox('Auto center', default = ifs_auto_center, key = 'ifs_auto_center', tooltip='If activated, SPAN will find the photometric center instead using the origin of the coordinates', font = ('', default_size)), sg.Push(),  sg.Text('S/N:', tooltip='Select the minimum S/N of the bins. Set low to let dR decide the bin radiii', font = ('', default_size)), sg.InputText(ifs_target_snr_elliptical, size = (3,1), key = 'ifs_target_snr_elliptical', font = ('', default_size)), sg.Text('R max:', tooltip='Maximum radius in arcsec to consider for binning', font = ('', default_size)), sg.InputText(ifs_ell_r_max, size = (4,1), key = 'ifs_ell_r_max', font = ('', default_size)), sg.Text('dR:', tooltip='Minimum R thickness of the bins, in arcsec. Must be >= of the spaxel sampling', font = ('', default_size)), sg.InputText(ifs_ell_min_dr, size = (4,1), key = 'ifs_ell_min_dr', font = ('', default_size))],
         [sg.Radio('Manual binning by selecting custom regions or spaxels:', "RADIOVOR", default=ifs_manual_bin, key='ifs_manual_bin', tooltip='Select region(s) to bin. Masking is not applied here', font = ('', default_size)), sg.Button('Perform manual binning', tooltip='Open the datacube and draw regions to be binned together', font = ('', default_size))],
         [sg.Radio('Use already generated bin scheme stored in your pc', "RADIOVOR", default=ifs_existing_bin, key='ifs_existing_bin', tooltip='Use already available mask and bin info', font = ('', default_size)), sg.Input(ifs_existing_bin_folder, key='ifs_existing_bin_folder', size = (21,1), font = ('', default_size)), sg.FolderBrowse(tooltip='Browse the folder where your *_table.fits and *_mask.fits are located', font = ('', default_size))],
 
@@ -1377,7 +1483,7 @@ def datacube_extraction(params):
 
     print ('*** Cube extraction routine open. The main panel will be inactive until you close the window ***')
     cube_ifs_window = open_subwindow('Cube extraction using GIST standard', cube_ifs_layout, zm=zm)
-
+    misc.enable_hover_effect(cube_ifs_window)
     while True:
 
         cube_ifs_event, cube_ifs_values = cube_ifs_window.read()
@@ -1386,8 +1492,6 @@ def datacube_extraction(params):
             print ('Cube extraction routine closed. This main panel is now active again')
             print ('')
             break
-
-
 
         #assigning user values
         ifs_run_id = cube_ifs_values['ifs_run_id']
@@ -1407,16 +1511,20 @@ def datacube_extraction(params):
         ifs_voronoi = cube_ifs_values['ifs_voronoi']
         ifs_elliptical = cube_ifs_values['ifs_elliptical']
         elliptical = ifs_elliptical
-        
-        isf_auto_pa_q = cube_ifs_values['isf_auto_pa_q']
-        isf_auto_center = cube_ifs_values['isf_auto_center']
+        ifs_auto_pa_q = cube_ifs_values['ifs_auto_pa_q']
+        ifs_auto_center = cube_ifs_values['ifs_auto_center']
 
+        ifs_powerbin = cube_ifs_values['ifs_powerbin']
+        powerbin = ifs_powerbin
+        
         if ifs_voronoi:
             ifs_bin_method = 'VORONOI'
         elif ifs_manual_bin:
             ifs_bin_method = 'SPAXEL'
         elif ifs_elliptical:
             ifs_bin_method = 'ELLIPTICAL'
+        elif ifs_powerbin:
+            ifs_bin_method = 'POWERBIN'
             
         ifs_existing_bin = cube_ifs_values['ifs_existing_bin']
         if ifs_existing_bin:
@@ -1441,13 +1549,13 @@ def datacube_extraction(params):
             ell_x0=0
             ell_y0=0
             
-            if isf_auto_pa_q and ifs_bin_method == 'ELLIPTICAL':
+            if ifs_auto_pa_q and ifs_bin_method == 'ELLIPTICAL':
                 ifs_pa = None
                 ifs_q = None
             else: 
                 ifs_pa = ifs_pa_user
                 ifs_q = ifs_q_user
-            if isf_auto_center and ifs_bin_method == 'ELLIPTICAL':
+            if ifs_auto_center and ifs_bin_method == 'ELLIPTICAL':
                 ell_x0=None
                 ell_y0=None
                 
@@ -1721,7 +1829,7 @@ def datacube_extraction(params):
             
                                                                                 
             try:
-                cubextr.extract(config, preview, voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
+                cubextr.extract(config, preview, voronoi, elliptical, powerbin, ifs_manual_bin, ifs_existing_bin)
             except Exception as e:
                 sg.popup("Error showing the bins:", str(e))
                 continue
@@ -1905,7 +2013,7 @@ def datacube_extraction(params):
                     ifs_min_snr_mask_bin, bin_mask_path, ifs_bin_method_manual, ifs_target_snr_manual,
                     ifs_covariance_manual)
                 try:
-                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, powerbin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Sorry, Error.", str(e))
                     continue
@@ -1945,7 +2053,7 @@ def datacube_extraction(params):
                     ifs_covariance_manual)
                 try:
                     #running the cubextract module to produce the spaxel and BIN_ID map
-                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, True, voronoi_bin, elliptical, powerbin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.popup("Error! Cannot show the bins", str(e))
                     continue
@@ -2006,7 +2114,7 @@ def datacube_extraction(params):
                 # 5) Run cubextract again with the new bin configuration
                 try:
                     mock_voronoi = True # Fake voronoi bin required
-                    cubextr.extract(config_manual, False, mock_voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
+                    cubextr.extract(config_manual, False, mock_voronoi, elliptical, powerbin, ifs_manual_bin, ifs_existing_bin)
                 except Exception as e:
                     sg.Popup("ERROR performing the extraction")
 
@@ -2029,7 +2137,7 @@ def datacube_extraction(params):
                 voronoi = True
                 preview = False
                 #calling the cube_extraction routine
-                cubextr.extract(config, preview, voronoi, elliptical, ifs_manual_bin, ifs_existing_bin)
+                cubextr.extract(config, preview, voronoi, elliptical, powerbin, ifs_manual_bin, ifs_existing_bin)
                 # except Exception as e:
                 #     sg.Popup ('ERROR performing the extraction')
                 #     continue
@@ -2184,8 +2292,9 @@ def datacube_extraction(params):
                     # ifs_ell_min = ifs_ell_min,
                     ifs_ell_r_max = ifs_ell_r_max,
                     ifs_ell_min_dr = ifs_ell_min_dr,
-                    isf_auto_pa_q = isf_auto_pa_q,
-                    isf_auto_center = isf_auto_center
+                    ifs_auto_pa_q = ifs_auto_pa_q,
+                    ifs_auto_center = ifs_auto_center,
+                    ifs_powerbin = ifs_powerbin,
                     
                      )
 
@@ -2359,7 +2468,8 @@ def utilities_window(params, one_spec_flag: bool):
             [sg.Exit(size=(18, 1))]
         ]
         
-    win = sg.Window('SPAN Utilities', utilities_layout, modal=False, finalize=True, resizable=False)
+    win = open_subwindow('SPAN Utilities', utilities_layout, zm=zm)
+    misc.enable_hover_effect(win)
 
     # event loop della sottofinestra
     while True:

@@ -100,7 +100,7 @@ def blackbody_parameters(params: SpectraParams) -> SpectraParams:
     print('*** Blackbody fitting parameters window open. The main panel will be inactive until you close the window ***')
 
     bb_window = open_subwindow('Blackbody fitting parameters', bb_layout, zm=zm)
-
+    misc.enable_hover_effect(bb_window)
     while True:
         bb_event, bb_values = bb_window.read()
 
@@ -182,7 +182,7 @@ def crosscorr_parameters(params: SpectraParams) -> SpectraParams:
     print('*** Cross-corr parameters window open. The main panel will be inactive until you close the window ***')
 
     xcorr_window = open_subwindow('Cross-correlation parameters', xcorr_layout, zm=zm)
-    
+    misc.enable_hover_effect(xcorr_window)
     while True:
         xcorr_event, xcorr_values = xcorr_window.read()
 
@@ -340,7 +340,7 @@ def sigma_parameters(params: SpectraParams) -> SpectraParams:
     print('*** Sigma parameters window open. The main panel will be inactive until you close the window ***')
 
     sigma_window = open_subwindow('Sigma parameters', sigma_layout, zm=zm)
-    
+    misc.enable_hover_effect(sigma_window)
 
     while True:
         sigma_event, sigma_values = sigma_window.read()
@@ -542,7 +542,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
     print ('*** Line-strength parameters window open. The main panel will be inactive until you close the window ***')
     ew_window = open_subwindow('Line-strength parameters', ew_layout, zm=zm)
-
+    misc.enable_hover_effect(ew_window)
     while True:
         ew_event, ew_values = ew_window.read()
 
@@ -627,7 +627,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 ]
 
             sigmacorr_window = open_subwindow('Sigma coeff parameters', sigmacorr_layout, zm=zm)
-
+            misc.enable_hover_effect(sigmacorr_window)
             print (single_index_corr)
             while True:
 
@@ -690,7 +690,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
             print ('*** Sigma corr parameters window open. The main panel will be inactive until you close the window ***')
             correw_window = open_subwindow('Sigma correction parameters', correw_layout, zm=zm)
-
+            misc.enable_hover_effect(correw_window)
             while True:
 
                 correw_event, correw_values = correw_window.read()
@@ -1053,7 +1053,7 @@ def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
 
     print('*** Line fitting parameters window open. The main panel will be inactive until you close the window ***')
     linefit_window = open_subwindow('Line(s) fitting parameters', linefit_layout, zm=zm)
-
+    misc.enable_hover_effect(linefit_window)
     while True:
         linefit_event, linefit_values = linefit_window.read()
 
@@ -1208,7 +1208,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
 
     print ('*** Kinematics parameters window open. The main panel will be inactive until you close the window ***')
     ppxf_kin_window = open_subwindow('pPXF Kinematics parameters', ppxf_kin_layout, zm=zm)
-
+    misc.enable_hover_effect(ppxf_kin_window)
 
     while True:
 
@@ -1529,7 +1529,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
 
     print ('*** Population parameters window open. The main panel will be inactive until you close the window ***')
     ppxf_pop_window = open_subwindow('pPXF Population parameters', ppxf_pop_layout, zm=zm)
-
+    misc.enable_hover_effect(ppxf_pop_window)
     while True:
 
         ppxf_pop_event, ppxf_pop_values = ppxf_pop_window.read()

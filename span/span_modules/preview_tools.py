@@ -43,7 +43,7 @@ import math
 import platform
 from scipy.signal import find_peaks
 import tkinter as tk
-
+from matplotlib.ticker import FuncFormatter
         
 try:
     from matplotlib.backend_bases import MouseButton
@@ -103,8 +103,13 @@ class PreviewInteractor:
         self._intflux_rect = None
         self._intflux_lines = []
         
+        # === Line finder mode. The lines follow che shift (if applied)===
         self._linefinder_lines = []
-        
+        self._lf_peaks_log = None 
+        self._lf_dx0 = 0.0     
+        self._lf_line_mean_at_det = None
+        self._lf_dx_applied = 0.0 
+
         self._active_mode = None 
         self._mode_label = None 
 
@@ -868,41 +873,63 @@ class PreviewInteractor:
         self.ax.figure.canvas.draw_idle()
 
 
-
     def _compute_linefinder(self):
-        """Detect and mark spectral lines automatically using simple peak detection."""
+        """Detect and mark spectral lines automatically using simple peak detection.
+        Stores peaks at baseline log10(λ) and snapshots the current horizontal shift,
+        so subsequent drags shift by (new_dx - dx0) only (no double-shift)."""
+
+        # Remove previous line-finder overlays
+        for obj_pair in getattr(self, "_linefinder_lines", []):
+            for obj in obj_pair:
+                try:
+                    obj.remove()
+                except Exception:
+                    pass
+        self._linefinder_lines = []
 
         data = getattr(self.ax, "_last_xydata", None)
         if not data:
             return
 
-        lam, flux = np.asarray(data[0]), np.asarray(data[1])
+        lam, flux = np.asarray(data[0], float), np.asarray(data[1], float)
         ok = np.isfinite(lam) & np.isfinite(flux)
+        if not np.any(ok):
+            return
         lam, flux = lam[ok], flux[ok]
 
-        # === Peak detection ===
+        # --- Peak detection (same as your original) ---
         median = np.nanmedian(flux)
         std = np.nanstd(flux)
-        threshold = median + 2 * std
+        threshold = median + 2.0 * std
         peaks, props = find_peaks(flux, height=threshold, distance=5)
 
-        self._linefinder_peaks = lam[peaks]
-        
-        y0, y1 = self.ax.get_ylim()
+        # Baseline positions in log10(λ) at detection time
+        peaks_log = np.log10(lam[peaks]) if peaks.size else np.array([], dtype=float)
+        self._lf_peaks_log = peaks_log
 
-        for p in peaks:
-            lam_p = lam[p]
-            line = self.ax.axvline(np.log10(lam_p), color="lime", ls="--", lw=1.2, alpha=0.7)
-            txt = self.ax.text(
-                np.log10(lam_p),
-                y1 - 0.05 * (y1 - y0),
-                f"{lam_p:.0f}",
-                color="lime",
-                fontsize=8,
-                ha="center",
-                va="top",
-            )
-            self._linefinder_lines.append((line, txt))
+        # Snapshot of the shift to follow the spectrum
+        try:
+            if hasattr(self, "parent") and hasattr(self.parent, "_cumulative_dx"):
+                self._lf_dx_applied = float(self.parent._cumulative_dx)
+            else:
+                self._lf_dx_applied = 0.0
+        except Exception:
+            self._lf_dx_applied = 0.0
+
+        try:
+            x_line_now = np.asarray(self.parent.line.get_xdata(), float)
+            self._lf_line_mean_at_det = float(np.nanmean(x_line_now)) if x_line_now.size else None
+        except Exception:
+            self._lf_line_mean_at_det = None
+            
+        # Draw markers at current (already-shifted) visual positions = peaks_log
+        y0, y1 = self.ax.get_ylim()
+        y_lab = y1 - 0.05 * (y1 - y0)
+        for x_log in peaks_log:
+            v = self.ax.axvline(x_log, color="lime", ls="--", lw=1.2, alpha=0.7, zorder=6)
+            t = self.ax.text(x_log, y_lab, f"{10**x_log:.0f}", color="lime",
+                            fontsize=8, ha="center", va="top", zorder=7, clip_on=False)
+            self._linefinder_lines.append((v, t))
 
         self.ax.figure.canvas.draw_idle()
 
@@ -911,174 +938,242 @@ class PreviewInteractor:
             self.hud_text.set_text(msg)
         if self.status_setter:
             self.status_setter(msg)
-
+        
         print(f"[SPAN-Preview] Line finder: {len(peaks)} lines detected.")
 
 
-
-    def update_linefinder_positions(self, delta_loglam):
-        """Shift existing line-finder markers to follow spectrum shifts."""
-        if not hasattr(self, "_linefinder_lines") or not self._linefinder_lines:
+    def update_linefinder_positions(self, new_dx: float):
+        """
+        Shift the line finder markers to follow the spectrum
+        delta = new_dx - _lf_dx_applied, then update _lf_dx_applied = new_dx.
+        """
+        if not self._linefinder_lines:
             return
-        if not hasattr(self, "_linefinder_peaks") or not np.any(self._linefinder_peaks):
+
+        try:
+            new_dx = float(new_dx)
+        except Exception:
             return
 
-        for (line, txt), lam0 in zip(self._linefinder_lines, self._linefinder_peaks):
-            new_x = np.log10(lam0) + delta_loglam
-            line.set_xdata([new_x, new_x])
-            txt.set_x(new_x)
+        delta = new_dx - float(getattr(self, "_lf_dx_applied", 0.0))
+        if delta == 0.0:
+            return
 
+        # Move the markers starting from the actual position
+        for (vline, label) in self._linefinder_lines:
+            try:
+                x_curr = float(np.asarray(vline.get_xdata()).ravel()[0])
+                x_new = x_curr + delta
+                vline.set_xdata([x_new, x_new])
+                label.set_x(x_new)
+                label.set_text(f"{10**x_new:.0f}")
+            except Exception:
+                pass
+
+        # Label makeup
+        try:
+            y0, y1 = self.ax.get_ylim()
+            y_lab = y1 - 0.05 * (y1 - y0)
+            for _, lbl in self._linefinder_lines:
+                lbl.set_y(y_lab)
+        except Exception:
+            pass
+
+        # memorize the latest position
+        self._lf_dx_applied = new_dx
+        
         self.ax.figure.canvas.draw_idle()
-
-
-    def clear_overlays(self):
-        """Remove all graphical overlays (fit, EW, S/N, Δλ/Δv, flux, linefinder) but keep zoom/pan."""
-        groups = [
-            "_fit_lines", "_ew_lines", "_sn_lines", "_d_lines",
-            "_intflux_lines", "_linefinder_lines"
-        ]
-
-        for group in groups:
-            if hasattr(self, group):
-                objs = getattr(self, group)
-                for obj in objs:
-                    # Gestisce sia linee che fill_between (PolyCollections)
-                    try:
-                        if hasattr(obj, "remove"):
-                            obj.remove()
-                        elif isinstance(obj, tuple):
-                            for o in obj:
-                                try: o.remove()
-                                except Exception: pass
-                    except Exception:
-                        pass
-                setattr(self, group, [])
-
-        # Aggiorna canvas
-        self.ax.figure.canvas.draw_idle()
-
-        # Aggiorna HUD
-        if self.hud_text:
-            self.hud_text.set_text("All overlays cleared (zoom/pan preserved)")
 
 
     def _on_move(self, event):
-        now = time.time()
-        if (now - self._last_move_ts) * 1000.0 >= self.throttle_ms:
-            self._last_move_ts = now
+        # Throttle: ~1 / throttle_ms (default: 25 ms ≈ 40 Hz)
+        now = time.perf_counter()
+        if (now - self._last_move_ts) < (self.throttle_ms / 1000.0):
+            return
+        self._last_move_ts = now
 
-            # === Update selection rectangle ===
-            if self._is_selecting_line and self._sel_rect is not None and event.xdata is not None:
+        # Mouse not on the plot
+        if event.inaxes != self.ax:
+            return
+
+        xdata = event.xdata
+        ydata = event.ydata
+
+        # === Selection rectangles ===
+        if xdata is not None:
+            # FIT
+            if self._is_selecting_line and self._sel_rect is not None and self._press_lambda is not None:
                 x0 = np.log10(self._press_lambda)
-                x1 = event.xdata
+                x1 = float(xdata)
                 self._sel_rect.set_x(min(x0, x1))
                 self._sel_rect.set_width(abs(x1 - x0))
                 self.ax.figure.canvas.draw_idle()
                 return
 
-            # === Update EW quick rectangle ===
-            if self._is_selecting_ew_quick and event.inaxes == self.ax and event.xdata is not None and self._ew_quick_rect is not None:
+            # EW quick
+            if self._is_selecting_ew_quick and self._ew_quick_rect is not None and self._ew_press_lambda is not None:
                 x0 = np.log10(self._ew_press_lambda)
-                x1 = event.xdata
+                x1 = float(xdata)
                 self._draw_rect('_ew_quick_rect', x0, x1, color='purple')
                 return
 
-            # === Update S/N selection rectangle ===
-            if self._is_selecting_sn and event.inaxes == self.ax and event.xdata is not None and self._sn_rect is not None:
+            # S/N region
+            if self._is_selecting_sn and self._sn_rect is not None and self._sn_press_lambda is not None:
                 x0 = np.log10(self._sn_press_lambda)
-                x1 = event.xdata
+                x1 = float(xdata)
                 self._draw_rect('_sn_rect', x0, x1, color='teal')
                 return
 
-            # === Update Integrated Flux selection rectangle ===
-            if self._active_mode == 'intflux' and self._intflux_rect is not None and event.xdata is not None:
+            # Integrated flux region
+            if self._active_mode == 'intflux' and self._intflux_rect is not None and self._intflux_press_lambda is not None:
                 x0 = np.log10(self._intflux_press_lambda)
-                x1 = event.xdata
+                x1 = float(xdata)
                 self._intflux_rect.set_x(min(x0, x1))
                 self._intflux_rect.set_width(abs(x1 - x0))
                 self.ax.figure.canvas.draw_idle()
                 return
 
-            # === HUD update ===
-            if not self._is_panning and not self._is_selecting_line and event.inaxes == self.ax and event.xdata is not None:
-                lam_log = float(event.xdata)
-                lam = 10 ** lam_log
-                data = getattr(self.ax, "_last_xydata", None)
-                flux = float(event.ydata) if event.ydata is not None else float("nan")
-                if data:
-                    x, y = data
-                    x = np.asarray(x, dtype=float)
-                    y = np.asarray(y, dtype=float)
-                    ok = np.isfinite(x) & np.isfinite(y)
-                    if np.any(ok):
-                        x = x[ok]
-                        y = y[ok]
-                        if x.size >= 2:
-                            if x[0] <= x[-1]:
-                                flux = float(np.interp(lam, x, y))
-                            else:
-                                flux = float(np.interp(lam[::-1], y[::-1]))
+        # === HUD ===
+        if (not self._is_panning) and (event.inaxes == self.ax) and (xdata is not None):
+            lam_log = float(xdata)
+            lam = 10.0 ** lam_log
 
-                snr_txt = " · SNR n/a"
-                if self.get_snr is not None:
-                    try:
-                        snr_val = self.get_snr(lam)
-                        if snr_val is not None and np.isfinite(snr_val):
-                            snr_txt = f" · SNR≈{snr_val:.1f}"
-                    except Exception:
-                        snr_txt = " · SNR n/a"
+            # Flux
+            flux = float(ydata) if ydata is not None else float("nan")
+            data = getattr(self.ax, "_last_xydata", None)
+            if data:
+                x_lin, y = data
+                x_lin = np.asarray(x_lin, dtype=float)
+                y = np.asarray(y, dtype=float)
+                ok = np.isfinite(x_lin) & np.isfinite(y)
+                if np.any(ok):
+                    x_lin = x_lin[ok]
+                    y = y[ok]
+                    if x_lin.size >= 2:
+                        if x_lin[0] <= x_lin[-1]:
+                            flux = float(np.interp(lam, x_lin, y))
+                        else:
+                            flux = float(np.interp(lam, x_lin[::-1], y[::-1]))
 
-                msg = f"λ = {lam:.2f} Å · Flux = {flux:.4g}{snr_txt} (50 pts)"
-                if self.hud_text is not None and msg != self._last_hud_msg:
-                    self.hud_text.set_text(msg)
-                    self._last_hud_msg = msg
-                    self.ax.figure.canvas.draw_idle()
-                if self.status_setter is not None:
-                    self.status_setter(msg)
+            # SNR
+            snr_txt = " · SNR n/a"
+            if self.get_snr is not None:
+                try:
+                    snr_val = self.get_snr(lam)
+                    if snr_val is not None and np.isfinite(snr_val):
+                        snr_txt = f" · SNR≈{snr_val:.1f}"
+                except Exception:
+                    snr_txt = " · SNR n/a"
 
-            #=== Panning ===
-            if self._is_panning and event.inaxes == self.ax and self._press_pixel is not None:
-                dx_pix = event.x - self._press_pixel[0]
-                dy_pix = event.y - self._press_pixel[1]
-                inv = self.ax.transData.inverted()
-                x0_data, y0_data = inv.transform(self._press_pixel)
-                x1_data, y1_data = inv.transform((event.x, event.y))
-                dx = x1_data - x0_data
-                dy = y1_data - y0_data
-                self.ax.set_xlim(self._pan_xlim0[0] - dx, self._pan_xlim0[1] - dx)
-                self.ax.set_ylim(self._pan_ylim0[0] - dy, self._pan_ylim0[1] - dy)
+            # HUD
+            pts = self.snr_halfwin_pts if isinstance(self.snr_halfwin_pts, int) else 50
+            msg = f"λ = {lam:.2f} Å · Flux = {flux:.4g}{snr_txt} ({pts} pts)"
+
+            if self.hud_text is not None and msg != self._last_hud_msg:
+                self.hud_text.set_text(msg)
+                self._last_hud_msg = msg
                 self.ax.figure.canvas.draw_idle()
 
+            if self.status_setter is not None:
+                self.status_setter(msg)
+
+        # === Panning ===
+        if self._is_panning and self._press_pixel is not None:
+            inv = self.ax.transData.inverted()
+            x0_data, y0_data = inv.transform(self._press_pixel)
+            x1_data, y1_data = inv.transform((event.x, event.y))
+            dx = x1_data - x0_data
+            dy = y1_data - y0_data
+            self.ax.set_xlim(self._pan_xlim0[0] - dx, self._pan_xlim0[1] - dx)
+            self.ax.set_ylim(self._pan_ylim0[0] - dy, self._pan_ylim0[1] - dy)
+            self.ax.figure.canvas.draw_idle()
 
 
-# Class for estimating the redshift by manual shifting the spectrum on thr Preview window
+    def clear_overlays(self):
+        """Remove all graphical overlays (fit, EW, S/N, Δλ/Δv, flux, linefinder) and transient UI."""
+        # --- Fit / EW / S/N / Δv / Flux overlays (liste di artisti) ---
+        for name in ("_fit_lines", "_ew_lines", "_sn_lines", "_d_lines", "_intflux_lines"):
+            for obj in getattr(self, name, []):
+                try:
+                    obj.remove()
+                except Exception:
+                    pass
+            if hasattr(self, name):
+                getattr(self, name).clear()
+
+        # --- Line finder overlays (coppie: vline, label) ---
+        for obj_pair in getattr(self, "_linefinder_lines", []):
+            for obj in obj_pair:
+                try:
+                    obj.remove()
+                except Exception:
+                    pass
+        if hasattr(self, "_linefinder_lines"):
+            self._linefinder_lines.clear()
+
+        # --- Rettangles/slections ---
+        for rect_name in ("_sel_rect", "_ew_quick_rect", "_sn_rect", "_intflux_rect"):
+            rect = getattr(self, rect_name, None)
+            if rect is not None:
+                try:
+                    rect.remove()
+                except Exception:
+                    pass
+                setattr(self, rect_name, None)
+
+        # --- Mode label ---
+        if getattr(self, "_mode_label", None) is not None:
+            try:
+                self._mode_label.remove()
+            except Exception:
+                pass
+            self._mode_label = None
+
+        # --- Reset line-finder ---
+        self._lf_peaks_log = None
+        self._lf_dx0 = 0.0
+        if hasattr(self, "_lf_line_mean_at_det"):
+            self._lf_line_mean_at_det = None
+        if hasattr(self, "_lf_dx_applied"):
+            self._lf_dx_applied = 0.0
+
+        # --- HUD message ---
+        if self.hud_text:
+            try:
+                self.hud_text.set_text("All overlays cleared (zoom/pan preserved)")
+            except Exception:
+                pass
+
+        # --- Refresh ---
+        self.ax.figure.canvas.draw_idle()
+
+
+# Class for estimating the redshift by manually shifting the spectrum in the Preview window
 class SpectrumShifterInteractor:
     """
-    Allow shifting the spectrum horizontally (Right Click + Drag) 
-    to align with fixed rest-frame lines and estimate redshift.
-    Right double-click resets the spectrum to its original position.
+    Right click + drag to shift the spectrum horizontally (X axis in log10(λ))
+    to align it with rest-frame lines; real-time z estimation.
+    Right double-click: reset to the original position.
     """
 
-    def __init__(self, ax, line, hud_text=None, parent=None):
+    def __init__(self, ax, line, hud_text=None, parent=None, throttle_ms=25):
+        # import time
         self.ax = ax
-        self.line = line  # the Line2D object of the spectrum
+        self.line = line              # Spectrum Line2D (x already in log10(λ))
         self.hud_text = hud_text
-        self.parent = parent 
+        self.parent = parent
+
+        # Original data (set with set_original_data() when you load the spectrum)
+        self._xdata_orig = np.asarray(line.get_xdata(), float).copy()
+        self._ydata_orig = np.asarray(line.get_ydata(), float).copy()
+
+        # Drag state
         self._press_event = None
         self._xdata0 = None
         self._last_valid_x = None
-        
-        # Save original data
-        self._xdata_orig = line.get_xdata().copy()
-        self._ydata_orig = line.get_ydata().copy()
         self._cumulative_dx = 0.0
-        self._labels = []
-        
-        self._xdata_orig = np.log10(line.get_xdata().copy())
-        self._ydata_orig = line.get_ydata().copy()
-        line.set_xdata(self._xdata_orig)
 
-        # Rest-frame reference lines (estese per high-z)
+        # Reference line markers
         self.ref_lines = {
             "[O II]": 3727.0,
             "Hβ": 4861.0,
@@ -1088,72 +1183,167 @@ class SpectrumShifterInteractor:
             "Ca II 8542": 8542.0,
             "Ca II 8662": 8662.0,
         }
+        self._label_texts = []    # list of Text objects
+        self._marker_lines = []   # list of Line2D (axvline)
 
-        self._draw_markers()
+        # Mouse-move throttle
+        self._throttle_ms = throttle_ms
+        self._last_move_ts = 0.0
+        self._time = time
 
-        # Connect events
+        # MPL events
+        self._cids = []
         fig = ax.figure
-        fig.canvas.mpl_connect("button_press_event", self.on_press)
-        fig.canvas.mpl_connect("button_release_event", self.on_release)
-        fig.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        self._cids.append(fig.canvas.mpl_connect("button_press_event",  self.on_press))
+        self._cids.append(fig.canvas.mpl_connect("button_release_event", self.on_release))
+        self._cids.append(fig.canvas.mpl_connect("motion_notify_event",  self.on_motion))
 
-    def _draw_markers(self):
-        # Clear old labels
-        for t in self._labels:
-            try: 
-                t.remove()
-            except Exception: 
+        # Draw markers once (you can call refresh_labels() after adjusting limits)
+        self.draw_markers()
+
+    # ---------- Utility API ----------
+
+    def disconnect_events(self):
+        """Disconnect registered handlers (if you ever recreate the interactor)."""
+        try:
+            for cid in self._cids:
+                try:
+                    self.ax.figure.canvas.mpl_disconnect(cid)
+                except Exception:
+                    pass
+        finally:
+            self._cids = []
+
+    def set_original_data(self, x_log10, y):
+        """Set (or reset) the original log10(λ), y data for reset and z estimation."""
+        self._xdata_orig = np.asarray(x_log10, float).copy()
+        self._ydata_orig = np.asarray(y, float).copy()
+        self._cumulative_dx = 0.0
+
+    def clear_markers(self):
+        """Remove all vertical markers and labels for the reference lines."""
+        for ln in self._marker_lines:
+            try:
+                ln.remove()
+            except Exception:
                 pass
-        self._labels = []
+        self._marker_lines.clear()
+
+        for t in self._label_texts:
+            try:
+                t.remove()
+            except Exception:
+                pass
+        self._label_texts.clear()
+
+    def draw_markers(self):
+        """Draw the reference lines (X axis in log10(λ)) and their labels."""
+        self.clear_markers()
+
+        ylim = self.ax.get_ylim()
+        y_lab = ylim[1] - 0.05*(ylim[1] - ylim[0])  # 5% below the top
 
         for name, lam in self.ref_lines.items():
             lam_log = np.log10(lam)
-            self.ax.axvline(lam_log, color="orange", ls="--", lw=0.8, alpha=0.7, zorder=5)
+            v = self.ax.axvline(lam_log, color="orange", ls="--", lw=0.8, alpha=0.7, zorder=5)
+            self._marker_lines.append(v)
             t = self.ax.text(
-                lam_log, self.ax.get_ylim()[1]*0.95, f"{name} ({lam:.0f} Å)",
+                lam_log, y_lab, f"{name} ({lam:.0f} Å)",
                 rotation=90, va="top", ha="center",
-                fontsize=8, color="darkred", zorder=6
+                fontsize=8, color="darkred", zorder=6, clip_on=False
             )
-            self._labels.append(t)
+            self._label_texts.append(t)
 
+        self.ax.figure.canvas.draw_idle()
+
+    def refresh_labels(self):
+        """Redraw the markers (useful after changing Y limits or loading a new spectrum)."""
+        self.draw_markers()
+
+    # ---------- Events ----------
 
     def on_press(self, event):
         if event.inaxes != self.ax:
             return
+        # Right mouse button
         if event.button == 3:
+            # Right double-click -> reset
             if getattr(event, "dblclick", False):
-                self.line.set_data(self._xdata_orig.copy(), self._ydata_orig.copy())
-                self._cumulative_dx = 0.0
-                self.ax._last_xydata = (10**self._xdata_orig, self._ydata_orig)
+                if self._xdata_orig.size:
+                    self.line.set_data(self._xdata_orig.copy(), self._ydata_orig.copy())
+                    self._cumulative_dx = 0.0
+                    # _last_xydata in linear scale (to stay consistent with your code)
+                    self.ax._last_xydata = (10**self._xdata_orig, self._ydata_orig)
                 if self.hud_text:
                     self.hud_text.set_text("Estimated z reset")
                 self.ax.figure.canvas.draw_idle()
-                            
-                if hasattr(self, "parent") and hasattr(self.parent, "update_linefinder_positions"):
-                    self.parent.update_linefinder_positions(0.0)
+
+                if self.parent is not None and hasattr(self.parent, "_lf_peaks_log") and self.parent._lf_peaks_log is not None:
+                    try:
+                        prev_dx0 = float(getattr(self.parent, "_lf_dx0", 0.0))
+                        # how much the spectrum moved from the markers’ baseline
+                        carried = float(self._cumulative_dx) - prev_dx0
+                        if carried != 0.0:
+                            # shift the markers’ baseline to the current position (no jump)
+                            self.parent._lf_peaks_log = self.parent._lf_peaks_log + carried
+                    except Exception:
+                        pass
+                    # in any case, realign the snapshot to the current state
+                    try:
+                        self.parent._lf_dx0 = float(self._cumulative_dx)
+                    except Exception:
+                        pass
                 return
             # Start drag
             self._press_event = event.xdata
-            self._xdata0 = self.line.get_xdata().copy()
+            self._xdata0 = np.asarray(self.line.get_xdata(), float).copy()
             self._last_valid_x = event.xdata
+            
+            # if self.parent is not None and hasattr(self.parent, "_lf_dx0"):
+            #     self.parent._lf_dx0 = float(self._cumulative_dx)
+    
+            if self.parent is not None:
+                try:
+                    # 1) If markers exist, read their current X and use it as the new baseline
+                    if getattr(self.parent, "_linefinder_lines", None):
+                        xs_now = []
+                        for (vline, _label) in self.parent._linefinder_lines:
+                            xd = np.asarray(vline.get_xdata()).ravel()
+                            if xd.size:
+                                xs_now.append(float(xd[0]))
+                        if xs_now:
+                            self.parent._lf_peaks_log = np.asarray(xs_now, float)
+
+                    # 2) Align the snapshot to the current cumulative value
+                    self.parent._lf_dx0 = float(self._cumulative_dx)
+
+                    # (optional) if you use an incremental counter, align it as well:
+                    if hasattr(self.parent, "_lf_dx_applied"):
+                        self.parent._lf_dx_applied = float(self._cumulative_dx)
+                except Exception:
+                    pass
 
     def on_motion(self, event):
-        if self._press_event is None or event.inaxes != self.ax:
+        if self._press_event is None or event.inaxes != self.ax or event.xdata is None:
             return
-        if event.xdata is None:
-            return  # ignore if out of plot margins
 
-        dx = event.xdata - self._press_event
-        self.line.set_xdata(self._xdata0 + dx)
-        self.ax._last_xydata = (10**self.line.get_xdata(), self.line.get_ydata())
+        # Throttle
+        now = self._time.perf_counter()
+        if (now - self._last_move_ts) < (self._throttle_ms / 1000.0):
+            return
+        self._last_move_ts = now
+
+        dx = float(event.xdata) - float(self._press_event)
+        new_x = self._xdata0 + dx
+        self.line.set_xdata(new_x)
+        self.ax._last_xydata = (10**new_x, self.line.get_ydata())
 
         self._cumulative_dx += dx
-        self._press_event = event.xdata 
-        self._xdata0 = self.line.get_xdata().copy()
-        
-        delta_log = self._cumulative_dx 
-        z = (10**(-delta_log) - 1)
+        self._press_event = event.xdata
+        self._xdata0 = new_x
 
+        delta_log = self._cumulative_dx
+        z = (10**(-delta_log) - 1)
 
         if self.hud_text:
             self.hud_text.set_text(f"Estimated z ≈ {z:.3f}")
@@ -1161,14 +1351,14 @@ class SpectrumShifterInteractor:
             self.ax.set_title(f"Estimated z ≈ {z:.3f}", fontsize=10)
 
         self.ax.figure.canvas.draw_idle()
-        
-        # === Notify parent (if linefinder lines exist) ===
+
+        # Notify parent (line-finder, etc.)
         if self.parent is not None and hasattr(self.parent, "update_linefinder_positions"):
             try:
                 self.parent.update_linefinder_positions(self._cumulative_dx)
             except Exception:
                 pass
-            
+
         self._last_valid_x = event.xdata
 
     def on_release(self, event):
@@ -1176,23 +1366,50 @@ class SpectrumShifterInteractor:
             self._press_event = None
             self._xdata0 = None
 
-    def refresh_labels(self):
-        self._draw_markers()
-        self.ax.figure.canvas.draw_idle()
+
 
 
 # --------------------------------------------------------------
 # Create preview figure and canvas
 # --------------------------------------------------------------
-
 def create_preview(layout, window, preview_key='-CANVAS-'):
     """
     Matplotlib-in-Tk Canvas with:
-      - proper embedding via create_window (no clipping, correct origin),
-      - responsive sizing on <Configure>,
-      - dynamic typography scaling (labels, ticks, HUD, line width).
+    - proper embedding (Windows/Linux: create_window to avoid clipping),
+    - responsive sizing on <Configure>,
+    - dynamic typography scaling (labels, ticks, HUD, line width),
+    - single log10(λ) → linear-Å formatter applied on all OS.
     """
-    if layout == 'linux' or layout =='windows': # Linux and Windows systems deserve a special treatment for handling the scaling factor of the screen (if applied)
+    # Common axis formatter (x stores log10(λ), labels show linear Å)
+    def _log_to_lin(x, pos):
+        try:
+            return f"{10**x:.0f}"
+        except Exception:
+            return ""
+            
+    if layout == 'linux' or layout =='windows':
+        # --- Base visual parameters (tuned for your plot) ---
+        dpi = 100
+        BASE_W_PX, BASE_H_PX = 900, 420   # reference pixels used for scaling
+        BASE_LABEL = 12                   # axis label font (pt) at reference size
+        BASE_TICK  = 12                   # tick labels font (pt)
+        BASE_HUD   = 11                   # HUD font (pt)
+        BASE_LW    = 0.9                  # plotted line width (points)
+
+        # Small helper to scale fonts/lines
+        def _apply_style_scale(ax, plot_line, hud_text, scale: float):
+            """Scale fonts and strokes according to the current canvas size (clamped)."""
+            s = max(0.7, min(scale, 2.0))
+            ax.xaxis.label.set_size(BASE_LABEL * s)
+            ax.yaxis.label.set_size(BASE_LABEL * s)
+            ax.tick_params(axis='both', labelsize=BASE_TICK * s, width=0.75 * s, length=3.5 * s)
+            for spine in ax.spines.values():
+                spine.set_linewidth(0.8 * s)
+            plot_line.set_linewidth(max(0.5, BASE_LW * s))
+            hud_text.set_fontsize(BASE_HUD * s)
+
+        # ---- Windows/Linux branch: keep your create_window embedding ----
+        # if layout in ('linux', 'windows'):
         tk_canvas = window[preview_key].TKCanvas  # real tkinter.Canvas
         try:
             tk_canvas.configure(highlightthickness=0, bd=0, bg=window.TKroot['bg'])
@@ -1202,15 +1419,6 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
             except Exception:
                 pass
 
-        # --- Base visual parameters (tuned for your plot) ---
-        dpi = 100
-        BASE_W_PX, BASE_H_PX = 900, 420     # reference pixels used for scaling
-        BASE_LABEL = 12                     # axis label font (pt) at reference size
-        BASE_TICK  = 12                      # tick labels font (pt)
-        BASE_HUD   = 11                     # HUD font (pt)
-        BASE_LW    = 0.9                    # plotted line width (points)
-
-        # --- Figure & axes ---
         fig = Figure(figsize=(6.0, 3.0), dpi=dpi, constrained_layout=False)
         ax = fig.add_subplot(111)
         fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
@@ -1218,61 +1426,38 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         (plot_line,) = ax.plot([], [], lw=BASE_LW)
         ax.set_xlabel("Wavelength [Å]")
         ax.set_ylabel("Flux")
+        ax.xaxis.set_major_formatter(FuncFormatter(_log_to_lin))
+
         hud_text = ax.text(
             0.995, 0.01, "", transform=ax.transAxes,
             ha='right', va='bottom', fontsize=BASE_HUD,
             color='black', zorder=50, clip_on=False
         )
 
-        # --- Embed MPL widget into the Tk Canvas via create_window ---
         mplt_canvas = FigureCanvasTkAgg(fig, master=tk_canvas)
         mplt_widget = mplt_canvas.get_tk_widget()
         window_id = tk_canvas.create_window(0, 0, window=mplt_widget, anchor="nw")
-
-        def _apply_style_scale(scale: float):
-            """Scale fonts and strokes according to the current canvas size."""
-            # clamp to a sensible range to avoid extremes on tiny/huge windows
-            s = max(0.7, min(scale, 2.0))
-
-            ax.xaxis.label.set_size(BASE_LABEL * s)
-            ax.yaxis.label.set_size(BASE_LABEL * s)
-            ax.tick_params(axis='both', labelsize=BASE_TICK * s, width=0.75 * s, length=3.5 * s)
-
-            # scale spines and plotted line
-            for spine in ax.spines.values():
-                spine.set_linewidth(0.8 * s)
-            plot_line.set_linewidth(max(0.5, BASE_LW * s))
-
-            # scale HUD text
-            hud_text.set_fontsize(BASE_HUD * s)
 
         def _sync_to_canvas(width_px: int, height_px: int):
             """Resize embedded widget, figure (inches) and style to the Canvas pixel size."""
             tk_canvas.coords(window_id, 0, 0)
             tk_canvas.itemconfig(window_id, width=width_px, height=height_px)
             tk_canvas.configure(scrollregion=(0, 0, width_px, height_px))
-
-            # match figure pixel area
             fig.set_size_inches(max(width_px, 1) / dpi, max(height_px, 1) / dpi, forward=True)
-
-            # compute scale factor relative to a reference pixel box
             scale = min(width_px / BASE_W_PX, height_px / BASE_H_PX)
-            _apply_style_scale(scale)
-
+            _apply_style_scale(ax, plot_line, hud_text, scale)
             try:
                 mplt_canvas.draw_idle()
             except tk.TclError:
                 pass
 
         def _on_canvas_configure(event):
-            # ignore spurious tiny events during initial layout
             if event.width < 150 or event.height < 120:
                 return
             _sync_to_canvas(event.width, event.height)
 
         tk_canvas.bind("<Configure>", _on_canvas_configure)
 
-        # Initial sync once layout is ready
         try:
             window.refresh()
         except Exception:
@@ -1281,14 +1466,15 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         h = max(tk_canvas.winfo_height(), 1)
         _sync_to_canvas(w, h)
         return fig, ax, plot_line, hud_text, mplt_canvas
-    
+
+    # ---- macOS / Android / default: pack() embedding + responsive scaling ----
     else:
         if layout == 'macos':
-            fig = Figure(figsize=(6.6, 3.05), dpi=100)
+            fig = Figure(figsize=(6.6, 3.5), dpi=100)
             ax = fig.add_subplot(111)
             fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
         elif layout == 'android':
-            fig = Figure(figsize=(8.3, 2.9), dpi=100)
+            fig = Figure(figsize=(8.3, 3.3), dpi=100)
             ax = fig.add_subplot(111)
             fig.subplots_adjust(left=0.11, right=0.98, top=0.92, bottom=0.16)
         else:
@@ -1298,6 +1484,7 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         (_plot_line,) = ax.plot([], [], lw=0.8)
         ax.set_xlabel("Wavelength [Å]")
         ax.set_ylabel("Flux")
+        ax.xaxis.set_major_formatter(FuncFormatter(_log_to_lin))
         hud_text = ax.text(0.995, 0.01, "", transform=ax.transAxes,
                         ha='right', va='bottom', fontsize=9,
                         color='black', zorder=50, clip_on=False)
@@ -1308,7 +1495,6 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
         _preview_canvas.draw()
 
         return fig, ax, _plot_line, hud_text, _preview_canvas
-
 
 # --------------------------------------------------------------
 # Real-time SNR provider for the preview

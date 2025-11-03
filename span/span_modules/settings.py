@@ -34,6 +34,7 @@ try: #try local import if executed as script
     from FreeSimpleGUI_local import FreeSimpleGUI as sg
     from span_functions import system_span as stm
     from span_modules import misc
+    from span_modules.ui_zoom import open_subwindow, ZoomManager
 
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
@@ -41,12 +42,14 @@ except ModuleNotFoundError: #local import if executed as package
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
     from span.span_functions import system_span as stm
     from . import misc
+    from .ui_zoom import open_subwindow, ZoomManager
 
 import json
 import numpy as np
 from dataclasses import replace
 import os
 
+zm = ZoomManager.get()
 
 def generate_spectra_list(window, params):
 
@@ -69,7 +72,8 @@ def generate_spectra_list(window, params):
         [sg.Button('Save')]
     ]
 
-    list_window = sg.Window('Generate spectra list containing 1D spectra', list_layout)
+    list_window = open_subwindow('Generate spectra list containing 1D spectra', list_layout, zm=zm)
+    misc.enable_hover_effect(list_window)
 
     while True:
         list_event, list_values = list_window.read()
@@ -541,8 +545,10 @@ def save_settings(filename, keys, events, values, params: SpectraParams):
             'ifs_q_user': params.ifs_q_user,
             'ifs_ell_r_max': params.ifs_ell_r_max,
             'ifs_ell_min_dr': params.ifs_ell_min_dr,
-            'isf_auto_pa_q': params.isf_auto_pa_q,
-            'isf_auto_center': params.isf_auto_center,
+            'ifs_auto_pa_q': params.ifs_auto_pa_q,
+            'ifs_auto_center': params.ifs_auto_center,
+            'ifs_powerbin': params.ifs_powerbin,
+            
         }
     }
     with open(filename, 'w') as file:
@@ -904,10 +910,10 @@ def load_settings(filename, params):
                 ifs_q_user = params_data.get('ifs_q_user', params.ifs_q_user),
                 ifs_ell_r_max = params_data.get('ifs_ell_r_max', params.ifs_ell_r_max),
                 ifs_ell_min_dr = params_data.get('ifs_ell_min_dr', params.ifs_ell_min_dr),
-                isf_auto_pa_q = params_data.get('isf_auto_pa_q', params.isf_auto_pa_q),
-                isf_auto_center = params_data.get('isf_auto_center', params.isf_auto_center),
-
-
+                ifs_auto_pa_q = params_data.get('ifs_auto_pa_q', params.ifs_auto_pa_q),
+                ifs_auto_center = params_data.get('ifs_auto_center', params.ifs_auto_center),
+                ifs_powerbin = params_data.get('ifs_powerbin', params.ifs_powerbin),
+                
         )
 
         return keys, events, values, updated_params

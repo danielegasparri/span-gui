@@ -34,6 +34,7 @@ try: #try local import if executed as script
     from span_functions import system_span as stm
     from span_functions import spec_manipul as spman
     from span_functions import utilities as uti
+    from span_modules.ui_zoom import open_subwindow, ZoomManager
     from span_modules import layouts
     from span_modules import misc
 
@@ -43,6 +44,7 @@ except ModuleNotFoundError: #local import if executed as package
     from span.span_functions import system_span as stm
     from span.span_functions import spec_manipul as spman
     from span.span_functions import utilities as uti
+    from .ui_zoom import open_subwindow, ZoomManager
     from . import layouts
     from . import misc
 
@@ -53,6 +55,8 @@ import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
+
+zm = ZoomManager.get()
 
 layout, scale_win, fontsize, default_size = misc.get_layout()
 
@@ -72,8 +76,8 @@ def show_fits_header(prev_spec):
     layout_hdr = [[sg.Multiline(header, size=(120, 30) if layout == layouts.layout_android else (100, 40), disabled=True, autoscroll=True, key='-MULTILINE-')],
                   [sg.Button('Close')]]
 
-    window_hdr = sg.Window('FITS Header Viewer', layout_hdr, finalize=True)
-
+    window_hdr = open_subwindow('FITS Header Viewer', layout_hdr, zm=zm)
+    misc.enable_hover_effect(window_hdr)
     while True:
         event_hdr, values_hdr = window_hdr.read()
         if event_hdr in (sg.WIN_CLOSED, 'Close'):
