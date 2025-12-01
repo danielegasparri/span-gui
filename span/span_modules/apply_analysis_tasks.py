@@ -704,12 +704,12 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
         # Adjusting the parameters when z is inserted and the correction to restframe needed
         if dop_correction_lick and z_guess_lick_emission > 0:
             
-            lick_wavelength /= (1 + z_guess_lick_emission)
-            lick_wave_limits  /= (1 + z_guess_lick_emission)
+            lick_wavelength = lick_wavelength/(1 + z_guess_lick_emission)
+            lick_wave_limits  = lick_wave_limits/(1 + z_guess_lick_emission)
             
             #setting up the resolution, if dop/z correction is activated and resolution is given in FWHM
             if lick_constant_fwhm and z_guess_lick_emission > 0.01:
-                spec_lick_res_fwhm  /= 1 + z_guess_lick_emission
+                spec_lick_res_fwhm  = spec_lick_res_fwhm/(1 + z_guess_lick_emission)
 
                 
         redshift_lick =  0 # now the real redshift is zero. 
@@ -756,7 +756,7 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             if dop_correction_lick:
                 print('Doppler correction with ppxf...')
 
-            emiles_resolution = 2.5
+            emiles_resolution = 2.51
 
             #setting up the other parameters for pPXF
             stellar_library_lick = 'emiles'
@@ -1003,12 +1003,10 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
             if event == 'Preview result':
                 span.lick_grids(ssp_model, ssp_lick_indices_list, ssp_lick_indices_err_list, age, True, False, 'none', result_plot_dir)
 
-
             print ('Age (Gyr):', round(age,2), '+/-', round(err_age, 2))
             print ('[M/H] (dex):', round(met, 2), '+/-', round(err_met,2))
             print ('[Alpha/Fe]:', round(alpha, 2), '+/-', round(err_alpha,2))
             print('')
-
 
         return lick_id_array, lick_ew_array, lick_err_array, lick_snr_ew_array, lick_ew_array_mag, lick_err_array_mag, age, met, alpha, err_age, err_met, err_alpha, lick_for_ssp, ssp_model, ssp_lick_indices_list, ssp_lick_indices_err_list, params
 
@@ -1022,276 +1020,509 @@ def apply_lick_indices_ew_measurement(event, save_plot, i, params):
 
 
 def apply_cat_line_fitting(event, save_plot, params):
-
     """
-    Fits the Calcium Triplet lines (CaT) in the NIR portion of the spectrum,
-    using the cat_fit function of the spectral_analysis modules. Calculates
-    also the equivalent width of the best fit using the ew_measurement task
-    of the linestrength module.
-
-    Returns:
-    - Central wavelength of the lines
-    - wavelength displacement between the central fitted lines and their real wavelength (in air)
-    - equivalent widths measured in the best fitting model
-    - broadening of the best fitted gaussians (in pixels and km/s). WARNING:
-      this is not the velocity dispersion of the spectrum!
-
+    CaT: fit 3 Gaussian components (ordered to 8498/8542/8662 Å), compute fluxes, EW and errors,
+    print a compact summary to terminal in any mode, and return arrays ready for file writing.
     """
-
-    wavelength = params.wavelength
-    flux = params.flux
-    wave_interval_fit = params.wave_interval_fit
-    wave_limits = params.wave_limits
-    real_cat1 = params.real_cat1
-    real_cat2 = params.real_cat2
-    real_cat3 = params.real_cat3
-    index_ca1 = params.index_ca1
-    index_ca2 = params.index_ca2
-    index_ca3 = params.index_ca3
-    prev_spec = params.prev_spec
-    prev_spec_nopath = params.prev_spec_nopath
-    result_plot_dir = params.result_plot_dir
-    task_done = params.task_done
-    task_done2 = params.task_done2
-    task_analysis = params.task_analysis
-    wave_limits_cat = params.wave_limits_cat
-
-
-    # 1) HEADER
+    # import numpy as np
+    # import matplotlib.pyplot as plt
+    # from dataclasses import replace
+    # ---- header flags ----
     if event == 'Process all':
         task_done2 = 1
+        task_done = params.task_done
+        task_analysis = params.task_analysis
     else:
         task_done = 1
+        task_done2 = params.task_done2
         task_analysis = 1
-
-    #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
 
-    # Check wavelength limits
-    #checking limits
-    if min(wavelength) > wave_limits_cat[0] or max(wavelength) < wave_limits_cat[1]:
-        if event == "Process all":
-            print("The window band is out of the spectrum range")
-        else:
-            sg.popup("The window band is out of the spectrum range")
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+    # ---- inputs ----
+    wavelength       = params.wavelength
+    flux             = params.flux
+    prev_spec_nopath = getattr(params, 'prev_spec_nopath', 'spectrum')
+    result_plot_dir  = getattr(params, 'result_plot_dir', '.')
+    wave_limits_cat  = getattr(params, 'wave_limits_cat', (8440.0, 8720.0))
+
+    real_cat1 = float(getattr(params, 'real_cat1', 8498.02))
+    real_cat2 = float(getattr(params, 'real_cat2', 8542.09))
+    real_cat3 = float(getattr(params, 'real_cat3', 8662.14))
+    cats_ref  = np.array([real_cat1, real_cat2, real_cat3], float)
+    cat_sigma_inst = None #getattr(params, 'cat_sigma_inst', None)
+
+    if (min(wavelength) > wave_limits_cat[0]) or (max(wavelength) < wave_limits_cat[1]):
+        msg = "The CaT window is out of the spectrum range"
+        print(msg) if event == "Process all" else sg.popup(msg)
+        nan3 = (np.full(3, np.nan),)*10
+        return *nan3, params, {}
 
     try:
-        # Perform the fit
-        cat_wave, cat_flux_norm, cat_fit, momentum = span.cat_fitting(wavelength, flux)
+        line_wave, flux_norm, fit_model, components, meta = span.cat_fitting(
+            wavelength, flux, sigma_inst=cat_sigma_inst
+        )
+        if not components:
+            nan3 = (np.full(3, np.nan),)*10
+            return *nan3, params, meta
 
-        # Identify minima in the fitted spectrum
-        min_values_arg = argrelextrema(cat_fit, np.less)
-        min_values_arg_extracted = min_values_arg[0]
+        # ----- order components by closest to 8498/8542/8662 -----
+        mus_fit = np.array([c.get('mu', np.nan) for c in components], float)
+        ordered, remaining = [], list(range(len(components)))
+        for target in cats_ref:
+            if not remaining:
+                ordered.append(None); continue
+            idx_pool = np.array(remaining, int)
+            mu_pool  = mus_fit[idx_pool]
+            jrel     = int(np.nanargmin(np.abs(mu_pool - target)))
+            j        = remaining.pop(jrel)
+            ordered.append(components[j])
+        while len(ordered) < 3:
+            ordered.append(None)
 
-        # Extract central wavelengths of the fitted CaT lines
-        min_wave1 = round(cat_wave[min_values_arg_extracted[0]], 1) if len(min_values_arg_extracted) > 0 else 0.
-        min_wave2 = round(cat_wave[min_values_arg_extracted[1]], 1) if len(min_values_arg_extracted) > 1 else 0.
-        min_wave3 = round(cat_wave[min_values_arg_extracted[2]], 1) if len(min_values_arg_extracted) > 2 else 0.
+        def _arr3_from(key, default=np.nan):
+            out = []
+            for c in ordered:
+                out.append(c.get(key, default) if isinstance(c, dict) else default)
+            return np.array(out, float)
 
-        # Compute residuals
-        residual_wave1 = min_wave1 - real_cat1
-        residual_wave2 = min_wave2 - real_cat2
-        residual_wave3 = min_wave3 - real_cat3
+        mus        = _arr3_from('mu')
+        sig_obs    = _arr3_from('sigma_obs')
+        sig_intr   = _arr3_from('sigma_intr')
+        amps       = _arr3_from('amp')
+        flux_phys  = _arr3_from('flux')
+        e_mu       = _arr3_from('err_mu')
+        e_sigma    = _arr3_from('err_sigma')
+        e_flux     = _arr3_from('err_flux')
 
-        # Convert residuals to velocity space
-        c = 299792.458  # Speed of light in km/s
-        delta_rv1 = (residual_wave1 / real_cat1) * c
-        delta_rv2 = (residual_wave2 / real_cat2) * c
-        delta_rv3 = (residual_wave3 / real_cat3) * c
-        mean_delta_rv = (delta_rv1 + delta_rv2 + delta_rv3) / 3
+        use_intr_any = np.any(np.isfinite(sig_intr))
+        sigma_A = np.where(np.isfinite(sig_intr), sig_intr, sig_obs) if use_intr_any else sig_obs
 
-        # Extract sigma values in pixels
-        sigma_cat1 = momentum[3]
-        sigma_cat2 = momentum[9]
-        sigma_cat3 = momentum[15]
+        c_kms = 299792.458
+        with np.errstate(divide='ignore', invalid='ignore'):
+            sigma_kms = (sigma_A / mus) * c_kms
 
-        # Convert sigma to velocity space
-        sigma_cat1_vel = (sigma_cat1 / min_wave1) * c if min_wave1 else 0
-        sigma_cat2_vel = (sigma_cat2 / min_wave2) * c if min_wave2 else 0
-        sigma_cat3_vel = (sigma_cat3 / min_wave3) * c if min_wave3 else 0
+        if np.any(np.isfinite(e_sigma)) or np.any(np.isfinite(e_mu)):
+            es = np.where(np.isfinite(e_sigma), e_sigma, 0.0)
+            em = np.where(np.isfinite(e_mu),    e_mu,    0.0)
+            e_sigma_kms = c_kms * np.sqrt((es / mus)**2 + ((sigma_A * em) / (mus**2))**2)
+        else:
+            e_sigma_kms = np.full(3, np.nan, float)
 
-        # Compute residual spectrum
-        residual_flux = cat_flux_norm - cat_fit
+        cont_level = float(meta.get('norm_factor', 1.0))
+        base_m = float(meta['baseline']['m']); base_q = float(meta['baseline']['q'])
+        bmu = base_m * mus + base_q
+        bmu = np.where(np.isfinite(bmu) & (bmu != 0.0), bmu, np.nan)
 
-        # Print results
-        print("Central wavelength of the fitted CaT lines (A):", min_wave1, min_wave2, min_wave3)
-        print("Real central wavelength of the CaT lines (A):", real_cat1, real_cat2, real_cat3)
-        print("Residuals (A):", residual_wave1, residual_wave2, residual_wave3)
-        print("Residuals in km/s:", delta_rv1, delta_rv2, delta_rv3)
-        print("Mean Delta RV:", mean_delta_rv)
-        print("Sigma (A):", sigma_cat1, sigma_cat2, sigma_cat3)
-        print("Sigma (km/s):", sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel)
-        print('')
+        EW  = - flux_phys / (cont_level * bmu)
+        e_EW = np.where(np.isfinite(e_flux), e_flux / (cont_level * bmu), np.full(3, np.nan))
 
-        #EW measurement of the fitted lines
-        cat_single_index = True
-        cat_plot = False
-        cat_verbose = False
-        cat_with_uncertainties = True
-        cat_save_plot = False
-        cat_normalise_spec = False
+        # ----- ΔRV (km/s) w.r.t. reference wavelengths -----
+        dRV = c_kms * (mus - cats_ref) / cats_ref
 
-        #ca1
-        id_array, ew_array_ca1, err_array, snr_ew_array,ew_array_mag, err_array_mag = ls.ew_measurement(cat_wave, cat_fit, index_ca1, cat_single_index, cat_plot, cat_verbose, cat_with_uncertainties, cat_save_plot, prev_spec, cat_normalise_spec, result_plot_dir)
+        # ----- always print a compact summary -----
+        print(f"\n[CaT] {prev_spec_nopath}")
+        header = (f"{'Line':<6}{'λ0(Å)':>10}{'μ(Å)':>12}{'±':>3}{'dμ':>9}"
+                  f"{'σ(Å)':>12}{'±':>3}{'dσ':>9}"
+                  f"{'σ(km/s)':>14}{'±':>3}{'dσk':>10}"
+                  f"{'Flux':>18}{'±':>3}{'dF':>10}"
+                  f"{'EW(Å)':>12}{'±':>3}{'dEW':>9}"
+                  f"{'ΔRV(km/s)':>14}")
+        print(header)
+        print("-"*len(header))
+        for k,(lam0,mu,emu,sA,esA,sk,esk,F,eF,ew,eew,drv) in enumerate(zip(
+            cats_ref, mus, e_mu, sigma_A, e_sigma, sigma_kms, e_sigma_kms, flux_phys, e_flux, EW, e_EW, dRV
+        ), start=1):
+            print(f"{('Ca'+str(k)):<6}{lam0:>10.2f}{mu:>12.2f}{'±':>3}{(emu if np.isfinite(emu) else np.nan):>9.3f}"
+                  f"{sA:>12.3f}{'±':>3}{(esA if np.isfinite(esA) else np.nan):>9.3f}"
+                  f"{sk:>14.2f}{'±':>3}{(esk if np.isfinite(esk) else np.nan):>10.2f}"
+                  f"{F:>18.3e}{'±':>3}{(eF if np.isfinite(eF) else np.nan):>10.3e}"
+                  f"{ew:>12.3f}{'±':>3}{(eew if np.isfinite(eew) else np.nan):>9.3f}"
+                  f"{drv:>14.2f}")
+        print(f"norm_factor = {cont_level:.6g}\n")
 
-        #ca2
-        id_array, ew_array_ca2, err_array, snr_ew_array,ew_array_mag, err_array_mag = ls.ew_measurement(cat_wave, cat_fit, index_ca2, cat_single_index, cat_plot, cat_verbose, cat_with_uncertainties, cat_save_plot, prev_spec, cat_normalise_spec, result_plot_dir)
-
-        #ca3
-        id_array, ew_array_ca3, err_array, snr_ew_array,ew_array_mag, err_array_mag = ls.ew_measurement(cat_wave, cat_fit, index_ca3, cat_single_index, cat_plot, cat_verbose, cat_with_uncertainties, cat_save_plot, prev_spec, cat_normalise_spec, result_plot_dir)
-
-
-        # Print EW measurements
-        print("Equivalent Width from the Fit (Angstrom):")
-        print("Ca1:", round(ew_array_ca1, 2), "Ca2:", round(ew_array_ca2, 2), "Ca3:", round(ew_array_ca3, 2))
-        print('')
-
-        # Plot fitting results
+        # ----- plot (optional) -----
         if event == "Preview result" or (event == 'Process all' and save_plot):
             fig, (ax1, ax2) = plt.subplots(2, figsize=(8.5, 7), gridspec_kw={"height_ratios": [3, 1]})
+            fig.suptitle("CaT Fitting")
+            ax1.plot(line_wave, flux_norm, label="Spectrum (norm.)")
+            ax1.plot(line_wave, fit_model,  label="Model (norm.)")
+            for mu in mus[np.isfinite(mus)]:
+                ax1.axvline(float(mu), linestyle='-', linewidth=0.9, color='red', alpha=0.7)
+            ax1.set_xlabel("Wavelength (Å)"); ax1.set_ylabel("Normalised flux"); ax1.legend(fontsize=10)
 
-            fig.suptitle("CaT Lines Fitting")
-            ax1.plot(cat_wave, cat_flux_norm, label="Spectrum")
-            ax1.plot(cat_wave, cat_fit, label="Fit line spec")
-            ax1.set_xlabel("Wavelength (A)")
-            ax1.set_ylabel("Norm flux")
-            ax1.legend(fontsize=10)
-
-            # Plot residuals
-            ax2.plot(cat_wave, residual_flux, linewidth=0.5, label="Residuals")
-            ax2.hlines(y=0, xmin=min(cat_wave), xmax=max(cat_wave), linestyles="--", lw=2, linewidth=2, color="r")
-            ax2.set_xlabel("Wavelength (A)")
-            ax2.set_ylabel("Residuals")
-            ax2.legend(fontsize=10)
+            resid = flux_norm - fit_model
+            ax2.plot(line_wave, resid, linewidth=0.6, label="Residuals")
+            ax2.hlines(y=0, xmin=float(line_wave.min()), xmax=float(line_wave.max()),
+                       linestyles="--", lw=2, color="r")
+            ax2.set_xlabel("Wavelength (Å)"); ax2.set_ylabel("Residuals"); ax2.legend(fontsize=10)
 
             if event == "Preview result":
-                plt.show()
-                plt.close()
+                plt.show(); plt.close()
             else:
-                plt.savefig(result_plot_dir + '/'+ 'cat_fitting_' + prev_spec_nopath + '.png', format='png', dpi=300)
+                out = f"cat_fitting_{prev_spec_nopath}.png"
+                plt.savefig(os.path.join(result_plot_dir, out), format='png', dpi=300)
                 plt.close()
 
-        return min_wave1, min_wave2, min_wave3, residual_wave1, residual_wave2, residual_wave3, ew_array_ca1, ew_array_ca2, ew_array_ca3, real_cat1, real_cat2, real_cat3, delta_rv1, delta_rv2, delta_rv3, sigma_cat1, sigma_cat2, sigma_cat3, sigma_cat1_vel, sigma_cat2_vel, sigma_cat3_vel, params
+        # ----- return -----
+        return (mus, e_mu,
+                sigma_A, e_sigma,
+                sigma_kms, e_sigma_kms,
+                flux_phys, e_flux,
+                EW, e_EW,
+                params, meta)
 
     except Exception as e:
-        if event == "Process all":
-            print(f"CaT fitting failed. Try adjusting the parameters: {str(e)}")
-        else:
-            sg.popup(f"CaT fitting failed. Try adjusting the parameters: {str(e)}")
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+        msg = f"CaT fitting failed. Try adjusting the parameters: {str(e)}"
+        print(msg) if event == "Process all" else sg.popup(msg)
+        nan3 = (np.full(3, np.nan),)*10
+        return *nan3, params, {}
 
 
 
 def apply_line_fitting(event, save_plot, params):
-
     """
-    Fits a single line (emission or absorption) with a gaussian function,
-    using the cat_fit function of the spectral_analysis modules.
+    Interface between GUI and line-fitting functions.
 
-    Returns:
-    - Central wavelength of the lines
-    - wavelength displacement between the central fitted lines and their real wavelength (in air)
-    - equivalent widths measured in the best fitting model
-    - broadening of the best fitted gaussians (in pixels and km/s). WARNING:
-      this is not the velocity dispersion of the spectrum!
-
+    Returns
+    -------
+    centers_A : np.ndarray
+        Central wavelengths (Å) for each fitted component.
+    sigma_A : np.ndarray
+        Line width in Å (Gaussian: sigma_obs or sigma_intr if available; Lorentz: sigma_eff = FWHM/2.3548).
+    sigma_kms : np.ndarray
+        Width in km/s, computed as (sigma_A / center_A) * c.
+    flux_phys : np.ndarray
+        Physical integrated flux per component (same units as input spectrum), NaN if not available (e.g. CaT path for now).
+    err_mu_A : np.ndarray or None
+        Uncertainty on centres (Å), if available.
+    err_sigmaA : np.ndarray or None
+        Uncertainty on sigma_A (Å), if available.
+    err_sigma_kms : np.ndarray or None
+        Uncertainty on sigma_kms (km/s), if available.
+    err_flux_phys : np.ndarray or None
+        Uncertainty on flux_phys (same units), if available (bootstrap).
+    params : SpectraParams
+        Updated parameters.
     """
 
-    wavelength = params.wavelength
-    flux = params.flux
-    wave_interval_fit = params.wave_interval_fit
-    guess_param = params.guess_param
-    emission_line = params.emission_line
-    prev_spec = params.prev_spec
-    prev_spec_nopath = params.prev_spec_nopath
-    result_plot_dir = params.result_plot_dir
-    task_done = params.task_done
-    task_done2 = params.task_done2
-    task_analysis = params.task_analysis
-
-
-    # 1) HEADER
+    # -------------------------
+    # 1) HEADER / FLAGS
+    # -------------------------
     if event == 'Process all':
         task_done2 = 1
+        task_done = params.task_done
+        task_analysis = params.task_analysis
     else:
         task_done = 1
+        task_done2 = params.task_done2
         task_analysis = 1
 
-    #updating the params that changed, that is just the check conditions
     params = replace(params, task_done=task_done, task_done2=task_done2, task_analysis=task_analysis)
 
-    # Check wavelength limits
-    wave_limits = np.array([wavelength[0], wavelength[-1]])
+    # -------------------------
+    # 2) INPUTS
+    # -------------------------
+    wavelength = params.wavelength
+    flux       = params.flux
 
-    if min(wave_interval_fit) < wave_limits[0] or max(wave_interval_fit) > wave_limits[1]:
-        if event == "Process all":
-            print("The window band is out of the spectrum range")
-        else:
-            sg.popup("The window band is out of the spectrum range")
-        return None, None, None, params
+    # Window (compat with legacy)
+    if hasattr(params, 'wave_interval_fit') and params.wave_interval_fit is not None:
+        wave_interval_fit = np.asarray(params.wave_interval_fit, float)
+    else:
+        wave_interval_fit = np.asarray([params.low_wave_fit, params.high_wave_fit], float)
 
+    prev_spec         = getattr(params, 'prev_spec', None)
+    prev_spec_nopath  = getattr(params, 'prev_spec_nopath', 'spectrum')
+    result_plot_dir   = getattr(params, 'result_plot_dir', '.')
+
+    # Modes
+    # cat_band_fit = bool(getattr(params, 'cat_band_fit', False))
+    usr_fit_line = bool(getattr(params, 'usr_fit_line'))
+
+    # Generic options
+    lf_profile        = getattr(params, 'lf_profile', 'gauss')
+    lf_sign           = getattr(params, 'lf_sign', 'auto')
+    lf_ncomp_mode     = getattr(params, 'lf_ncomp_mode', 'auto')
+    lf_ncomp          = int(getattr(params, 'lf_ncomp', 1))
+    lf_max_components = int(getattr(params, 'lf_max_components', 3))
+    lf_min_prom_sigma = float(getattr(params, 'lf_min_prom_sigma', 3.0))
+    lf_sigma_inst     = getattr(params, 'lf_sigma_inst', None)
+    lf_do_bootstrap   = bool(getattr(params, 'lf_do_bootstrap', False))
+    lf_Nboot          = int(getattr(params, 'lf_Nboot', 100))
+
+    # Baseline controls (generic)
+    lf_baseline_mode  = getattr(params, 'lf_baseline_mode', 'auto')
+    lf_perc_em        = float(getattr(params, 'lf_perc_em', 15.0))
+    lf_perc_abs       = float(getattr(params, 'lf_perc_abs', 85.0))
+    lf_bin_width_A    = float(getattr(params, 'lf_bin_width_A', 50.0))
+
+    # -------------------------
+    # 3) BASIC VALIDATIONS
+    # -------------------------
+    wave_limits = np.array([wavelength[0], wavelength[-1]], float)
+    if usr_fit_line:
+        if min(wave_interval_fit) < wave_limits[0] or max(wave_interval_fit) > wave_limits[1]:
+            msg = "The window band is out of the spectrum range"
+            if event == "Process all":
+                print(msg)
+            else:
+                sg.popup(msg)
+            return None, None, None, None, None, None, None, None, None, None, None, params
+
+    # -------------------------
+    # Utilities
+    # -------------------------
+    def _as_array(x, dtype=float):
+        """Return None or a numpy array with given dtype."""
+        if x is None:
+            return None
+        return np.asarray(x, dtype=dtype)
+
+    def _first_not_none(*vals):
+        """Return the first value that is not None (no boolean evaluation of arrays)."""
+        for v in vals:
+            if v is not None:
+                return v
+        return None
+
+    # -------------------------
+    # 4) EXECUTE FIT
+    # -------------------------
     try:
-        # Perform the fitting
-        line_wave, line_flux_norm, line_fit, momentum = span.line_fitting(wavelength, flux, wave_interval_fit, guess_param)
+        # --- Generic window fit ---
+        ncomp = ('auto' if lf_ncomp_mode == 'auto' else int(lf_ncomp))
 
-        # Find minimum or maximum value depending on absorption or emission
-        if not emission_line:
-            min_value_wave_arg = np.argmin(line_fit)
+        line_wave, flux_norm, fit_norm, popt, meta = span.line_fitting(
+            wavelength, flux, wave_interval_fit,
+            guess_param=None,  # legacy
+            profile=lf_profile,
+            sign=lf_sign,
+            ncomp=ncomp,
+            sigma_inst=lf_sigma_inst,
+            do_bootstrap=lf_do_bootstrap, Nboot=lf_Nboot,
+            max_components=int(lf_max_components),
+            min_prom_sigma=float(lf_min_prom_sigma),
+            # Baseline controls
+            baseline_mode=lf_baseline_mode,
+            perc_em=lf_perc_em,
+            perc_abs=lf_perc_abs,
+            bin_width_A=lf_bin_width_A
+        )
+
+        comps = meta.get('components', [])
+        if not comps:
+            raise RuntimeError("Generic line fit did not return components.")
+
+        centers_A = np.array([c['mu'] for c in comps], float)
+
+        # Choose the most 'physical' sigma to report
+        if meta.get('profile', 'gauss') == 'gauss':
+            sigma_A = np.array([c.get('sigma_intr', c.get('sigma_obs', np.nan)) for c in comps], float)
         else:
-            min_value_wave_arg = np.argmax(line_fit)
+            # Lorentzian: report sigma_eff = FWHM/2.3548
+            sigma_A = np.array([(c.get('fwhm', np.nan) / 2.3548) for c in comps], float)
 
-        min_wave = line_wave[min_value_wave_arg]
+        # Physical fluxes using meta information
+        cont_level   = float(meta.get('norm_factor', 1.0))
+        resid_kind   = meta.get('resid_kind', 'diff')  # current engine uses 'diff'
+        baseline_m   = meta['baseline']['m']
+        baseline_q   = meta['baseline']['q']
+        profile_meta = meta.get('profile', 'gauss')
 
-        # Assign sigma of the line (in pixels)
-        sigma_line = abs(momentum[3])
+        def _scale_at_mu(mu):
+            # If future engine uses fractional residuals, scale by baseline(mu)*cont_level
+            if resid_kind == 'frac':
+                return (baseline_m * mu + baseline_q) * cont_level
+            return cont_level
 
-        # Convert sigma to velocity space
-        c = 299792.458  # Speed of light in km/s
-        sigma_line_vel = (sigma_line / min_wave) * c
+        flux_phys = []
+        for cdict in comps:
+            mu = float(cdict['mu'])
+            scale = _scale_at_mu(mu)
+            if profile_meta == 'gauss':
+                a   = float(cdict['amp'])
+                sg1 = float(cdict.get('sigma_obs', np.nan))
+                Fk = a * np.sqrt(2.0*np.pi) * sg1 * scale if (np.isfinite(a) and np.isfinite(sg1)) else np.nan
+            else:
+                a   = float(cdict['amp'])
+                gm  = float(cdict.get('gamma', np.nan))
+                Fk = a * np.pi * gm * scale if (np.isfinite(a) and np.isfinite(gm)) else np.nan
+            flux_phys.append(Fk)
+        flux_phys = np.asarray(flux_phys, float)
 
-        # Compute residual spectrum
-        residual_flux = line_flux_norm - line_fit
+        # Parameter uncertainties (prefer bootstrap; fallback to asymptotic)
+        err_mu_A = _first_not_none(_as_array(meta.get('err_mu'), float),
+                                    _as_array(meta.get('asym_err_mu'), float))
+        err_wpar = _first_not_none(_as_array(meta.get('err_wpar'), float),
+                                    _as_array(meta.get('asym_err_w'), float))
 
-        # Print results
-        print("Central wavelength of the fitted line (A):", min_wave)
-        print("Sigma (A):", sigma_line)
-        print("Sigma (km/s):", sigma_line_vel)
-        print('')
-        # Plot fitting results
+        if meta.get('profile', 'gauss') == 'gauss':
+            err_sigmaA = err_wpar  # same parameter (sigma)
+        else:
+            err_sigmaA = None if err_wpar is None else (2.0 * err_wpar) / 2.3548
+
+        # Flux uncertainties (from bootstrap on normalised residuals)
+        err_flux_phys = None
+        if meta.get('err_flux', None) is not None:
+            err_norm = np.asarray(meta['err_flux'], float)
+            scales = np.array([_scale_at_mu(float(c['mu'])) for c in comps], float)
+            err_flux_phys = err_norm * scales
+
+        # -------------------------
+        # 5) Convert widths to km/s (+ errors)
+        # -------------------------
+        c_kms = 299792.458
+        with np.errstate(divide='ignore', invalid='ignore'):
+            sigma_kms = (sigma_A / centers_A) * c_kms
+
+        err_sigma_kms = None
+        if 'err_sigmaA' in locals() and err_sigmaA is not None:
+            if 'err_mu_A' in locals() and err_mu_A is not None:
+                # d(σ/μ) ≈ sqrt[(dσ/μ)^2 + (σ dμ/μ^2)^2]
+                err_sigma_kms = c_kms * np.sqrt(
+                    (err_sigmaA / centers_A)**2 +
+                    ((sigma_A * err_mu_A) / (centers_A**2))**2
+                )
+            else:
+                err_sigma_kms = c_kms * (err_sigmaA / centers_A)
+
+
+        # -------------------------
+        # 6) PLOTS
+        # -------------------------
+        residual_flux = flux_norm - fit_norm
+
         if event == "Preview result" or (event == 'Process all' and save_plot):
             fig, (ax1, ax2) = plt.subplots(2, figsize=(8.5, 7), gridspec_kw={"height_ratios": [3, 1]})
+            fig.suptitle("Line Fitting" )
 
-            fig.suptitle("Line Fitting")
-            ax1.plot(line_wave, line_flux_norm, label="Spectrum")
-            ax1.plot(line_wave, line_fit, label="Fit line spec")
-            ax1.set_xlabel("Wavelength (A)")
-            ax1.set_ylabel("Norm flux")
+            ax1.plot(line_wave, flux_norm, label="Spectrum (norm.)")
+            ax1.plot(line_wave, fit_norm,  label="Model (norm.)")
+
+            # Detected peaks (dashed grey)
+            try:
+                all_idx = meta.get('all_peaks_idx', [])
+                if isinstance(all_idx, (list, tuple)) and len(all_idx) > 0:
+                    xpeaks = np.array(line_wave)[np.array(all_idx, int)]
+                    for xp in xpeaks:
+                        ax1.axvline(float(xp), linestyle=':', linewidth=0.8, color='gray', alpha=0.6, label='_nolegend_')
+            except Exception:
+                pass
+
+            # Fitted centres (solid red)
+            for cdict in comps:
+                ax1.axvline(float(cdict['mu']), linestyle='-', linewidth=0.9, color='red', alpha=0.7, label='_nolegend_')
+
+            # Optional: overlay components
+            try:
+                baseline_m = meta['baseline']['m']
+                baseline_q = meta['baseline']['q']
+                baseline   = baseline_m*line_wave + baseline_q
+                for idx_c, cdict in enumerate(comps, start=1):
+                    if meta.get('profile','gauss') == 'gauss':
+                        a  = cdict['amp']
+                        mu = cdict['mu']
+                        sg1 = cdict.get('sigma_obs', np.nan)
+                        if np.isfinite(sg1):
+                            comp_resid = a * np.exp(-0.5*((line_wave - mu)/sg1)**2)
+                            comp_norm  = (baseline + comp_resid) / np.where(baseline!=0, baseline, np.nanmedian(baseline))
+                            ax1.plot(line_wave, comp_norm, linestyle='--', linewidth=1.0, label=f"Comp {idx_c}")
+                    else:
+                        a  = cdict['amp']
+                        mu = cdict['mu']
+                        gm = cdict.get('gamma', np.nan)
+                        if np.isfinite(gm):
+                            comp_resid = a * (gm**2)/((line_wave-mu)**2 + gm**2)
+                            comp_norm  = (baseline + comp_resid) / np.where(baseline!=0, baseline, np.nanmedian(baseline))
+                            ax1.plot(line_wave, comp_norm, linestyle='--', linewidth=1.0, label=f"Comp {idx_c}")
+            except Exception:
+                pass
+
+            ax1.set_xlabel("Wavelength (Å)")
+            ax1.set_ylabel("Normalised flux")
             ax1.legend(fontsize=10)
 
-            # Plot residuals
-            ax2.plot(line_wave, residual_flux, linewidth=0.5, label="Residuals")
-            ax2.hlines(y=0, xmin=min(line_wave), xmax=max(line_wave), linestyles="--", lw=2, linewidth=2, color="r")
-            ax2.set_xlabel("Wavelength (A)")
+            ax2.plot(line_wave, residual_flux, linewidth=0.6, label="Residuals")
+            ax2.hlines(y=0, xmin=float(line_wave.min()), xmax=float(line_wave.max()),
+                       linestyles="--", lw=2, color="r")
+            ax2.set_xlabel("Wavelength (Å)")
             ax2.set_ylabel("Residuals")
             ax2.legend(fontsize=10)
 
             if event == "Preview result":
-                plt.show()
-                plt.close()
+                plt.show(); plt.close()
             else:
-                plt.savefig(result_plot_dir + '/'+ 'line_fitting_' + prev_spec_nopath + '.png', format='png', dpi=300)
+                fname = ('line_fitting_') + f'{prev_spec_nopath}.png'
+                plt.savefig(os.path.join(result_plot_dir, fname), format='png', dpi=300)
                 plt.close()
 
+        # -------------------------
+        # 7) PRINT CONSOLIDATED TABLE
+        # -------------------------
+        def _nan_if_none(x, size):
+            """Return an array of length 'size' filled with NaNs if x is None; broadcast scalar; pad otherwise."""
+            if x is None:
+                return np.full(size, np.nan, dtype=float)
+            x = np.asarray(x, float)
+            if x.size == 1 and size > 1:
+                return np.full(size, float(x.ravel()[0]), dtype=float)
+            if x.size != size:
+                out = np.full(size, np.nan, dtype=float)
+                out[:min(size, x.size)] = x[:min(size, x.size)]
+                return out
+            return x
 
-        return min_wave, sigma_line, sigma_line_vel, params
+        n = centers_A.size
+        err_mu_A        = _nan_if_none(locals().get('err_mu_A', None), n)
+        err_sigmaA      = _nan_if_none(locals().get('err_sigmaA', None), n)
+        err_sigma_kms   = _nan_if_none(locals().get('err_sigma_kms', None), n)
+        err_flux_phys   = _nan_if_none(locals().get('err_flux_phys', None), n)
+
+        print("\nFitted components:")
+        header = (f"{'Comp':<5}{'Center [Å]':>15}{'±':>3}{'dC':>10}"
+                  f"{'Sigma [Å]':>15}{'±':>3}{'dS':>10}"
+                  f"{'Sigma [km/s]':>18}{'±':>3}{'dSk':>10}"
+                  f"{'Flux':>18}{'±':>3}{'dF':>10}")
+        print(header)
+        print("-" * len(header))
+
+        for i in range(n):
+            mu = centers_A[i]; emu = err_mu_A[i]
+            sA = sigma_A[i];   esA = err_sigmaA[i]
+            sk = sigma_kms[i]; esk = err_sigma_kms[i]
+            Fk = flux_phys[i]; eFk = err_flux_phys[i]
+            print(f"{i+1:<5}{mu:>15.3f}{'±':>3}{emu:>10.3f}"
+                  f"{sA:>15.4f}{'±':>3}{esA:>10.4f}"
+                  f"{sk:>18.2f}{'±':>3}{esk:>10.2f}"
+                  f"{Fk:>18.3e}{'±':>3}{eFk:>10.3e}")
+
+        print(f"\nTotal flux in window = {np.nansum(flux_phys):.3e}\n")
+
+        chi2nu = np.nan
+        peaks_detected = np.nan
+        norm_factor = np.nan
+
+        try:
+            if 'meta' in locals() and meta is not None:
+                chi2nu = meta.get('chi2nu', np.nan)
+                # some fits might store peaks in different keys
+                peaks_detected = len(meta.get('all_peaks_idx', [])) if 'all_peaks_idx' in meta else np.nan
+                norm_factor = meta.get('norm_factor', np.nan)
+        except Exception:
+            pass
+
+        # -------------------------
+        # 8) RETURN
+        # -------------------------
+        return centers_A, sigma_A, sigma_kms, flux_phys, err_mu_A, err_sigmaA, err_sigma_kms, err_flux_phys, chi2nu, peaks_detected, norm_factor, params
 
     except Exception as e:
+        msg = f"Line fitting failed. Try adjusting the parameters: {str(e)}"
         if event == "Process all":
-            print(f"Line fitting failed. Try adjusting the parameters: {str(e)}")
+            print(msg)
         else:
-            sg.popup(f"Line fitting failed. Try adjusting the parameters: {str(e)}")
-        return None, None, None, params
+            sg.popup(msg)
+        return None, None, None, None, None, None, None, None, None, None, None, params
 
 
 
@@ -1369,7 +1600,10 @@ def apply_ppxf_kinematics(event, save_plot, params):
     task_done2 = params.task_done2
     task_analysis = params.task_analysis
     ppxf_kin_mode = params.ppxf_kin_mode
+    kin_stars_values = params.kin_stars_values
 
+    emission_corrected_flux = params.kin_emission_corrected_flux
+    bestfit_wavelength = params.bestfit_wavelength_kin
 
     # 1) HEADER
     if event == 'Process all':
@@ -1394,7 +1628,7 @@ def apply_ppxf_kinematics(event, save_plot, params):
             print("The window band is out of the spectrum range")
         else:
             sg.popup("The window band is out of the spectrum range")
-        return None, None, None, None, None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, None, params
 
         
     try:
@@ -1430,54 +1664,57 @@ def apply_ppxf_kinematics(event, save_plot, params):
 
     #Saving the single stellar component fit results
         if (kin_component == 0 and not ppxf_kin_two_stellar_components):
-            vel = round(kinematics[0])
-            sigma = round(kinematics[1])
-            h3 = round(kinematics[2],3)
-            h4 = round(kinematics[3],3)
-            h5 = round(kinematics[4],3)
-            h6 = round(kinematics[5],3)
-            err_vel = round(error_kinematics[0])
-            err_sigma = round(error_kinematics[1])
-            err_h3 = round(error_kinematics[2],3)
-            err_h4 = round(error_kinematics[3],3)
-            err_h5 = round(error_kinematics[4],3)
-            err_h6 = round(error_kinematics[5],3)
+            vel = round(kinematics[0],3)
+            sigma = round(kinematics[1],3)
+            h3 = round(kinematics[2],5)
+            h4 = round(kinematics[3],5)
+            h5 = round(kinematics[4],5)
+            h6 = round(kinematics[5],5)
+            err_vel = round(error_kinematics[0],3)
+            err_sigma = round(error_kinematics[1],3)
+            err_h3 = round(error_kinematics[2],5)
+            err_h4 = round(error_kinematics[3],5)
+            err_h5 = round(error_kinematics[4],5)
+            err_h6 = round(error_kinematics[5],5)
 
             vel_string = str(int(kinematics[0]))
             sigma_string = str(int(kinematics[1]))
             h3_string = str(round(kinematics[2],3))
             h4_string = str(round(kinematics[3],3))
 
+            all_moments = [vel, sigma, h3, h4, h5, h6]
+            kin_stars_values = all_moments[:kin_moments]
+            
             if params.with_errors_kin:
                 err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
 
 
         elif ppxf_kin_two_stellar_components:
-            vel1 = round(kinematics[0][0])
-            sigma1 = round(kinematics[0][1])
-            h31 = round(kinematics[0][2],3)
-            h41 = round(kinematics[0][3],3)
-            h51 = round(kinematics[0][4],3)
-            h61 = round(kinematics[0][5],3)
-            err_vel1 = round(error_kinematics[0][0])
-            err_sigma1 = round(error_kinematics[0][1])
-            err_h31 = round(error_kinematics[0][2],3)
-            err_h41 = round(error_kinematics[0][3],3)
-            err_h51 = round(error_kinematics[0][4],3)
-            err_h61 = round(error_kinematics[0][5],3)
+            vel1 = round(kinematics[0][0],3)
+            sigma1 = round(kinematics[0][1],3)
+            h31 = round(kinematics[0][2],5)
+            h41 = round(kinematics[0][3],5)
+            h51 = round(kinematics[0][4],5)
+            h61 = round(kinematics[0][5],5)
+            err_vel1 = round(error_kinematics[0][0],3)
+            err_sigma1 = round(error_kinematics[0][1],3)
+            err_h31 = round(error_kinematics[0][2],5)
+            err_h41 = round(error_kinematics[0][3],5)
+            err_h51 = round(error_kinematics[0][4],5)
+            err_h61 = round(error_kinematics[0][5],5)
 
-            vel2 = round(kinematics[1][0])
-            sigma2 = round(kinematics[1][1])
-            h32 = round(kinematics[1][2],3)
-            h42 = round(kinematics[1][3],3)
-            h52 = round(kinematics[1][4],3)
-            h62 = round(kinematics[1][5],3)
-            err_vel2 = round(error_kinematics[1][0])
-            err_sigma2 = round(error_kinematics[1][1])
-            err_h32 = round(error_kinematics[1][2],3)
-            err_h42 = round(error_kinematics[1][3],3)
-            err_h52 = round(error_kinematics[1][4],3)
-            err_h62 = round(error_kinematics[1][5],3)
+            vel2 = round(kinematics[1][0],3)
+            sigma2 = round(kinematics[1][1],3)
+            h32 = round(kinematics[1][2],5)
+            h42 = round(kinematics[1][3],5)
+            h52 = round(kinematics[1][4],5)
+            h62 = round(kinematics[1][5],5)
+            err_vel2 = round(error_kinematics[1][0],3)
+            err_sigma2 = round(error_kinematics[1][1],3)
+            err_h32 = round(error_kinematics[1][2],5)
+            err_h42 = round(error_kinematics[1][3],5)
+            err_h52 = round(error_kinematics[1][4],5)
+            err_h62 = round(error_kinematics[1][5],5)
 
             vel_string1 = str(int(kinematics[0][0]))
             sigma_string1 = str(int(kinematics[0][1]))
@@ -1488,30 +1725,36 @@ def apply_ppxf_kinematics(event, save_plot, params):
             h3_string2 = str(round(kinematics[1][2],3))
             h4_string2 = str(round(kinematics[1][3],3))
 
+            all_moments = [vel1, sigma1, h31, h41, h51, h61]
+            kin_stars_values = all_moments[:kin_moments]
+            
             if params.with_errors_kin:
                 # extracting the MonteCarlo errors from the error array
                 err_rv_kin_mc1, err_sigma_kin_mc1, err_h3_kin_mc1, err_h4_kin_mc1, err_h5_kin_mc1, err_h6_kin_mc1, err_rv_kin_mc2, err_sigma_kin_mc2, err_h3_kin_mc2, err_h4_kin_mc2, err_h5_kin_mc2, err_h6_kin_mc2  = np.round(error_kinematics_mc[0],3)
 
 
         else: # with gas
-            vel = round(kinematics[0][0])
-            sigma = round(kinematics[0][1])
-            h3 = round(kinematics[0][2],3)
-            h4 = round(kinematics[0][3],3)
-            h5 = round(kinematics[0][4],3)
-            h6 = round(kinematics[0][5],3)
-            err_vel = round(error_kinematics[0][0])
-            err_sigma = round(error_kinematics[0][1])
-            err_h3 = round(error_kinematics[0][2],3)
-            err_h4 = round(error_kinematics[0][3],3)
-            err_h5 = round(error_kinematics[0][4],3)
-            err_h6 = round(error_kinematics[0][5],3)
+            vel = round(kinematics[0][0],3)
+            sigma = round(kinematics[0][1],3)
+            h3 = round(kinematics[0][2],5)
+            h4 = round(kinematics[0][3],5)
+            h5 = round(kinematics[0][4],5)
+            h6 = round(kinematics[0][5],5)
+            err_vel = round(error_kinematics[0][0],3)
+            err_sigma = round(error_kinematics[0][1],3)
+            err_h3 = round(error_kinematics[0][2],5)
+            err_h4 = round(error_kinematics[0][3],5)
+            err_h5 = round(error_kinematics[0][4],5)
+            err_h6 = round(error_kinematics[0][5],5)
 
             vel_string = str(int(kinematics[0][0]))
             sigma_string = str(int(kinematics[0][1]))
             h3_string = str(round(kinematics[0][2],3))
             h4_string = str(round(kinematics[0][3],3))
 
+            all_moments = [vel, sigma, h3, h4, h5, h6]
+            kin_stars_values = all_moments[:kin_moments]
+                            
             if params.with_errors_kin:
                 err_rv_kin_mc, err_sigma_kin_mc, err_h3_kin_mc, err_h4_kin_mc, err_h5_kin_mc, err_h6_kin_mc = np.round(error_kinematics_mc[0],3)
 
@@ -1567,7 +1810,6 @@ def apply_ppxf_kinematics(event, save_plot, params):
                     file_emission_corrected_spec = result_spec+'ppxf_kin_emission_corrected_' + prev_spec_nopath + '.fits'
                     file_gas_continuum_subtracted = result_spec+'ppxf_kin_gas_cont_subtracted_' + prev_spec_nopath + '.fits'
 
-
                     uti.save_fits_2d(bestfit_wavelength, bestfit_gas_flux, file_best_fit_gas)
                     uti.save_fits_2d(bestfit_wavelength, emission_corrected_flux, file_emission_corrected_spec)
                     uti.save_fits_2d(bestfit_wavelength, gas_without_continuum, file_gas_continuum_subtracted)
@@ -1578,18 +1820,21 @@ def apply_ppxf_kinematics(event, save_plot, params):
 
         plt.close() #closing all the plots
 
-        return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, params
+        params = replace(params, kin_emission_corrected_flux=emission_corrected_flux, bestfit_wavelength_kin = bestfit_wavelength, kin_stars_values = kin_stars_values)
+            
+        return kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, gas_component, snr_kin, error_kinematics_mc, gas_names, gas_flux, gas_flux_err, emission_corrected_flux, params
 
+                        
     except Exception as e:
         if event == "Process all":
             print('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
         else:
             sg.popup('Kinematics failed. Common cause: the templates do not cover the wavelength range you want to fit.\nOther possible explanations:\n- The resolution of your spectra is lower than the templates, if you are using the Xshooter templates\n- The templates do not exist. ')
-        return None, None, None, None, None, None, None, None, None, None, None, params
+        return None, None, None, None, None, None, None, None, None, None, None, None, params
 
 
 
-def apply_ppxf_stellar_populations(event, save_plot, params):
+def apply_ppxf_stellar_populations(event, save_plot, params, kin_active = False, emission_corrected_flux_kin = None, wavelength_kin = None):
 
     """
     Fits the spectrum and retrieves the stellar populations parameters
@@ -1655,8 +1900,11 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
     prev_spec = params.prev_spec
     result_spec = params.result_spec
     result_ppxf_pop_data_dir = params.result_ppxf_pop_data_dir
-    # result_ppxf_pop_data_dir_weights = params.result_ppxf_pop_data_dir_weights
-    # result_ppxf_pop_data_dir_sfh = params.result_ppxf_pop_data_dir_sfh
+    ppxf_pop_fix = params.ppxf_pop_fix
+    ppxf_use_emission_corrected_from_kin = params.ppxf_use_emission_corrected_from_kin
+    wavelength_kin = params.bestfit_wavelength_kin
+    emission_corrected_flux_kin = params.kin_emission_corrected_flux
+    kin_stars_values = params.kin_stars_values
     spectra_list_name = params.spectra_list_name
     result_plot_dir = params.result_plot_dir
     task_done = params.task_done
@@ -1716,8 +1964,52 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
         ppxf_with_plots = False
         ppxf_save_plot = False
 
+    wavelength_to_fit = wavelength
+    flux_to_fit = flux
+    ppxf_pop_redshift = z_pop
+        
+    # If using the kinematics of the stars and gas kinematics
+    if ppxf_pop_fix:
+        if not kin_active:
+            if event == "Process all":
+                print('You need to activate and setting up the kinematics task to fix the stellar kinematics values!')
+            else:
+                sg.popup('You need to activate and setting up the kinematics task to fix the stellar kinematics values!')
+        else:
+            print('Fixing kinematics:', kin_stars_values)
+            if params.ppxf_kin_two_stellar_components:
+                print('\n WARNING: With two components kinematics, I will consider and fix only the first one!\n')
+    
+    # If using the emission corrected spectra
+    if ppxf_use_emission_corrected_from_kin:
+        try:
+
+            
+            if kin_active:
+                if params.gas_kin:
+                    ppxf_pop_redshift = 0 #The emission corrected spectra are rest-frame
+                    wavelength_to_fit = wavelength_kin
+                    flux_to_fit = emission_corrected_flux_kin
+                    step_pop = wavelength_to_fit[1] - wavelength_to_fit[0]
+                    wavelength_to_fit, flux_to_fit, npoint_resampled = spman.resample(wavelength_to_fit, flux_to_fit, step_pop)
+                    print ('Using the emission corrected spectra')
+                else:
+                    print('No gas in kinematics, using the original spectrum')
+                    wavelength_to_fit = wavelength
+                    flux_to_fit = flux
+            else:
+                if event == "Process all":
+                    print('You need to activate and setting up the kinematics task with stars and gas components to use the emissio corrected spectra here!')
+                else:
+                    sg.popup('You need to activate and setting up the kinematics task with stars and gas components to use the emissio corrected spectra here!')
+                return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+            
+        except Exception:
+            return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, params
+
+        
     try:
-        kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_flux_gas, residual_flux, chi_square, age_err_abs, met_err, alpha_err, mass_age_err_abs, mass_met_err, mass_alpha_err, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic = span.ppxf_pop(wavelength, flux, wave1_pop, wave2_pop, res_pop, z_pop, sigma_guess_pop, fit_components, ppxf_with_plots, with_errors, ppxf_save_plot, prev_spec_nopath, regul_err, additive_degree, multiplicative_degree, ppxf_pop_tie_balmer, stellar_library, ppxf_pop_dust_stars, ppxf_pop_dust_gas, ppxf_pop_noise, age_range_array, met_range_array, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_pop_custom_npz, ppxf_pop_npz_file, ppxf_pop_mask, ppxf_custom_temp_suffix, ppxf_best_param, ppxf_best_noise_estimate, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_want_to_mask, ppxf_pop_mask_ranges, ppxf_pop_error_nsim, ppxf_pop_lg_age, ppxf_pop_lg_met, result_plot_dir)
+        kinematics, info_pop, info_pop_mass, mass_light, errors, galaxy, bestfit_flux, bestfit_wave, bestfit_flux_gas, residual_flux, chi_square, age_err_abs, met_err, alpha_err, mass_age_err_abs, mass_met_err, mass_alpha_err, emission_corrected_flux, pop_age, light_weights_age_bin, mass_weights_age_bin, cumulative_mass, light_weights_age_std, mass_weights_age_std, cumulative_light_std, cumulative_mass_std, snr_pop, light_weights, mass_weights, t50_age, t80_age, t50_cosmic, t80_cosmic = span.ppxf_pop(wavelength_to_fit, flux_to_fit, wave1_pop, wave2_pop, res_pop, ppxf_pop_redshift, sigma_guess_pop, fit_components, ppxf_with_plots, with_errors, ppxf_save_plot, prev_spec_nopath, regul_err, additive_degree, multiplicative_degree, ppxf_pop_tie_balmer, stellar_library, ppxf_pop_dust_stars, ppxf_pop_dust_gas, ppxf_pop_noise, age_range_array, met_range_array, ppxf_pop_custom_lib, ppxf_pop_lib_folder, ppxf_pop_custom_npz, ppxf_pop_npz_file, ppxf_pop_mask, ppxf_custom_temp_suffix, ppxf_best_param, ppxf_best_noise_estimate, ppxf_frac_chi, ppxf_pop_convolve, ppxf_pop_want_to_mask, ppxf_pop_mask_ranges, ppxf_pop_error_nsim, ppxf_pop_lg_age, ppxf_pop_lg_met, result_plot_dir, ppxf_pop_fix = ppxf_pop_fix, kinematics_values = kin_stars_values, moments_from_kin = params.kin_moments)
 
 
         age_ssp =0
@@ -1766,8 +2058,8 @@ def apply_ppxf_stellar_populations(event, save_plot, params):
 
             # 3) degrading the resolution, only if smaller than the lick system
             # Considering alzo the redshift!
-            if z_pop > 0.01: #arbitrary value of z above which it is wirth to recalculate the resolution.  
-                res_pop_z_corrected = res_pop/ (1 + z_pop)
+            if ppxf_pop_redshift > 0.01: #arbitrary value of z above which it is wirth to recalculate the resolution.  
+                res_pop_z_corrected = res_pop/ (1 + ppxf_pop_redshift)
             else:
                 res_pop_z_corrected = res_pop
                 

@@ -1,7 +1,7 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
-# Tips and Tricks #
+# Tips and Tricks
 
 Here are some useful tips to help you master SPAN.
 
@@ -33,7 +33,7 @@ The "Emission Line(s) Correction" option in the Lick/IDS line-strength analysis 
 Solution: Activate the "Cropping" task in the Spectra manipulation panel and crop the spectra to remove problematic regions. If you want to analyze only the 4800-5500 A range for stellar populations, crop the spectra accordingly.
 
 
-6. **Lick/IDS analysys within the "Stellar populations and SFH" task**
+6. **Lick/IDS analysis within the "Stellar populations and SFH" task**
 You can perform the Lick/IDS line-strength analysis also within the "Stellar populations and SFH" task by leveraging the results of the fit from pPXF. You just need to activate the option "Lick/IDS analysis with SSP models". Here, you can fit the spectra with any template, on the contrary of the Lick/IDS analysis in the "Line-strength analysis" task and fully adjust the parameters of the fit. In this case, it is strongly recommended to fit also the stellar and gas component and to activate the "Convolve templates to galaxy resolution" option, which allows pPXF to perform a reliable estimation of the velocity dispersion. This is needed to correct the equivalent widths of the Lick/IDS indices for the velocity dispersion broadening and give more accurate results. 
 
 

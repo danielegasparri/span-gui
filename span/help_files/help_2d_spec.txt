@@ -1,7 +1,7 @@
-SPAN: SPectral ANalysis Software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis Software V7.3
+Daniele Gasparri, December 2025
 
-# Long-slit extraction #
+# Long-slit extraction
 
 
 This sub-program allows you to extract a single 1D spectrum or a series of 1D spectra from a fully reduced 2D FITS image of a long-slit spectrum. The dispersion axis should be aligned with the X-axis, while the spatial axis should be along the Y-axis.

@@ -1,11 +1,7 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
-# DataCube extraction #
-
-![Datacube extraction](img/datacube_extraction.png)
-*Datacube extraction parameters*
-
+# DataCube extraction
 
 This sub-program allows you to extract a series of n 1D spectra from a 3D FITS image (i.e., a datacube) following the GIST pipeline standard (Bittner et al., 2019, 2021).
 The required parameters are similar to those used in the GIST pipeline (and for any datacube extraction in general). The data product generated (i.e. spectra and bin table) are fully compatible with both with SPAN and GIST. **IMPORTANT:** All the binning methods proposed in this task assume uncorrelated noise between the spaxels (no spaxel covariance). In real IFU data cubes, especially those reconstructed with drizzle algorithms (e.g., MUSE, JWST NIRSpec), the effective S/N per bin may be slightly overestimated (typically by 10–15%). Therefore, a practical approach to account for the covariance effect is to increase the target S/N accordingly (e.g., set the target S/N = 55 if an effective S/N ≈ 50 is desired).

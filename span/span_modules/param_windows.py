@@ -945,12 +945,7 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
                 sg.popup ('Succeed!')
         
         if ew_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "linestrength.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("linestrength")
 
     ew_window.close()
 
@@ -1013,95 +1008,270 @@ def line_strength_parameters(params: SpectraParams) -> SpectraParams:
 
 
 def line_fitting_parameters(params: SpectraParams) -> SpectraParams:
-
     """
-    Opens the line fitting parameters GUI and updates the values in params.
+    Opens the (new) line fitting parameters GUI and updates the values in params.
+    Keeps compatibility with legacy code: older guess fields remain in params but are no longer edited here.
     """
 
-    # Extract parameters from params
-    cat_band_fit = params.cat_band_fit
-    usr_fit_line = params.usr_fit_line
-    emission_line = params.emission_line
-    low_wave_fit = params.low_wave_fit
-    high_wave_fit = params.high_wave_fit
-    y0 = params.y0
-    x0 = params.x0
-    a = params.a
-    sigma = params.sigma
-    m = params.m
-    c = params.c
+    # --- Extract current values (old + new) ---
+    cat_band_fit      = params.cat_band_fit
+    usr_fit_line      = params.usr_fit_line
+    emission_line     = params.emission_line  # legacy (not used directly any more)
 
+    low_wave_fit      = params.low_wave_fit
+    high_wave_fit     = params.high_wave_fit
+
+    # legacy guesses (kept but unused here)
+    y0, x0, a, sigma, m, c = params.y0, params.x0, params.a, params.sigma, params.m, params.c
+
+    # new generic-fit params
+    lf_profile        = params.lf_profile
+    lf_sign           = params.lf_sign
+    lf_ncomp_mode     = params.lf_ncomp_mode
+    lf_ncomp          = params.lf_ncomp
+    lf_max_components = params.lf_max_components
+    lf_min_prom_sigma = params.lf_min_prom_sigma
+    lf_sigma_inst     = "" if params.lf_sigma_inst is None else params.lf_sigma_inst
+    lf_do_bootstrap   = params.lf_do_bootstrap
+    lf_Nboot          = params.lf_Nboot
+
+    # baseline controls (with safe getattr in case of old params) <<<
+    lf_baseline_mode  = getattr(params, 'lf_baseline_mode', 'auto')
+    lf_perc_em        = getattr(params, 'lf_perc_em', 15.0)
+    lf_perc_abs       = getattr(params, 'lf_perc_abs', 85.0)
+    lf_bin_width_A    = getattr(params, 'lf_bin_width_A', 50.0)
+
+
+    # --- Layout ---
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
-    linefit_layout = [
-        [sg.Radio('Automatic fit of the CaT lines', "RADIOFILEFIT", key='cat_fit', default=cat_band_fit,
-                  tooltip='Automatic CaT band fitting with three gaussian functions and a line', font = ('', default_size))],
-        [sg.Radio('Manual fit of the following line:', "RADIOFILEFIT", default=usr_fit_line, key='line_fit_single',
-                  tooltip='Fitting of user defined line with the parameters on the right', font = ('', default_size)),
-         sg.Checkbox('Emission', default=emission_line, key='emission_line', font = ('', default_size)),
-         sg.Text('Wave:', font = ('', default_size)), sg.InputText(low_wave_fit, size=(4, 1), key='left_wave_fitting', font = ('', default_size)),
-         sg.Text('-', font = ('', default_size)), sg.InputText(high_wave_fit, size=(4, 1), key='right_wave_fitting', font = ('', default_size)),
-         sg.Text('Guess:', tooltip='Initial guess only for usr line, fitted with a gaussian and a line', font = ('', default_size)),
-         sg.Text('Y-off', font = ('', default_size)), sg.InputText(y0, key='y0', size=(3, 1), font = ('', default_size)),
-         sg.Text('Line', font = ('', default_size)), sg.InputText(x0, key='x0', size=(4, 1), font = ('', default_size)),
-         sg.Text('Height', font = ('', default_size)), sg.InputText(a, key='a', size=(3, 1), font = ('', default_size)),
-         sg.Text('Sigma', font = ('', default_size)), sg.InputText(sigma, key='sigma', size=(3, 1), font = ('', default_size)),
-         sg.Text('Slope', font = ('', default_size)), sg.InputText(m, key='m', size=(2, 1), font = ('', default_size)),
-         sg.Text('Intercept', font = ('', default_size)), sg.InputText(c, key='c', size=(2, 1), font = ('', default_size))],
-        [sg.Push(), sg.Button('Confirm', button_color=('white', 'black'), size=(18, 1), font = ('', default_size))]
+
+    # helper sizes
+    L = ('', default_size)
+    LB = ('', default_size, 'bold')
+    XLB = ('', 14, 'bold')
+    IN_SMALL = (6, 1)
+    IN_MED   = (8, 1)
+    IN_BIG   = (12, 1)
+    IN_BIG2   = (14, 1)
+
+    # Mode selection
+    mode_row = [
+        [sg.Radio('Automatic fit of the CaT triplet', "MODE", key='cat_fit', default=cat_band_fit, enable_events=True, tooltip='Fit Ca II triplet (8498, 8542, 8662 Å) absorption lines', font=XLB)],
+        [sg.HorizontalSeparator()],
+        [sg.Radio('Custom line(s) fitting', "MODE", key='line_fit_generic', default=usr_fit_line, enable_events=True, tooltip='Fit emission/absorption lines in the selected wavelength window', font=XLB)],
     ]
 
+    # Window (generic)
+    window_frame = sg.Frame('Spectral window', [
+        [sg.Text('λ min', font=L), sg.InputText(low_wave_fit, key='left_wave_fitting', size=IN_MED, font=L), sg.Text('λ max', font=L), sg.InputText(high_wave_fit, key='right_wave_fitting', size=IN_MED, font=L)]
+    ], font=LB)
+
+    # Detection (generic)
+    detect_frame = sg.Frame('Detection & type ', [
+        [sg.Text('Line type', font=L), sg.Combo(values=['auto', 'emission', 'absorption'], default_value=lf_sign, key='lf_sign', readonly=True, size=IN_BIG, font=L), sg.Text('Peak threshold (σ)', font=L), sg.InputText(lf_min_prom_sigma, key='lf_min_prom_sigma', size=(5,1), font=L)]
+    ], font=LB)
+
+    # Model (generic)
+    model_frame = sg.Frame('Model', [
+        [sg.Text('Profile', font=L),
+         sg.Combo(values=['gauss', 'lorentz'], default_value=lf_profile, key='lf_profile', readonly=True, size=IN_BIG, font=L), sg.Text('Components', font=L), sg.Combo(values=['auto', 'fixed'], default_value=lf_ncomp_mode, key='lf_ncomp_mode', readonly=True, size=IN_SMALL, font=L), sg.Text('Max. components', font=L), sg.Spin([i for i in range(1,6)], initial_value=lf_max_components, key='lf_max_components', size=(3,1), font=L), sg.Text('N (if fixed)', font=L), sg.Spin([1,2,3], initial_value=min(max(1, lf_ncomp), 3), key='lf_ncomp', size=(3,1), font=L)]
+    ], font=LB)
+
+    baseline_frame = sg.Frame('Continuum / baseline', [
+        [sg.Text('Continuum modelling', font=L), sg.Combo(values=['auto', 'flat', 'linear', 'binned_percentile', 'poly2'], default_value=lf_baseline_mode, key='lf_baseline_mode', readonly=True, size=IN_BIG2, font=L), sg.Text('Bin width [Å]', tooltip='Used by binned_percentile', font=L),  sg.InputText(lf_bin_width_A, key='lf_bin_width_A', size=(5,1), font=L), sg.Text('Resolution FWHM [Å]', tooltip='Instrumental sigma in Angstrom (optional)', font=L),  sg.InputText(lf_sigma_inst, key='lf_sigma_inst', size=IN_SMALL, font=L)],
+        [sg.Text('Percentile (emission)', tooltip='Used by flat/binned modes', font=L), sg.InputText(lf_perc_em, key='lf_perc_em', size=IN_SMALL, font=L), sg.Text('Percentile (absorption)', tooltip='Used by flat/binned modes', font=L), sg.InputText(lf_perc_abs, key='lf_perc_abs', size=IN_SMALL, font=L)]
+    ], font=LB)
+
+    # Uncertainties (generic)
+    err_frame = sg.Frame('Uncertainties', [
+        [sg.Checkbox('Bootstrap simulations', default=lf_do_bootstrap, key='lf_do_bootstrap', font=L), sg.Text('N. simulations', font=L), sg.Spin([50,100,150,200,300], initial_value=lf_Nboot, key='lf_Nboot', size=(4,1), font=L)]
+    ], font=LB)
+
+    # Footer
+    footer_row = [sg.Button("Help", size=(12, 1),button_color=('black','orange'), font = ('', default_size)), sg.Push(), sg.Button('Confirm', button_color=('white', 'black'), size=(18, 1), font=L)]
+
+    # Compose layout
+    linefit_layout = [
+        [mode_row],
+        [window_frame, detect_frame],
+        [model_frame],
+        [baseline_frame],
+        [err_frame],
+        [footer_row]
+    ]
+
+    # --- Window ---
     print('*** Line fitting parameters window open. The main panel will be inactive until you close the window ***')
     linefit_window = open_subwindow('Line(s) fitting parameters', linefit_layout, zm=zm)
     misc.enable_hover_effect(linefit_window)
-    while True:
-        linefit_event, linefit_values = linefit_window.read()
 
+    # --- Helpers to enable/disable frames according to mode ---
+    def _toggle_generic(enable: bool):
+        for key in ['left_wave_fitting','right_wave_fitting','lf_sign','lf_min_prom_sigma',
+                    'lf_max_components','lf_profile','lf_ncomp_mode','lf_ncomp',
+                    'lf_sigma_inst','lf_do_bootstrap','lf_Nboot',
+                    'lf_baseline_mode','lf_perc_em','lf_perc_abs','lf_bin_width_A']:
+            try:
+                linefit_window[key].update(disabled=not enable)
+            except Exception:
+                pass
+
+    def _toggle_cat(enable: bool):
+        # for key in ['cat_delta_mu','cat_sigma_inst']:
+        try:
+            linefit_window[key].update(disabled=not enable)
+        except Exception:
+            pass
+
+    # --- init state ---
+    is_cat = bool(linefit_window['cat_fit'].get())
+    is_gen = bool(linefit_window['line_fit_generic'].get())
+    if not (is_cat or is_gen):
+        linefit_window['line_fit_generic'].update(value=True)
+        is_gen = True
+        is_cat = False
+    _toggle_generic(is_gen)
+    _toggle_cat(is_cat)
+
+    # --- Event loop ---
+    while True:
+        linefit_event, values = linefit_window.read()
         if linefit_event == sg.WIN_CLOSED:
             break
 
-        # Read values from GUI
-        cat_band_fit = linefit_values['cat_fit']
-        usr_fit_line = linefit_values['line_fit_single']
-        emission_line = linefit_values['emission_line']
-
-        try:
-            low_wave_fit = float(linefit_values['left_wave_fitting'])
-            high_wave_fit = float(linefit_values['right_wave_fitting'])
-            y0 = float(linefit_values['y0'])
-            x0 = float(linefit_values['x0'])
-            a = float(linefit_values['a'])
-            sigma = float(linefit_values['sigma'])
-            m = float(linefit_values['m'])
-            c = float(linefit_values['c'])
-
-            wave_interval_fit = np.array([low_wave_fit, high_wave_fit])
-            guess_param = [y0, x0, a, sigma, m, c]
-
-        except ValueError:
-            sg.popup('At least one of the parameters of the Line(s) fitting task is not valid!')
-            continue
+        if linefit_event in ('cat_fit','line_fit_generic'):
+            is_cat = values.get('cat_fit', False)
+            is_gen = values.get('line_fit_generic', False)
+            _toggle_generic(is_gen)
+            _toggle_cat(is_cat)
 
         if linefit_event == 'Confirm':
-            print('Line fitting parameters confirmed. This main panel is now active again')
-            print('')
+            # Mode selection
+            cat_band_fit = bool(values.get('cat_fit', False))
+            usr_fit_line = bool(values.get('line_fit_generic', False))
+            if not (cat_band_fit or usr_fit_line):
+                usr_fit_line = True
+                _toggle_generic(True); _toggle_cat(False)
+
+            # --- Generic fields & validation ---
+            try:
+                low_wave_fit  = float(values['left_wave_fitting'])
+                high_wave_fit = float(values['right_wave_fitting'])
+                if high_wave_fit <= low_wave_fit:
+                    raise ValueError('λ max must be greater than λ min.')
+            except Exception:
+                sg.popup('Invalid window: please check λ min/max.')
+                continue
+
+            lf_sign           = str(values['lf_sign']).strip()
+            lf_profile        = str(values['lf_profile']).strip()
+            lf_ncomp_mode     = str(values['lf_ncomp_mode']).strip()
+
+            try:
+                lf_min_prom_sigma = float(values['lf_min_prom_sigma'])
+                if lf_min_prom_sigma <= 0:
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid peak threshold (σ).')
+                continue
+
+            try:
+                lf_max_components = int(values['lf_max_components'])
+                if lf_max_components < 1 or lf_max_components > 5:
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid "Max components". Choose 1–5.')
+                continue
+
+            try:
+                lf_ncomp = int(values['lf_ncomp'])
+                if lf_ncomp < 1 or lf_ncomp > 3:
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid fixed N components. Choose 1–3.')
+                continue
+
+            # sigma_inst (generic)
+            txt = str(values['lf_sigma_inst']).strip()
+            if txt == "" or txt.lower() == 'none':
+                lf_sigma_inst = None
+            else:
+                try:
+                    lf_sigma_inst = float(txt)
+                    lf_sigma_inst = lf_sigma_inst/2.355
+                    if lf_sigma_inst <= 0:
+                        raise ValueError
+                except Exception:
+                    sg.popup('Invalid σ_inst [Å] (generic).')
+                    continue
+
+            # --- NEW baseline controls ---
+            lf_baseline_mode = str(values['lf_baseline_mode']).strip()
+            try:
+                lf_bin_width_A = float(values['lf_bin_width_A'])
+                if lf_bin_width_A <= 0:
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid Bin width [Å] (must be > 0).')
+                continue
+
+            try:
+                lf_perc_em = float(values['lf_perc_em'])
+                if not (1.0 <= lf_perc_em <= 50.0):
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid Percentile (emission). Use 1–50.')
+                continue
+
+            try:
+                lf_perc_abs = float(values['lf_perc_abs'])
+                if not (50.0 <= lf_perc_abs <= 99.0):
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid Percentile (absorption). Use 50–99.')
+                continue
+
+            # uncertainties
+            lf_do_bootstrap = bool(values['lf_do_bootstrap'])
+            try:
+                lf_Nboot = int(values['lf_Nboot'])
+                if lf_Nboot < 20 or lf_Nboot > 2000:
+                    raise ValueError
+            except Exception:
+                sg.popup('Invalid N boot (20–2000).')
+                continue
+
+            print('Line fitting parameters confirmed. This main panel is now active again\n')
             break
+
+
+        if linefit_event == 'Help':
+            stm.popup_markdown("lines_fitting")
 
     linefit_window.close()
 
-    # Update only the modified parameters in params
-    params = replace(params,
+    # --- Update params immutably (dataclass.replace pattern) ---
+    params = replace(
+        params,
         cat_band_fit=cat_band_fit,
         usr_fit_line=usr_fit_line,
-        emission_line=emission_line,
         low_wave_fit=low_wave_fit,
         high_wave_fit=high_wave_fit,
-        y0=y0,
-        x0=x0,
-        a=a,
-        sigma=sigma,
-        m=m,
-        c=c,
+        y0=y0, x0=x0, a=a, sigma=sigma, m=m, c=c,
+        lf_profile=lf_profile,
+        lf_sign=lf_sign,
+        lf_ncomp_mode=lf_ncomp_mode,
+        lf_ncomp=lf_ncomp,
+        lf_max_components=lf_max_components,
+        lf_min_prom_sigma=lf_min_prom_sigma,
+        lf_sigma_inst=lf_sigma_inst,
+        lf_do_bootstrap=lf_do_bootstrap,
+        lf_Nboot=lf_Nboot,
+        lf_baseline_mode=lf_baseline_mode,
+        lf_perc_em=lf_perc_em,
+        lf_perc_abs=lf_perc_abs,
+        lf_bin_width_A=lf_bin_width_A,
     )
 
     return params
@@ -1372,12 +1542,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             break
 
         if ppxf_kin_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_kinematics.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("kinematics")
 
     ppxf_kin_window.close()
 
@@ -1452,7 +1617,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     z_pop = params.z_pop
     pop_with_gas = params.pop_with_gas
     pop_without_gas = params.pop_without_gas
-    fit_components = params.fit_components
+    # fit_components = params.fit_components
     ppxf_pop_dust_stars = params.ppxf_pop_dust_stars
     ppxf_pop_dust_gas = params.ppxf_pop_dust_gas
     ppxf_pop_tie_balmer = params.ppxf_pop_tie_balmer
@@ -1489,6 +1654,8 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     lick_ssp_models_ppxf = params.lick_ssp_models_ppxf
     interp_modes_ppxf = params.interp_modes_ppxf
     ppxf_pop_save_spectra = params.ppxf_pop_save_spectra
+    ppxf_pop_fix = params.ppxf_pop_fix
+    ppxf_use_emission_corrected_from_kin = params.ppxf_use_emission_corrected_from_kin
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
@@ -1496,6 +1663,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_pop_layout = [
         [sg.Text('Wavelength interval (A):', font = ('', default_size, 'bold')), sg.InputText(wave1_pop, size = (5,1), key = 'left_wave_ppxf_pop', font = ('', default_size)), sg.Text('-', font = ('', default_size)), sg.InputText(wave2_pop, size = (5,1), key = 'right_wave_ppxf_pop', font = ('', default_size)), sg.Text('Spec. resolution FWHM (A):', font = ('', default_size, 'bold'),tooltip='Instrumental resolution (FWHM) in A of the spectral region'), sg.InputText(res_pop , size = (4,1), key = 'resolution_ppxf_pop', font = ('', default_size))],
         [sg.Text('Velocity dispersion guess (km/s):', font = ('', default_size, 'bold')), sg.InputText(sigma_guess_pop, size = (9,1), key = 'sigma_guess_pop', font = ('', default_size)), sg.Text('Redshift guess (z):', font = ('', default_size, 'bold')), sg.InputText(z_pop, size = (8,1), key = 'ppxf_z_pop', font = ('', default_size))],
+        [sg.Checkbox('Fix stellar kin. from kinematics', key = 'ppxf_pop_fix', default = ppxf_pop_fix, font = ('', default_size, 'bold'), enable_events=True, tooltip='Activate the Stars and Gas kinematics task to fix the stellar moments'), sg.Checkbox('Fit emission corrected spec. from kinematics', key = 'ppxf_use_emission_corrected_from_kin', default = ppxf_use_emission_corrected_from_kin, font = ('', default_size, 'bold'), enable_events=True, tooltip='Activate the Stars and Gas kinematics task to fit the emission corrected spectra here')],
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Fitting stars and gas together', "RADIOPOP", key = 'gas_pop', default = pop_with_gas, font = ('', default_size, 'bold')), sg.Radio('Fitting only stars',"RADIOPOP", key = 'no_gas_pop', default = pop_without_gas, font = ('', default_size, 'bold'))],
@@ -1530,6 +1698,21 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     print ('*** Population parameters window open. The main panel will be inactive until you close the window ***')
     ppxf_pop_window = open_subwindow('pPXF Population parameters', ppxf_pop_layout, zm=zm)
     misc.enable_hover_effect(ppxf_pop_window)
+    
+    use_emcorr = ppxf_use_emission_corrected_from_kin
+    fix_kin = ppxf_pop_fix
+
+    # checking parameters 
+    if use_emcorr:
+        ppxf_pop_window['ppxf_z_pop'].update(disabled=True)
+        ppxf_pop_window['no_gas_pop'].update(value=True, disabled=True)
+        ppxf_pop_window['gas_pop'].update(disabled=True)
+        ppxf_pop_window['ppxf_pop_dust_gas'].update(value=False, disabled=True)
+        ppxf_pop_window['ppxf_pop_tie_balmer'].update(value=False, disabled=True)
+
+    if fix_kin:
+        ppxf_pop_window['sigma_guess_pop'].update(disabled=True)
+
     while True:
 
         ppxf_pop_event, ppxf_pop_values = ppxf_pop_window.read()
@@ -1537,6 +1720,47 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         if ppxf_pop_event == sg.WIN_CLOSED:
             break
 
+
+
+        # -----------------------------------------------------------------
+        # 1. Updating and deactivating parameters NOT needed with the option "Fit the emission corrected spectra from kinematics"
+        # -----------------------------------------------------------------
+        if ppxf_pop_event == 'ppxf_use_emission_corrected_from_kin':
+            use_emcorr = ppxf_pop_values['ppxf_use_emission_corrected_from_kin']
+
+            # Aggiorna redshift a 0 e blocca la casella se attivo
+            ppxf_pop_window['ppxf_z_pop'].update(disabled=use_emcorr)
+
+            # Attiva "Fitting only stars" e disabilita i Radio relativi
+            ppxf_pop_window['no_gas_pop'].update(value=True, disabled=use_emcorr)
+            ppxf_pop_window['gas_pop'].update(disabled=use_emcorr)
+            
+            ppxf_pop_window['ppxf_pop_dust_gas'].update(value=False, disabled=use_emcorr)
+            ppxf_pop_window['ppxf_pop_tie_balmer'].update(value=False, disabled=use_emcorr)
+
+        # -----------------------------------------------------------------
+        # 2. Updating and deactivating parameters NOT needed with the option "Fix stellar kinematics from the kinematics task"
+        # -----------------------------------------------------------------
+        if ppxf_pop_event == 'ppxf_pop_fix':
+            fix_kin = ppxf_pop_values['ppxf_pop_fix']
+
+            # Aggiorna sigma_guess a 0 e blocca la casella se attivo
+            ppxf_pop_window['sigma_guess_pop'].update(disabled=fix_kin)
+
+        # -----------------------------------------------------------------
+        # 3. Updating and deactivating parameters NOT needed with the two above options activated
+        # -----------------------------------------------------------------
+        use_emcorr = ppxf_pop_values.get('ppxf_use_emission_corrected_from_kin', False)
+        fix_kin = ppxf_pop_values.get('ppxf_pop_fix', False)
+
+        if use_emcorr:
+            ppxf_pop_window['ppxf_z_pop'].update(disabled=True)
+            ppxf_pop_window['no_gas_pop'].update(value=True, disabled=True)
+            ppxf_pop_window['gas_pop'].update(disabled=True)
+        if fix_kin:
+            ppxf_pop_window['sigma_guess_pop'].update(disabled=True)
+            
+                
         ppxf_pop_want_to_mask = ppxf_pop_values['ppxf_pop_want_to_mask']
         ppxf_pop_dust_stars = ppxf_pop_values['ppxf_pop_dust_stars']
         ppxf_pop_dust_gas = ppxf_pop_values['ppxf_pop_dust_gas']
@@ -1547,7 +1771,9 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         ssp_model_ppxf = ppxf_pop_values['ssp_model_ppxf']
         interp_model_ppxf = ppxf_pop_values['interp_model_ppxf']
         ppxf_pop_save_spectra = ppxf_pop_values['ppxf_pop_save_spectra']
-
+        ppxf_pop_fix = ppxf_pop_values['ppxf_pop_fix']
+        ppxf_use_emission_corrected_from_kin = ppxf_pop_values['ppxf_use_emission_corrected_from_kin']
+        
         if ppxf_pop_want_to_mask:
             try:
                 ppxf_pop_mask_ranges_str = ppxf_pop_values['ppxf_pop_mask_ranges']
@@ -1650,12 +1876,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
             break
 
         if ppxf_pop_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_stellar_pop.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("populations")
 
     ppxf_pop_window.close()
 
@@ -1668,7 +1889,6 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 z_pop = z_pop,
                 pop_with_gas = pop_with_gas,
                 pop_without_gas = pop_without_gas,
-                fit_components = fit_components,
                 ppxf_pop_dust_stars = ppxf_pop_dust_stars,
                 ppxf_pop_dust_gas = ppxf_pop_dust_gas,
                 ppxf_pop_tie_balmer = ppxf_pop_tie_balmer,
@@ -1704,7 +1924,9 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 interp_model_ppxf = interp_model_ppxf,
                 lick_ssp_models_ppxf = lick_ssp_models_ppxf,
                 interp_modes_ppxf = interp_modes_ppxf,
-                ppxf_pop_save_spectra = ppxf_pop_save_spectra
+                ppxf_pop_save_spectra = ppxf_pop_save_spectra,
+                ppxf_pop_fix = ppxf_pop_fix,
+                ppxf_use_emission_corrected_from_kin = ppxf_use_emission_corrected_from_kin
                 )
 
     return params

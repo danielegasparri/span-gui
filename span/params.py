@@ -212,7 +212,6 @@ class SpectraParams:
     lambda_units_template_crosscorr_nm: bool = False
     lambda_units_template_crosscorr_a: bool = True
     lambda_units_template_crosscorr_mu: bool = False
-
     wave_interval_corr: np.ndarray = field(init=False)
     vel_interval_corr: np.ndarray = field(init=False)
     z_interval_corr: np.ndarray = field(init=False)
@@ -220,7 +219,6 @@ class SpectraParams:
     xcorr_limit_wave_range: bool = False
     xcorr_vel_step: float = 5
     xcorr_z_step: float = 0.001
-
     template_crosscorr: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "template_emiles.dat"))
 
     # Sigma Velocity Parameters
@@ -238,13 +236,11 @@ class SpectraParams:
     resolution_mode_spec_sigma_FWHM: bool = False
     resolution_mode_temp_sigma_R: bool = False
     resolution_mode_temp_sigma_FWHM: bool = True
-    
     resolution_spec: int = 5000
     resolution_template: int = 2.51
     low_wave_sigma: float = 8400
     high_wave_sigma: float = 8900
-    band_sigma: np.ndarray = field(default_factory=lambda: np.array([8440, 8720])) #need to define here because it can be also CaT, Halpha... and then it cannot be linked to any self.parameter
-
+    band_sigma: np.ndarray = field(default_factory=lambda: np.array([8440, 8720]))
     template_sigma: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "templates", "emiles_template_extended_younger.dat"))
 
     # Equivalent Width Parameters
@@ -283,16 +279,16 @@ class SpectraParams:
     dop_correction_lick: bool = True
 
     # Fit Lines Default Values
-    emission_line: bool = False
-    low_wave_fit: float = 8450
-    high_wave_fit: float = 8700
+    emission_line: bool = True
+    low_wave_fit: float = 4800
+    high_wave_fit: float = 5500
     y0: float = 1.0
     x0: float = 8500
     a: float = -0.8
     sigma: float = 0.5
     m: float = 0.1
     c: float = 1.0
-    cat_band_fit: bool = True
+    cat_band_fit: bool = False
     usr_fit_line: bool = False
     wave_interval_fit: np.ndarray = field(init=False)  # in __post_init__
     guess_param: list = field(init=False)  # in __post_init__
@@ -303,7 +299,19 @@ class SpectraParams:
     index_ca2: list = field(default_factory=lambda: [8474, 8484, 8563, 8577, 8522, 8562])
     index_ca3: list = field(default_factory=lambda: [8619, 8642, 8700, 8725, 8642, 8682])
     wave_limits_cat: np.ndarray = field(default_factory=lambda: np.array([8440, 8720]))
-
+    lf_profile: str = 'gauss'
+    lf_sign: str = 'emission'
+    lf_ncomp_mode: str = 'auto'
+    lf_ncomp: int = 1
+    lf_max_components: int = 3
+    lf_min_prom_sigma: float = 10
+    lf_sigma_inst: float | None = None
+    lf_do_bootstrap: bool = False
+    lf_Nboot: int = 100              
+    lf_baseline_mode: str = 'auto'
+    lf_perc_em: float = 15.0
+    lf_perc_abs: float = 85.0
+    lf_bin_width_A: float = 50.0
 
     # PPXF Kinematics Default Parameters
     kin_stars_templates: list = None
@@ -336,12 +344,10 @@ class SpectraParams:
     ppxf_kin_custom_lib: bool = False
     ppxf_kin_lib_folder: str = field(default_factory=lambda: os.path.join(BASE_DIR, "spectralTemplates", "EMILES_BASTI_BASE_KU_FITS"))
     ppxf_kin_custom_temp_suffix: str = '*Eku1.30*.fits'
-
     ppxf_kin_generic_lib: bool = False
     ppxf_kin_generic_lib_folder: str = field(default_factory=lambda: os.path.join(BASE_DIR, "spectralTemplates", "EMILES_BASTI_BASE_KU_FITS"))
     ppxf_kin_FWHM_tem_generic: float = 2.51
     ppxf_kin_fixed_kin: bool = False
-
     ppxf_kin_tie_balmer: bool = False
     ppxf_kin_dust_stars: bool = False
     ppxf_kin_dust_gas: bool = False
@@ -364,7 +370,9 @@ class SpectraParams:
     ppxf_kin_metal_rich_poor: bool = False
     ppxf_kin_two_templates: bool = False
     ppxf_kin_mode: str = 'old_young'
-
+    kin_emission_corrected_flux: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
+    bestfit_wavelength_kin: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
+    kin_stars_values: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
 
     # PPXF Stellar Population Parameters
     pop_with_gas: bool = True
@@ -374,16 +382,14 @@ class SpectraParams:
     res_pop: float = 3.5
     z_pop: float = 0.0
     sigma_guess_pop: float = 100.0
-    fit_components: str = 'with_gas'
+    fit_components: str = field(init=False)    
     with_errors: bool = False
     regul_err: float = 0.02
     additive_degree: int = -1
     multiplicative_degree: int = 7
     ppxf_pop_tie_balmer: bool = False
     markers_ppxf: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xshooter', 'sMILES'])
-
     stellar_library: str = 'emiles'
-
     ppxf_pop_noise: float = 0.0163
     ppxf_min_age: float = 0.0
     ppxf_max_age: float = 16.0
@@ -401,7 +407,7 @@ class SpectraParams:
     ppxf_best_param: bool = False
     ppxf_best_noise_estimate: bool = False
     ppxf_frac_chi: float = 0.30
-    ppxf_pop_convolve: bool = False
+    ppxf_pop_convolve: bool = True
     ppxf_pop_dust_stars: bool = False
     ppxf_pop_dust_gas: bool = False
     ppxf_pop_want_to_mask: bool = False
@@ -418,7 +424,9 @@ class SpectraParams:
     interp_modes_ppxf: list = field(default_factory=lambda: ['griddata', 'GPR', 'MCMC'])
     interp_model_ppxf: str = 'GPR'
     ppxf_pop_save_spectra: bool = True
-
+    ppxf_pop_fix: bool = False
+    ppxf_use_emission_corrected_from_kin: bool = False
+    
     # Sigma Coeff Parameters
     sigma_coeff: bool = False
     stellar_spectra_coeff_file: str = field(default_factory=lambda: os.path.join(BASE_DIR, "example_files", "sample_templates.txt"))
@@ -488,7 +496,6 @@ class SpectraParams:
     ifs_auto_pa_q: bool = False
     ifs_auto_center: bool = False
 
-
     # Plot maps default parameters    
     fits_path: str = ''
     txt_path: str = ''
@@ -506,7 +513,6 @@ class SpectraParams:
     plot_maps_gaussian_smooth_value: float = 1.0 
     plot_maps_radial_profiles: bool = False
     plot_maps_colormap: str = 'sauron'
-
 
     # Spectra Pre-processing Default Parameters
     cropping_spectrum: bool = False
@@ -595,6 +601,7 @@ class SpectraParams:
             self.guess_param = [self.y0, self.x0, self.a, self.sigma, self.m, self.c]
             self.age_range_array = np.array([self.ppxf_min_age, self.ppxf_max_age])
             self.met_range_array = np.array([self.ppxf_min_met, self.ppxf_max_met])
+            self.fit_components = str('with_gas') if self.pop_with_gas else str('without_gas')  
 
         except Exception:
             self.wave_limits = np.array([])

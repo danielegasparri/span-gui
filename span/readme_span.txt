@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
 # SPAN user manual
 
@@ -340,8 +340,8 @@ Here is a description of any task:
 
 
 3. **Spectral analysis:**  
-    - Blackbody fitting = performs a fit of the spectrum with Planck's blackbody equation and gives the temperature estimation. It works with any type of spectra but it performs better for stellar spectra, with wide (at least 5000 A) wavelength range;
-    b)  Cross-correlation = performs a cross-correlation of the spectra with any template. You can smooth the template to a velocity dispersion value in order to improve the cross-correlation and should identify a narrow region of the spectrum to be cross-correlated (tip: the Calcium triplet lines are the best features in the NIR);
+    - Blackbody fitting = performs a fit of the spectrum with Planck's blackbody equation and gives the color temperature estimation. It works with any type of spectra but it performs better for stellar spectra, with wide (at least 5000 A) wavelength range;
+    -  Cross-correlation = performs a cross-correlation of the spectra with any template. You can smooth the template to a velocity dispersion value in order to improve the cross-correlation and should identify a narrow region of the spectrum to be cross-correlated (tip: the Calcium triplet lines are the best features in the NIR);
     - Velocity dispersion = performs the measurement of the velocity dispersion of the spectra with a rough (but fats) fit it with any template. Some pre-loaded bands in the visible and NIR are shown but you can input any band. The routine succeeds with strong features (the CaT is the best). It is a little rough but very fast and gives reasonably accurate results;
     - Line-strength analysis = performs the equivalent width measurement of the spectra, with a single index, with a list of indices or with the Lick/IDS system. The results are provided in Angstrom. MonteCarlo simulations are run for the uncertainties estimation. The calculation of the Lick/IDS indices can be personalized in many ways: you can correct for the emission, for the velocity dispersion and the recession velocity. You can also perform a linear interpolation with the SSP models of Thomas et al. 2010, Xshooter, MILES and sMILES to retrieve the age, metallicity and alpha-enhancement (not available for the Xshooter models) of the stellar populations via linear interpolation or with machine-learning pre-trained models (Gaussian Process Regression). From the "Line-strength parameters" window, it is possible also to perform the "Calculate velocity dispersion coefficients" task. This task broadens a sample of SSP spectra up to 400 km/s and calculates the deviation of the equivalent width of the indices contained in the index file provided. It works only by pressing the "Compute!" button and creates a text file with a third order polynomial curve that fits the behavior of the broadened index (or indices). The "Correct the line-strength for velocity dispersion" task performs the correction of the equivalent widths based on the coefficients estimated with the "Calculate velocity dispersion coefficients" task. It works only by pressing the "Correct!" button and requires the raw equivalent width measurements stored in the ASCII file generated previously, with the same indices in the same order to that considered in the "Calculate velocity dispersion coefficients". The output files of the "Line-strength analysis", "Calculate velocity dispersion coefficients" and "Velocity dispersion" are ready to be used for this task, if we are considering the same spectra and indices;
     - Line(s) fitting = performs the fitting of a line in the inserted wavelength range using a combination of a Gaussian function to model the spectral line and straight line for the continuum. If "CaT lines" is selected, the task will perform an automatic fitting of the Calcium Triplet lines, assuming they have been previously corrected for redshift and/or Doppler velocity;
@@ -400,5 +400,5 @@ Please, report any bug or comment to daniele.gasparri@gmail.com
 Have fun!
 
 Daniele Gasparri  
-2025-11-02  
+2025-12-02  
 Greetings from the Atacama desert!

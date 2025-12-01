@@ -170,12 +170,7 @@ def plot_data_window(BASE_DIR, layout):
                 stm.plot_data(file_path, x_column, y_columns, x_label, y_label, marker_color, marker_size, plot_size, x_label_size, y_label_size, x_tick_size, y_tick_size, legend, add_error_bars_x, add_error_bars_y, x_err, y_err, True, enable_linear_fit, x_log_scale, y_log_scale, x_range_min, x_range_max, y_range_min, y_range_max)
 
         if plot_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_me_plot.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("plot_data")
 
     plot_window.close()
 
@@ -788,12 +783,7 @@ def plot_maps_window(BASE_DIR, layout, params):
                 sg.popup("Please load files before saving.")
 
         elif map_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_maps.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("plot_maps")
 
         elif map_event == "Exit":
             break
@@ -1385,12 +1375,7 @@ def long_slit_extraction(BASE_DIR, layout, params):
                 sg.popup_error("Please correct the spectrum and find the spectroscopic trace first.")
 
         if spec_extr_event == 'Help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_2d_spec.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("longslit_extraction")
 
     spec_extr_window.close()
 
@@ -2251,12 +2236,7 @@ def datacube_extraction(params):
 
         #showing the help file
         if cube_ifs_event == 'I need help':
-            f = open(os.path.join(BASE_DIR, "help_files", "help_3d_spec.txt"), 'r')
-            file_contents = f.read()
-            if layout == layouts.layout_android:
-                sg.popup_scrolled(file_contents, size=(120, 30))
-            else:
-                sg.popup_scrolled(file_contents, size=(100, 40))
+            stm.popup_markdown("datacube_extraction")
 
     cube_ifs_window.close()
 

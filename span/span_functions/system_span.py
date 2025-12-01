@@ -77,6 +77,7 @@ from datetime import datetime
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
+HELP_DIR = os.path.join(BASE_DIR, "help_files")
 
 #0) Simple function to check if the spectra are linearly sampled in wavelength, as required by SPAN
 def is_spec_linear(wavelength, tol=2e-4):
@@ -1860,7 +1861,7 @@ def quick_snr(wl, fl):
 # Simple function to open the PDF manual
 def open_manual():
     try:
-        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.2.pdf")
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.3.pdf")
 
         if sys.platform.startswith("darwin"):  # macOS
             subprocess.run(["open", manual_path])
@@ -2133,3 +2134,233 @@ def save_multi_maps_fits(save_path, x, y, bin_id, result_df, quantities,
         hdus.append(hq)
 
     fits.HDUList(hdus).writeto(save_path, overwrite=True)
+
+
+
+
+# Functions to visualize corretcly the help files in the GUI. They are intended only for making nicer the text display.
+def parse_markdown_lines(md_text):
+    """
+    Convert Markdown into a list of logical lines.
+    Each logical line is a list of (text, style) segments,
+    where style can be: 'normal', 'bold', 'title', 'subtitle'.
+    """
+    def split_bold(text):
+        """Split a string into (text, style) segments with bold support."""
+        # Remove inline code markers `...`
+        text = re.sub(r"`([^`]*)`", r"\1", text)
+
+        segments = []
+        pos = 0
+        for m in re.finditer(r"\*\*([^*]+)\*\*", text):
+            if m.start() > pos:
+                segments.append((text[pos:m.start()], "normal"))
+            segments.append((m.group(1), "bold"))
+            pos = m.end()
+
+        if pos < len(text):
+            segments.append((text[pos:], "normal"))
+
+        if not segments:
+            segments.append((text, "normal"))
+
+        return segments
+
+    lines = md_text.split("\n")
+    logical_lines = []
+
+    for line in lines:
+        s = line.rstrip()
+
+        # Blank line → empty logical line
+        if s.strip() == "":
+            logical_lines.append([])
+            continue
+
+        # ==== TITLES ====
+        if s.startswith("# "):  # H1
+            title = s[2:].upper()
+            logical_lines.append([(title, "title")])
+            logical_lines.append([("─" * len(title), "title")])
+            logical_lines.append([])
+            continue
+
+        if s.startswith("## "):  # H2
+            title = s[3:].capitalize()
+            logical_lines.append([(title, "subtitle")])
+            logical_lines.append([("─" * len(title), "subtitle")])
+            logical_lines.append([])
+            continue
+
+        if s.startswith("### "):  # H3
+            title = s[4:].capitalize()
+            logical_lines.append([(title, "bold")])
+            logical_lines.append([("-" * len(title), "normal")])
+            logical_lines.append([])
+            continue
+
+        if s.startswith("#### "):  # H4
+            title = "• " + s[5:]
+            logical_lines.append([(title, "bold")])
+            logical_lines.append([])
+            continue
+
+        # ==== NUMERIC LISTS: 1. text ====
+        match_num = re.match(r"^(\d+\.)\s+(.*)$", s)
+        if match_num:
+            prefix = match_num.group(1) + " "
+            content = match_num.group(2)
+            segments = [(prefix, "normal")] + split_bold(content)
+            logical_lines.append(segments)
+            continue
+
+        # ==== bullet lists: - text ====
+        if s.strip().startswith("- "):
+            bullet_text = "• " + s.strip()[2:]
+            segments = split_bold(bullet_text)
+            logical_lines.append(segments)
+            continue
+
+        # ==== generic line with possible bold ====
+        segments = split_bold(s)
+        logical_lines.append(segments)
+
+    return logical_lines
+
+
+def popup_markdown_file(md_path, title="Help"):
+    """
+    Render Markdown with real bold using Tkinter tags.
+    The text area expands when the window is resized and
+    the font size can be increased/decreased with buttons.
+    """
+    try:
+        with open(md_path, "r", encoding="utf-8") as f:
+            md_text = f.read()
+    except Exception as e:
+        sg.popup_error(f"Could not open help file:\n{md_path}\n\n{e}")
+        return
+
+    # List of logical lines: each line is a list of (text, style) segments
+    logical_lines = parse_markdown_lines(md_text)
+
+    # Base font settings
+    base_font_family = "Helvetica"
+    base_font_size = 11   # initial font size
+
+    layout = [
+        [sg.Text(title, font=(base_font_family, 14, "bold"), expand_x=True)],
+        [sg.Multiline(
+            "",
+            size=(100, 30),
+            font=(base_font_family, base_font_size),
+            disabled=False,          # needed for word-wrap
+            autoscroll=False,
+            horizontal_scroll=False,
+            key="-ML-",
+            expand_x=True,           # expand with the window in X
+            expand_y=True            # expand with the window in Y
+        )],
+        [
+            sg.Button("A-", key="-FONT_DOWN-"),
+            sg.Button("A+", key="-FONT_UP-"),
+            sg.Push(),
+            sg.Button("Close", size=(10, 1))
+        ],
+    ]
+
+    win = sg.Window(
+        title,
+        layout,
+        modal=True,
+        finalize=True,
+        resizable=True
+    )
+
+    ml_elem = win["-ML-"]
+    ml = ml_elem.Widget  # underlying tk.Text widget
+
+    # Some PySimpleGUI versions need this explicit call
+    try:
+        ml_elem.expand(True, True)
+    except Exception:
+        pass
+
+    def apply_font_sizes(size: int):
+        """Update fonts for normal text, bold, title, and subtitle."""
+        ml.configure(font=(base_font_family, size))
+        ml.tag_configure("bold", font=(base_font_family, size, "bold"))
+        ml.tag_configure("title", font=(base_font_family, size + 2, "bold"))
+        ml.tag_configure("subtitle", font=(base_font_family, size + 1, "bold"))
+
+    # Define initial font tags
+    apply_font_sizes(base_font_size)
+
+    # Insert parsed lines with tags
+    for line_segments in logical_lines:
+        if not line_segments:
+            # blank logical line
+            ml.insert("end", "\n")
+            continue
+
+        # insert all segments on the same logical line
+        for text, style in line_segments:
+            if style == "normal":
+                ml.insert("end", text)
+            else:
+                ml.insert("end", text, style)
+
+        # newline at the end of the logical line
+        ml.insert("end", "\n")
+
+    # Disable editing after writing everything
+    ml_elem.update(disabled=True)
+
+    current_size = base_font_size
+
+    # Event loop with font size controls
+    while True:
+        event, _ = win.read()
+        if event in (sg.WINDOW_CLOSED, "Close"):
+            break
+        elif event == "-FONT_UP-":
+            if current_size < 24:          # reasonable upper limit
+                current_size += 1
+                apply_font_sizes(current_size)
+        elif event == "-FONT_DOWN-":
+            if current_size > 8:           # reasonable lower limit
+                current_size -= 1
+                apply_font_sizes(current_size)
+
+    win.close()
+
+
+def popup_markdown(key):
+    """
+    Open the Markdown help file associated to the given key.
+    """
+    if key not in HELP_FILES:
+        sg.popup_error(f"No help available for key '{key}'")
+        return
+    
+    fname, title = HELP_FILES[key]
+    md_path = os.path.join(HELP_DIR, fname)
+    popup_markdown_file(md_path, title)
+
+
+
+HELP_FILES = {
+    "read_me":("readme_span.txt", "SPAN – General Help"),
+    "longslit_extraction":("help_2d_spec.txt", "Long-slit extraction"),
+    "datacube_extraction":("help_3d_spec.txt", "Datacube extraction"),
+    "kinematics":("help_kinematics.txt", "Stars and Gas Kinematics"),
+    "populations":("help_stellar_pop.txt", "Stellar Populations and SFH"),
+    "plot_maps":("help_maps.txt", "Plot maps"),
+    "plot_data":("help_me_plot.txt", "Plot data"),
+    "spec_analysis":("help_me_spec_analysis.txt", "Spec analysis"),
+    "lines_fitting":("lines_fitting.txt", "Line(s) fitting"),
+    "linestrength":("linestrength.txt", "Line-strength analysis"),
+    "spec_manipulation":("need_help_spec_proc.txt", "Spectra manipulation"),
+    "quick_start":("quick_start.txt", "Quick start"),
+    "tips_tricks":("tips_and_tricks.txt", "Tips and tricks"),
+}

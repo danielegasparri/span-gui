@@ -50,6 +50,10 @@ try:
 except Exception:
     MouseButton = None
 
+try:
+    from span_modules import layouts
+except Exception:
+    from . import layouts
 
 @dataclass
 class PreviewInteractor:
@@ -121,6 +125,13 @@ class PreviewInteractor:
             fig.canvas.mpl_connect('key_press_event', self._on_key_press),
         ]
 
+        # Use provided S/N function or default internal provider.
+        self.get_snr = self.get_snr or self._snr_provider
+
+    def _snr_provider(self, lam_x: float):
+        """Default S/N provider used by the preview HUD."""
+        return snr_provider(lam_x, self.ax, self)
+    
     # === Gaussian model ===
     @staticmethod
     def _gauss(x, amp, mu, sigma, c0, c1):
@@ -1381,13 +1392,25 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
     - single log10(λ) → linear-Å formatter applied on all OS.
     """
     # Common axis formatter (x stores log10(λ), labels show linear Å)
+
+    if layout == layouts.layout_windows:
+        layout_name = 'windows'
+    elif layout == layouts.layout_linux:
+        layout_name = 'linux'
+    elif layout == layouts.layout_macos:
+        layout_name = 'macos'
+    elif layout == layouts.layout_android:
+        layout_name = 'android'
+    else:
+        layout_name = 'default'
+        
     def _log_to_lin(x, pos):
         try:
             return f"{10**x:.0f}"
         except Exception:
             return ""
             
-    if layout == 'linux' or layout =='windows':
+    if layout_name == 'linux' or layout_name =='windows':
         # --- Base visual parameters (tuned for your plot) ---
         dpi = 100
         BASE_W_PX, BASE_H_PX = 900, 420   # reference pixels used for scaling
@@ -1469,11 +1492,11 @@ def create_preview(layout, window, preview_key='-CANVAS-'):
 
     # ---- macOS / Android / default: pack() embedding + responsive scaling ----
     else:
-        if layout == 'macos':
+        if layout_name == 'macos':
             fig = Figure(figsize=(6.6, 3.5), dpi=100)
             ax = fig.add_subplot(111)
             fig.subplots_adjust(left=0.11, right=0.98, top=0.93, bottom=0.16)
-        elif layout == 'android':
+        elif layout_name == 'android':
             fig = Figure(figsize=(8.3, 3.3), dpi=100)
             ax = fig.add_subplot(111)
             fig.subplots_adjust(left=0.11, right=0.98, top=0.92, bottom=0.16)

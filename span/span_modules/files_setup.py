@@ -38,7 +38,6 @@ except ModuleNotFoundError: #local import if executed as package
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
     from span.span_functions import linestrength as ls
 
-
 import numpy as np
 import pandas as pd
 import os
@@ -548,3 +547,63 @@ def create_stellar_population_files(result_ppxf_pop_data_dir, spectra_list_name,
         pop_files["ssp_lick_parameters"] = ssp_param_file_ppxf
 
     return pop_files
+
+
+
+def create_linefit_output_files(result_linefit_dir: str, spectra_list_name: str, timestamp: str, spectra_number: int, spec_names_nopath):
+    """
+    Prepare output for custom line-fitting.
+    - components_file: ASCII file
+
+    """
+
+    os.makedirs(result_linefit_dir, exist_ok=True)
+
+    components_file = os.path.join(result_linefit_dir, f"{spectra_list_name}_linefit_components_{timestamp}.dat")
+
+    # --- COMPONENTS header  ---
+    header_cols = [
+        "spec_idx", "spec_name",
+        "window_min_A", "window_max_A",
+        "profile", "sign", "ncomp_used",
+        "chi2nu", "peaks_detected",
+        "comp_idx",
+        "center_A", "e_center_A",
+        "sigma_A", "e_sigma_A",
+        "sigma_kms", "e_sigma_kms",
+        "flux", "e_flux",
+        "norm_factor"
+    ]
+    with open(components_file, 'w') as f:
+        f.write(" ".join(header_cols) + "\n")
+
+    return components_file
+
+
+
+
+def create_cat_output_files(result_cat_dir: str, spectra_list_name: str, timestamp: str, spectra_number: int, spec_names_nopath):
+    """
+    Prepare the output files for the CaT line-fitting task.
+    Single 'components' file in long format: one row per CaT line (3 per spectrum).
+    """
+
+    os.makedirs(result_cat_dir, exist_ok=True)
+
+    components_file = os.path.join(result_cat_dir, f"{spectra_list_name}_cat_components_{timestamp}.dat")
+
+    # Write a clean header line (space-separated, no index)
+    header_cols = [
+        "spec_idx", "spec_name",
+        "line_id",
+        "center_A", "e_center_A",
+        "sigma_A", "e_sigma_A",
+        "sigma_kms", "e_sigma_kms",
+        "flux", "e_flux",
+        "EW", "e_EW",
+        "norm_factor" 
+    ]
+    with open(components_file, "w") as f:
+        f.write(" ".join(header_cols) + "\n")
+
+    return components_file

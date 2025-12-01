@@ -1,8 +1,8 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
 
-# Quick start #
+# Quick start
 
 To get started, press the "Load!" button in the "Prepare and Load Spectra" frame to load the example files.
 

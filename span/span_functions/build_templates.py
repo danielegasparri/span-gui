@@ -277,169 +277,179 @@ def plot_alpha_weights(weights, alpha_grid, metal_grid, lg_age=True, nodots=Fals
 ###############################################################################
 # Class for the (E)MILES models (no alpha dimension)
 ###############################################################################
+
+
 class miles:
     def __init__(self, pathname, velscale, FWHM_gal=None, FWHM_tem=2.51,
-                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R = None):
+                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R=None):
         """
         Class handling (E)MILES SSP templates without alpha dimension.
         """
-        # Find all files matching the provided pattern
+        # Collect files
         files = glob.glob(pathname)
         if not files:
             raise FileNotFoundError(f"No files found matching pattern: {pathname}")
 
-        # Extract age and metallicity for each file
+        # Extract (age, Z)
         age_metal_list = [age_metal_miles(f) for f in files]
         all_ages = np.array([am[0] for am in age_metal_list])
         all_metals = np.array([am[1] for am in age_metal_list])
-
-        # Identify unique ages and metals
         ages = np.unique(all_ages)
         metals = np.unique(all_metals)
         n_ages = len(ages)
         n_metal = len(metals)
 
-        # Create a dictionary for direct access: (age, metal) -> filename
-        # This avoids repeated list.index() calls which can be slow
-        file_map = {}
-        for i, f in enumerate(files):
-            key = (all_ages[i], all_metals[i])
-            file_map[key] = f
+        # Map (age, Z) -> filename
+        file_map = {(all_ages[i], all_metals[i]): f for i, f in enumerate(files)}
 
-        # Read one file to get initial wavelength info
+        # Read one file to get initial wavelength info (full, uncut)
         with fits.open(files[0]) as hdu:
-            ssp = hdu[0].data
-            header = hdu[0].header
-        lam = header['CRVAL1'] + np.arange(header['NAXIS1']) * header['CDELT1']
+            ssp0 = np.asarray(hdu[0].data, dtype=np.float64)
+            header0 = hdu[0].header
+        lam_full = header0['CRVAL1'] + np.arange(header0['NAXIS1']) * header0['CDELT1']
 
-        # Cutting the templates to +- 0.02% of the wave_range inserted
+        # --- Normalisation band defined on the FULL linear grid (Opzione A) ---
+        band_full = None
+        if norm_range is not None:
+            band_full_mask = (norm_range[0] <= lam_full) & (lam_full <= norm_range[1])
+            band_full = band_full_mask if np.any(band_full_mask) else None
+
+        # --- Cut templates around the requested wave_range (±2%) ---
         wave_min, wave_max = wave_range
         delta = 0.02 * (wave_max - wave_min)
         cut_min = wave_min - delta
         cut_max = wave_max + delta
-        mask = (lam >= cut_min) & (lam <= cut_max)
-        lam_cut = lam[mask]
-        ssp_cut = ssp[..., mask]
-
-        lam = lam_cut
-        ssp = ssp_cut
+        cut_mask = (lam_full >= cut_min) & (lam_full <= cut_max)
+        lam = lam_full[cut_mask]
 
         lam_range_temp = lam[[0, -1]]
 
-        # Log-rebin to the chosen velocity scale
-        ssp_new, ln_lam_temp = util.log_rebin(lam_range_temp, ssp, velscale=velscale)[:2]
+        # Log-rebin a reference array just to size the containers
+        ssp_new_ref, ln_lam_temp = util.log_rebin(lam_range_temp, np.ones_like(lam), velscale=velscale)[:2]
         lam_temp = np.exp(ln_lam_temp)
 
-        # Define normalization band if needed
-        if norm_range is not None:
-            band = (norm_range[0] <= lam_temp) & (lam_temp <= norm_range[1])
-
         # Prepare arrays
-        templates = np.empty((ssp_new.size, n_ages, n_metal))
+        templates = np.empty((ssp_new_ref.size, n_ages, n_metal))
         age_grid = np.empty((n_ages, n_metal))
         metal_grid = np.empty((n_ages, n_metal))
         flux = np.empty((n_ages, n_metal))
 
-
-        # Considering three possibilities: Resolution in FWHM, in R and in MUSE LSF
+        # --- Build (possibly variable) convolution kernel ---
+        # Use the CUT wavelength grid 'lam' for spectral-resolution matching downstream
         if FWHM_gal is not None:
-            if isinstance(FWHM_gal, (int, float)):
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+            if isinstance(FWHM_gal, (int, float, np.floating)):
+                # Scalar FWHM for the galaxy; template native resolution is FWHM_tem
+                FWHM_dif = np.sqrt(np.maximum(FWHM_gal**2 - FWHM_tem**2, 0.0))
+                sigma = FWHM_dif / 2.355 / header0['CDELT1']   # in pixels (on the ORIGINAL sampling)
             elif R is not None:
-                FWHM_gal = lam/R #FWHM_gal[mask]
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+                FWHM_gal_vec = lam / R
+                FWHM_dif = np.sqrt(np.maximum(FWHM_gal_vec**2 - FWHM_tem**2, 0.0))
+                sigma = FWHM_dif / 2.355 / header0['CDELT1']   # vector in pixels
             else:
-                FWHM_gal = 5.866e-8*lam**2-9.187e-4*lam+6.040
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
+                # MUSE LSF approximation as in your code
+                FWHM_gal_vec = 5.866e-8 * lam**2 - 9.187e-4 * lam + 6.040
+                FWHM_dif = np.sqrt(np.maximum(FWHM_gal_vec**2 - FWHM_tem**2, 0.0))
+                sigma = FWHM_dif / 2.355 / header0['CDELT1']   # vector in pixels
+        else:
+            sigma = None
 
-        # Sort and process templates by age and metallicity
         warn_conv_failed = False
+
+        # --- Process templates ---
         for j, age in enumerate(ages):
             for k, met in enumerate(metals):
-                # Retrieve the correct file via our dictionary
                 fname = file_map.get((age, met), None)
                 if fname is None:
                     raise ValueError(f"Missing template for age={age}, metallicity={met}")
+
                 with fits.open(fname) as hdu:
-                    ssp_data = hdu[0].data
+                    ssp_full = np.asarray(hdu[0].data, dtype=np.float64)  # full spectrum
+                    hdr = hdu[0].header
 
-                #cutting the templates
-                ssp_data = ssp_data[..., mask]
+                # Cut to the fitting window
+                ssp_cut = ssp_full[cut_mask]
 
-                # Convolving
-                if FWHM_gal is not None:
-                    if np.isscalar(FWHM_gal):
-                        if sigma > 0.01:   # Skip convolution for nearly zero sigma
-                            x = np.arange(len(ssp_data))
-                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
+                # Convolution (if requested)
+                if sigma is not None:
+                    x = np.arange(ssp_cut.size)
+                    try:
+                        if np.isscalar(sigma):
+                            # Skip if effectively zero
+                            if sigma > 0.01:
+                                ssp_cut = util.varsmooth(x, ssp_cut, sigma)
+                            else:
+                                if not warn_conv_failed:
+                                    print('WARNING: Template resolution >= galaxy resolution; skipping convolution (scalar case)')
+                                    warn_conv_failed = True
                         else:
-                            if not warn_conv_failed:
-                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
-                                warn_conv_failed = True
-                    else:
-                        x = np.arange(len(ssp_data))
-                        try:
-                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
-                        except ValueError:
-                            if not warn_conv_failed:
-                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
-                                warn_conv_failed = True
+                            # Vector sigma (variable resolution)
+                            # Guard against all-zero sigma
+                            if np.any(sigma > 0.01):
+                                ssp_cut = util.varsmooth(x, ssp_cut, sigma)
+                            else:
+                                if not warn_conv_failed:
+                                    print('WARNING: Template resolution >= galaxy resolution; skipping convolution (vector case)')
+                                    warn_conv_failed = True
+                    except ValueError:
+                        if not warn_conv_failed:
+                            print('WARNING: Convolution failed; skipping (likely template resolution >= galaxy)')
+                            warn_conv_failed = True
 
-                # Log-rebin the template
-                ssp_new = util.log_rebin(lam_range_temp, ssp_data, velscale=velscale)[0]
+                # Log-rebin the CUT template to the working velocity scale
+                ssp_new = util.log_rebin(lam_range_temp, ssp_cut, velscale=velscale)[0]
 
-                # Normalize if norm_range is specified
-                if norm_range is not None:
-                    flux_val = np.mean(ssp_new[band])
-                    flux[j, k] = flux_val
-                    ssp_new /= flux_val
+                # --- Normalisation on the FULL spectrum (Option A) ---
+                if norm_range is not None and band_full is not None:
+                    # Mean over the requested band on the full, uncut spectrum
+                    flux_val = np.mean(ssp_full[band_full])
+                    # Robust fallback if band is pathological (NaN/Inf/<=0)
+                    if not np.isfinite(flux_val) or flux_val <= 0:
+                        tmp = np.median(ssp_new[np.isfinite(ssp_new)])
+                        flux_val = float(tmp) if (np.isfinite(tmp) and tmp > 0) else 1.0
+                elif norm_range is not None and band_full is None:
+                    # The requested band does not exist on the full grid → fallback
+                    tmp = np.median(ssp_new[np.isfinite(ssp_new)])
+                    flux_val = float(tmp) if (np.isfinite(tmp) and tmp > 0) else 1.0
                 else:
-                    flux[j, k] = 1.0  # Just for bookkeeping
+                    # No normalisation band requested
+                    flux_val = 1.0
 
-                # Store the processed template and grids
+                ssp_new /= flux_val
+                flux[j, k] = flux_val
+
+                # Store
                 templates[:, j, k] = ssp_new
                 age_grid[j, k] = age
                 metal_grid[j, k] = met
 
-        # Apply optional age range mask
+        # Optional age range filter
         if age_range is not None:
-            age_mask = (age_range[0] <= ages) & (ages <= age_range[1])
-            templates = templates[:, age_mask, :]
-            age_grid = age_grid[age_mask, :]
-            metal_grid = metal_grid[age_mask, :]
-            flux = flux[age_mask, :]
-            ages = ages[age_mask]
+            w = (age_range[0] <= ages) & (ages <= age_range[1])
+            templates = templates[:, w, :]
+            age_grid = age_grid[w, :]
+            metal_grid = metal_grid[w, :]
+            flux = flux[w, :]
+            ages = ages[w]
 
-        # Apply optional metal range mask
+        # Optional metallicity range filter
         if metal_range is not None:
-            metal_mask = (metal_range[0] <= metals) & (metals <= metal_range[1])
-            templates = templates[:, :, metal_mask]
-            age_grid = age_grid[:, metal_mask]
-            metal_grid = metal_grid[:, metal_mask]
-            flux = flux[:, metal_mask]
-            metals = metals[metal_mask]
+            w = (metal_range[0] <= metals) & (metals <= metal_range[1])
+            templates = templates[:, :, w]
+            age_grid = age_grid[:, w]
+            metal_grid = metal_grid[:, w]
+            flux = flux[:, w]
+            metals = metals[w]
 
-        # If no normalization range is given, do a global normalization
+        # Global normalisation if no band was specified (kept from your original logic)
         if norm_range is None:
-            flux_median = np.median(templates[templates > 0])
-            templates /= flux_median
+            flux_median = np.median(templates[np.isfinite(templates) & (templates > 0)])
+            if np.isfinite(flux_median) and flux_median > 0:
+                templates /= flux_median
 
-        # Save full arrays (before cutting wave range)
+        # Store attributes
         self.templates_full = templates
         self.ln_lam_temp_full = ln_lam_temp
         self.lam_temp_full = lam_temp
-
-        # Apply optional wavelength range
-        if wave_range is not None:
-            wave_mask = (wave_range[0] <= lam_temp) & (lam_temp <= wave_range[1])
-            ln_lam_temp = ln_lam_temp[wave_mask]
-            lam_temp = lam_temp[wave_mask]
-            templates = templates[wave_mask, :, :]
-
-        # Final attributes
         self.templates = templates
         self.ln_lam_temp = ln_lam_temp
         self.lam_temp = lam_temp

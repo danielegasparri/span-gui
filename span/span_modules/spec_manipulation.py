@@ -35,11 +35,13 @@ try: #try local import if executed as script
     from params import SpectraParams
     from span_modules import misc
     from span_modules import layouts
+    from span_functions import system_span as stm
     from span_modules.ui_zoom import open_subwindow, ZoomManager
     
 except ModuleNotFoundError: #local import if executed as package
     #GUI import
     from span.FreeSimpleGUI_local import FreeSimpleGUI as sg
+    from span.span_functions import system_span as stm
     from . import misc
     from . import layouts
     from .params import SpectraParams
@@ -827,9 +829,7 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
 
         #Help file
         if spec_event == 'I need help':
-            f = open(os.path.join(BASE_DIR, "help_files", "need_help_spec_proc.txt"), 'r')
-            file_contents = f.read()
-            sg.popup_scrolled(file_contents, size=(120, 30))
+            stm.popup_markdown("spec_manipulation")
 
         #Confirm the parameters
         if spec_event == 'Confirm':

@@ -38,12 +38,14 @@ try:#Local imports
     from span_functions import system_span as stm
     from span_functions import utilities as uti
     from span_functions import build_templates as template
+    from span_functions.emission_lines import emission_lines
 
 except ModuleNotFoundError: #local import if executed as package
     from . import spec_manipul as spman
     from . import system_span as stm
     from . import utilities as uti
     from . import build_templates as template
+    from .emission_lines import emission_lines
 
 #pPXF import
 from ppxf.ppxf import ppxf
@@ -71,7 +73,9 @@ from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 from scipy.constants import h,k,c
 from scipy.integrate import quad
-from scipy.optimize import leastsq
+from scipy.optimize import least_squares
+from scipy.special import wofz
+
 import scipy.stats
 from scipy.interpolate import griddata
 from scipy.interpolate import CubicSpline
@@ -97,6 +101,8 @@ import multiprocessing as mp
 
 from scipy import optimize, fft as spfft
 from scipy.ndimage import gaussian_filter1d
+
+from datetime import datetime
 
 import warnings
 
@@ -596,92 +602,6 @@ def measure_sigma_simple(wave_obs_A, flux_obs, spec_test_template, lambda_units_
 
 
 #*****************************************************************************************************
-# 6) Single line fitting
-def line_fitting (wavelength, flux, wave_interval, guess_param):
-
-    """
-    This function fits an emission or absorption line with a convolution of
-    a gussian function with a line, in order to account for the continuum
-    slope.
-    Input: wavelength and flux arrays of the spectrum, array containing the
-           wavelength range of the spectral that contains the line to fit ([min_wave, max_wave])
-            array containing the initial guess for the fit [y_offset, line_wave, relative_intensity,
-            sigma_gauss, slope_continuum_line, intercept_continuum_line].
-    Output: wavelength and normalised flux arrays of the spectrum within the fitted band,
-            array of the model fit, array of the best fit parameters found.
-
-    """
-
-    step = wavelength[1]-wavelength[0]
-    wave1 = min(wave_interval)
-    wave2 = max(wave_interval)
-
-    #isolating the region of interest
-    line_wave = wavelength[(wavelength >= wave1) & (wavelength <= wave2)]
-    line_flux_spec = flux[(wavelength >= wave1) & (wavelength <= wave2)]
-
-    #normalize the spectrum
-    wave_norm = line_wave[10] # guessing for now. fix it later
-    epsilon_norm = step*10
-    line_flux_spec_norm = spman.norm_spec(line_wave, line_flux_spec, wave_norm, epsilon_norm, line_flux_spec)
-
-    #fitting to the spectra
-    popt_spec, pconv_spec = curve_fit(uti.Gauss_slope, line_wave, line_flux_spec_norm, p0=guess_param)
-
-    fit = uti.Gauss_slope(line_wave, *popt_spec)
-    return line_wave, line_flux_spec_norm, fit, popt_spec
-
-
-#*****************************************************************************************************
-# 7) fitting threee gaussians to the CaT lines
-def cat_fitting (wavelength, flux):
-
-    """
-    This function fits the Calcium Trilet (CaT) lines in the NIR with
-    a convolution of three gussians with a line, in order to account for the continuum
-    slope.
-    Input: wavelength and flux arrays of the spectrum.
-    Output: wavelength and normalised flux arrays of the spectrum within the fitted band,
-            array of the model fit, array of the best fit parameters found.
-
-    """
-
-    step = wavelength[1]-wavelength[0]
-
-    wave1 = 8440
-    wave2 = 8720
-
-    #extract the line flux and wavelength arrays
-    line_wave = wavelength[(wavelength >= wave1) & (wavelength <= wave2)]
-    line_flux_spec = flux[(wavelength >= wave1) & (wavelength <= wave2)]
-
-    #normalize the spectrum
-    wave_norm = line_wave[10] # guessing for now. fix it later
-    epsilon_norm = step*10
-    line_flux_spec_norm = spman.norm_spec(line_wave, line_flux_spec, wave_norm, epsilon_norm, line_flux_spec)
-
-    #initial guesses
-    y0 = 1
-    x0 = 8500
-    a = -0.8
-    sigma = 0.1
-    m = 0.1
-    c = 1
-
-    guess = [y0,x0,a,sigma,m,c]
-    for i in range(3):
-        if i == 0:
-            guess = guess
-        if i == 1:
-            guess+= [y0,8540,-0.6, 0.2, m, c]
-        if i == 2:
-            guess+= [y0,8660,-0.6, 0.2, m, c]
-
-    #fitting to the spectra
-    popt_spec, pconv_spec = curve_fit(uti.multiple_gauss, line_wave, line_flux_spec_norm, p0=guess)
-    fit = uti.multiple_gauss(line_wave, *popt_spec)
-
-    return line_wave, line_flux_spec_norm, fit, popt_spec
 
 
 #*****************************************************************************************************
@@ -1761,7 +1681,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
 #*****************************************************************************************************
 # 9) stellar populations with ppxf
-def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, lg_met, result_plot_dir):
+def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, lg_met, result_plot_dir, ppxf_pop_fix = False, kinematics_values = None, moments_from_kin = None):
 
     """
      This function uses the pPXF algorith to retrieve the properties of the
@@ -1773,7 +1693,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             to fit, delta lambda resolution of the spectrum in the wavelength
             range considered (FWHM value, in Angstrom), float redshift guess, float
             velocity dispersion guess, string wether fit the gas ('with gas')
-            or just the stars ()'whitout gas'), bool whether showing (True) or not
+            or just the stars ('whitout gas'), bool whether showing (True) or not
             (False) the plots, bool whether calculate (True) or not (False) the uncertainties,
             bool whether save (True) or not (False) the plots, string name of the spectrum,
             float regularization error, int degree of additive polynomials, int degree of
@@ -1959,16 +1879,23 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
         try:
             templates = stars_templates
-            vel = c*np.log(1 + z)
-            start = [vel, sigma_guess]
+            
+            if ppxf_pop_fix:
+                stellar_moments = -moments_from_kin
+                start = kinematics_values #[vel, sigma]
+                print ("FIXING KINEMATICS")
+            else:
+                vel = c*np.log(1 + z)
+                stellar_moments = 4
+                start = [vel, sigma_guess]
             n_temps = stars_templates.shape[1]
             component = [0]*n_temps
             gas_component = np.array(component) > 0
-            moments = 4
+            moments = stellar_moments
             start = start
             gas = False
             t = clock()
-
+            
 
             #define the dust components, if activated
             if dust_correction_stars or dust_correction_gas:
@@ -2244,7 +2171,17 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
 
             templates = np.column_stack([stars_templates, gas_templates])
             vel = c*np.log(1 + z)
-            start = [vel, sigma_guess]
+
+            if ppxf_pop_fix:
+                stellar_moments = -moments_from_kin
+                start = kinematics_values #[vel, sigma]
+                start_gas = [vel, sigma_guess]
+                print ("FIXING KINEMATICS")
+            else:
+                stellar_moments = 4
+                start = [vel, sigma_guess]
+                start_gas = [vel, sigma_guess]
+
             n_temps = stars_templates.shape[1]
 
             # grouping the emission lines: 1) balmer, 2) forbidden, 3) others
@@ -2265,8 +2202,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print('Balmer, forbidden and other lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden +[3]*n_others
                 gas_component = np.array(component) > 0
-                moments = [4, 2, 2, 2]
-                start = [start, start, start, start]
+                moments = [stellar_moments, 2, 2, 2]
+                start = [start, start_gas, start_gas, start_gas]
 
             if n_forbidden !=0 and n_balmer !=0 and n_others == 0:
                 #####
@@ -2274,8 +2211,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Forbidden and Balmer lines')
                 component = [0]*n_temps + [1]*n_balmer + [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [4, 2, 2]
-                start = [start, start, start]
+                moments = [stellar_moments, 2, 2]
+                start = [start, start_gas, start_gas]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others !=0:
                 #####
@@ -2283,8 +2220,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Forbidden and other lines')
                 component = [0]*n_temps + [1]*n_others + [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [4, 2, 2]
-                start = [start, start, start]
+                moments = [stellar_moments, 2, 2]
+                start = [start, start_gas, start_gas]
 
             if n_forbidden !=0 and n_balmer == 0 and n_others ==0:
                 #######
@@ -2292,8 +2229,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Only forbidden lines')
                 component = [0]*n_temps + [1]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [4, 2]
-                start = [start, start]
+                moments = [stellar_moments, 2]
+                start = [start, start_gas]
 
             if n_forbidden ==0 and n_balmer != 0 and n_others ==0:
                 ######
@@ -2301,8 +2238,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print('Only balmer lines')
                 component = [0]*n_temps + [1]*n_balmer
                 gas_component = np.array(component) > 0
-                moments = [4, 2]
-                start = [start, start]
+                moments = [stellar_moments, 2]
+                start = [start, start_gas]
 
             if n_forbidden ==0 and n_balmer != 0 and n_others !=0:
                 #######
@@ -2310,8 +2247,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Balmer and other lines')
                 component = [0]*n_temps + [1]*n_balmer [2]*n_forbidden
                 gas_component = np.array(component) > 0
-                moments = [4, 2, 2]
-                start = [start, start, start]
+                moments = [stellar_moments, 2, 2]
+                start = [start, start_gas, start_gas]
 
             if n_forbidden ==0 and n_balmer == 0 and n_others !=0:
                 ########
@@ -2319,8 +2256,8 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 print ('Only other lines')
                 component = [0]*n_temps + [1]*n_others
                 gas_component = np.array(component) > 0
-                moments = [4, 2]
-                start = [start, start]
+                moments = [stellar_moments, 2]
+                start = [start, start_gas]
 
             if n_forbidden ==0 and n_balmer == 0 and n_others ==0:
                 ########### NO GAS COMPONENT
@@ -2329,7 +2266,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
                 # check_gas_cond = 0
                 component = [0]*n_temps
                 gas_component = np.array(component) > 0
-                moments = 4
+                moments = stellar_moments
                 start = start
 
             t = clock()
@@ -3018,269 +2955,8 @@ def calculate_t50_t80_cosmic(age_array, mass_cumulative_array, redshift, lg_age)
 
 
 
-
-
 #*****************************************************************************************************
-# 11) Modified emission line list from the ppxf_util.py of the ppxf package.
-def emission_lines(ln_lam_temp, lam_range_gal, FWHM_gal, pixel=True,
-                   tie_balmer=False, limit_doublets=False, vacuum=False, wave_galaxy = None):
-    """
-    Generates an array of Gaussian emission lines to be used as gas templates in PPXF.
-
-    Daniele Gasparri:
-    Added the 'wave_galaxy' array, which is the galaxy wavelength array, needed to compute the FWHM_gal values in the gas
-    emission lines when the FWHM_gal is not constant (i.e. when we are working with spectra with
-    a fixed resolving power R. Needed for stars and gas kinematics task when selecting 'Spec. constant R resolution:'.)
-
-    ****************************************************************************
-    ADDITIONAL LINES CAN BE ADDED BY EDITING THE CODE OF THIS PROCEDURE, WHICH
-    IS MEANT AS A TEMPLATE TO BE COPIED AND MODIFIED BY THE USERS AS NEEDED.
-    ****************************************************************************
-
-
-    Output Parameters
-    -----------------
-
-    emission_lines: ndarray
-        Array of dimensions ``[ln_lam_temp.size, line_wave.size]`` containing
-        the gas templates, one per array column.
-
-    line_names: ndarray
-        Array of strings with the name of each line, or group of lines'
-
-    line_wave: ndarray
-        Central wavelength of the lines, one for each gas template'
-
-    """
-    #        Balmer:     H10       H9         H8        Heps    Hdelta    Hgamma    Hbeta     Halpha
-    balmer = np.array([3798.983, 3836.479, 3890.158, 3971.202, 4102.899, 4341.691, 4862.691, 6564.632])  # vacuum wavelengths
-
-    if tie_balmer:
-
-        # Balmer decrement for Case B recombination (T=1e4 K, ne=100 cm^-3)
-        # from Storey & Hummer (1995) https://ui.adsabs.harvard.edu/abs/1995MNRAS.272...41S
-        # In electronic form https://cdsarc.u-strasbg.fr/viz-bin/Cat?VI/64
-        # See Table B.7 of Dopita & Sutherland 2003 https://www.amazon.com/dp/3540433627
-        # Also see Table 4.2 of Osterbrock & Ferland 2006 https://www.amazon.co.uk/dp/1891389343/
-        wave = balmer
-        if not vacuum:
-            wave = util.vac_to_air(wave)
-
-        #if FWHM_gal is an array, I need to extract the FWHM values corresponding to the emission lines of the gas template
-        if isinstance(FWHM_gal, np.ndarray):
-            FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-        else:
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-        ratios = np.array([0.0530, 0.0731, 0.105, 0.159, 0.259, 0.468, 1, 2.86])
-        ratios *= wave[-2]/wave  # Account for varying log-sampled pixel size in Angstrom
-        emission_lines = gauss @ ratios
-        line_names = ['Balmer']
-        w = (lam_range_gal[0] < wave) & (wave < lam_range_gal[1])
-        line_wave = np.mean(wave[w]) if np.any(w) else np.mean(wave)
-
-    else:
-
-        line_wave = balmer
-        if not vacuum:
-            line_wave = util.vac_to_air(line_wave)
-        line_names = ['(H10)', '(H9)', '(H8)', '(Heps)', '(Hdelta)', '(Hgamma)', '(Hbeta)', '(Halpha)']
-
-        #if FWHM_gal is an array, I need to extract the FWHM values corresponding to the emission lines of the gas template
-        if isinstance(FWHM_gal, np.ndarray):
-            FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in line_wave])
-            emission_lines = util.gaussian(ln_lam_temp, line_wave, FWHM_gal_line, pixel)
-        else:
-            emission_lines = util.gaussian(ln_lam_temp, line_wave, FWHM_gal, pixel)
-
-
-    if limit_doublets:
-
-        # The line ratio of this doublet lam3727/lam3729 is constrained by
-        # atomic physics to lie in the range 0.28--1.47 (e.g. fig.5.8 of
-        # Osterbrock & Ferland 2006 https://www.amazon.co.uk/dp/1891389343/).
-        # We model this doublet as a linear combination of two doublets with the
-        # maximum and minimum ratios, to limit the ratio to the desired range.
-        #       -----[OII]-----
-        wave = [3727.092, 3729.875]    # vacuum wavelengths
-        if not vacuum:
-            wave = util.vac_to_air(wave)
-        names = ['[OII]3726_d1', '[OII]3726_d2']
-
-        if isinstance(FWHM_gal, np.ndarray):
-            FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-        else:
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-        doublets = gauss @ [[1, 1], [0.28, 1.47]]  # produces *two* doublets
-        emission_lines = np.column_stack([emission_lines, doublets])
-        line_names = np.append(line_names, names)
-        line_wave = np.append(line_wave, wave)
-
-        # The line ratio of this doublet lam6717/lam6731 is constrained by
-        # atomic physics to lie in the range 0.44--1.43 (e.g. fig.5.8 of
-        # Osterbrock & Ferland 2006 https://www.amazon.co.uk/dp/1891389343/).
-        # We model this doublet as a linear combination of two doublets with the
-        # maximum and minimum ratios, to limit the ratio to the desired range.
-        #        -----[SII]-----
-        wave = [6718.294, 6732.674]    # vacuum wavelengths
-        if not vacuum:
-            wave = util.vac_to_air(wave)
-        names = ['[SII]6731_d1', '[SII]6731_d2']
-
-        #if FWHM_gal is an array, I need to extract the FWHM values corresponding to the emission lines of the gas template
-        if isinstance(FWHM_gal, np.ndarray):
-            FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-        else:
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-        doublets = gauss @ [[0.44, 1.43], [1, 1]]  # produces *two* doublets
-        emission_lines = np.column_stack([emission_lines, doublets])
-        line_names = np.append(line_names, names)
-        line_wave = np.append(line_wave, wave)
-
-    else:
-
-        # Here the two doublets are free to have any ratio
-        #         -----[OII]-----     -----[SII]-----
-        # wave = [3727.092, 3729.875, 6718.294, 6732.674]  # vacuum wavelengths
-        wave = [3727.092, 3729.875, 5198.4, 5201.35, 6718.294, 6732.674]  # vacuum wavelengths with NI "empirical"
-        # wave = [3727.092, 3729.875, 5196.45, 5198.94, 6718.294, 6732.674] #right NI wavelengths from the emission file of GIST
-        if not vacuum:
-            wave = util.vac_to_air(wave)
-        # names = ['[OII]3726', '[OII]3729', '[SII]6716', '[SII]6731']
-        names = ['[OII]3726', '[OII]3729', '[NI]5196', '[NI]5198', '[SII]6716', '[SII]6731']
-
-        #if FWHM_gal is an array, I need to extract the FWHM values corresponding to the emission lines of the gas template
-        if isinstance(FWHM_gal, np.ndarray):
-            FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-        else:
-            gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-        emission_lines = np.column_stack([emission_lines, gauss])
-        line_names = np.append(line_names, names)
-        line_wave = np.append(line_wave, wave)
-
-    # Here the lines are free to have any ratio
-    #       -----[NeIII]-----    HeII      HeI
-    wave = [3968.59, 3869.86, 4687.015, 5877.243]  # vacuum wavelengths
-    if not vacuum:
-        wave = util.vac_to_air(wave)
-    names = ['[NeIII]3968', '[NeIII]3869', '-HeII4687-', '-HeI5876-']
-
-    if isinstance(FWHM_gal, np.ndarray):
-        FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-        gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-    else:
-        gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-    emission_lines = np.column_stack([emission_lines, gauss])
-    line_names = np.append(line_names, names)
-    line_wave = np.append(line_wave, wave)
-
-    # NIR H lines
-    #       paeps      pad      pab
-    wave = [10052.1, 10941.1, 12821.6]  # vacuum wavelengths
-    if not vacuum:
-        wave = util.vac_to_air(wave)
-    names = ['-PaEps-', '-Pad-', '-Pab-']
-
-    if isinstance(FWHM_gal, np.ndarray):
-        FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-        gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel)
-    else:
-        gauss = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel)
-
-    emission_lines = np.column_stack([emission_lines, gauss])
-    line_names = np.append(line_names, names)
-    line_wave = np.append(line_wave, wave)
-
-
-
-    ######### Doublets with fixed ratios #########
-
-    # To keep the flux ratio of a doublet fixed, we place the two lines in a single template
-    #        -----[OIII]-----
-    wave = [4960.295, 5008.240]    # vacuum wavelengths
-    if not vacuum:
-        wave = util.vac_to_air(wave)
-
-
-    if isinstance(FWHM_gal, np.ndarray):
-        FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel) @ [0.33, 1]
-    else:
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [0.33, 1]
-
-
-
-    # doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [0.33, 1]
-    emission_lines = np.column_stack([emission_lines, doublet])
-    line_names = np.append(line_names, '[OIII]5007_d')  # single template for this doublet
-    line_wave = np.append(line_wave, wave[1])
-
-    # To keep the flux ratio of a doublet fixed, we place the two lines in a single template
-    #        -----[OI]-----
-    wave = [6302.040, 6365.535]    # vacuum wavelengths
-    if not vacuum:
-        wave = util.vac_to_air(wave)
-
-
-
-    if isinstance(FWHM_gal, np.ndarray):
-        FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel) @ [1, 0.33]
-    else:
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [1, 0.33]
-
-
-
-    # doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [1, 0.33]
-    emission_lines = np.column_stack([emission_lines, doublet])
-    line_names = np.append(line_names, '[OI]6300_d')  # single template for this doublet
-    line_wave = np.append(line_wave, wave[0])
-
-    # To keep the flux ratio of a doublet fixed, we place the two lines in a single template
-    #       -----[NII]-----
-    wave = [6549.860, 6585.271]    # air wavelengths
-    if not vacuum:
-        wave = util.vac_to_air(wave)
-
-
-
-    if isinstance(FWHM_gal, np.ndarray):
-        FWHM_gal_line = np.array([FWHM_gal[find_nearest(wave_galaxy, lw)] for lw in wave])
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal_line, pixel) @ [0.33, 1]
-    else:
-        doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [0.33, 1]
-
-
-    # doublet = util.gaussian(ln_lam_temp, wave, FWHM_gal, pixel) @ [0.33, 1]
-    emission_lines = np.column_stack([emission_lines, doublet])
-    line_names = np.append(line_names, '[NII]6583_d')  # single template for this doublet
-    line_wave = np.append(line_wave, wave[1])
-
-    # Only include lines falling within the estimated fitted wavelength range.
-    #
-    w = (lam_range_gal[0] < line_wave) & (line_wave < lam_range_gal[1])
-    emission_lines = emission_lines[:, w]
-    line_names = line_names[w]
-    line_wave = line_wave[w]
-
-    print('Emission lines included in gas templates:')
-    print(line_names)
-
-    return emission_lines, line_names, line_wave
-
-
-
-
-#*****************************************************************************************************
-# 12) stellar populations with LICK and ssp models
+# 11) stellar populations with LICK and ssp models
 
 def lick_pop(ssp_lick_indices, ssp_lick_indices_err, ssp_model_name, interp_model):
 
@@ -3606,7 +3282,7 @@ def lick_pop(ssp_lick_indices, ssp_lick_indices_err, ssp_model_name, interp_mode
                     # ================= Alpha prior (1D fit on Mgb & <Fe> at fixed (loga_hat, zh_hat)) =================
                     USE_ALPHA_PRIOR = True
                     try:
-                        from scipy.optimize import least_squares
+                        
 
                         def _model_Mgb_Fem(loga, zh, alpha):
                             sa  = (loga - age_min_log) / (age_max_log - age_min_log + 1e-12)
@@ -4303,12 +3979,6 @@ def bootstrap_residuals(model, resid, wild=True):
 
 
 
-# simple function to find the nearest FWHM_gal value corresponding to the emission line funcion, in case of kinematics with gas and variable FWHM_gal (i.e. constant resolving power R).
-def find_nearest(array, value):
-    idx = (np.abs(array - value)).argmin()
-    return idx
-
-
 
 # Find a specific SSP template for ppxf kinematics module when you use the two fit stellar components
 def pick_ssp_template(desired_age, desired_metal, ages, metals, templates):
@@ -4588,19 +4258,839 @@ def extract_stellar_components_from_matrix(pp, component, stars_templates, gas_t
     idx0 = np.where(comp_stars == 0)[0]
     idx1 = np.where(comp_stars == 1)[0]
 
-    
     # 7) Reconstruct the individual stellar components on the galaxy wavelength grid
     #    If a component is missing, create a zero array of the same length as pp.bestfit.
     spec_comp0 = A_stars[:, idx0] @ w_stars[idx0] if idx0.size > 0 else np.zeros(pp.bestfit.shape, dtype=float)
     spec_comp1 = A_stars[:, idx1] @ w_stars[idx1] if idx1.size > 0 else np.zeros(pp.bestfit.shape, dtype=float)
 
-    # I don't know why, but IF using both additive and multiplicative polynomials, I need to divide the extracted two components for the multiplicative polynomials, otherwise thet have a very distorted continuum. Maybe a small bug in pPXF matrix??
+    # I don't know why, but IF using both additive and multiplicative polynomials, I need to divide the extracted two components for the multiplicative polynomials, otherwise they have a very distorted continuum. Maybe a small bug in pPXF matrix??
     M = getattr(pp, "mpoly", None)
     spec_comp0 = spec_comp0 / M if M is not None and n_add >0 else spec_comp0
     spec_comp1 = spec_comp1 / M if M is not None and n_add >0 else spec_comp1
 
-
     return spec_comp0, spec_comp1
+
+
+
+############# FUNCTIONS FOR THE NEW LINE(S) FITTING TASK
+
+def fit_local_baseline(wave, flux, ksigma=3.0, max_iter=5, core_frac=0.2):
+    """ Robust local straight-line baseline fit.
+        - Esclude il core della riga (core_frac della finestra al centro)
+        - Fa un sigma-clipping sui residui per evitare ali/outliers.
+    """
+    w = wave
+    f = flux
+
+    # mask core: esclude una banda centrale dove vivono le righe
+    mid = 0.5*(w.min()+w.max())
+    half = 0.5*(w.max()-w.min())
+    core = (np.abs(w - mid) < core_frac*half)
+
+    mask = ~core
+    X = np.vstack([w[mask], np.ones(mask.sum())]).T
+    y = f[mask]
+
+    for _ in range(max_iter):
+        # fit lineare semplice
+        m, q = np.linalg.lstsq(X, y, rcond=None)[0]
+        resid = y - (m*X[:,0] + q)
+        s = np.std(resid)
+        good = np.abs(resid) < ksigma*max(s, 1e-12)
+        if good.mean() > 0.6:
+            X = X[good]; y = y[good]
+        else:
+            break
+
+    return float(m), float(q)
+
+
+def detect_peaks(wave, resid, sign='emission', min_prominence=3.0, min_distance_pix=3):
+    """ Ritorna indici dei picchi nella finestra.
+        - sign: 'emission' o 'absorption'
+        - prominence in unità del rumore stimato dal residuo off-core
+    """
+    y = resid.copy()
+    if sign == 'absorption':
+        y = -y
+
+    # stima rumore: std nei quantili più bassi (evita picchi)
+    base = np.percentile(y, [5, 50, 95])
+    noise = max(1e-12, 0.741*(base[2]-base[0]))  # robust MAD approx
+
+    peaks, props = find_peaks(y, prominence=min_prominence*noise, distance=min_distance_pix)
+    return peaks, props, noise
+
+
+def fit_lines_window(line_wave, line_flux_spec,
+                     profile='gauss',                 # 'gauss' | 'lorentz'
+                     sign='emission',                 # 'emission' | 'absorption' | 'auto'
+                     ncomp='auto',                    # 'auto' or int (1..3)
+                     sigma_inst=None,                 # instrumental sigma [Å] (optional)
+                     max_components=3,
+                     min_prom_sigma=3.0,
+                     do_bootstrap=False, Nboot=100,
+                     baseline_mode='auto',       # 'auto'|'flat'|'linear'|'binned_percentile'|'poly2'
+                     perc_em=15.0,               # percentile for emission (low)
+                     perc_abs=85.0,              # percentile for absorption (high)
+                     bin_width_A=50.0):          # bin width for binned percentile
+    """
+    Fit parametric emission/absorption lines within an already-sliced window.
+
+    Returns a dict with:
+      - baseline: dict(m,q)
+      - baseline_safe: local baseline evaluated safely (for normalisation)
+      - profile, sign, ncomp
+      - popt, pcov, chi2nu
+      - peaks_detected, all_peaks_idx, used_peaks_idx, noise
+      - model_resid: best-fit model in residual space (same units as resid)
+      - resid: residuals minus model_resid (i.e. final residuals)
+      - components: list of dict per component (mu, amp, sigma_obs or gamma, fwhm, flux, sigma_intr if requested)
+      - flux: array of integrated fluxes (same sign as amp; +emission, -absorption)
+      - err_flux, err_amp, err_mu, err_wpar (bootstrap std if enabled)
+      - asym_err_amp, asym_err_mu, asym_err_w (asymptotic errors from pcov as fallback)
+    """
+    line_wave = np.asarray(line_wave, float)
+    line_flux_spec = np.asarray(line_flux_spec, float)
+
+    # # ---------- Robust local baseline (global sigma-clipping) ----------
+    # m, q = _fit_local_baseline(line_wave, line_flux_spec)
+    # baseline = (m * line_wave + q)
+    # baseline_safe = np.where(baseline != 0, baseline, np.nanmedian(baseline))
+    # resid = line_flux_spec - baseline  # positive bumps for emission features
+
+
+    # ---------- Baseline estimation ----------
+    def _baseline_linear(x, y):
+        # robust affine fit with sigma clipping
+        xx = np.vstack([x, np.ones_like(x)]).T
+        mask = np.isfinite(x) & np.isfinite(y)
+        for _ in range(3):
+            A = xx[mask]; b = y[mask]
+            if A.size < 4: break
+            m_q, *_ = np.linalg.lstsq(A, b, rcond=None)
+            m, q = float(m_q[0]), float(m_q[1])
+            resid_local = y - (m*x + q)
+            sig = np.nanstd(resid_local[mask])
+            if not np.isfinite(sig) or sig == 0: break
+            mask = mask & (np.abs(resid_local) < 3.0*sig)
+        return m, q
+
+    def _baseline_flat(y, sign_local):
+        # single robust level via percentile depending on sign
+        if sign_local == 'absorption':
+            qv = np.nanpercentile(y, max(50.0, min(99.0, perc_abs)))
+        else:
+            qv = np.nanpercentile(y, max(1.0, min(50.0, perc_em)))
+        return 0.0, float(qv)   # m=0, q=level
+
+    def _baseline_binned_percentile(x, y, sign_local, W_A):
+        # split into bins ~W_A and take percentile per bin, then linearly interpolate
+        step = max(1e-6, float(np.median(np.diff(x))))
+        n_per_bin = max(5, int(round(W_A / step)))
+        nbins = max(3, int(np.ceil(x.size / n_per_bin)))
+        edges = np.linspace(0, x.size, nbins+1, dtype=int)
+        xi, yi = [], []
+        q_target = perc_abs if sign_local == 'absorption' else perc_em
+        for i in range(nbins):
+            s, e = edges[i], edges[i+1]
+            if e - s < 3: continue
+            xx = x[s:e]; yy = y[s:e]
+            if not np.any(np.isfinite(yy)): continue
+            xi.append(0.5*(xx[0] + xx[-1]))
+            yi.append(np.nanpercentile(yy, q_target))
+        if len(xi) < 2:
+            # fall back to flat
+            return _baseline_flat(y, sign_local)
+        xi = np.asarray(xi); yi = np.asarray(yi)
+        # linear interpolate the envelope
+        q_interp = np.interp(x, xi, yi)
+        return 0.0, 0.0, q_interp  # special: return precomputed series
+
+    def _baseline_poly2(x, y):
+        # robust quadratic fit via simple clipping on residuals
+        X = np.vstack([x*x, x, np.ones_like(x)]).T
+        mask = np.isfinite(x) & np.isfinite(y)
+        coef = np.array([0.0, 0.0, np.nanmedian(y)], float)
+        for _ in range(3):
+            A = X[mask]; b = y[mask]
+            if A.size < 9: break
+            c, *_ = np.linalg.lstsq(A, b, rcond=None)
+            resid_local = y - (c[0]*x*x + c[1]*x + c[2])
+            sig = np.nanstd(resid_local[mask])
+            if not np.isfinite(sig) or sig == 0: 
+                coef = c; break
+            mask = mask & (np.abs(resid_local) < 3.0*sig)
+            coef = c
+        return coef  # a2, a1, a0
+
+    # --- decide baseline mode ---
+    win_A = float(line_wave[-1] - line_wave[0]) if line_wave.size > 1 else 0.0
+    mode = baseline_mode
+    if mode == 'auto':
+        # heuristic: narrow window -> linear; wide window -> binned percentile
+        mode = 'linear' if win_A <= 80.0 else 'binned_percentile'
+
+    if mode == 'flat':
+        m, q = _baseline_flat(line_flux_spec, sign)
+        baseline = (m*line_wave + q)
+    elif mode == 'linear':
+        m, q = _baseline_linear(line_wave, line_flux_spec)
+        baseline = (m*line_wave + q)
+    elif mode == 'binned_percentile':
+        out = _baseline_binned_percentile(line_wave, line_flux_spec, sign, bin_width_A)
+        if len(out) == 3:
+            # precomputed series
+            baseline = out[2]
+            m, q = 0.0, float(np.nanmedian(baseline))
+        else:
+            m, q = out
+            baseline = (m*line_wave + q)
+    elif mode == 'poly2':
+        a2, a1, a0 = _baseline_poly2(line_wave, line_flux_spec)
+        baseline = a2*line_wave*line_wave + a1*line_wave + a0
+        # store equivalent m,q for downstream meta (approx. local linear)
+        m = float(a1)
+        q = float(a0)
+    else:
+        # safety
+        m, q = _baseline_linear(line_wave, line_flux_spec)
+        baseline = (m*line_wave + q)
+
+    baseline_safe = np.where(baseline != 0, baseline, np.nanmedian(baseline))
+    resid = line_flux_spec - baseline
+
+
+
+    # ---------- Auto sign decision (skewed-tail heuristic) ----------
+    if sign == 'auto':
+        p5, med, p95 = np.percentile(resid, [5, 50, 95])
+        pos_tail = p95 - med
+        neg_tail = med - p5
+        sign = 'emission' if pos_tail >= 1.1 * neg_tail else 'absorption'
+
+    # ---------- Peak detection (used for auto ncomp and initial guesses) ----------
+    step = max(1e-6, float(np.median(np.diff(line_wave))))
+    min_dist_pix = max(2, int(round(2.0 / step)))
+
+    peaks, props, noise, _ = _detect_peaks(
+        line_wave, resid, sign=sign,
+        min_prom_sigma=min_prom_sigma,
+        min_distance_pix=min_dist_pix
+    )
+
+    # If nothing is found, try flipping the sign once
+    if len(peaks) == 0:
+        alt = 'absorption' if sign == 'emission' else 'emission'
+        peaks, props, noise, _ = _detect_peaks(
+            line_wave, resid, sign=alt,
+            min_prom_sigma=min_prom_sigma,
+            min_distance_pix=min_dist_pix
+        )
+        if len(peaks) > 0:
+            sign = alt
+
+    # Order by prominence (descending), if available
+    all_peaks_idx = np.array(peaks, int)
+    if len(all_peaks_idx) > 0 and 'prominences' in props:
+        order = np.argsort(props['prominences'])[::-1]
+        peaks = all_peaks_idx[order]
+    else:
+        peaks = all_peaks_idx
+
+    # ---------- Decide the number of components ----------
+    npeaks = int(len(peaks))
+    if isinstance(ncomp, str) and ncomp == 'auto':
+        ncomp = int(min(max_components, max(1, npeaks)))
+    ncomp = int(max(1, min(max_components, ncomp)))
+
+    # ---------- Robust initial guesses ----------
+    p0 = []
+    # If we have to guess without enough peaks, pick the max of the correct sign
+    y_pick = resid if sign == 'emission' else -resid
+
+    def _amp_guess(idx_val: int) -> float:
+        """Return a signed amplitude guess with a tiny clearance from 0."""
+        a_raw = float(resid[idx_val])
+        if sign == 'emission':
+            return max(a_raw, 1e-6)      # strictly > 0
+        else:
+            return min(a_raw, -1e-6)     # strictly < 0
+
+    if profile == 'gauss':
+        for i in range(ncomp):
+            if i < npeaks:
+                idx = peaks[i]
+            else:
+                idx = int(np.nanargmax(y_pick))
+            mu0 = float(line_wave[idx])
+            a0  = _amp_guess(idx)
+            sg0 = 2.0 * step
+            p0 += [a0, mu0, sg0]
+
+    elif profile == 'lorentz':
+        for i in range(ncomp):
+            if i < npeaks:
+                idx = peaks[i]
+            else:
+                idx = int(np.nanargmax(y_pick))
+            mu0 = float(line_wave[idx])
+            a0  = _amp_guess(idx)
+            gm0 = 2.0 * step
+            p0 += [a0, mu0, gm0]
+
+    p0 = np.array(p0, float)
+
+    # ---------- Bounds (keep a tiny clearance from amp==0 to avoid singular pcov) ----------
+    lo, hi = [], []
+    wmin, wmax = float(line_wave.min()), float(line_wave.max())
+    eps = 1e-12  # tiny offset to avoid landing exactly on 0
+
+    for _ in range(ncomp):
+        if sign == 'emission':
+            lo += [eps,     wmin, step / 3]
+            hi += [np.inf,  wmax, (wmax - wmin)]
+        else:
+            lo += [-np.inf, wmin, step / 3]
+            hi += [-eps,    wmax, (wmax - wmin)]
+
+    bounds = (np.array(lo, float), np.array(hi, float))
+
+    # ---------- Fit in residual space ----------
+    def _model(x, *pp):
+        return _composite(x, pp, profile=profile, ncomp=ncomp)
+
+    try:
+        popt, pcov = curve_fit(_model, line_wave, resid, p0=p0, bounds=bounds, maxfev=20000)
+        model_resid = _model(line_wave, *popt)
+    except Exception:
+        popt = p0.copy()
+        pcov = np.eye(p0.size) * np.nan
+        model_resid = np.zeros_like(line_wave)
+
+    # ---------- Asymptotic errors from pcov (fallback if bootstrap is off) ----------
+    asym_err_amp = None
+    asym_err_mu  = None
+    asym_err_w   = None
+    if np.all(np.isfinite(pcov)) and pcov.shape[0] == popt.size:
+        perr = np.sqrt(np.clip(np.diag(pcov), 0.0, np.inf))  # length = 3*ncomp
+        if perr.size == popt.size:
+            perr = perr.reshape(ncomp, 3)  # columns: [amp, mu, wpar]
+            asym_err_amp = perr[:, 0]
+            asym_err_mu  = perr[:, 1]
+            asym_err_w   = perr[:, 2]
+
+    # ---------- Diagnostics ----------
+    chi2nu = float(np.sum((resid - model_resid) ** 2) / max(1, (line_wave.size - popt.size)))
+    areas  = _areas_from_params(popt, profile, ncomp)  # signed fluxes: +emission, -absorption
+
+    # ---------- Build component table ----------
+    components = []
+    j = 0
+    for k in range(ncomp):
+        a, mu, wpar = popt[j:j + 3]; j += 3
+        if profile == 'gauss':
+            sigma_obs = float(wpar)
+            fwhm = 2.3548 * sigma_obs
+            entry = dict(amp=float(a), mu=float(mu), sigma_obs=sigma_obs, fwhm=fwhm)
+            if sigma_inst is not None:
+                entry['sigma_intr'] = _sigma_intrinsic(sigma_obs, float(sigma_inst))
+        else:
+            gamma = float(wpar)
+            fwhm = 2.0 * gamma
+            entry = dict(amp=float(a), mu=float(mu), gamma=gamma, fwhm=fwhm)
+        entry['flux'] = float(areas[k])  # keep physical sign
+        components.append(entry)
+
+    # ---------- (Optional) bootstrap on parameter and flux uncertainties ----------
+    err_flux = None
+    err_amp  = None
+    err_mu   = None
+    err_wpar = None  # sigma (gauss) or gamma (lorentz)
+
+    if do_bootstrap:
+        rng = np.random.default_rng(12345)
+        noise_est = np.std(resid - model_resid)  # homoscedastic proxy
+        boots_params = []
+        boots_flux   = []
+        for _ in range(Nboot):
+            yb = resid + rng.normal(0.0, noise_est, resid.size)
+            try:
+                pb, _ = curve_fit(_model, line_wave, yb, p0=popt, bounds=bounds, maxfev=10000)
+                fb = _areas_from_params(pb, profile, ncomp)
+                boots_params.append(pb)
+                boots_flux.append(fb)
+            except Exception:
+                continue
+
+        if boots_params:
+            boots_params = np.asarray(boots_params, float)          # (Nb, 3*ncomp)
+            boots_flux   = np.asarray(boots_flux,   float)          # (Nb, ncomp)
+            err_flux     = np.std(boots_flux, axis=0)               # (ncomp,)
+
+            Nb = boots_params.shape[0]
+            bp = boots_params.reshape(Nb, ncomp, 3)                 # -> (Nb, ncomp, [amp, mu, wpar])
+            err_amp  = np.std(bp[:, :, 0], axis=0)                  # (ncomp,)
+            err_mu   = np.std(bp[:, :, 1], axis=0)                  # (ncomp,)
+            err_wpar = np.std(bp[:, :, 2], axis=0)                  # (ncomp,)
+
+    # ---------- Return all ----------
+    return dict(
+        baseline=dict(m=m, q=q),
+        baseline_safe=baseline_safe,
+        profile=profile,
+        sign=sign,
+        ncomp=ncomp,
+        chi2nu=chi2nu,
+        peaks_detected=int(len(all_peaks_idx)),
+        all_peaks_idx=all_peaks_idx.tolist(),
+        used_peaks_idx=peaks[:ncomp].tolist(),
+        noise=float(noise),
+        popt=popt, pcov=pcov,
+        model_resid=model_resid,
+        resid=(resid - model_resid),   # final residuals
+        components=components,
+        flux=areas,
+        # bootstrap errors (if any)
+        err_flux=err_flux,
+        err_amp=err_amp,
+        err_mu=err_mu,
+        err_wpar=err_wpar,
+        # asymptotic errors from pcov (fallback)
+        asym_err_amp=asym_err_amp,
+        asym_err_mu=asym_err_mu,
+        asym_err_w=asym_err_w,
+    )
+
+
+
+def line_fitting(wavelength, flux, wave_interval,
+                 guess_param=None,                 # legacy, unused
+                 profile='gauss',                  # 'gauss' | 'lorentz'
+                 sign='emission',                  # 'emission' | 'absorption' | 'auto'
+                 ncomp='auto',                     # 'auto' or 1..3
+                 sigma_inst=None,                  # [Å] optional
+                 do_bootstrap=False, Nboot=100,
+                 max_components=3,
+                 min_prom_sigma=3.0,
+                 # >>> NEW baseline controls passed through to fit_lines_window <<<
+                 baseline_mode='auto',             # 'auto'|'flat'|'linear'|'binned_percentile'|'poly2'
+                 perc_em=15.0,                     # percentile for emission (used by flat/binned)
+                 perc_abs=85.0,                    # percentile for absorption (used by flat/binned)
+                 bin_width_A=50.0                  # bin width [Å] for binned_percentile
+                 ):
+    """
+    Wrapper around fit_lines_window to fit one or more spectral lines within a user window.
+    It performs a robust local normalisation before calling the line-fitting engine, and
+    reconstructs a normalised model and diagnostic meta for later use.
+
+    Returns
+    -------
+    line_wave : np.ndarray
+        Wavelength array within the selected window [Å].
+    flux_norm : np.ndarray
+        Input flux within the window, normalised by a robust continuum level and by the
+        local baseline estimated inside fit_lines_window.
+    fit_norm : np.ndarray
+        Model over the same grid as flux_norm (normalised plane).
+    popt : np.ndarray
+        Best-fit parameter vector from fit_lines_window (amplitudes, centres, widths).
+    meta : dict
+        Rich dictionary with baseline info, components, fluxes, uncertainties, and the
+        normalisation factor to recover physical units.
+    """
+
+    wl = np.asarray(wavelength, float)
+    fl = np.asarray(flux, float)
+
+    # ---- slice the requested window
+    w1, w2 = float(min(wave_interval)), float(max(wave_interval))
+    sel = (wl >= w1) & (wl <= w2)
+    line_wave = wl[sel]
+    line_flux_spec = fl[sel]
+
+    if line_wave.size < 6:
+        fit = np.full_like(line_wave, np.nan)
+        popt = np.array([])
+        meta = dict(flag='TOO_FEW_PIXELS')
+        flux_norm = np.full_like(line_wave, np.nan)
+        return line_wave, flux_norm, fit, popt, meta
+
+    # -------------------------
+    # 1) Robust pre-normalisation (scalar)
+    # -------------------------
+    # Use a low percentile to avoid emission peaks biasing the scale; fall back to median>0
+    cont_level = np.nanpercentile(line_flux_spec, 5)
+    if not np.isfinite(cont_level) or cont_level <= 0:
+        # safeguard for pathological cases
+        pos = line_flux_spec[line_flux_spec > 0]
+        cont_level = (np.nanmedian(pos) if pos.size else 1.0)
+    flux_norm_in = line_flux_spec / cont_level
+
+    # -------------------------
+    # 2) Actual fit in the normalised plane
+    # -------------------------
+    res = fit_lines_window(
+        line_wave, flux_norm_in,
+        profile=profile,
+        sign=sign,
+        ncomp=ncomp,
+        sigma_inst=sigma_inst,
+        max_components=max_components,
+        min_prom_sigma=min_prom_sigma,
+        do_bootstrap=do_bootstrap,
+        Nboot=Nboot,
+        # >>> pass-through of baseline controls <<<
+        baseline_mode=baseline_mode,
+        perc_em=perc_em,
+        perc_abs=perc_abs,
+        bin_width_A=bin_width_A
+    )
+
+    # -------------------------
+    # 3) Rebuild the normalised model (same convention as engine)
+    # -------------------------
+    # fit_lines_window works in residual space: resid = flux_norm_in - baseline.
+    # It returns model_resid, so model = baseline + model_resid.
+    # For a fully normalised view, divide by baseline (safe) to get ~1 in the continuum.
+    baseline_safe = res['baseline_safe']
+    denom = np.where(baseline_safe != 0, baseline_safe, 1.0)
+    flux_norm = flux_norm_in / denom
+    fit_norm  = (baseline_safe + res['model_resid']) / denom
+
+    popt = res['popt']
+
+    # -------------------------
+    # 4) Meta enrichment (to recover physical units downstream)
+    # -------------------------
+    meta = dict(res)
+    meta['norm_factor']   = float(cont_level)     # scalar to go back to physical flux units
+    meta['resid_kind']    = 'diff'                # engine uses (flux_norm_in - baseline)
+    meta['baseline_mode'] = baseline_mode
+    meta['perc_em']       = float(perc_em)
+    meta['perc_abs']      = float(perc_abs)
+    meta['bin_width_A']   = float(bin_width_A)
+    # Helpful alias for plotting the estimated baseline in the normalised plane
+    meta['baseline_series'] = baseline_safe.copy()
+
+    return line_wave, flux_norm, fit_norm, popt, meta
+
+
+
+
+def cat_fitting(wavelength, flux, sigma_inst=None):
+    """
+    Fit the Ca II triplet (CaT) region with three Gaussians plus a linear continuum.
+    Always performs a 100-iteration bootstrap to estimate parameter and flux errors.
+
+    Parameters
+    ----------
+    wavelength : array_like
+        Wavelength array (Å).
+    flux : array_like
+        Flux array (same length as wavelength).
+    sigma_inst : float, optional
+        Instrumental sigma (Å); used to report intrinsic widths via sqrt(sigma_obs^2 - sigma_inst^2).
+
+    Returns
+    -------
+    line_wave : np.ndarray
+        Wavelength array within the fitted window (Å).
+    flux_norm : np.ndarray
+        Normalised flux in the fitted window (unitless).
+    fit_model : np.ndarray
+        Best-fitting model (same size as line_wave), in normalised units.
+    components : list of dict
+        For each of the 3 CaT lines:
+        {
+          'mu', 'sigma_obs', 'sigma_intr', 'amp', 'flux',
+          'err_mu', 'err_sigma', 'err_flux'
+        }
+        Flux is in the same physical units as the input spectrum.
+    meta : dict
+        Diagnostics and bookkeeping:
+        {
+          'chi2nu', 'norm_factor', 'baseline': {'m','q'},
+          'bootstrap_success', 'timestamp_utc'
+        }
+    """
+
+    # -----------------------------
+    # 1) Define wavelength window
+    # -----------------------------
+    wave1, wave2 = 8440.0, 8720.0
+    wl = np.asarray(wavelength, float)
+    fl = np.asarray(flux, float)
+
+    mask = (wl >= wave1) & (wl <= wave2)
+    if not np.any(mask):
+        raise ValueError("CaT window not within wavelength range.")
+
+    line_wave = wl[mask]
+    line_flux = fl[mask]
+
+    # -----------------------------
+    # 2) Robust normalisation
+    # -----------------------------
+    # Use a high percentile to avoid absorption depressing the continuum estimate.
+    cont_level = np.nanpercentile(line_flux, 90)
+    if not np.isfinite(cont_level) or cont_level <= 0:
+        cont_level = np.nanmedian(line_flux[line_flux > 0]) if np.any(line_flux > 0) else 1.0
+    flux_norm = line_flux / cont_level
+
+    # -----------------------------
+    # 3) Initial guess (3 Gaussians + linear baseline)
+    # -----------------------------
+    centres_guess = [8498.0, 8542.0, 8662.0]  # Å
+    init_params = []
+    for mu0 in centres_guess:
+        amp0 = -0.4     # absorption → negative amplitude in normalised units
+        sigma0 = 2.0    # Å
+        init_params.extend([amp0, mu0, sigma0])
+    init_params.extend([0.0, 1.0])  # linear baseline: slope m, intercept q
+
+    # -----------------------------
+    # 4) Model definition
+    # -----------------------------
+    def three_gauss(x, a1, m1, s1, a2, m2, s2, a3, m3, s3, m, q):
+        # Three independent Gaussians, unconstrained widths; linear baseline (m*x + q)
+        g1 = a1 * np.exp(-0.5 * ((x - m1) / s1) ** 2)
+        g2 = a2 * np.exp(-0.5 * ((x - m2) / s2) ** 2)
+        g3 = a3 * np.exp(-0.5 * ((x - m3) / s3) ** 2)
+        return (g1 + g2 + g3) + (m * x + q)
+
+    # Optional: loose bounds to discourage unphysical values without being brittle
+    # amplitudes ≤ 0 (absorption), centres within window, 0.2Å ≤ sigma ≤ 15Å
+    lo = [-np.inf, wave1, 0.2,
+          -np.inf, wave1, 0.2,
+          -np.inf, wave1, 0.2,
+          -np.inf, -np.inf]
+    hi = [0.0,     wave2, 15.0,
+          0.0,     wave2, 15.0,
+          0.0,     wave2, 15.0,
+          np.inf,  np.inf]
+    bounds = (np.array(lo, float), np.array(hi, float))
+
+    # -----------------------------
+    # 5) Nominal fit
+    # -----------------------------
+    popt, pcov = curve_fit(
+        three_gauss, line_wave, flux_norm,
+        p0=init_params, bounds=bounds, maxfev=20000
+    )
+    fit_model = three_gauss(line_wave, *popt)
+
+    # Extract nominal parameters
+    amps   = np.array([popt[0], popt[3], popt[6]], float)
+    mus    = np.array([popt[1], popt[4], popt[7]], float)
+    sigmas = np.array([popt[2], popt[5], popt[8]], float)
+    m, q   = float(popt[-2]), float(popt[-1])
+
+    # Observed → intrinsic sigma (if instrumental resolution provided)
+    if sigma_inst is not None and np.isfinite(sigma_inst) and sigma_inst > 0:
+        sigma_intr = np.sqrt(np.clip(sigmas**2 - float(sigma_inst)**2, 0.0, None))
+    else:
+        sigma_intr = np.full_like(sigmas, np.nan)
+
+    # Physical fluxes in the input units (integral of Gaussian × continuum scale)
+    flux_phys_nominal = amps * np.sqrt(2.0 * np.pi) * sigmas * cont_level
+
+    # -----------------------------
+    # 6) Bootstrap (always on, 100 iters)
+    # -----------------------------
+    Nb = 100
+    rng = np.random.default_rng()
+    # Use a homoscedastic proxy from residuals in normalised space
+    resid = flux_norm - fit_model
+    noise_est = float(np.nanstd(resid)) if np.isfinite(np.nanstd(resid)) else 0.0
+
+    boots_mu     = []
+    boots_sigma  = []
+    boots_flux   = []
+
+    if noise_est > 0:
+        for _ in range(Nb):
+            try:
+                yb = flux_norm + rng.normal(0.0, noise_est, flux_norm.size)
+                pb, _ = curve_fit(
+                    three_gauss, line_wave, yb,
+                    p0=popt, bounds=bounds, maxfev=20000
+                )
+                a1, m1, s1, a2, m2, s2, a3, m3, s3, mb, qb = pb
+                # bootstrap flux in physical units requires re-scaling by the *same* cont_level
+                F1 = a1 * np.sqrt(2.0 * np.pi) * s1 * cont_level
+                F2 = a2 * np.sqrt(2.0 * np.pi) * s2 * cont_level
+                F3 = a3 * np.sqrt(2.0 * np.pi) * s3 * cont_level
+                boots_mu.append([m1, m2, m3])
+                boots_sigma.append([s1, s2, s3])
+                boots_flux.append([F1, F2, F3])
+            except Exception:
+                # Skip failed realisations silently; count successes later
+                continue
+
+    boots_mu     = np.asarray(boots_mu,    float) if len(boots_mu)    > 0 else None
+    boots_sigma  = np.asarray(boots_sigma, float) if len(boots_sigma) > 0 else None
+    boots_flux   = np.asarray(boots_flux,  float) if len(boots_flux)  > 0 else None
+
+    if boots_mu is not None and boots_mu.shape[0] >= 5:
+        err_mu    = np.nanstd(boots_mu, axis=0)
+    else:
+        err_mu    = np.full(3, np.nan, float)
+
+    if boots_sigma is not None and boots_sigma.shape[0] >= 5:
+        err_sigma = np.nanstd(boots_sigma, axis=0)
+    else:
+        err_sigma = np.full(3, np.nan, float)
+
+    if boots_flux is not None and boots_flux.shape[0] >= 5:
+        err_flux  = np.nanstd(boots_flux, axis=0)
+    else:
+        err_flux  = np.full(3, np.nan, float)
+
+    # -----------------------------
+    # 7) Assemble per-line components
+    # -----------------------------
+    components = []
+    for i in range(3):
+        components.append(dict(
+            mu=float(mus[i]),
+            sigma_obs=float(sigmas[i]),
+            sigma_intr=float(sigma_intr[i]),
+            amp=float(amps[i]),
+            flux=float(flux_phys_nominal[i]),
+            err_mu=float(err_mu[i]),
+            err_sigma=float(err_sigma[i]),
+            err_flux=float(err_flux[i]),
+        ))
+
+    # -----------------------------
+    # 8) Diagnostics and meta
+    # -----------------------------
+    # Simple reduced-chi2 proxy in normalised space
+    var = np.nanvar(flux_norm)
+    chi2nu = float(np.nanmean((resid**2) / var)) if var > 0 else np.nan
+
+    meta = dict(
+        chi2nu=chi2nu,
+        norm_factor=float(cont_level),
+        baseline=dict(m=float(m), q=float(q)),
+        bootstrap_success=int(boots_flux.shape[0]) if isinstance(boots_flux, np.ndarray) else 0,
+        timestamp_utc=datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    )
+
+    return line_wave, flux_norm, fit_model, components, meta
+
+
+# ---------------------------
+# Robust local baseline (linear)
+# ---------------------------
+def _fit_local_baseline(wave, flux, ksigma=3.0, max_iter=8, use_percentile=True):
+    """
+    Robust straight-line baseline via iterative sigma-clipping.
+    Per spettri con righe di emissione forti, il livello medio può venire sovrastimato;
+    in quel caso, se use_percentile=True, si abbassa verso il 20° percentile del fit.
+    """
+    w = np.asarray(wave, float)
+    f = np.asarray(flux, float)
+    mask = np.isfinite(w) & np.isfinite(f)
+    if mask.sum() < 3:
+        return 0.0, float(np.nanmedian(f))
+
+    wfit = w[mask]
+    ffit = f[mask]
+
+    for _ in range(max_iter):
+        X = np.vstack([wfit, np.ones_like(wfit)]).T
+        m, q = np.linalg.lstsq(X, ffit, rcond=None)[0]
+        resid = ffit - (m*wfit + q)
+        mad = np.median(np.abs(resid - np.median(resid)))
+        srob = 1.4826*mad if mad > 0 else np.std(resid)
+        if srob <= 0:
+            break
+        newmask = np.abs(resid) < ksigma*srob
+        if newmask.sum() == wfit.size:
+            break
+        wfit = wfit[newmask]
+        ffit = ffit[newmask]
+        if wfit.size < 3:
+            break
+
+    # correzione per righe forti in emissione: abbassa la retta verso il 20° percentile
+    if use_percentile:
+        resid_all = f - (m*w + q)
+        # se i residui hanno coda positiva netta → emissione → baseline troppo alto
+        if np.nanpercentile(resid_all, 95) > 3 * np.nanstd(resid_all):
+            q -= 0.2 * (np.nanpercentile(resid_all, 95))
+    return float(m), float(q)
+
+
+# ---------------------------
+# Peak detection (emission/absorption)
+# ---------------------------
+
+def _detect_peaks(wave, resid, sign='emission', min_prom_sigma=3.0, min_distance_pix=3):
+    """
+    Ritorna (peaks, props, noise, med), con noise stimato dalla metà inferiore della distribuzione,
+    così le code positive delle righe in emissione non gonfiano la soglia.
+    """
+    y = np.asarray(resid, float).copy()
+    if sign == 'absorption':
+        y = -y
+
+    med = np.median(y)
+    lower = y[y <= med]
+    if lower.size < 10:
+        # fallback: robust IQR
+        q5, q95 = np.percentile(y, [5, 95])
+        noise = max(1e-12, 0.741*(q95 - med))
+    else:
+        mad = np.median(np.abs(lower - np.median(lower)))
+        noise = max(1e-12, 1.4826*mad)
+
+    peaks, props = find_peaks(y,
+                              prominence=max(1e-12, float(min_prom_sigma)*noise),
+                              distance=max(1, int(min_distance_pix)))
+    return peaks, props, float(noise), float(med)
+
+# ---------------------------
+# Line profiles
+# ---------------------------
+def _gauss(x, amp, mu, sigma):
+    return amp * np.exp(-0.5*((x-mu)/sigma)**2)
+
+def _lorentz(x, amp, mu, gamma):
+    return amp * (gamma**2)/((x-mu)**2 + gamma**2)
+
+def _composite(x, params, profile='gauss', ncomp=1):
+    x = np.asarray(x, float)
+    y = np.zeros_like(x)
+    if profile == 'gauss':
+        for k in range(ncomp):
+            a, mu, sg = params[3*k:3*k+3]
+            y += _gauss(x, a, mu, sg)
+    elif profile == 'lorentz':
+        for k in range(ncomp):
+            a, mu, gm = params[3*k:3*k+3]
+            y += _lorentz(x, a, mu, gm)
+    return y
+
+def _areas_from_params(params, profile, ncomp):
+    """Return list of component fluxes (areas)."""
+    areas = []
+    i = 0
+    if profile == 'gauss':
+        for _ in range(ncomp):
+            a, mu, sg = params[i:i+3]; i += 3
+            areas.append(a * sg * np.sqrt(2*np.pi))
+    elif profile == 'lorentz':
+        for _ in range(ncomp):
+            a, mu, gm = params[i:i+3]; i += 3
+            areas.append(a * np.pi * gm)
+    return np.asarray(areas, float)
+
+def _sigma_intrinsic(sigma_obs, sigma_inst):
+    s2 = sigma_obs**2 - sigma_inst**2
+    return float(np.sqrt(s2)) if s2 > 0 else 0.0
+
 #********************** END OF SPECTRA ANALYSIS FUNCTIONS *********************************
 #******************************************************************************************
-

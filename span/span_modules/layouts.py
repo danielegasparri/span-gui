@@ -53,7 +53,7 @@ menu_def = ['Unused', ['↑ Move Up', '↓ Move Down', 'Remove', 'Undo', '---', 
 #Layout optimized for Windows systems
 layout_windows = [
             [sg.Menu([
-                ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
+                ['&File', ['&Load!', '&Save parameters...', 'Save session...', 'Load session/parameters...', 'Restore default parameters', 'E&xit']],
                 ['&Edit', ['Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...', 'Save current spectra list...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Spectra manipulation', 'Utilities']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
@@ -144,7 +144,7 @@ layout_windows = [
 #Layout optimized for Linux systems
 layout_linux = [
             [sg.Menu([
-                ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
+                ['&File', ['&Load!', '&Save parameters...', 'Save session...', 'Load session/parameters...', 'Restore default parameters', 'E&xit']],
                 ['&Edit', ['Clear all tas&ks', 'Clean output', 'Show result folder', 'Change result folder...', 'Save current spectra list...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Spectra manipulation', 'Utilities']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
@@ -237,7 +237,7 @@ layout_linux = [
 #Layout optimized for MacOS systems
 layout_macos = [
             [sg.Menu([
-                ['&File', ['&Load!', '&Save parameters...', 'Load parameters...', 'Restore default parameters', 'E&xit']],
+                ['&File', ['&Load!', '&Save parameters...', 'Save session...', 'Load session/parameters...', 'Restore default parameters', 'E&xit']],
                 ['&Edit', ['Clear all tas&ks', 'Show result folder', 'Change result folder...', 'Save current spectra list...']],
                 ['&Window', ['Long-slit extraction', 'DataCube extraction', 'Text editor', 'FITS header editor', 'Spectra manipulation', 'Utilities']],
                 ['P&rocess',['Pl&ot', 'Pre&view spec.']],
@@ -314,7 +314,7 @@ layout_macos = [
 #************************************************************************************
 #Layout optimized for Android systems
 layout_android = [
-            [sg.Button('Read me', button_color=('black','orange'), tooltip='Open the SPAN readme'), sg.Button('Quick start', button_color=('black','orange'), tooltip='A fast guide to begin using SPAN'), sg.Button('Tips and tricks', button_color=('black','orange'), tooltip='Some tricks to master SPAN'), sg.Push(), sg.Button('Change result folder...', button_color=('black','light blue')), sg.Button('Save parameters...', button_color=('black','light blue'), tooltip='Save the current parameters in a json file'), sg.Button('Load parameters...', button_color=('black','light blue'), tooltip='Load the saved parameters'), sg.Button('Restore default parameters', button_color=('black','light blue'), tooltip='Restore the default parameters'), sg.Button('Clear all tasks', button_color=('black','light blue'), tooltip='De-activate all the tasks, including from the spectral manipulation panel'), sg.Button('Clean output', button_color=('black','light blue'), tooltip='Delete the output window')],
+            [sg.Button('Read me', button_color=('black','orange'), tooltip='Open the SPAN readme'), sg.Button('Quick start', button_color=('black','orange'), tooltip='A fast guide to begin using SPAN'), sg.Button('Tips and tricks', button_color=('black','orange'), tooltip='Some tricks to master SPAN'), sg.Push(), sg.Button('Change result folder...', button_color=('black','light blue')), sg.Button('Save parameters...', button_color=('black','light blue'), tooltip='Save the current parameters in a json file'), sg.Button('Load session/parameters...', button_color=('black','light blue'), tooltip='Load the saved parameters'), sg.Button('Restore default parameters', button_color=('black','light blue'), tooltip='Restore the default parameters'), sg.Button('Clear all tasks', button_color=('black','light blue'), tooltip='De-activate all the tasks, including from the spectral manipulation panel'), sg.Button('Clean output', button_color=('black','light blue'), tooltip='Delete the output window')],
             [sg.HorizontalSeparator()],
 
             [sg.Frame('Prepare and load spectra', [
@@ -368,7 +368,6 @@ layout_android = [
             [sg.Button('Preview result',button_color=('black','light gray'),tooltip='Preview the results of the Spectral analysis frame', size = (12,2), font=("Helvetica", 10, 'bold'))],
             [sg.Text('', font=("Helvetica", 14, 'bold'))],
             [sg.Text('')],
-            # [sg.Button('Help me',button_color=('black','orange'), size = (12,1),tooltip='Getting help for the spectral analysis')],
 
             ],font=("Helvetica", 12, 'bold')),
 

@@ -42,7 +42,9 @@ except ModuleNotFoundError: #local import if executed as package
     from span.span_functions import spec_analysis as span
 
 # from params import SpectraParams
-
+import os
+import hashlib
+from datetime import datetime
 
 
 def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, gas_component, gas_names, gas_flux, gas_flux_err,
@@ -609,3 +611,150 @@ def save_velocity_or_redshift_to_file(i, params, value_at_max, err, df_rv, rv_fi
         except Exception:
             print ('Error writing the file')
             print('')
+
+
+
+def append_linefit_components(i: int, params, components_file: str, centers_A, sigma_A, sigma_kms, flux_phys, err_mu_A, err_sigmaA, err_sigma_kms, err_flux_phys, chi2nu=np.nan, peaks_detected=np.nan, norm_factor=np.nan):
+    """
+    Appende righe al file components_file (spazio-separato .dat).
+    Una riga = una componente dello spettro i-esimo.
+    Nessun DataFrame: scrittura diretta e robusta.
+    """
+
+    # se niente da aggiungere, esci
+    if centers_A is None or len(centers_A) == 0:
+        return
+
+    spec_idx  = _fmt_int(i)
+    spec_name = getattr(params, 'prev_spec_nopath', f'spec_{i:04d}')
+
+    # finestra usata (dalla GUI/params)
+    wmin = getattr(params, 'low_wave_fit', np.nan)
+    wmax = getattr(params, 'high_wave_fit', np.nan)
+
+    # scelte modello dalla GUI
+    if getattr(params, 'usr_fit_line', True):
+        profile = getattr(params, 'lf_profile', 'gauss')
+        sign    = getattr(params, 'lf_sign', 'auto')
+    else:
+        # CaT (assorbimento) per coerenza
+        profile = 'gauss'
+        sign    = 'absorption'
+
+    # converti in float per sicurezza
+    chi2nu = float(chi2nu) if np.isfinite(chi2nu) else np.nan
+    peaks_detected = float(peaks_detected) if np.isfinite(peaks_detected) else np.nan
+    norm_factor = float(norm_factor) if np.isfinite(norm_factor) else np.nan
+
+    ncomp_used = int(len(centers_A))
+
+    # normalizza array di errore alla stessa lunghezza
+    def _arr(x, n):
+        if x is None:
+            return np.full(n, np.nan)
+        xx = np.asarray(x, float)
+        if xx.size != n:
+            out = np.full(n, np.nan)
+            out[:min(n, xx.size)] = xx[:min(n, xx.size)]
+            return out
+        return xx
+
+    centers_A     = np.asarray(centers_A, float)
+    sigma_A       = np.asarray(sigma_A, float)
+    sigma_kms     = np.asarray(sigma_kms, float)
+    flux_phys     = np.asarray(flux_phys, float) if flux_phys is not None else np.full(ncomp_used, np.nan)
+    err_mu_A      = _arr(err_mu_A, ncomp_used)
+    err_sigmaA    = _arr(err_sigmaA, ncomp_used)
+    err_sigma_kms = _arr(err_sigma_kms, ncomp_used)
+    err_flux_phys = _arr(err_flux_phys, ncomp_used)
+
+    # ordine delle colonne (deve combaciare con l'header scritto in setup)
+    col_order = [
+        "spec_idx", "spec_name",
+        "window_min_A", "window_max_A",
+        "profile", "sign", "ncomp_used",
+        "chi2nu", "peaks_detected",
+        "comp_idx",
+        "center_A", "e_center_A",
+        "sigma_A", "e_sigma_A",
+        "sigma_kms", "e_sigma_kms",
+        "flux", "e_flux",
+        "norm_factor"
+    ]
+
+    with open(components_file, 'a') as f:
+        for j in range(ncomp_used):
+            row = {
+                "spec_idx":     spec_idx,
+                "spec_name":    str(spec_name),
+                "window_min_A": _fmt_float(wmin),
+                "window_max_A": _fmt_float(wmax),
+                "profile":      str(profile),
+                "sign":         str(sign),
+                "ncomp_used":   _fmt_int(ncomp_used),
+                "chi2nu":       _fmt_float(chi2nu),
+                "peaks_detected": _fmt_float(peaks_detected),
+                "comp_idx":     _fmt_int(j+1),
+                "center_A":     _fmt_float(centers_A[j]),
+                "e_center_A":   _fmt_float(err_mu_A[j]),
+                "sigma_A":      _fmt_float(sigma_A[j]),
+                "e_sigma_A":    _fmt_float(err_sigmaA[j]),
+                "sigma_kms":    _fmt_float(sigma_kms[j]),
+                "e_sigma_kms":  _fmt_float(err_sigma_kms[j]),
+                "flux":         _fmt_float(flux_phys[j]),
+                "e_flux":       _fmt_float(err_flux_phys[j]),
+                "norm_factor":  _fmt_float(norm_factor),
+            }
+            f.write(" ".join(str(row[k]) for k in col_order) + "\n")
+
+
+def _fmt_int(x):    return f"{int(x)}"
+def _fmt_float(x):  return f"{float(x):g}"
+
+
+def append_cat_components(i: int, spec_name: str, components_file: str, centers_A, e_centers_A, sigma_A, e_sigma_A, sigma_kms, e_sigma_kms, flux_phys, e_flux_phys, EW, e_EW, norm_factor):
+    """
+    Append three rows (one per CaT line) to components_file.
+    Assumes all arrays have length 3.
+    """
+
+    # normalise arrays to length 3 safely
+    def _arr3(x):
+        xx = np.asarray(x, float)
+        if xx.size == 3:
+            return xx
+        out = np.full(3, np.nan, float)
+        out[:min(3, xx.size)] = xx[:min(3, xx.size)]
+        return out
+
+    centers_A    = _arr3(centers_A)
+    e_centers_A  = _arr3(e_centers_A)
+    sigma_A      = _arr3(sigma_A)
+    e_sigma_A    = _arr3(e_sigma_A)
+    sigma_kms    = _arr3(sigma_kms)
+    e_sigma_kms  = _arr3(e_sigma_kms)
+    flux_phys    = _arr3(flux_phys)
+    e_flux_phys  = _arr3(e_flux_phys)
+    EW           = _arr3(EW)
+    e_EW         = _arr3(e_EW)
+
+    with open(components_file, "a") as f:
+        for j in range(3):
+            row = [
+                _fmt_int(i),
+                str(spec_name),
+                _fmt_int(j+1),                            
+                _fmt_float(centers_A[j]),
+                _fmt_float(e_centers_A[j]),
+                _fmt_float(sigma_A[j]),
+                _fmt_float(e_sigma_A[j]),
+                _fmt_float(sigma_kms[j]),
+                _fmt_float(e_sigma_kms[j]),
+                _fmt_float(flux_phys[j]),
+                _fmt_float(e_flux_phys[j]),
+                _fmt_float(EW[j]),
+                _fmt_float(e_EW[j]),
+                _fmt_float(norm_factor),
+            ]
+            f.write(" ".join(row) + "\n")
+

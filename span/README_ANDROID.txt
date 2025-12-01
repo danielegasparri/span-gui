@@ -17,6 +17,7 @@ Before compiling, you need to manually install with the embedded pip of Pydroid3
   tk
   certifi
   emcee
+  powerbin
 
 Once done, you need to compile the __main__.py.
 Put your mobile device in landscape mode (horizontal), otherwise the GUI panel will be truncated. 

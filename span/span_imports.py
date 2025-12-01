@@ -25,10 +25,19 @@
     THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
-# Import local modules needed by SPAN
-
+# Import modules needed by SPAN
 import importlib
-import sys
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+import matplotlib.backends.backend_tkagg
+import time
+import json
+from dataclasses import replace
+from params import SpectraParams
+
 
 # Import GUI module
 try:
@@ -62,8 +71,7 @@ modules = {
     "check_spec": "span_modules.check_spec",
     "settings": "span_modules.settings",
     "file_writer": "span_modules.file_writer",
-
-    # New imports (with alias for clarity)
+    "listbox_events": "span_modules.listbox_events",
     "zoom": "span_modules.ui_zoom",
     "preview_tools": "span_modules.preview_tools",
 }
@@ -77,16 +85,8 @@ for alias, module in modules.items():
 
     globals()[alias] = imported_module
 
-# ------------------------------------------------------------------
-# Direct imports (no alias, use full module name)
-# ------------------------------------------------------------------
-from span_modules import listbox_events
-# from span_modules import preview_tools_extra
 
-# ------------------------------------------------------------------
-# Data classes / definitions
-# ------------------------------------------------------------------
-from params import SpectraParams
+
 
 
 

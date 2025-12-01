@@ -1,11 +1,7 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
-# Stars and gas kinematics #
-
-![Kinematics](img/kinematics.png)
-*Stars and gas kinematics parameters*
-
+# Stars and gas kinematics
 
 SPAN utilizes the capabilities of the pPXF algorithm (Cappellari 2023 and references therein) to perform a comprehensive kinematic analysis of both stellar and gaseous components in galaxy spectra, covering the optical and near-infrared (NIR) regions. This task can measure the line-of-sight velocity moments both of stars and gas, as well as the fluxes of the gas emission lines automatically found in the spectral region considered.
 
@@ -15,7 +11,7 @@ The default parameters in this window offer a solid starting point for typical g
 Fine-tuning the fit requires adjusting specific parameters. 
 
 
-## Parameter Overview ##
+## Parameter Overview
 The parameters are grouped into seven sections, separated by horizontal dividers. Below is a brief description of each:
 
 ### First Section: Basic Parameters
@@ -41,13 +37,13 @@ Here you can select the SSP Model Library to use for the fit. The available pre-
 	3. FSPS (subsample)
 	4. X-shooter Spectral Library (XSL) (complete sample with Salpeter IMF, better suited for higher resolution spectra, R = 10,000)  
 If your spectra have a higher resolution than the templates, you should degrade them to match the template resolution using the "Degrade Resolution" tool in the Spectra manipulation panel.
-You can use any kind of EMILES templates or generic ones. The generic templates should have the wavelength scale in linear units and Angstrom. WARNING: Two stellar component fit is not available with a generic template set option (see next section). 
+You can use any kind of EMILES templates or generic ones. The generic templates should have the wavelength scale in linear units and Angstrom. **WARNING:** Two stellar component fit is not available with a generic template set option (see next section). 
 
 
 ### Fourth Section: Which component to fit
 
-1. "Fitting only stellar kinematics": Considering only the stellar component. To prevent gas emission lines in the optical, the option "Mask emission lines is activated by default". If you are fitting the optical window and are absolutely sure to not have emission (usually in HBeta and HAlpha) you can disable this option. 
-2. "Gas and Stars Kinematics": Considers both stellar and gaseous emission lines. The gas components are divided into three families: Balmer lines, forbidden lines, other lines. SPAN will automatically fit all the components found in the spectral range given, using a modified version of the line emission template provided by pPXF and embedded in the "spectral_analysis.py" module in the "span_functions" folder. By default, stars and gas kinematics are calculated together with one fit. However, often is necessary to fix the stellar kinematics to perform a more accurate gas fit. The option "Fixing stellar kinematics first" will perform a first fit only for the stellar components and will use the kinematics moments derived to fix them in the subsequent fit for the gas component.
+1. "Fitting only stellar kinematics": Considering only the stellar component. To prevent gas emission lines in the optical, the option "Mask emission lines" is activated by default. If you are fitting the optical window and are absolutely sure to not have emission (usually in HBeta and HAlpha) you can disable this option. 
+2. "Gas and Stars Kinematics": Considers both stellar and gaseous emission lines. The gas components are divided into three families: Balmer lines, forbidden lines, other lines. SPAN will automatically fit all the components found in the spectral range given, using a modified version of the line emission template provided by pPXF and embedded in the "emission_lines.py" module in the "span_functions" folder. By default, stars and gas kinematics are calculated together with one fit. However, often is necessary to fix the stellar kinematics to perform a more accurate gas fit. The option "Fixing stellar kinematics first" will perform a first fit only for the stellar components and will use the kinematics moments derived to fix them in the subsequent fit for the gas component.
 3. Two stellar component fit option: Here you can also decide to fit two stellar components by activating the "Fit two stellar components with:" checkbox. This option is important only when you have kinematic decoupled stellar components (e.g. counter-rotating discs) with high S/N (> 50). It can be activated both with stellar and gas fit option, but gas will always be fitted with one kinematic component. Dust correction is not available (both for star and gas) in this mode. You need to insert an accurate velocity and velocity dispersion guess for both the stellar components. Beside this, you can select the templates to assign to each component, based on three options: 1) Old (> 5 Gyr) and young (< 5 Gyr) components, 2) Metal rich ([M/H] > 0 ) and metal poor ([M/H] < 0) components, 3) pick two templates with fixed age and metallicity. This option has been used in some works with counter-rotating discs as such Rubino et al., 2021.
 **WARNING:** Two component fit is available only by using the pre-set template set of SPAN and with any (E)MILES template. Not available for fully custom templates, since it needs to read the information about age and metallicity of the SSPs.
 **IMPORTANT1:** For the two component fit you must always insert a GOOD guess of the velocity and velocity dispersion of the two components you think to see in your spectrum. I stress out that a good guess is necessary (according to Cappellari et al., 2023 and the pPXF documentation), so first take an accurate look at your spectrum. Some tries may be necessary to find the correct parameters and it is better to perform these tests on spectral regions not affected by gas (e.g. the CaT lines) with the option "Fit only stellar kinematics".
@@ -86,7 +82,7 @@ This option is recommended if you do not fully trust the formal uncertainties co
 Particularly useful for galaxies with very low velocity dispersion compared to the instrumental resolution (velscale). This operation is very time consuming, so try to not insert too many simulations. 
 
 
-## Outputs ##
+## Outputs
 In **"Process selected"** mode, if the option "Save processed spectra" is activated, the task produces:
 
 - bestfit model spectrum
