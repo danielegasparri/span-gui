@@ -1,8 +1,19 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
 
 ## Changelog
+
+**Version 7.3 (20251202):**  
+
+- Minor bug fixes for the 'Stellar populations and SFH' task: custom EMILES templates where fitting only the V band, now they can be used to fit any band covered by them. The option to fit with or without gas was not saved correctly to the parameter file.
+- Introduced the difference between the 'Save session...' and 'Save parameters...' in the File menu. The 'Save session' will save all the parameters and the program status, while the 'Save parameters' option saves only the parameters and not the path of the local files on the computer. 
+- The 'Stellar populations and SFH' task now can use the results of the 'Stars and gas kinematics' for fixing the kinematics values found and/or to use the emission corrected spectra
+- The emission_lines function that defines the gas emission lines to be passed to pPXF now is stored as a separate module called 'emission_lines.py' in the 'span_functions' folder to be easily used and personalized following the pPXF standard
+- Completely refactored the 'Line(s) fitting' task to perform science-grade analysis and error estimation with bootstrap simulations. Now it is possible to fit multiple lines across the selected wavelength rage. Also, flux measurement of the fitted components is available. 
+- Created spectral analysis recipes to be loaded to SPAN and used as templates for galaxy spectral analysis. 
+- Improved the layout and the readability of the help windows within the GUI.
+
 
 **Version 7.2 (20251102):**  
 

@@ -8,6 +8,7 @@ nav:
   - Quick start: quick_start.md
   - Spectra manipulation: spectra_manipulation.md
   - Spectral analysis overview: spectral_analysis_overview.md
+  - Line(s) fitting: lines_fitting.md
   - Line-strength analysis: linestrength.md
   - Stars and gas kinematics: stars_and_gas_kinematics.md
   - Stellar populations and SFH: stellar_populations_and_SFH.md

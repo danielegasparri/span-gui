@@ -1,7 +1,7 @@
-SPAN: SPectral ANalysis software V7.2
-Daniele Gasparri, November 2025
+SPAN: SPectral ANalysis software V7.3
+Daniele Gasparri, December 2025
 
-# Stellar populations and SFH #
+# Stellar populations and SFH
 
 ![Stellar populations](img/stellar_populations.png)
 *Stellar populations and SFH parameters*
@@ -21,7 +21,7 @@ The full spectral fitting method requires spectra with an acceptable Signal-to-N
 The default settings offer a good starting point for most local galaxy spectra and common spectrographs. To perform an initial fit, simply enter the redshift of the spectrum. For fine-tuning, adjust the parameters based on your specific dataset.
 
 
-## Parameter Overview ##
+## Parameter Overview
 The parameters are grouped into six sections, separated by horizontal dividers. Below is a brief description of each:
 
 
@@ -53,6 +53,8 @@ Recommended workflow for finding the best parameters:
 - If uncertain, use "Auto Noise" option, which performs an initial unregularized fit to determine the optimal noise level.
 - For small spectral ranges (<1000 A) and limited templates, "Auto Noise and Regul. error" can be used to optimize both parameters. A good starting point for S/N = 50 is setting "Fraction of Dchi2 to reach" to 0.20.
 
+**IMPORTANT:** The regularization factor here is expressed as "Regul. error", following the convention of pPXF, where "Regul. error" = 1/regularization. Example: If you want to apply a regularization of 10, then "Regul. error" = 1/10 = 0.1. **TIP:** With good S/N spectra (100) a "Regul. error" = 0.1 is usually a good choice, following what stated, for example, by @bittner2020.
+
 **Polynomial Adjustments**:  
 Additive Degree: Leave disabled (-1) for reliable results, since they may change the absorption line profiles.
 Multiplicative Degree: Adjust based on spectral range (about 1 degree per 100 A).
@@ -63,10 +65,10 @@ Example: For 4800-5500 A, set Mult. degree = 7.
 Choose the SSP model library for fitting:
 
 - E-MILES, Galaxev, FSPS (pPXF defaults, they are a subsample of the respective libraries).
-- X-shooter Spectral Library. A full sample in the optical range with Salpeter IMF and Parsec/Colibri isochrones. They have a resolving power of R = 10,000 and are better suited for medium to high resolutio galaxy spectra.
+- X-shooter Spectral Library. A full sample in the optical range with Salpeter IMF and Parsec/Colibri isochrones. They have a resolving power of R = 10,000 and are better suited for medium to high resolution galaxy spectra.
 - sMILES Library (Knowles et al., 2023). Full sample in the optical window with 4 alpha/Fe values and Salpeter IMF. They are useful to extract also the alpha/Fe values besides age and metallicity. 
 
-**Warning** If your spectra have much higher resolution than the templates, apply the "Degrade Resolution" task in the Spectra manipulation panel before fitting may improve the results.
+**TIP** If your spectra have much higher resolution than the templates, apply the "Degrade Resolution" task in the Spectra manipulation panel before fitting may improve the results.
 
 
 **Template Handling:**  
@@ -89,7 +91,7 @@ For highly star-forming galaxies, consider FSPS (Conroy et al., 2010) or other t
 - You can mask out the emission Lines. In this case, you should select the "Fitting without gas" mode (see Section 2).
 - Custom masking is available and can be added also to the automatic masking of the emission lines. There are two custom masking options available: 
     1. Manual masking, by inserting the wavelength interval(s) to be masked, separated by commas and parenthesis in the text box. If invalid values are inserted, SPAN will warn you.
-    2. Graphical masking mode, activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking in done, you can close the Matplotlib window and the text box on the left will update with the new ranges selected.
+    2. Graphical masking mode, activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking is done, you can close the Matplotlib window and the text box on the left will update with the new ranges selected.
 
 **Age and Metallicity Ranges:**  
 Limit the maximum template age and metallicity based on the galaxy's cosmic age. For high-redshift galaxies, reducing the upper age limit is strongly recommended. Example: we are analyzing a galaxy located at z = 1.20, corresponding to an epoch when the Universe was about 5 Gyr old. You can move the maximum age slider to 5 Gyr to consider only SSP younger than this value for the fit. 
@@ -105,13 +107,13 @@ You can select the model grids and interpolation mode in the same way as in the 
 If your spectra have a significantly different resolution compared to the SSP templates used in pPXF, it is recommended to activate the option "Convolve templates to galaxy resolution". This ensures a more accurate estimate of the velocity dispersion during the fit, which is required to properly correct the Lick/IDS indices for spectral broadening.
 
 
-## Final Notes ##
+## Final Notes
 By default, templates are V-band normalized (5070-5950 A), meaning age, metallicity, and SFH are V luminosity-weighted.
 Using pPXF's .flux attribute, SPAN derives mass-weighted results from the same fit.
 Best regularization differs for mass-weighted vs. luminosity-weighted results. If mass results are the priority, fine-tune the "Regul. error" accordingly.
 
 
-## Outputs ##
+## Outputs
 Every fit generates three plots both in the **"Process selected** and **Process all"** mode:
 
 - Fitted Spectrum
