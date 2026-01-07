@@ -1,8 +1,15 @@
-SPAN: SPectral ANalysis software V7.3
-Daniele Gasparri, December 2025
+SPAN: SPectral ANalysis software V7.4
+Daniele Gasparri, January 2026
 
 
 ## Changelog
+
+**Version 7.4 (20260102):**  
+
+- Improved the "Stellar populations and SFH" task, which now can calculates the M/L for any (E)MILES based and XSL SSP models.
+- The XSL models now are not included in SPAN anymore as single spectra but are automatically downloaded from the pPXF distribution
+- Optimized the preparation of the SSP templates for the 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks to save calculation time and maintain accuracy.
+- Code refactoring and optimization for the 'span_main.py', 'spectral_analysis.py', and 'build_templates.py' modules
 
 **Version 7.3 (20251202):**  
 

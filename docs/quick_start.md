@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.3
-Daniele Gasparri, December 2025
+SPAN: SPectral ANalysis software V7.4
+Daniele Gasparri, January 2026
 
 
 # Quick start #
