@@ -13,7 +13,7 @@
 
 ## What’s New in SPAN 7.4
 
-- Replaced the XSL SSP models with those embedded with the pPXF distribution in .npz format. These templates are automatically downloaded by SPAN the first time they are called in the "Stars and gas kinematics" of "Stellar populations and SFH" tasks.
+- Replaced the XSL SSP models with those embedded with the pPXF distribution in .npz format. These templates are automatically downloaded by SPAN the first time they are called in the "Stars and gas kinematics" or "Stellar populations and SFH" tasks.
 - For the "Stellar populations and SFH" task, now the M/L estimation is available for any (E)MILES custom and XSL SSP templates.
 - Reduced the size of the SPAN app installer for Windows systems by a factor of two.
 - Code refactoring to ensure better readability and performances
