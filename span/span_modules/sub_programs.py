@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -364,9 +364,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                 if plot_radial:
                     try:
                         if offset:
-                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                            try:
+                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
                         else:
-                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
+                            try:
+                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
                         
                         if xmin is not None and xmax is not None:
                             ax.set_xlim(xmin, xmax)
@@ -385,9 +391,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                         img_path = map_values["-IMG-"]
                         
                         if offset:
-                            fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                            try:
+                                fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
                         else:
-                            fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                            try:
+                                fig, ax = stm.plot_reprojected_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
 
                         if img_path and os.path.isfile(img_path):
                             if img_path and os.path.isfile(img_path):
@@ -414,9 +426,16 @@ def plot_maps_window(BASE_DIR, layout, params):
                 else:
                     
                     if offset:
-                        fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                        try:
+                            fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                        except Exception as e:
+                            sg.popup(f"Data not valid: {e}")
+                            
                     else:
-                        fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                        try:
+                            fig, ax = stm.plot_voronoi_map_clickable(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], vmin=vmin, vmax=vmax)
+                        except Exception as e:
+                            sg.popup(f"Data not valid: {e}")
                    
                     img_path = map_values["-IMG-"]
                     if img_path and os.path.isfile(img_path):
@@ -483,10 +502,18 @@ def plot_maps_window(BASE_DIR, layout, params):
                         try:
                             
                             if offset:
-                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                                try:
+                                    fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, selected_quantity)
+                                except Exception as e:
+                                    sg.popup(f"Data not valid: {e}")
+                                    continue
                             else:
-                                fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
-                            
+                                try:
+                                    fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, selected_quantity)
+                                except Exception as e:
+                                    sg.popup(f"Data not valid: {e}")
+                                    continue
+                                    
                             if xmin is not None and xmax is not None:
                                 ax.set_xlim(xmin, xmax)
                             if ymin is not None and ymax is not None:
@@ -505,9 +532,17 @@ def plot_maps_window(BASE_DIR, layout, params):
                         try:
                             
                             if offset:
-                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                try:
+                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                except Exception as e:
+                                    sg.popup(f"Data not valid: {e}")
+                                    continue
                             else:
-                                fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                try:
+                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                except Exception as e:
+                                    sg.popup(f"Data not valid: {e}")
+                                    continue
 
                             if img_path and os.path.isfile(img_path):
                                 try:
@@ -543,9 +578,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                             iso_levels = None
 
                         if offset:
-                            fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                            try:
+                                fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
                         else:
-                            fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                            try:
+                                fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, selected_quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                            except Exception as e:
+                                sg.popup(f"Data not valid: {e}")
 
                         # Set X and Y limits if provided
                         if xmin is not None and xmax is not None:
@@ -609,9 +650,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                             if plot_radial:
                                 try:
                                     if offset:
-                                        fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, quantity)
+                                        try:
+                                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df_mod, quantity)
+                                        except Exception as e:
+                                            print(f"Data not valid: {e}")
                                     else:
-                                        fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, quantity)
+                                        try:
+                                            fig, ax = stm.plot_radial_profile_bins(xbin, ybin, bin_id, result_df, quantity)
+                                        except Exception as e:
+                                            print(f"Data not valid: {e}")
                                     
                                     if xmin is not None and xmax is not None:
                                         ax.set_xlim(xmin, xmax)
@@ -628,9 +675,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                                 img_path = map_values["-IMG-"]
                                 
                                 if offset:
-                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                    try:
+                                        fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                    except Exception as e:
+                                        print(f"Data not valid: {e}")
                                 else:
-                                    fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                    try:
+                                        fig, ax = stm.plot_reprojected_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], smoothing=map_values["-SMOOTH-"], sigma=float(map_values["-SIGMA-"]), vmin=vmin, vmax=vmax)
+                                    except Exception as e:
+                                        print(f"Data not valid: {e}")
 
                                 if img_path and os.path.isfile(img_path):
                                     try:
@@ -661,9 +714,15 @@ def plot_maps_window(BASE_DIR, layout, params):
                                     iso_levels = None
 
                                 if offset:
-                                    fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                                    try:
+                                        fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df_mod, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                                    except Exception as e:
+                                        print(f"Data not valid: {e}")
                                 else:
-                                    fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                                    try:
+                                        fig, ax = stm.plot_voronoi_map(x, y, bin_id, result_df, quantity, cmap=map_values["-CMAP-"], img_path=img_path, iso_levels=iso_levels, vmin=vmin, vmax=vmax)
+                                    except Exception as e:
+                                        print(f"Data not valid: {e}")
 
                                 # Set X and Y limits if provided
                                 if xmin is not None and xmax is not None:
@@ -1795,7 +1854,11 @@ def datacube_extraction(params):
                 continue
 
         if ifs_existing_bin:
-            cubextr.handle_existing_bin_files(ifs_existing_bin_folder, ifs_output_dir, ifs_run_id)
+            try:
+                cubextr.handle_existing_bin_files(ifs_existing_bin_folder, ifs_output_dir, ifs_run_id)
+            except Exception as e:
+                sg.popup(f"Failed to import existing bin info: {e}")
+                continue
 
         # preview mode for voronoi or elliptical binning
         if cube_ifs_event == 'Preview bins' and not ifs_manual_bin:

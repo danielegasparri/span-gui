@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -183,7 +183,7 @@ def get_layout():
 SPECTRAL_TEMPLATES_DIR = os.path.join(BASE_DIR, "spectralTemplates")
 
 # Link to my website to download the spectralTemplates folder
-DOWNLOAD_URL = "https://github.com/danielegasparri/span-gui/releases/download/v7.1.2/spectralTemplates.zip" 
+DOWNLOAD_URL = "https://github.com/danielegasparri/span-gui/releases/download/v6.6.13/spectralTemplates.zip" 
 
 # Temporary path to save the zipped file
 TEMP_ZIP_PATH = os.path.join(BASE_DIR, "spectralTemplates.zip")
@@ -280,7 +280,7 @@ def check_and_download_spectral_templates():
     if not os.path.exists(SPECTRAL_TEMPLATES_DIR):
         # If spectralTemplates does not exist, I should download it, if the user agrees
         choice = sg.popup_yes_no(
-            "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 250MB. This might take a while...\n \nYou can also download the file here: https://github.com/danielegasparri/span-gui/releases/download/v7.1.2/spectralTemplates.zip, unzip the folder and put in the root folder of span",
+            "SPAN must download and extract the spectralTemplates folder to work properly. Do you want to continue? Size = 33MB. This might take a while...\n \nYou can also download the file here: https://github.com/danielegasparri/span-gui/releases/download/v6.6.13/spectralTemplates.zip, unzip the folder and put in the root folder of span",
             title="SPAN Missing Files", font = ('', default_size),
             keep_on_top=True
         )

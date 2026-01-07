@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 

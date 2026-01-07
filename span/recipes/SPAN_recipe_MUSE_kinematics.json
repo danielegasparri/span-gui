@@ -208,7 +208,7 @@
         "lf_bin_width_A": 50.0,
         "left_wave_ppxf_kin": 4800.0,
         "right_wave_ppxf_kin": 5500.0,
-        "stellar_library_kin": "xshooter",
+        "stellar_library_kin": "xsl",
         "constant_resolution_lambda": false,
         "resolution_kin_muse": true,
         "ppxf_resolution": 3.5,

@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -330,7 +330,7 @@ class SpectraParams:
     redshift_guess_kin: float = 0.0
     constant_resolution_lambda: bool = True
     constant_resolution_r: bool = False
-    markers_ppxf_kin: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xshooter'])
+    markers_ppxf_kin: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xsl'])
     stellar_library_kin: str = 'emiles'
     additive_degree_kin: int = 4
     multiplicative_degree_kin: int = -1
@@ -388,7 +388,7 @@ class SpectraParams:
     additive_degree: int = -1
     multiplicative_degree: int = 7
     ppxf_pop_tie_balmer: bool = False
-    markers_ppxf: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xshooter', 'sMILES'])
+    markers_ppxf: list = field(default_factory=lambda: ['emiles', 'galaxev', 'fsps', 'xsl', 'sMILES'])
     stellar_library: str = 'emiles'
     ppxf_pop_noise: float = 0.0163
     ppxf_min_age: float = 0.0

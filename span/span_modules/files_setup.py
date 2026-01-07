@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -459,7 +459,7 @@ def create_kinematics_files(result_ppxf_kin_data_dir, spectra_list_name, timesta
     kin_file = os.path.join(result_ppxf_kin_data_dir, f"{spectra_list_name}_kin_data_stars_{timestamp}.dat")
 
     # Define column headers for stellar kinematics
-    kin_id = ['#Spectrum', 'RV(km/s)', 'Sigma(km/s)', 'H3', 'H4', 'H5', 'H6', 'errRV', 'errSigma', 'errH3', 'errH4', 'errH5', 'errH6', 'S/N']
+    kin_id = ['#Spectrum', 'RV(km/s)', 'Sigma(km/s)', 'H3', 'H4', 'H5', 'H6', 'errRV', 'errSigma', 'errH3', 'errH4', 'errH5', 'errH6', 'Av_stars', 'delta_stars', 'S/N']
 
     # Initialise arrays with zero values
     kinematics_data = np.zeros((spectra_number, len(kin_id) - 1))

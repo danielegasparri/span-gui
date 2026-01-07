@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -48,7 +48,7 @@ from datetime import datetime
 
 
 def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, gas_component, gas_names, gas_flux, gas_flux_err,
-                            kin_component, snr_kin, df_kin, kin_file, df_kin_mc=None, kin_file_mc=None, df_kin_gas=None, kin_file_gas=None):
+                            kin_component, Av_stars, delta_stars, Av_gas, snr_kin, df_kin, kin_file, df_kin_mc=None, kin_file_mc=None, df_kin_gas=None, kin_file_gas=None):
 
     """
     Saves kinematics data (stellar/gas) to file(s) using Pandas.
@@ -83,6 +83,11 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
             df_kin.at[i, 'errH4']= err_h4
             df_kin.at[i, 'errH5']= err_h5
             df_kin.at[i, 'errH6']= err_h6
+            
+            df_kin.at[i, 'Av_stars']= round(Av_stars,2)
+            df_kin.at[i, 'delta_stars']= round(delta_stars,2)
+            
+            
             df_kin.at[i, 'S/N']= round(snr_kin)
 
             df_kin.to_csv(kin_file, index= False, sep=' ')
@@ -101,6 +106,10 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 df_kin_mc.at[i, 'errH4']= err_h4_kin_mc
                 df_kin_mc.at[i, 'errH5']= err_h5_kin_mc
                 df_kin_mc.at[i, 'errH6']= err_h6_kin_mc
+                
+                df_kin_mc.at[i, 'Av_stars']= round(Av_stars,2)
+                df_kin_mc.at[i, 'delta_stars']= round(delta_stars,2)
+                
                 df_kin_mc.at[i, 'S/N']= round(snr_kin)
 
                 df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')
@@ -169,6 +178,10 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
             df_kin.at[i, 'errH5_2']= err_h52
             df_kin.at[i, 'errH6_2']= err_h62
 
+
+            df_kin.at[i, 'Av_stars']= round(Av_stars,2)
+            df_kin.at[i, 'delta_stars']= round(delta_stars,2)
+            
             #writing to file
             df_kin.to_csv(kin_file, index= False, sep=' ')
 
@@ -211,6 +224,10 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                 df_kin_mc.at[i, 'errH5_2']= err_h5_kin_mc2
                 df_kin_mc.at[i, 'errH6_2']= err_h6_kin_mc2
 
+
+                df_kin_mc.at[i, 'Av_stars']= round(Av_stars,2)
+                df_kin_mc.at[i, 'delta_stars']= round(delta_stars,2)
+                
                 #writing the dataframe to file
                 df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')
 
@@ -242,6 +259,10 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
             df_kin.at[i, 'errH4']= err_h4
             df_kin.at[i, 'errH5']= err_h5
             df_kin.at[i, 'errH6']= err_h6
+            
+            df_kin.at[i, 'Av_stars']= round(Av_stars,2)
+            df_kin.at[i, 'delta_stars']= round(delta_stars,2)
+            
             df_kin.at[i, 'S/N']= int(snr_kin)
 
             df_kin.to_csv(kin_file, index= False, sep=' ')
@@ -261,6 +282,7 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                             
                         ]
 
+                    kin_id_gas += ['Av_gas']
                     spectra_number = len(params.spec_names_nopath)
                     gas_data = np.zeros((spectra_number, len(kin_id_gas) - 1))
                     df_kin_gas = pd.DataFrame(np.column_stack((params.spec_names_nopath, gas_data)), columns=kin_id_gas)
@@ -280,6 +302,7 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     df_kin_gas.at[i, f'errSigma_{name}']= round(error_kinematics[comp][1],3)
 
                     # df_kin_gas.to_csv(kin_file_gas, index= False, sep=' ')
+                df_kin_gas.at[i, 'Av_gas']= round(Av_gas,2)
                 if df_kin_gas is not None and kin_file_gas is not None:
                     df_kin_gas.to_csv(kin_file_gas, index=False, sep=' ')
 
@@ -299,6 +322,11 @@ def save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinem
                     df_kin_mc.at[i, 'errH4']= err_h4_kin_mc
                     df_kin_mc.at[i, 'errH5']= err_h5_kin_mc
                     df_kin_mc.at[i, 'errH6']= err_h6_kin_mc
+
+                    df_kin_mc.at[i, 'Av_stars']= round(Av_stars,2)
+                    df_kin_mc.at[i, 'delta_stars']= round(delta_stars,2)
+
+                    
                     df_kin_mc.at[i, 'S/N']= int(snr_kin)
 
                     df_kin_mc.to_csv(kin_file_mc, index= False, sep=' ')

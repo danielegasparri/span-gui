@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -39,7 +39,10 @@ from scipy import ndimage
 from astropy.io import fits
 import ppxf.ppxf_util as util
 import ppxf.sps_util as lib
+import os
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(CURRENT_DIR)
 
 ###### The following classes and functions have been written to be an interface with the pPXF code.
 # They allow to interact with the pre-loaded SSP templates that come with pPXF and to use
@@ -290,6 +293,10 @@ class miles:
         if not files:
             raise FileNotFoundError(f"No files found matching pattern: {pathname}")
 
+        # Store one representative template filename to infer IMF/isochrones later
+        self._template_example = files[0]
+        self._ml_imf_tag, self._ml_iso_tag = self._infer_ml_variant(self._template_example)
+
         # Extract (age, Z)
         age_metal_list = [age_metal_miles(f) for f in files]
         all_ages = np.array([am[0] for am in age_metal_list])
@@ -514,6 +521,160 @@ class miles:
         return self.metal_grid
 
 
+    def _infer_ml_variant(self, template_filename):
+        s = os.path.basename(template_filename)
+        su = s.upper()
+
+        # Isochrones: _iTp (BaSTI) vs _iPp (Padova00)
+        iso = None
+        m_iso = re.search(r"_I([TP])P", su)  # _ITP or _IPP
+        if m_iso:
+            iso = "BASTI" if m_iso.group(1) == "T" else "PADOVA00"
+
+        # IMF: allow optional leading E/M (Eku, Mku, ku) and allow prefixes like "crop_"
+        imf = None
+        if re.search(r"(?:^|[^0-9A-Z])(?:[EM])?KU1\.30", su):
+            imf = "KU"
+        elif re.search(r"(?:^|[^0-9A-Z])(?:[EM])?UN1\.30", su):
+            imf = "UN"
+
+        return imf, iso
+
+
+
+    def _get_builtin_ml_files(self, base_dir):
+        """Return absolute paths to built-in mass/phot tables for the inferred variant."""
+        if self._ml_imf_tag is None or self._ml_iso_tag is None:
+            raise ValueError(f"Cannot infer IMF/isochrones from template: {self._template_example}")
+
+        folder = os.path.join(base_dir, "spectralTemplates", "MILES_SSP_phot_mass_prediction")
+
+        phot_map = {
+            ("UN", "BASTI"): "out_phot_UN_BASTI.txt",
+            ("UN", "PADOVA00"): "out_phot_UN_PADOVA00.txt",
+            ("KU", "BASTI"): "out_phot_KU_BASTI.txt",
+            ("KU", "PADOVA00"): "out_phot_KU_PADOVA00.txt",
+        }
+        mass_map = {
+            ("UN", "BASTI"): "out_mass_UN_BASTI.txt",
+            ("UN", "PADOVA00"): "out_mass_UN_PADOVA00.txt",
+            ("KU", "BASTI"): "out_mass_KU_BASTI.txt",
+            ("KU", "PADOVA00"): "out_mass_KU_PADOVA00.txt",
+        }
+
+        key = (self._ml_imf_tag, self._ml_iso_tag)
+        file_mass = os.path.join(folder, mass_map[key])
+        file_phot = os.path.join(folder, phot_map[key])
+
+        if not os.path.isfile(file_mass) or not os.path.isfile(file_phot):
+            raise FileNotFoundError(f"Missing built-in M/L files: {file_mass} / {file_phot}")
+
+        return file_mass, file_phot
+
+
+
+    def mass_to_light(self, weights, band="V", quiet=False):
+        """
+        Computes the M/L in a chosen band, given the weights produced by pPXF.
+        If the built-in (E)MILES phot/mass tables cannot be matched, returns 0.0 with a warning.
+        """
+        assert self.age_grid.shape == self.metal_grid.shape == weights.shape, \
+            "Input weight dimensions do not match"
+
+        vega_bands = ["U", "B", "V", "R", "I", "J", "H", "K"]
+        sdss_bands = ["u", "g", "r", "i"]
+        vega_sun_mag = [5.600, 5.441, 4.820, 4.459, 4.148, 3.711, 3.392, 3.334]
+        sdss_sun_mag = [6.55, 5.12, 4.68, 4.57]
+
+        try:
+            if band in vega_bands:
+                band_index = vega_bands.index(band)
+                sun_mag = vega_sun_mag[band_index]
+            elif band in sdss_bands:
+                # Keep it simple: implement later if you do not ship SDSS tables
+                raise ValueError("SDSS bands not supported with current built-in tables")
+            else:
+                raise ValueError("Unsupported photometric band")
+
+            # Auto-select the correct built-in tables from the template filename
+            file1, file2 = self._get_builtin_ml_files(BASE_DIR)
+
+            slope1, MH1, Age1, m_no_gas = np.loadtxt(file1, usecols=[1, 2, 3, 5]).T
+            slope2, MH2, Age2, mag = np.loadtxt(file2, usecols=[1, 2, 3, 4 + band_index]).T
+
+            # Use the dominant/unique slope in each file (usually a single value)
+            s1 = float(np.median(slope1[np.isfinite(slope1)]))
+            s2 = float(np.median(slope2[np.isfinite(slope2)]))
+
+            mass_no_gas_grid = np.empty_like(weights)
+            lum_grid = np.empty_like(weights)
+
+            for j in range(self.n_ages):
+                for kk in range(self.n_metal):
+                    p1 = (np.abs(self.age_grid[j, kk] - Age1) < 0.001) & \
+                        (np.abs(self.metal_grid[j, kk] - MH1) < 0.01) & \
+                        (np.abs(s1 - slope1) < 0.01)
+                    v1 = m_no_gas[p1]
+                    if v1.size != 1:
+                        raise ValueError(
+                            f"Mass table mismatch ({v1.size} matches) at age={self.age_grid[j,kk]}, MH={self.metal_grid[j,kk]}"
+                        )
+                    mass_no_gas_grid[j, kk] = v1[0]
+
+                    p2 = (np.abs(self.age_grid[j, kk] - Age2) < 0.001) & \
+                        (np.abs(self.metal_grid[j, kk] - MH2) < 0.01) & \
+                        (np.abs(s2 - slope2) < 0.01)
+                    v2 = mag[p2]
+                    if v2.size != 1:
+                        raise ValueError(
+                            f"Phot table mismatch ({v2.size} matches) at age={self.age_grid[j,kk]}, MH={self.metal_grid[j,kk]}"
+                        )
+                    lum_grid[j, kk] = 10**(-0.4 * (v2[0] - sun_mag))
+
+            mlpop = np.sum(weights * mass_no_gas_grid) / np.sum(weights * lum_grid)
+
+            if not quiet:
+                print(f"(M*/L)_{band} [{self._ml_imf_tag}, {self._ml_iso_tag}]: {mlpop:#.4g}")
+
+            return mlpop
+
+        except Exception as e:
+            if not quiet:
+                print(f"WARNING: Cannot compute M/L (band={band}). Returning 0. Reason: {e}")
+            return 0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ###############################################################################
 # Class for sMILES templates WITH alpha dimension
 ###############################################################################
@@ -717,227 +878,6 @@ class smiles:
     def get_full_alpha_grid(self):
         return self.alpha_grid
 
-
-###############################################################################
-# Class for XSHOOTER templates
-###############################################################################
-class xshooter:
-    """
-    Class to handle SSP templates from the XSHOOTER spectral library (XSL).
-    """
-    def __init__(self, pathname, velscale, FWHM_gal=None, FWHM_tem=0.5,
-                 age_range=None, metal_range=None, norm_range=None, wave_range=None, R = None):
-        files = glob.glob(pathname)
-        if not files:
-            raise FileNotFoundError(f"No files found matching pattern: {pathname}")
-
-        # Extract ages and metallicities
-        age_metal_list = [age_metal_xshooter(f) for f in files]
-        all_ages = np.array([am[0] for am in age_metal_list])
-        all_metals = np.array([am[1] for am in age_metal_list])
-        ages = np.unique(all_ages)
-        metals = np.unique(all_metals)
-        n_ages = len(ages)
-        n_metal = len(metals)
-
-        # Dictionary for quick file lookup
-        file_map = {}
-        for i, f in enumerate(files):
-            file_map[(all_ages[i], all_metals[i])] = f
-
-        # Open first file to initialize wavelength
-        with fits.open(files[0]) as hdu:
-            ssp = hdu[0].data
-            header = hdu[0].header
-
-        lam = header['CRVAL1'] + np.arange(header['NAXIS1']) * header['CDELT1']
-
-        # Define normalization band
-        if norm_range is not None:
-            band = (norm_range[0] <= lam) & (lam <= norm_range[1])
-
-        # If wave_range is provided, apply mask to lam and ssp
-        if wave_range is not None:
-            mask = (lam >= wave_range[0]) & (lam <= wave_range[1])
-        else:
-            mask = np.ones_like(lam, dtype=bool)
-
-        # Cutting the templates to the galaxy spectra range
-        lam = lam[mask]
-        ssp = ssp[mask]
-
-        # Recompute FWHM_tem
-        lam_range_temp = lam[[0, -1]]
-
-        # Log-rebin
-        ssp_new, ln_lam_temp = util.log_rebin(lam_range_temp, ssp, velscale=velscale)[:2]
-        lam_temp = np.exp(ln_lam_temp)
-
-
-        # Initialize arrays
-        templates = np.empty((ssp_new.size, n_ages, n_metal))
-        age_grid = np.empty((n_ages, n_metal))
-        metal_grid = np.empty((n_ages, n_metal))
-        flux = np.empty((n_ages, n_metal))
-
-
-        # Considering three possibilities: Resolution in FWHM, in R and in MUSE LSF
-        if FWHM_gal is not None:
-            if isinstance(FWHM_gal, (int, float)): # FWHM resolution
-                # print('FWHM resolution')
-                FWHM_tem = lam/10000.
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
-            elif R is not None:
-                # print('R resolution')
-                FWHM_gal = lam/R #FWHM_gal[mask]
-                FWHM_tem = lam/10000.
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
-            else:
-                # print('MUSE resolution')
-                FWHM_gal = 5.866e-8*lam**2-9.187e-4*lam+6.040
-                FWHM_dif = np.sqrt(FWHM_gal**2 - FWHM_tem**2)
-                sigma = FWHM_dif/2.355/header['CDELT1']   # Sigma difference in pixels
-
-        # Process each template
-        warn_conv_failed = False
-        for j, age in enumerate(ages):
-            for k, met in enumerate(metals):
-                fname = file_map.get((age, met), None)
-                if fname is None:
-                    raise ValueError(f"Missing template for age={age}, metallicity={met}")
-
-                with fits.open(fname) as hdu:
-                    ssp_data_full = hdu[0].data
-                    hdr = hdu[0].header
-
-                # Apply the same wavelength masking for each template
-                ssp_data = ssp_data_full[mask]
-
-                # Convolving
-                if FWHM_gal is not None:
-                    if np.isscalar(FWHM_gal):
-                        if np.any(sigma) > 0.01:   # Skip convolution for nearly zero sigma
-                            try:
-                                x = np.arange(len(ssp_data))
-                                ssp_data = util.varsmooth(x, ssp_data, sigma)
-                            except ValueError:
-                                if not warn_conv_failed:
-                                    print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
-                                    warn_conv_failed = True
-                        else:
-                            if not warn_conv_failed:
-                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
-                                warn_conv_failed = True
-                    else:
-                        x = np.arange(len(ssp_data))
-                        try:
-                            ssp_data = util.varsmooth(x, ssp_data, sigma) # convolution with variable sigma
-                        except ValueError:
-                            if not warn_conv_failed:
-                                print('WARNING: The resolution of the templates is lower than galaxy. Skipping convolution')
-                                warn_conv_failed = True
-
-
-                # Log rebin the masked data
-                ssp_new = util.log_rebin(lam_range_temp, ssp_data, velscale=velscale)[0]
-
-                # Normalize
-                if norm_range is not None:
-                    flux_val = np.mean(ssp_data_full[band]) #Using the NON cutted SSP templates for flux normalization in the V band
-                    flux[j, k] = flux_val
-                    ssp_new /= flux_val
-                else:
-                    flux[j, k] = 1.0
-
-                templates[:, j, k] = ssp_new
-                age_grid[j, k] = age
-                metal_grid[j, k] = met
-
-        # Apply optional age_range filter
-        if age_range is not None:
-            w = (age_range[0] <= ages) & (ages <= age_range[1])
-            templates = templates[:, w, :]
-            age_grid = age_grid[w, :]
-            metal_grid = metal_grid[w, :]
-            flux = flux[w, :]
-            ages = ages[w]
-
-        # Apply optional metal_range filter
-        if metal_range is not None:
-            w = (metal_range[0] <= metals) & (metals <= metal_range[1])
-            templates = templates[:, :, w]
-            age_grid = age_grid[:, w]
-            metal_grid = metal_grid[:, w]
-            flux = flux[:, w]
-            metals = metals[w]
-
-        # Global normalization if norm_range is None
-        if norm_range is None:
-            flux_median = np.median(templates[templates > 0])
-            templates /= flux_median
-
-        # Store attributes
-        self.templates_full = templates
-        self.ln_lam_temp_full = ln_lam_temp
-        self.lam_temp_full = lam_temp
-        self.templates = templates
-        self.ln_lam_temp = ln_lam_temp
-        self.lam_temp = lam_temp
-        self.age_grid = age_grid
-        self.metal_grid = metal_grid
-        self.n_ages, self.n_metal = age_grid.shape
-        self.flux = flux
-
-    ###############################################################################
-    def mean_age_metal(self, weights, lg_age=True, lg_met = True, quiet=False):
-        """
-        Compute mean age and metallicity from pPXF weights.
-        :param weights: pPXF weights array with dimensions [n_ages, n_metal]
-        :param lg_age: If True, compute log10(Age/yr) mean; else linear (Gyr).
-        :param quiet: If True, suppress printout.
-        :return: (mean_age, mean_metal)
-        """
-        if lg_age:
-            lg_age_grid = np.log10(self.age_grid) + 9
-            mean_lg_age = np.sum(weights * lg_age_grid) / np.sum(weights)
-            mean_age = mean_lg_age
-        else:
-            lin_age_grid = self.age_grid
-            mean_lin_age = np.sum(weights * lin_age_grid) / np.sum(weights)
-            mean_age = mean_lin_age
-
-        if lg_met:
-            mean_metal = np.sum(weights * self.metal_grid) / np.sum(weights)
-        else:
-            z_sun = 0.02
-            lin_met_grid = z_sun*10**self.metal_grid
-            mean_z = np.sum(weights * lin_met_grid) / np.sum(weights)
-            mean_metal = np.log10(mean_z / z_sun)  # return in [Z/H]
-
-        if not quiet:
-            if lg_age:
-                print(f'Weighted lg <Age>: {mean_age:.3g}')
-                print(f'Weighted <[M/H]>: {mean_metal:.3g}')
-            else:
-                print(f'Weighted <Age> [Gyr]: {mean_age:.3g}')
-                print(f'Weighted <[M/H]>: {mean_metal:.3g}')
-
-        return mean_age, mean_metal
-
-    ###############################################################################
-    def get_full_age_grid(self):
-        """
-        Return the 2D array of ages.
-        """
-        return self.age_grid
-
-    def get_full_metal_grid(self):
-        """
-        Return the 2D array of metallicities.
-        """
-        return self.metal_grid
 
 
 class KinematicTemplates:

@@ -1,5 +1,5 @@
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
     E-mail: daniele.gasparri@gmail.com
 
     SPAN is a GUI software that allows to modify and analyze 1D astronomical spectra.
@@ -36,7 +36,7 @@ def main():
     layout, scale_win, fontsize, default_size = misc.get_layout()
     
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 7.3 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
+    window1 = sg.Window('SPAN - SPectral ANalysis - 7.4 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
     misc.enable_hover_effect(window1) #enabling hover mouse on the buttons
     
     #Allowing elements in the listbox to be deleted
@@ -75,7 +75,7 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 7.3 *********')
+    print ('********* Welcome to SPAN version 7.4 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
@@ -172,7 +172,7 @@ def main():
         if event == 'About SPAN':
             sg.popup ('SPAN is a Python 3.10+ software. It can modify the spectra and perform analyses, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         elif event == 'Version':
-            sg.popup ('This is version 7.3 with improved, dynamical, and responsive layout')
+            sg.popup ('This is version 7.4 with improved, dynamical, and responsive layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         elif event == 'Clear all tasks':
@@ -632,9 +632,9 @@ def main():
                                 print ('Cannot write the file')
                     if (perform_kinematics):                                     #6) STARS AND GAS KINEMATICS
                         i == 0 and print('\nRunning stars and gas kinematics task...\n')
-                        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, kin_gas_component, snr_kin, error_kinematics_mc, kin_gas_names, kin_gas_flux, kin_gas_flux_err, kin_emission_corrected_flux, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
+                        kinematics, error_kinematics, bestfit_flux, bestfit_wavelength, kin_component, kin_gas_component, snr_kin, error_kinematics_mc, kin_gas_names, kin_gas_flux, kin_gas_flux_err, kin_emission_corrected_flux, kin_Av_stars, kin_delta_stars, kin_Av_gas, params = apply_analysis_tasks.apply_ppxf_kinematics(event, save_plot, params)
                         if event == 'Process all': #Updating and writing the file(s)
-                            df_kin_gas = file_writer.save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, kin_gas_component, kin_gas_names, kin_gas_flux, kin_gas_flux_err, kin_component, snr_kin, df_kin, kin_file, df_kin_mc, kin_file_mc, df_kin_gas, kin_file_gas)
+                            df_kin_gas = file_writer.save_kinematics_to_file(i, params, kinematics, error_kinematics, error_kinematics_mc, kin_gas_component, kin_gas_names, kin_gas_flux, kin_gas_flux_err, kin_component, kin_Av_stars, kin_delta_stars, kin_Av_gas, snr_kin, df_kin, kin_file, df_kin_mc, kin_file_mc, df_kin_gas, kin_file_gas)
                     if (stellar_pop):                                           #7) STELLAR POPULATIONS AND SFH
                         i == 0 and print('\nRunning stellar populations and SFH task...\n')
                         kinematics, info_pop, info_pop_mass, mass_light, chi_square, met_err, mass_met_err, snr_pop, ppxf_pop_lg_age, ppxf_pop_lg_met, age_err_abs, mass_age_err_abs, alpha_err, mass_alpha_err, t50_age, t80_age, t50_cosmic, t80_cosmic, ssp_lick_indices_ppxf, ssp_lick_indices_err_ppxf, ppxf_lick_params, params = apply_analysis_tasks.apply_ppxf_stellar_populations(event, save_plot, params, kin_active = perform_kinematics, emission_corrected_flux_kin = params.kin_emission_corrected_flux, wavelength_kin = params.bestfit_wavelength_kin)

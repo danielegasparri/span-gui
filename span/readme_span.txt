@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.3
-Daniele Gasparri, December 2025
+SPAN: SPectral ANalysis software V7.4
+Daniele Gasparri, January 2026
 
 # SPAN user manual
 
@@ -400,5 +400,5 @@ Please, report any bug or comment to daniele.gasparri@gmail.com
 Have fun!
 
 Daniele Gasparri  
-2025-12-02  
+2026-01-02  
 Greetings from the Atacama desert!

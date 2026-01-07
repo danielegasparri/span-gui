@@ -29,6 +29,12 @@
 ######################################################################################
 #Version histories
 
+# Version 7.4 (20260102): 
+# Improved the "Stellar populations and SFH" task, which now can calculates the M/L for any (E)MILES based and XSL SSP models.
+# The XSL models now are not included in SPAN anymore as single spectra but are automatically downloaded from the pPXF distribution
+# Optimized the preparation of the SSP templates for the 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks to save calculation time and maintain accuracy.
+# Code refactoring and optimization for the 'span_main.py', 'spectral_analysis.py', and 'build_templates.py' modules
+
 # Version 7.3 (20251202):  
 # Minor bug fixes for the 'Stellar populations and SFH' task: custom EMILES templates where fitting only the V band, now they can be used to fit any band covered by them. The option to fit with or without gas was not saved correctly to the parameter file.
 # Introduced the difference between the 'Save session...' and 'Save parameters...' in the File menu. The 'Save session' will save all the parameters and the program status, while the 'Save parameters' option saves only the parameters and not the path of the local files on the computer. 

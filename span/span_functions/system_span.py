@@ -2,7 +2,7 @@
 #Written by Daniele Gasparri#
 
 """
-    Copyright (C) 2020-2025, Daniele Gasparri
+    Copyright (C) 2020-2026, Daniele Gasparri
 
     E-mail: daniele.gasparri@gmail.com
 
@@ -1861,7 +1861,7 @@ def quick_snr(wl, fl):
 # Simple function to open the PDF manual
 def open_manual():
     try:
-        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.3.pdf")
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.4.pdf")
 
         if sys.platform.startswith("darwin"):  # macOS
             subprocess.run(["open", manual_path])
