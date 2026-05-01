@@ -19,7 +19,7 @@
 
 - SPAN now handles air and vacuum wavelength more easily. Two new functions in the Spectra manipulation panel allow to convert the wavelengths from air to vacuum and vice versa.
 - The wrappers to pPXF can now generate and handle emission templates both in vacuum and air wavelength reference
-- New datacube extraction routine for the MEGARA instrument has been implemented
+- New datacube extraction routine for the MEGARA instrument has been implemented, but with no variance handling
 - Some bug fixes and code refactoring to ensure more robustness 
 
 
@@ -89,7 +89,7 @@ The goal of SPAN is to make spectral manipulation and analysis faster and simple
 
 - **Fully interactive GUI:** No command line required to perform high-level scientific analysis and spectra manipulation  
 - **Compatibility:** Automatically recognizes a wide range of **FITS and ASCII** spectral formats  
-- **Spectra extraction:** From reduced long-slit FITS and datacubes FITS, SPAN allows to extract 1D spectra with automatic (e.g. Voronoi) and manual binning options. Native supports for MUSE, CALIFA, WEAVE LIFU, and JWST IFU datacubes is offered. Users can also write and implement their custom routines to support more instruments  
+- **Spectra extraction:** From reduced long-slit FITS and datacubes FITS, SPAN allows to extract 1D spectra with automatic (e.g. Voronoi) and manual binning options. Native supports for MUSE, CALIFA, WEAVE LIFU, JWST NIRSpec, and MEGARA datacubes is offered. Users can also write and implement their custom routines to support more instruments  
 - **Spectral manipulation:** More than 20 tasks to manipulate the spectra (e.g cropping, Doppler/z correction, rebinning, smoothing, continuum modelling...)  
 - **Spectral analysis:** Using built-in routines and relying on state-of-the-art full spectral fitting code (pPXF), SPAN can perform all the powerful spectral analysis tasks of modern astronomy: kinematics, stellar populations studies, line-strength, cross-correlation, line fitting...  
 - **Batch processing support** for multiple spectra. Optimized to work with a large amount of 1D spectra (e.g. extracted from data cubes)   
