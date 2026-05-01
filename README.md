@@ -19,7 +19,7 @@
 
 - SPAN now handles air and vacuum wavelength more easily. Two new functions in the Spectra manipulation panel allow to convert the wavelengths from air to vacuum and vice versa.
 - The wrappers to pPXF can now generate and handle emission templates both in vacuum and air wavelength reference
-- New datacube extraction routine for the MEGARA instrument has been implemented, but with no variance handling
+- New datacube extraction routine for the MEGARA instrument has been implemented
 - Some bug fixes and code refactoring to ensure more robustness 
 
 
