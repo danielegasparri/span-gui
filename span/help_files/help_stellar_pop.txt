@@ -1,9 +1,9 @@
-SPAN: SPectral ANalysis software V7.4
-Daniele Gasparri, January 2026
+SPAN: SPectral ANalysis software V7.5
+Daniele Gasparri, May 2026
 
 # Stellar populations and SFH
 
-This task is one of the most critical tools within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023 and referenes therein) to fit a galaxy's spectrum using a set of Single Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
+This task is one of the most critical within the spectral analysis framework and extragalactic astronomy in general. It leverages the well-known pPXF algorithm (Cappellari 2023 and referenes therein) to fit a galaxy spectrum using a set of Simple Stellar Population (SSP) models, extracting key stellar population parameters such as age, metallicity, Star Formation History (SFH) and mass growth.
 
 The provided settings allow for an optimal use of pPXF, though not all of its parameters and functionalities are included in this interface.
 
@@ -13,8 +13,9 @@ The full spectral fitting method requires spectra with an acceptable Signal-to-N
 - S/N > 15 for basic results.
 - S/N > 50 for high-accuracy results.
 
-
 The default settings offer a good starting point for most local galaxy spectra and common spectrographs. To perform an initial fit, simply enter the redshift of the spectrum. For fine-tuning, adjust the parameters based on your specific dataset.
+
+**IMPORTANT:** It is recommended (but not as important as the kinematics) that the wavelength frame you are using both for your spectra and templates is the same. You must use air wavelength templates with air wavelength spectra and vacuum wavelength templates with vacuum wavelength spectra. You can convert your spectra to air or vacuum to match the wavelength reference used by the templates by activating the relative tasks in the "Spectra manipulation" panel. A mismatch between the wavelength frames used can lead to slightly biased values in the stellar population parameters.
 
 
 ## Parameter Overview
@@ -23,25 +24,26 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 
 ### First Section: Basic Parameters
 - Wavelength Range: Defines the spectral region to be fitted. A good estimate of stellar population parameters in galaxies is obtained by focusing on the 4800-5500 A (rest-frame) which includes age, metallicity, and SFH-sensitive lines such as Hbeta, OIII, Mg, and Fe. Il you have near-infrared (NIR) spectra, the 8400-8800 A (rest-frame) range is good, which includes the Ca II triplet.
-- Spectral Resolution FWHM (A): Approximate resolution of your spectrum **in the selected wavelength range**. This is relevant only if including gas emission lines in the fit or if the option "Convolve templates to galaxy resolution" is activated (not mandatory). A precise value is not required, but a good estimate is recommended.
+- Spectral Resolution FWHM (A): Approximate resolution of your spectrum **in the selected wavelength range**. This is relevant only if including gas emission lines in the fit or if the option "Convolve templates to galaxy resolution" is activated (not mandatory). A precise value is not required, but a good estimate is recommended. If working with high redshift spectra which have not been de-redshifted, the resolution value in terms of FWHM is referred to your actual wavelength range. SPAN will scale this value considering the redshift inserted by a factor: FWHM_rest = FWHM/(1+z). 
 - Velocity Dispersion Guess (km/s): An approximate estimate of the actual stellar velocity dispersion.
 - Redshift Guess (z): An initial estimate of the spectrum's redshift. If this value is not within +/- 0.005 the real one, the fit will likely fail.
-- "Fix stellar kin. from kinematics": If the "Stars and gas kinematics" task is activated and properly configured, this option fix the stellar kinematics values found and reduces the number of free parameters for the SFH fit.
-- "Fit emission corrected spec. from kinematics": If the "Stars and gas kinematics" task is activated and properly configured, this option will tell pPXF to use the emission corrected spectra generated in the "Stars and gas kinematics" task. This option can be used together with "Fix stellar kin. from kinematics" to reproduce the workflow of the GIST pipeline.
 
 
 ### Second Section: Gas Emission Lines and Dust Attenuation
 - If the spectrum contains emission lines, you should select "Fitting with gas" for more accurate results. Alternatively, you can mask out the emission lines with the "Mask emission lines" option and perform a fit without considering the gas ("Fitting only stars")
+- If fitting stars and gas with templates and spectra in vacuum wavelengths, you should activate the "Vacuum emission" option to generate gas templates using vacuum wavelengths.
 - If the spectrum includes multiple Balmer emission lines, you may enable "Tie Balmer" to constrain their ratios. This automatically applies the Calzetti et al. (2000) dust attenuation curve.
-Two additional options allow for dust correction. They should used only for spectra with very good flux calibration:
+Two additional options allow for dust correction. They should be used only for spectra with very good flux calibration:
 - "Correct for dust the stars": Uses the Cappellari (2023) 2-parameter attenuation model.
 - "Correct for dust the gas": Uses the Calzetti (2000) 1-parameter attenuation model.
+
+Using or not dust correction depends on case-to-case basis. Usually, multiplicative polynomials gives reliable results and the addition of dust correction produces very similar results. For a deeper understanding of dust correction ad its effect on the stellar populations, please see Lee et al., 2024 (https://arxiv.org/pdf/2406.13924)
 
 
 
 ### Third Section: Noise Estimation, Regularization and polynomials
 Noise and Regularization: These are critical for obtaining accurate results. Refer to the pPXF documentation for an in-depth guide.
-Recommended Workflow for finding the best parameters from pPXF documentation:
+Recommended workflow for finding the best parameters:
 
 - Perform an unregularized fit (Regul. error = 0).
 - Adjust the noise level to achieve chi^2 = 1.
@@ -49,7 +51,7 @@ Recommended Workflow for finding the best parameters from pPXF documentation:
 - If uncertain, use "Auto Noise" option, which performs an initial unregularized fit to determine the optimal noise level.
 - For small spectral ranges (<1000 A) and limited templates, "Auto Noise and Regul. error" can be used to optimize both parameters. A good starting point for S/N = 50 is setting "Fraction of Dchi2 to reach" to 0.20.
 
-The regularization factor here is expressed as "Regul. error", following the convention of pPXF, where "Regul. error" = 1/regularization. Example: If you want to apply a regularization of 10, then "Regul. error" = 1/10 = 0.1. With good S/N spectra (100) a "Regul. error" = 0.1 is usually a good choice, following what stated, for example, by Bittner et al. 2020.
+**IMPORTANT:** The regularization factor here is expressed as "Regul. error", following the convention of pPXF, where "Regul. error" = 1/regularization. Example: If you want to apply a regularization of 10, then "Regul. error" = 1/10 = 0.1. **TIP:** With good S/N spectra (100) a "Regul. error" = 0.1 is usually a good choice, following what stated, for example, by @bittner2020.
 
 **Polynomial Adjustments**:  
 Additive Degree: Leave disabled (-1) for reliable results, since they may change the absorption line profiles.
@@ -64,7 +66,7 @@ Choose the SSP model library for fitting:
 - X-shooter Spectral Library. A full sample in the optical range with Salpeter IMF and Parsec/Colibri isochrones. They have a resolving power of R = 10,000 and are better suited for medium to high resolution galaxy spectra.
 - sMILES Library (Knowles et al., 2023). Full sample in the optical window with 4 alpha/Fe values and Salpeter IMF. They are useful to extract also the alpha/Fe values besides age and metallicity. 
 
-**TIP:** If your spectra have much higher resolution than the templates, apply the "Degrade Resolution" task in the Spectra manipulation panel before fitting may improve the results.
+**TIP** If your spectra have much higher resolution than the templates, apply the "Degrade Resolution" task in the Spectra manipulation panel before fitting may improve the results.
 
 
 **Template Handling:**  
@@ -74,7 +76,8 @@ If replacing templates, ensure:
 - A regular grid of ages and metallicities.
 - No mixing of different IMF templates.
 
-You can also insert a custom .npz file following the standard of pPXF and containing any set of templates.
+You can use any set of (E)MILES templates that follows the standard MILES
+file naming convention (see http://research.iac.es/proyecto/miles/pages/ssp-models/name-convention.php) and also create and browse a custom .npz file following the standard of pPXF and containing any set of templates.
 
 **Important Notes on Stellar Population Models**  
 E-MILES, sMILES, and X-shooter work best for quiescent and moderately star forming galaxies but lack very young stellar populations (<30-60 Myr).
@@ -83,7 +86,7 @@ For highly star-forming galaxies, consider FSPS (Conroy et al., 2010) or other t
 
 ### Fifth Section: Custom Masking and Stellar Constraints
 
-- You can mask out the emission Lines. In this case, you should select the "Fitting without gas" in Section 3.
+- You can mask out the emission Lines. In this case, you should select the "Fitting without gas" mode (see Section 2).
 - Custom masking is available and can be added also to the automatic masking of the emission lines. There are two custom masking options available: 
     1. Manual masking, by inserting the wavelength interval(s) to be masked, separated by commas and parenthesis in the text box. If invalid values are inserted, SPAN will warn you.
     2. Graphical masking mode, activated by pressing the "Graphical masking" button. In this mode, an interactive Matplotlib window will open displaying the spectrum selected. You can then mask custom portion directly on the spectrum by ctrl+left click and drag. You can deselect the masked region by ctrl+right click and drag. On touchscreen devices (i.e. Android systems), masking and unmasking modes are activated by a tap on the screen and the relative selection is done by tapping and dragging on the spectrum. When graphical masking is done, you can close the Matplotlib window and the text box on the left will update with the new ranges selected.
@@ -97,8 +100,9 @@ Bootstrap Uncertainty Estimation (Kacharov et al., 2018) can be enabled to compu
 Suggested simulations: 20-50 (balance between accuracy and speed).
 
 **Lick/IDS Index Analysis:**  
-Uses the pPXF emission-corrected spectrum to estimate the stellar parameters also with the Lick/IDS indices.
-Select model grids and interpolation mode as in the "Line-Strength Analysis" task.
+Uses the pPXF emission-corrected spectrum to estimate stellar population parameters through the measurement of Lick/IDS spectral indices.
+You can select the model grids and interpolation mode in the same way as in the "Line-Strength Analysis" task.
+If your spectra have a significantly different resolution compared to the SSP templates used in pPXF, it is recommended to activate the option "Convolve templates to galaxy resolution". This ensures a more accurate estimate of the velocity dispersion during the fit, which is required to properly correct the Lick/IDS indices for spectral broadening.
 
 
 ## Final Notes
