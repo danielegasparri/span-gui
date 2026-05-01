@@ -606,7 +606,7 @@ def measure_sigma_simple(wave_obs_A, flux_obs, spec_test_template, lambda_units_
 
 #*****************************************************************************************************
 # 8) kinematics with ppxf and EMILES SSP models
-def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, mode, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, two_components_cached = None, kinematics_fixed = None, bias = None):
+def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_constant, R, muse_resolution, z, sigma_guess, stellar_library, additive_degree, multiplicative_degree, kin_moments, kin_noise, kin_fit_gas, kin_fit_stars, kin_best_noise, with_errors_kin, custom_lib, custom_lib_folder, custom_lib_suffix, generic_lib, generic_lib_folder, FWHM_tem_generic, dust_correction_gas, dust_correction_stars, tied_balmer, two_stellar_components, age_model1, met_model1, age_model2, met_model2, vel_guess1, sigma_guess1, vel_guess2, sigma_guess2, mask_lines, have_user_mask, mask_ranges, mc_sim, fixed_moments, mode, vacuum, stars_templates=None, lam_temp = None, velscale_cached = None, FWHM_gal_cached = None, two_components_cached = None, kinematics_fixed = None, bias = None):
 
     """
      This function uses the pPXF algorith to retrieve the n kinematics moments
@@ -1205,7 +1205,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
             #retrieving the emission lines in the wavelength range
             gas_templates, gas_names, line_wave = emission_lines(
             np.log(lam_temp), lam_range_gal, FWHM_gal,
-            tie_balmer=tie_balmer, limit_doublets=limit_doublets, wave_galaxy = wave)
+            tie_balmer=tie_balmer, limit_doublets=limit_doublets, wave_galaxy = wave, vacuum = vacuum)
 
             if tie_balmer and not two_stellar_components:
                 dust_correction_gas = True
@@ -1708,7 +1708,7 @@ def ppxf_kinematics(wavelength, flux, wave1, wave2, FWHM_gal, is_resolution_gal_
 
 #*****************************************************************************************************
 # 9) stellar populations with ppxf
-def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, lg_met, result_plot_dir, ppxf_pop_fix = False, kinematics_values = None, moments_from_kin = None):
+def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components, with_plots, with_errors, save_plot, spec_name, regul_err, additive_degree, multiplicative_degree, tied_balmer, stellar_library, dust_correction_stars, dust_correction_gas, noise_per_pix, age_range, metal_range, custom_emiles, custom_emiles_folder, custom_npz, filename_npz, mask_emission, custom_temp_suffix, best_param, best_noise_estimate, frac_chi, convolve_temp, have_user_mask, mask_ranges, nrand, lg_age, lg_met, result_plot_dir, vacuum, ppxf_pop_fix = False, kinematics_values = None, moments_from_kin = None):
 
     """
      This function uses the pPXF algorith to retrieve the properties of the
@@ -2186,7 +2186,7 @@ def ppxf_pop(wave, flux, wave1, wave2, FWHM_gal, z, sigma_guess, fit_components,
             #retrieving the emission lines in the wavelength range
             gas_templates, gas_names, line_wave = emission_lines(
             sps.ln_lam_temp, lam_range_gal, FWHM_gal,
-            tie_balmer=tie_balmer, limit_doublets=limit_doublets)
+            tie_balmer=tie_balmer, limit_doublets=limit_doublets, vacuum = vacuum)
 
             if tie_balmer:
                 dust_correction_gas = True

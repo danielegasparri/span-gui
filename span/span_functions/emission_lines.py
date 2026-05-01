@@ -131,13 +131,10 @@ def emission_lines(ln_lam_temp, lam_range_gal, FWHM_gal, pixel=True,
     else:
 
         # Here the two doublets are free to have any ratio
-        #         -----[OII]-----     -----[SII]-----
-        # wave = [3727.092, 3729.875, 6718.294, 6732.674]  # vacuum wavelengths
-        wave = [3727.092, 3729.875, 5198.4, 5201.35, 6718.294, 6732.674]  # vacuum wavelengths with NI "empirical"
-        # wave = [3727.092, 3729.875, 5196.45, 5198.94, 6718.294, 6732.674] #right NI wavelengths from the emission file of GIST
+        #         -----[OII]-----    -----[NI]-----    -----[SII]-----
+        wave = [3727.092, 3729.875, 5199.39, 5201.70, 6718.294, 6732.674]  # vacuum wavelengths.
         if not vacuum:
             wave = util.vac_to_air(wave)
-        # names = ['[OII]3726', '[OII]3729', '[SII]6716', '[SII]6731']
         names = ['[OII]3726', '[OII]3729', '[NI]5196', '[NI]5198', '[SII]6716', '[SII]6731']
 
         #if FWHM_gal is an array, I need to extract the FWHM values corresponding to the emission lines of the gas template

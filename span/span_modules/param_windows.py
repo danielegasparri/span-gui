@@ -1337,6 +1337,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_kin_metal_rich_poor = params.ppxf_kin_metal_rich_poor
     ppxf_kin_two_templates = params.ppxf_kin_two_templates
     ppxf_kin_mode = params.ppxf_kin_mode
+    ppxf_kin_vacuum = params.ppxf_kin_vacuum
     # prev_spec = params.prev_spec_nopath
 
 
@@ -1354,7 +1355,8 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Fitting only stellar kinematics',"RADIOKIN", key = 'no_gas_kin', default = no_gas_kin, font = ('', default_size, 'bold'),tooltip='Considering only the kinematics of stars'), sg.Checkbox('Masking the gas emission lines', default = ppxf_kin_mask_emission, key = 'ppxf_kin_mask_emission', tooltip = ('Activate the masking if gas emission is present!'), font = ('', default_size))],
-        [sg.Radio('Fitting gas and stellar kinematics', "RADIOKIN", key = 'gas_kin', default = gas_kin, font = ('', default_size, 'bold'),tooltip='Fitting the kinematics of ONE stellar component and the gas emission'), sg.Checkbox('Fixing stellar kinematics first', default = ppxf_kin_fixed_kin, key = 'ppxf_kin_fixed_kin', tooltip = ('Perform a first fit with stellar kinematics and fix the moments for the gas fitting'), font = ('', default_size))],
+        
+        [sg.Radio('Fitting gas and stellar kinematics', "RADIOKIN", key = 'gas_kin', default = gas_kin, font = ('', default_size, 'bold'),tooltip='Fitting the kinematics of ONE stellar component and the gas emission'), sg.Checkbox('Fixing stellar kinematics first', default = ppxf_kin_fixed_kin, key = 'ppxf_kin_fixed_kin', tooltip = ('Perform a first fit with stellar kinematics and fix the moments for the gas fitting'), font = ('', default_size)), sg.Checkbox('Vacuum emission lines', default = ppxf_kin_vacuum, key = 'ppxf_kin_vacuum', tooltip = ('Check this if you are working with vacuum wavelength SSP templates and vacuum spectra'), font = ('', default_size))],
         
         [sg.Checkbox('Fit two stellar components with:', default = ppxf_kin_two_stellar_components, key = 'ppxf_kin_two_stellar_components', tooltip='Enable to fit TWO stellar components with different V and sigma. Only for preset and EMILES SSP', font = ('', default_size, 'bold')), sg.Text('V1:', font = ('', default_size)), sg.InputText(ppxf_kin_vel_model1, size = (4,1), key = 'ppxf_kin_vel_model1', font = ('', default_size)), sg.Text('Sigma1:', font = ('', default_size)), sg.InputText(ppxf_kin_sigma_model1, size = (4,1), key = 'ppxf_kin_sigma_model1', font = ('', default_size)), sg.Text('V2:', font = ('', default_size)),sg.InputText(ppxf_kin_vel_model2, size = (4,1), key = 'ppxf_kin_vel_model2', font = ('', default_size)), sg.Text('Sigma2:', font = ('', default_size)), sg.InputText(ppxf_kin_sigma_model2, size = (4,1), key = 'ppxf_kin_sigma_model2', font = ('', default_size))],
         [sg.Text('', font = ('', 1)), sg.Radio('Old-young components',"RADIOKINMODE", key = 'ppxf_kin_old_young', default = ppxf_kin_old_young,tooltip='Two components, the first old (> 5 Gyr) and second young (< 5 Gyr)', font = ('', default_size)), sg.Radio('Metal rich-metal poor components',"RADIOKINMODE", key = 'ppxf_kin_metal_rich_poor', default = ppxf_kin_metal_rich_poor,tooltip='Two components, the first metal rich ([M/H] > 0]) and second metal poor ([M/H < 0)])', font = ('', default_size)), sg.Radio('All templates',"RADIOKINMODE", key = 'ppxf_kin_all_temp', default = ppxf_kin_all_temp, tooltip='Two components, using all the templates', font = ('', default_size))],
@@ -1404,6 +1406,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
         ppxf_kin_custom_lib = ppxf_kin_values['ppxf_kin_custom_lib']
         ppxf_kin_lib_folder = ppxf_kin_values['ppxf_kin_lib_folder']
         ppxf_kin_custom_temp_suffix = ppxf_kin_values['ppxf_kin_custom_temp_suffix']
+        ppxf_kin_vacuum = ppxf_kin_values['ppxf_kin_vacuum']
 
         # Generic templates
         ppxf_kin_generic_lib = ppxf_kin_values['ppxf_kin_generic_lib']
@@ -1592,6 +1595,7 @@ def kinematics_parameters(params: SpectraParams) -> SpectraParams:
             ppxf_kin_bias = ppxf_kin_bias,
             ppxf_kin_save_spectra = ppxf_kin_save_spectra,
             ppxf_kin_mode = ppxf_kin_mode,
+            ppxf_kin_vacuum = ppxf_kin_vacuum,
             ppxf_kin_all_temp = ppxf_kin_all_temp,
             ppxf_kin_metal_rich_poor = ppxf_kin_metal_rich_poor,
             ppxf_kin_old_young = ppxf_kin_old_young,
@@ -1656,6 +1660,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
     ppxf_pop_save_spectra = params.ppxf_pop_save_spectra
     ppxf_pop_fix = params.ppxf_pop_fix
     ppxf_use_emission_corrected_from_kin = params.ppxf_use_emission_corrected_from_kin
+    ppxf_pop_vacuum_emission = params.ppxf_pop_vacuum_emission
 
     layout, scale_win, fontsize, default_size = misc.get_layout()
     sg.theme('LightBlue1')
@@ -1667,7 +1672,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         [sg.HorizontalSeparator()],
 
         [sg.Radio('Fitting stars and gas together', "RADIOPOP", key = 'gas_pop', default = pop_with_gas, font = ('', default_size, 'bold')), sg.Radio('Fitting only stars',"RADIOPOP", key = 'no_gas_pop', default = pop_without_gas, font = ('', default_size, 'bold'))],
-        [sg.Checkbox('Correct for dust the stars', key = 'ppxf_pop_dust_stars', default = ppxf_pop_dust_stars, tooltip='Applying the default 2-params attenuation curve for stars of Cappellari 2023', font = ('', default_size)), sg.Checkbox('Correct for dust the gas', key = 'ppxf_pop_dust_gas', default = ppxf_pop_dust_gas, tooltip='Applying the Calzetti extinction curve for gas', font = ('', default_size)), sg.Checkbox('Tie Balmer lines', key = 'ppxf_pop_tie_balmer', default = ppxf_pop_tie_balmer, font = ('', default_size))],
+        [sg.Checkbox('Vacuum emission', key = 'ppxf_pop_vacuum_emission', default = ppxf_pop_vacuum_emission, tooltip='Check this if you are working with vacuum wavelengths for SSP templates and your spectra', font = ('', default_size)), sg.Checkbox('Dust correction stars', key = 'ppxf_pop_dust_stars', default = ppxf_pop_dust_stars, tooltip='Applying the default 2-params attenuation curve for stars of Cappellari 2023', font = ('', default_size)), sg.Checkbox('Dust correction gas', key = 'ppxf_pop_dust_gas', default = ppxf_pop_dust_gas, tooltip='Applying the Calzetti extinction curve for gas', font = ('', default_size)), sg.Checkbox('Tie Balmer', key = 'ppxf_pop_tie_balmer', default = ppxf_pop_tie_balmer, font = ('', default_size))],
         [sg.HorizontalSeparator()],
 
         [sg.Text('Noise:', font = ('', default_size, 'bold'), tooltip='Mean noise per pixel of the spectrum'), sg.InputText(ppxf_pop_noise, size = (8,1), key = 'ppxf_pop_noise', font = ('', default_size)), sg.Text('Regul. error:', font = ('', default_size, 'bold'), tooltip='Regularization parameter. Higher values = sharper solution. Lower values = smoother fit. Set zero to deactivate.'), sg.InputText(regul_err, size = (5,1), key = 'regul_err', font = ('', default_size)), sg.Text('Add. degree:', font = ('', default_size, 'bold'), tooltip='Additive degree to the fit. Not recommended to use for stellar populations!'), sg.InputText(additive_degree, size = (3,1), key = 'additive_degree', font = ('', default_size)), sg.Text('Mult. degree:', font = ('', default_size, 'bold'), tooltip='Multiplicative degree to the fit. Usually 1 degree every 100 Angstron of spectrum to be fitted'), sg.InputText(multiplicative_degree, size = (3,1), key = 'multiplicative_degree', font = ('', default_size))],
@@ -1773,6 +1778,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
         ppxf_pop_save_spectra = ppxf_pop_values['ppxf_pop_save_spectra']
         ppxf_pop_fix = ppxf_pop_values['ppxf_pop_fix']
         ppxf_use_emission_corrected_from_kin = ppxf_pop_values['ppxf_use_emission_corrected_from_kin']
+        ppxf_pop_vacuum_emission = ppxf_pop_values['ppxf_pop_vacuum_emission']
         
         if ppxf_pop_want_to_mask:
             try:
@@ -1926,6 +1932,7 @@ def population_parameters(params: SpectraParams) -> SpectraParams:
                 interp_modes_ppxf = interp_modes_ppxf,
                 ppxf_pop_save_spectra = ppxf_pop_save_spectra,
                 ppxf_pop_fix = ppxf_pop_fix,
+                ppxf_pop_vacuum_emission = ppxf_pop_vacuum_emission,
                 ppxf_use_emission_corrected_from_kin = ppxf_use_emission_corrected_from_kin
                 )
 

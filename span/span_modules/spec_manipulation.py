@@ -178,6 +178,8 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     multiply = params.multiply
     multiply_factor = params.multiply_factor
     derivatives = params.derivatives
+    air_vacuum = params.air_vacuum
+    vacuum_air = params.vacuum_air
 
     #variables to prevent the program to crash in case some of the list spectra loaded are not valid
     spectra_number = params.spectra_number
@@ -229,7 +231,8 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
     [sg.Checkbox('Subtract normalized average', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_avg', default = subtract_normalized_avg,tooltip='Normalize and subtract to the selected spectrum the normalized average of all the spectra')],
     [sg.Checkbox('Subtract norm. spec.', font = ('Helvetica', default_font_size, 'bold'), key = 'subtract_norm_spec', default = subtract_normalized_spec,tooltip='Normalize and subtract to the selected spectrum a user selected spectrum'), sg.InputText(spectra_to_subtract, size = (17,1), key = 'spec_to_subtract', font = ('', default_font_size)), sg.FileBrowse(tooltip='Load a spectrum (ASCII or fits) to be normalized and subtracted', font = ('', default_font_size))],
     [sg.Checkbox('Add constant', font = ('Helvetica', default_font_size, 'bold'), key = 'add_pedestal', default = add_pedestal,tooltip='Simply add a constant value to the spectrum'), sg.InputText(pedestal_to_add, size = (7,1), key = 'pedestal_to_add', font = ('', default_font_size)), sg.Checkbox('Multiply by:', font = ('Helvetica', default_font_size, 'bold'), key = 'multiply', default = multiply,tooltip='Multiply the spectrum by a constant'), sg.InputText(multiply_factor , size = (7,1), key = 'multiply_factor', font = ('', default_font_size))],
-    [sg.Checkbox('Calculate first and second derivatives', default = derivatives, key = 'derivatives', font = ('Helvetica', default_font_size, 'bold'),tooltip='Calculate the derivative of the spectra')],
+    [sg.Checkbox('Air to vacuum', default = air_vacuum, key = 'air_vacuum', font = ('Helvetica', default_font_size, 'bold'),tooltip='Convert air wavelength to vacuum wavelength'), sg.Checkbox('Vacuum to air', default = vacuum_air, key = 'vacuum_air', font = ('Helvetica', default_font_size, 'bold'),tooltip='Convert vacuum wavelength to air wavelength'), sg.Checkbox('Derivatives', default = derivatives, key = 'derivatives', font = ('Helvetica', default_font_size, 'bold'),tooltip='Calculate the derivative of the spectra') ],
+
     [sg.HorizontalSeparator()],
     [sg.Radio('Average all', "RADIOMATH", key = 'avg_all', default = average_all,tooltip='Average all the loaded spectra', font = ('', default_font_size)), sg.Radio('Norm. and average all', "RADIOMATH", key = 'norm_avg_all', default = norm_and_average,tooltip='First normalize, then average all the loaded spectra', font = ('', default_font_size)), sg.Radio('Nothing', "RADIOMATH", key = 'none', default = do_nothing,tooltip='Select this option if you DO NOT want to combine the spectra', font = ('Helvetica', default_font_size, 'bold'))],
     [sg.Radio('Sum all', "RADIOMATH", key = 'sum_all', default = sum_all,tooltip='Sum all the loaded spectra', font = ('', default_font_size)), sg.Radio('Norm. and sum all', "RADIOMATH", key = 'norm_sum_all', default = normalize_and_sum_all,tooltip='First normalize, then sum all the loaded spectra', font = ('', default_font_size)), sg.Checkbox('Use for spec. an.', text_color = 'yellow', key = 'use_for_spec_an', default = use_for_spec_an,tooltip='Select this to use the combined spectrum for the spectral analysis', font = ('Helvetica', default_font_size, 'bold'))],
@@ -284,6 +287,9 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
         add_pedestal = spec_values['add_pedestal']
         multiply = spec_values['multiply']
         derivatives = spec_values['derivatives']
+        
+        air_vacuum = spec_values['air_vacuum']
+        vacuum_air = spec_values['vacuum_air']
 
 
     #********** Initializing and checking the variables of the Spectra pre-processing frame **********
@@ -306,7 +312,9 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
             ("Subtract norm. spec","subtract_normalized_spec",subtract_normalized_spec),
             ("Add constant", "add_pedestal", add_pedestal),
             ("Multiply by", "multiply", multiply),
-            ("Calculate first and second derivatives", "derivatives",derivatives),
+            ("Derivatives", "derivatives",derivatives),
+            ("Air to vacuum", "air_vacuum", air_vacuum),
+            ("Vacuum to air", "vacuum_air", vacuum_air),
         ]
 
         # Select only the tasks activated
@@ -937,6 +945,8 @@ def spectra_manipulation(params: SpectraParams) -> SpectraParams:
         multiply=multiply,
         multiply_factor=multiply_factor,
         derivatives=derivatives,
+        air_vacuum=air_vacuum,
+        vacuum_air=vacuum_air,
         average_all=average_all,
         norm_and_average=norm_and_average,
         do_nothing=do_nothing,

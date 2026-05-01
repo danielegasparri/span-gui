@@ -1,7 +1,7 @@
 {
     "recipe_name": "MUSE optical: Kinematics",
     "author": "Daniele Gasparri",
-    "SPAN_version": "7.3",
+    "SPAN_version": "7.5",
     "description": "Kinematics analysis of the stellar and gaseous components for spectral bins extracted from MUSE data, already de-redshifted and in the rest-frame optical window (4800-5500 A), using the Xshooter SSP templates and the auto noise option to estimate the real noise leval of each spectra and yield reliable formal errors by pPXF",
     "notes": [
         "1) Using only multiplicative Legendre polynomials for pPXF for a reliable emission line fluxes determination",

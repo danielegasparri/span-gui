@@ -140,6 +140,8 @@ def clear_all_tasks(window, params):
                      add_pedestal=False,
                      multiply=False,
                      derivatives=False,
+                     air_vacuum=False,
+                     vacuum_air=False,
                      reorder_op=False,
                      active_operations=[],
                      reordered_operations=[],
@@ -290,6 +292,8 @@ def save_settings(filename, save_session, keys, events, values, params: SpectraP
         'multiply': params.multiply,
         'multiply_factor': params.multiply_factor,
         'derivatives' : params.derivatives,
+        'air_vacuum' : params.air_vacuum,
+        'vacuum_air' : params.vacuum_air,
         'reorder_op' : params.reorder_op,
         'current_order': params.current_order,
         'active_operations': params.active_operations,
@@ -400,11 +404,6 @@ def save_settings(filename, save_session, keys, events, values, params: SpectraP
         'lf_perc_abs': params.lf_perc_abs,
         'lf_bin_width_A': params.lf_bin_width_A,
 
-
-
-
-
-
         #Stars and gas kinematics parameters
         'left_wave_ppxf_kin': params.wave1_kin,
         'right_wave_ppxf_kin': params.wave2_kin,
@@ -453,6 +452,7 @@ def save_settings(filename, save_session, keys, events, values, params: SpectraP
         'ppxf_kin_all_temp': params.ppxf_kin_all_temp,
         'ppxf_kin_metal_rich_poor': params.ppxf_kin_metal_rich_poor,
         'ppxf_kin_two_templates': params.ppxf_kin_two_templates,
+        'ppxf_kin_vacuum': params.ppxf_kin_vacuum,
 
         #Stellar populations and SFH parameters
         'left_wave_ppxf_pop': params.wave1_pop,
@@ -495,6 +495,7 @@ def save_settings(filename, save_session, keys, events, values, params: SpectraP
         'ppxf_pop_save_spectra': params.ppxf_pop_save_spectra,
         'ppxf_pop_fix': params.ppxf_pop_fix,
         'ppxf_use_emission_corrected_from_kin': params.ppxf_use_emission_corrected_from_kin,
+        'ppxf_pop_vacuum_emission': params.ppxf_pop_vacuum_emission,
 
         # Long-slit (2D) extraction parameters
         'trace_y_range': params.trace_y_range_str,
@@ -656,6 +657,8 @@ def load_settings(filename, params):
                 multiply=params_data.get('multiply', params.multiply),
                 multiply_factor=params_data.get('multiply_factor', params.multiply_factor),
                 derivatives=params_data.get('derivatives', params.derivatives),
+                air_vacuum=params_data.get('air_vacuum', params.air_vacuum),
+                vacuum_air=params_data.get('vacuum_air', params.vacuum_air),
                 reorder_op=params_data.get('reorder_op', params.reorder_op),
                 current_order=params_data.get('current_order', params.current_order),
                 active_operations=params_data.get('active_operations', params.active_operations),
@@ -834,6 +837,7 @@ def load_settings(filename, params):
                 ppxf_kin_metal_rich_poor=params_data.get('ppxf_kin_metal_rich_poor', params.ppxf_kin_metal_rich_poor),
                 ppxf_kin_two_templates=params_data.get('ppxf_kin_two_templates', params.ppxf_kin_two_templates),
                 ppxf_kin_all_temp=params_data.get('ppxf_kin_all_temp', params.ppxf_kin_all_temp),
+                ppxf_kin_vacuum=params_data.get('ppxf_kin_vacuum', params.ppxf_kin_vacuum),
 
                 # Stellar populations and SFH parameters
                 wave1_pop=params_data.get('left_wave_ppxf_pop', params.wave1_pop),
@@ -876,10 +880,9 @@ def load_settings(filename, params):
                 ssp_model_ppxf=params_data.get('ssp_model_ppxf', params.ssp_model_ppxf),
                 interp_model_ppxf=params_data.get('interp_model_ppxf', params.interp_model_ppxf),
                 ppxf_pop_save_spectra=params_data.get('ppxf_pop_save_spectra', params.ppxf_pop_save_spectra),
-
-
                 ppxf_pop_fix=params_data.get('ppxf_pop_fix', params.ppxf_pop_fix),
-                ppxf_use_emission_corrected_from_kin=-params_data.get('ppxf_use_emission_corrected_from_kin', params.ppxf_use_emission_corrected_from_kin),
+                ppxf_use_emission_corrected_from_kin=params_data.get('ppxf_use_emission_corrected_from_kin', params.ppxf_use_emission_corrected_from_kin),
+                ppxf_pop_vacuum_emission=params_data.get('ppxf_pop_vacuum_emission', params.ppxf_pop_vacuum_emission),
 
                 # Long-slit (2D) extraction parameters
                 file_path_spec_extr=params_data.get('file_path', params.file_path_spec_extr),

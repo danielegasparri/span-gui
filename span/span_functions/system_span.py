@@ -286,6 +286,7 @@ def is_valid_spectrum(fits_file):
 #********************************************
 
 # 2) Read datacubes
+
 def read_datacube(file_path):
     """
     Read a 3D datacube from various sources and return data and wavelength array.
@@ -296,12 +297,21 @@ def read_datacube(file_path):
             # Try known formats
             # -----------------------------------
             # MUSE datacube: data in HDU[1], CD3_3
-            if 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) < 4:
+            if len(hdu) > 1 and 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) < 4:
                 data = hdu[1].data
                 hdr = hdu[1].header
                 nwave = data.shape[0]
                 wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CD3_3']
                 print("Datacube format detected: MUSE")
+                return data, wave
+
+            # MEGARA datacube: data in HDU[0], CDELT3
+            elif 'INSTRUME' in hdu[0].header and hdu[0].header['INSTRUME'] == 'MEGARA':
+                data = hdu[0].data
+                hdr = hdu[0].header
+                nwave = data.shape[0]
+                wave = hdr['CRVAL3'] + np.arange(nwave) * hdr['CDELT3']
+                print("Datacube format detected: MEGARA")
                 return data, wave
 
             # CALIFA datacube: data in HDU[0], CDELT3
@@ -314,7 +324,7 @@ def read_datacube(file_path):
                 return data, wave
 
             # --- WEAVE ---, as MUSE but with more extensions
-            elif 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) > 4:
+            elif len(hdu) > 1 and 'CD3_3' in hdu[1].header and 'CRVAL3' in hdu[1].header and len(hdu) > 4:
                 data = hdu[1].data
                 hdr = hdu[1].header
                 nwave = data.shape[0]
@@ -323,11 +333,11 @@ def read_datacube(file_path):
                 return data, wave
 
             # JWST NIRSpec datacube: data in HDU[1], CDELT3
-            elif 'CDELT3' in hdu[1].header and 'CRVAL3' in hdu[1].header:
+            elif len(hdu) > 1 and 'CDELT3' in hdu[1].header and 'CRVAL3' in hdu[1].header:
                 data = hdu[1].data
                 hdr = hdu[1].header
                 nwave = data.shape[0]
-                wave = (hdr['CRVAL3'] + np.arange(nwave) * hdr['CDELT3'])*1e4
+                wave = (hdr['CRVAL3'] + np.arange(nwave) * hdr['CDELT3']) * 1e4
                 print("Datacube format detected: JWST")
                 return data, wave
 
@@ -1861,7 +1871,7 @@ def quick_snr(wl, fl):
 # Simple function to open the PDF manual
 def open_manual():
     try:
-        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.4.pdf")
+        manual_path = os.path.join(BASE_DIR, "user_manual_SPAN_7.5.pdf")
 
         if sys.platform.startswith("darwin"):  # macOS
             subprocess.run(["open", manual_path])
@@ -1947,28 +1957,6 @@ def edges_from_centres(centres: np.ndarray) -> np.ndarray:
 
 #********************** END OF SYSTEM FUNCTIONS *******************************************
 #******************************************************************************************
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # ---- Functions for the plot maps subprogram to save the maps in FITS files ----------------------------------------------
 

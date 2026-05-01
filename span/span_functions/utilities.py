@@ -340,16 +340,17 @@ def convert_flux(wavelength, flux, spec_name, type_to_convert, lambda_units):
     converted_flux = np.zeros(flux_points)
 
     if lambda_units == 'mu':
-        wavelength /= 1000
-    elif lambda_units == 'A':
-        wavelength /= 10
+        wavelength *= 10000
+    elif lambda_units == 'nm':
+        wavelength *= 10
 
     if type_to_convert == 'to_flambda':
-        conversion_factor = 2.999792458e12
+        conversion_factor = 2.99792458e-5
         converted_flux = flux * conversion_factor / (wavelength ** 2)
+
     elif type_to_convert == 'to_fnu':
-        conversion_factor = 1e26
-        converted_flux = flux * conversion_factor
+        conversion_factor = 2.99792458e-5
+        converted_flux = flux * (wavelength ** 2) / conversion_factor
 
     return converted_flux
 

@@ -1643,7 +1643,7 @@ def datacube_extraction(params):
                 ax_img = fig.add_subplot(gs[:, :5])  # columns 0–4
 
                 # === Initial data and scaling ===
-                index = 0
+                index = data.shape[0] // 2
                 current_slice = data[index]
                 masked_slice = np.ma.masked_invalid(current_slice)
 
@@ -1663,8 +1663,8 @@ def datacube_extraction(params):
                 ax_slider_vmin = fig.add_axes([0.89, 0.20, 0.04, 0.75])
                 ax_slider_vmax = fig.add_axes([0.94, 0.20, 0.04, 0.75])
 
-                slider_wave = Slider(ax_slider_wave, 'λ', wave[0], wave[-1], valinit=wave[0], valfmt='%0.0f', orientation='vertical')
-                slider_vmin = Slider(ax_slider_vmin, 'Min', vmin, vmax, valinit=vmin, orientation='vertical')
+                slider_wave = Slider(ax_slider_wave, 'λ', wave[0], wave[-1], valinit=wave[index], valfmt='%0.0f', orientation='vertical')
+                slider_vmin = Slider(ax_slider_vmin, 'Min', vmin - abs(vmax - vmin), vmax, valinit=vmin, orientation='vertical')
                 slider_vmax = Slider(ax_slider_vmax, 'Max', vmin, vmax * 10, valinit=vmax, orientation='vertical')
 
                 # RADIO BUTTON

@@ -1244,10 +1244,125 @@ def apply_derivatives(event, save_plot, params):
 
 
 
+def apply_air_vacuum(event, save_plot, params):
+
+    """
+    Convert the spectrum from air to vacuum
+
+    """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
+
+    try:
+        sigma2 = (1e4 / params.wavelength) ** 2
+
+        n = (
+            1.0
+            + 8.336624212083e-5
+            + 2.408926869968e-2 / (130.1065924522 - sigma2)
+            + 1.599740894897e-4 / (38.92568793293 - sigma2)
+        )
+
+        updated_wavelength = params.wavelength  * n
+
+        # Save the modified spectrum
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+            # air_vacuum_suffix = str(int(round(params.multiply_factor)))
+            file_air_vacuum = os.path.join(params.result_spec, f'vacuum_{params.prev_spec_nopath}.fits')
+            uti.save_fits(updated_wavelength, params.flux, file_air_vacuum)
+            print(f'File saved: {file_air_vacuum}')
+
+        # Save plot if required
+        # if event == 'Process all' and save_plot:
+        #     plt.title(f'Air to vacuum {params.prev_spec_nopath}')
+        #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
+        #     plt.plot(updated_wavelength, params.original_flux, label='Vacuum')
+        #     plt.xlabel("Wavelength (A)")
+        #     plt.ylabel("Flux")
+        #     plt.legend()
+        #     plt.savefig(os.path.join(params.result_plot_dir, f'vacuum_{params.prev_spec_nopath}.png'), dpi=300)
+        #     plt.close()
+
+        # Return updated params
+        return replace(params,
+                    wavelength=updated_wavelength)
+
+    except Exception:
+        print("Conversion air to vacuum failed")
+        return params
+
+
+
+def apply_vacuum_air(event, save_plot, params):
+
+    """
+    Convert the spectrum from vacuum to air
+
+    """
+
+    # Header
+    task_done, task_spec, task_done2, task_spec2 = params.task_done, params.task_spec, params.task_done2, params.task_spec2
+    if event == 'Process all':
+        task_done2, task_spec2 = 1, 1
+    else:
+        task_done, task_spec = 1, 1
+
+    #updating the params that changed, that is just the check conditions
+    params = replace(params, task_done=task_done, task_spec=task_spec, task_done2=task_done2, task_spec2=task_spec2)
+
+    try:
+        sigma2 = (1e4 / params.wavelength) ** 2
+
+        n = (
+            1.0
+            + 8.336624212083e-5
+            + 2.408926869968e-2 / (130.1065924522 - sigma2)
+            + 1.599740894897e-4 / (38.92568793293 - sigma2)
+        )
+
+
+        updated_wavelength = params.wavelength/n
+
+        # Save the modified spectrum
+        if params.save_intermediate_spectra and (event == 'Process all' or event == 'Process selected'):
+            # air_vacuum_suffix = str(int(round(params.multiply_factor)))
+            file_air_vacuum = os.path.join(params.result_spec, f'air_{params.prev_spec_nopath}.fits')
+            uti.save_fits(updated_wavelength, params.flux, file_air_vacuum)
+            print(f'File saved: {file_air_vacuum}')
+
+        # Save plot if required
+        # if event == 'Process all' and save_plot:
+        #     plt.title(f'Vacuum to air {params.prev_spec_nopath}')
+        #     plt.plot(params.original_wavelength, params.original_flux, label='Original')
+        #     plt.plot(updated_wavelength, params.original_flux, label='Air')
+        #     plt.xlabel("Wavelength (A)")
+        #     plt.ylabel("Flux")
+        #     plt.legend()
+        #     plt.savefig(os.path.join(params.result_plot_dir, f'air_{params.prev_spec_nopath}.png'), dpi=300)
+        #     plt.close()
+
+        # Return updated params
+        return replace(params,
+                    wavelength=updated_wavelength)
+
+    except Exception:
+        print("Conversion air to vacuum failed")
+        return params
+    
+ 
+ 
 def combine_spectra(event, save_plot, params):
 
     """
-    Combine multiple spectra using averaging, summation, and normalisation
+    Combine multiple spectra using averaging, summation, and normalization
 
     """
 

@@ -1,7 +1,7 @@
 {
     "recipe_name": "MUSE galaxy optical: Kinematics + Stellar populations + Lick/IDS indices and stellar parameters with uncertainties",
     "author": "Daniele Gasparri",
-    "SPAN_version": "7.3",
+    "SPAN_version": "7.5",
     "description": "Workflow optimized for galaxy spectral bins extracted from MUSE data, already de-redshifted and in the rest-frame optical window (4800-5500 A), reproducing the behavior of the GIST pipeline with all analysis modules activated: 1) Kinematics of stars and gas in two steps, first for the stars then for the gas by fixing the stellar values, 2) Stellar populations with pPXF on emission corrected spectra from kinematics analysis and fixing the stellar kinematics values from kinematics task, 3) Lick/IDS analysis on the emission corrected spectra and stellar parameters estimation with sMILES SSP models and the GPR machine-learning algorithm. Uncertainties estimation for kinematics and stellar populations with Monte Carlo and Bootstrap simulations.",
     "notes": [
         "1) Assume MUSE-like resolution and using Xshooter templates for kinematics and stellar populations with pPXF.",
