@@ -370,6 +370,7 @@ class SpectraParams:
     ppxf_kin_metal_rich_poor: bool = False
     ppxf_kin_two_templates: bool = False
     ppxf_kin_mode: str = 'old_young'
+    ppxf_kin_vacuum: bool = False
     kin_emission_corrected_flux: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
     bestfit_wavelength_kin: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
     kin_stars_values: np.ndarray = field(default_factory=lambda: np.array([]))  # Wavelength array
@@ -418,6 +419,7 @@ class SpectraParams:
     ppxf_pop_error_nsim: int = 20
     ppxf_pop_lg_age: bool = True
     ppxf_pop_lg_met: bool = True
+    ppxf_pop_vacuum_emission: bool = False
     stellar_parameters_lick_ppxf: bool = False
     lick_ssp_models_ppxf: list = field(default_factory=lambda: ['Thomas2010', 'xshooter', 'miles', 'smiles'])
     ssp_model_ppxf: str = 'Thomas2010'
@@ -467,7 +469,7 @@ class SpectraParams:
     ifs_output: str = field(init=False)  #in __post_init__
     ifs_redshift: float = 0.008764
     ifs_ow_output: bool = False
-    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU', 'JWST_NIRSPEC'])
+    ifs_routine_read: list = field(default_factory=lambda: ['MUSE_WFM', 'MUSE_WFMAOE', 'MUSE_WFMAON', 'MUSE_NFM', 'MUSE_NFMAO', 'CALIFA_V500', 'CALIFA_V1200', 'WEAVE_LIFU', 'JWST_NIRSPEC', 'MEGARA'])
     ifs_routine_read_default: str = 'MUSE_WFM'
     ifs_origin: str = '14,14'
     ifs_lmin_tot: int = 4800
@@ -556,6 +558,8 @@ class SpectraParams:
     multiply: bool = False
     multiply_factor: float = 1.0
     derivatives: bool = False
+    air_vacuum: bool = False
+    vacuum_air: bool = False
 
     # Spectra Manipulation - Task Management
     active_operations: list = field(default_factory=list)

@@ -36,7 +36,7 @@ def main():
     layout, scale_win, fontsize, default_size = misc.get_layout()
     
     #Creating the main GUI
-    window1 = sg.Window('SPAN - SPectral ANalysis - 7.4 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
+    window1 = sg.Window('SPAN - SPectral ANalysis - 7.5 --- Daniele Gasparri ---', layout,finalize=True, resizable=True, scaling = scale_win, modal =False)
     misc.enable_hover_effect(window1) #enabling hover mouse on the buttons
     
     #Allowing elements in the listbox to be deleted
@@ -75,7 +75,7 @@ def main():
 
     # Prints in the output
     print ('***********************************************')
-    print ('********* Welcome to SPAN version 7.4 *********')
+    print ('********* Welcome to SPAN version 7.5 *********')
     print ('********* Written by Daniele Gasparri *********')
     print ('***********************************************\n')
     print ('SPAN is a software for performing operations and analyses on 1D reduced astronomical spectra.\n')
@@ -172,7 +172,7 @@ def main():
         if event == 'About SPAN':
             sg.popup ('SPAN is a Python 3.10+ software. It can modify the spectra and perform analyses, using both built-in and external (e.g. ppxf) algorithms\n\nSPAN uses FreeSimpleGUI (Copyright (C) 2007 Free Software Foundation, Inc.), which is distributed under the GNU LGPL license. ')
         elif event == 'Version':
-            sg.popup ('This is version 7.4 with improved, dynamical, and responsive layout')
+            sg.popup ('This is version 7.5 with improved, dynamical, and responsive layout')
 
         # In the case I want to deselect all the active tasks in the main panel in one click
         elif event == 'Clear all tasks':
@@ -210,7 +210,7 @@ def main():
                         params.degrade, params.normalize_wave, params.sigma_broad, params.add_noise,
                         params.continuum_sub, params.average_all, params.norm_and_average, params.sum_all,
                         params.normalize_and_sum_all, params.subtract_normalized_avg, params.subtract_normalized_spec,
-                        params.add_pedestal, params.multiply, params.derivatives,])
+                        params.add_pedestal, params.multiply, params.derivatives, params.air_vacuum, params.vacuum_air,])
         if any_active: #Changing the color of the button if at least one task is active
             window['Spectra manipulation'].update(button_color=('white', 'red'))
         else:
@@ -511,8 +511,14 @@ def main():
                             params = apply_spec_tasks.apply_multiplication(event, save_plot, params)
                         elif op_var == "derivatives":                           #17) DERIVATIVES
                             i == 0 and print('\n*** Derivatives ***\n')
-                            params = apply_spec_tasks.apply_derivatives(event, save_plot, params)
-
+                            params = apply_spec_tasks.apply_derivatives(event, save_plot, params)      
+                        elif op_var == "air_vacuum":                           #18) AIR TO VACUUM
+                            i == 0 and print('\n*** From air to vacuum ***\n')
+                            params = apply_spec_tasks.apply_air_vacuum(event, save_plot, params)
+                        elif op_var == "vacuum_air":                           #19) VACUUM TO AIR
+                            i == 0 and print('\n*** From vacuum to air ***\n')
+                            params = apply_spec_tasks.apply_vacuum_air(event, save_plot, params)                            
+                            
                     #plotting the results
                     if (event == 'Preview spec.'):
                         try:
