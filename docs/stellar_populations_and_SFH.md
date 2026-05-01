@@ -1,5 +1,5 @@
-SPAN: SPectral ANalysis software V7.4
-Daniele Gasparri, January 2026
+SPAN: SPectral ANalysis software V7.5
+Daniele Gasparri, May 2026
 
 # Stellar populations and SFH
 
@@ -17,8 +17,9 @@ The full spectral fitting method requires spectra with an acceptable Signal-to-N
 - S/N > 15 for basic results.
 - S/N > 50 for high-accuracy results.
 
-
 The default settings offer a good starting point for most local galaxy spectra and common spectrographs. To perform an initial fit, simply enter the redshift of the spectrum. For fine-tuning, adjust the parameters based on your specific dataset.
+
+**IMPORTANT:** It is recommended (but not as important as the kinematics) that the wavelength frame you are using both for your spectra and templates is the same. You must use air wavelength templates with air wavelength spectra and vacuum wavelength templates with vacuum wavelength spectra. You can convert your spectra to air or vacuum to match the wavelength reference used by the templates by activating the relative tasks in the "Spectra manipulation" panel. A mismatch between the wavelength frames used can lead to slightly biased values in the stellar population parameters.
 
 
 ## Parameter Overview
@@ -34,6 +35,7 @@ The parameters are grouped into six sections, separated by horizontal dividers. 
 
 ### Second Section: Gas Emission Lines and Dust Attenuation
 - If the spectrum contains emission lines, you should select "Fitting with gas" for more accurate results. Alternatively, you can mask out the emission lines with the "Mask emission lines" option and perform a fit without considering the gas ("Fitting only stars")
+- If fitting stars and gas with templates and spectra in vacuum wavelengths, you should activate the "Vacuum emission" option to generate gas templates using vacuum wavelengths.
 - If the spectrum includes multiple Balmer emission lines, you may enable "Tie Balmer" to constrain their ratios. This automatically applies the Calzetti et al. (2000) dust attenuation curve.
 Two additional options allow for dust correction. They should be used only for spectra with very good flux calibration:
 - "Correct for dust the stars": Uses the Cappellari (2023) 2-parameter attenuation model.

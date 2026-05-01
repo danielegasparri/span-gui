@@ -1,8 +1,17 @@
-SPAN: SPectral ANalysis software V7.4
-Daniele Gasparri, January 2026
+SPAN: SPectral ANalysis software V7.5
+Daniele Gasparri, May 2026
 
 
 ## Changelog
+
+**Version 7.5 (20260501):**  
+- Fixed the equations in the convert_flux functionin utilities.py module which were wrong
+- Improved and refactored the read_datacube function in system_span.py to better read datacubes from different instruments
+- Fixed a small visualization bug of the datacube_extraction function in the sub_programs.py module that did not display properly some datacubes when the initial wavelength slices are empty
+- Included the MEGARA.py routine for reading and extracting MEGARA datacubes
+- Added two new tasks in the 'Spectra manipulation' panel: 'Air to vacuum' and 'Vacuum to air' that convert the wavelength scale from air to vacuum and vice versa, using the approximate equation of Morton (1991). Good from the UV to the near IR.
+- Added the option 'Vacuum emission' in the 'Stars and gas kinematics' and 'Stellar populations and SFH' tasks in order to generate gas templates also in vacuum wavelengths. 
+
 
 **Version 7.4 (20260102):**  
 

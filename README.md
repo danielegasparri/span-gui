@@ -1,7 +1,7 @@
 # SPAN: Spectral Analysis Software
 
 📖 **Author:** Daniele Gasparri  
-📅 **Latest Release:** January 2026  
+📅 **Latest Release:** May 2026  
 
 ![PyPI Version](https://img.shields.io/pypi/v/span-gui)
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -15,13 +15,12 @@
 **SPAN is a cross-platform Python GUI software for the extraction, manipulation, and advanced analysis of 1D astronomical spectra in the optical and near-infrared (NIR) ranges, optimized for galaxy studies.**
 
 
-## What’s New in SPAN 7.4
+## What’s New in SPAN 7.5
 
-- Replaced the XSL SSP models with those embedded with the pPXF distribution in .npz format. These templates are automatically downloaded by SPAN the first time they are called in the "Stars and gas kinematics" or "Stellar populations and SFH" tasks.
-- For the "Stellar populations and SFH" task, now the M/L estimation is available for any (E)MILES custom and XSL SSP templates.
-- Reduced the size of the SPAN app installer for Windows systems by a factor of two.
-- Code refactoring to ensure better readability and performances
-- Minor bug correction and improvement of the help files within SPAN.
+- SPAN now handles air and vacuum wavelength more easily. Two new functions in the Spectra manipulation panel allow to convert the wavelengths from air to vacuum and vice versa.
+- The wrappers to pPXF can now generate and handle emission templates both in vacuum and air wavelength reference
+- New datacube extraction routine for the MEGARA instrument has been implemented, but with no variance handling
+- Some bug fixes and code refactoring to ensure more robustness 
 
 
 More from the version 7.X:
