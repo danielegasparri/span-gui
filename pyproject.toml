@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "span-gui"
-version = "7.5.0"
+version = "7.5.1"
 description = "GUI program for the manipulation and analysis of astronomical spectra in the optical and NIR wavelength ranges."
 requires-python = ">=3.10"
 readme = "README.md"
@@ -56,7 +56,7 @@ classifiers = [
 dependencies = [
   "numpy>=1.24.1,<=2.2.6",
   "astropy>=6.1.0,<=7.1.0",
-  "pandas>=2.2.3",
+  "pandas>=2.2.3, <3.0.0",
   "matplotlib>=3.10.0",
   "scipy>=1.15.0,<=1.16.0",
   "scikit-image>=0.25.2",
